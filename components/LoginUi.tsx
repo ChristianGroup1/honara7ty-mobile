@@ -137,7 +137,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           Alert.alert('Error', error.message);
         } else {
           console.log('Signed in with Google successfully');
-          // navigation2.replace('HomeScreen', { user: userInfo.data.user });
+          navigation.replace('HomeScreen', { user: userInfo.data.user });
         }
       } else {
         throw new Error('No ID token present!');

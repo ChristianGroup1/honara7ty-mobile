@@ -11,28 +11,25 @@ import {
   Platform,
   TouchableOpacity,
   Dimensions,
+  Alert,
 } from 'react-native';
 import {
   TextInput,
   Provider as PaperProvider,
   DefaultTheme,
+  ActivityIndicator,
 } from 'react-native-paper';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'; // ← Use this import
-// Remove Icon from react-native-paper usage, use IconButton below if you want.
-type Props = { navigation: any };
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import supabase from '../lib/supbase'; // ← استورد supabase
 
+type Props = { navigation: any };
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const theme = {
   ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: '#0A1124',
-    outline: '#EEE',
-  },
+  colors: { ...DefaultTheme.colors, primary: '#0A1124', outline: '#EEE' },
 };
 
-// 1. المكون خارج الـ SignupUI لضمان عدم اختفاء الكيبورد
 const CustomInput = ({
   label,
   value,
@@ -52,12 +49,10 @@ const CustomInput = ({
       textAlign="right"
       style={styles.inputStyle}
       outlineStyle={styles.inputOutline}
-      contentStyle={{ writingDirection: 'rtl' }} // يضمن بداية المؤشر من اليمين
-      // استخدم أيقونة مخصصة من vector-icons دائماً
+      contentStyle={{ writingDirection: 'rtl' }}
       left={
         isPassword ? (
           <TextInput.Icon
-            // use a custom icon node from vector-icons for password
             icon={() => (
               <MaterialCommunityIcons
                 name={secureText ? 'eye-off-outline' : 'eye-outline'}
@@ -87,8 +82,53 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
     password: '',
     confirmPassword: '',
   });
-
   const [secureText, setSecureText] = useState(true);
+  const [loading, setLoading] = useState(false); // ← loading state
+
+  // ✅ دالة التسجيل بـ Supabase
+  const handleRegister = async () => {
+    const { name, email, phone, password, confirmPassword } = formData;
+
+    // Validation
+    if (!name || !email || !phone || !password || !confirmPassword) {
+      return Alert.alert('خطأ', 'يرجى ملء جميع الحقول');
+    }
+    if (password !== confirmPassword) {
+      return Alert.alert('خطأ', 'كلمة المرور غير متطابقة');
+    }
+    if (password.length < 6) {
+      return Alert.alert('خطأ', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+    }
+
+    setLoading(true);
+    try {
+      // 1️⃣ سجّل اليوزر في Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name, // ← بيانات إضافية في user_metadata
+            phone: phone,
+          },
+        },
+      });
+
+      if (error) {
+        Alert.alert('خطأ في التسجيل', error.message);
+      } else {
+        // 2️⃣ روح على ProfileCompletion وبعت userId معاه
+        navigation.navigate('ProfileCompletion', {
+          userId: data.user?.id,
+          email,
+        });
+      }
+    } catch (err: any) {
+      Alert.alert('خطأ', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <PaperProvider theme={theme}>
@@ -98,11 +138,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           translucent
           backgroundColor="transparent"
         />
-
-        {/* الجزء الخلفي الداكن للهيدر */}
         <View style={styles.darkHeaderLayer} />
 
-        {/* الهيدر الثابت */}
         <View style={styles.headerContent}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -123,7 +160,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.headerSubtitle}>
             يرجى ملء المعلومات التالية لإنشاء حسابك بسهولة.
           </Text>
-
           <View style={styles.stepContainer}>
             <View style={[styles.step, { backgroundColor: '#333' }]} />
             <View style={[styles.step, { backgroundColor: '#FFF' }]} />
@@ -133,15 +169,12 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 40}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
             bounces={false}
-            showsVerticalScrollIndicator={false}
           >
-            {/* حاوية الفورم البيضاء ذات الحواف المستديرة */}
             <View style={styles.formContainer}>
               <CustomInput
                 label="الأسم"
@@ -151,7 +184,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                   setFormData({ ...formData, name: t })
                 }
               />
-
               <CustomInput
                 label="البريد الإلكتروني"
                 icon="email-outline"
@@ -160,7 +192,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                   setFormData({ ...formData, email: t })
                 }
               />
-
               <CustomInput
                 label="رقم التليفون"
                 icon="phone-outline"
@@ -169,7 +200,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                   setFormData({ ...formData, phone: t })
                 }
               />
-
               <CustomInput
                 label="كلمة المرور"
                 isPassword={true}
@@ -180,7 +210,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                   setFormData({ ...formData, password: t })
                 }
               />
-
               <CustomInput
                 label="تأكيد كلمة المرور"
                 isPassword={true}
@@ -192,15 +221,20 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                 }
               />
 
+              {/* ✅ زرار التالي بيكول handleRegister */}
               <TouchableOpacity
                 style={styles.submitBtn}
                 activeOpacity={0.8}
-                onPress={() => navigation.navigate('ProfileCompletion')}
+                onPress={handleRegister}
+                disabled={loading}
               >
-                <Text style={styles.submitText}>التالى</Text>
+                {loading ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.submitText}>التالى</Text>
+                )}
               </TouchableOpacity>
 
-              {/* زر جوجل الإضافي */}
               <TouchableOpacity style={styles.googleButton}>
                 <Image
                   source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
@@ -243,7 +277,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 30,
   },
-
   scrollContainer: { flexGrow: 1 },
   formContainer: {
     flex: 1,
@@ -252,16 +285,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 35,
     paddingHorizontal: 25,
     paddingTop: 30,
-    paddingBottom: 40, // مساحة إضافية في الأسفل للسكرول
+    paddingBottom: 40,
   },
   inputWrapper: { marginBottom: 15 },
-  labelRight: {
-    textAlign: 'right',
-    color: '#666',
-    marginBottom: 5,
-    fontWeight: '600',
-    fontSize: 14,
-  },
   inputStyle: { backgroundColor: '#FFF', height: 55, textAlign: 'right' },
   inputOutline: { borderRadius: 12 },
   submitBtn: {

@@ -11,26 +11,24 @@ import {
   Platform,
   TouchableOpacity,
   Dimensions,
+  Alert,
+  Modal,
 } from 'react-native';
 import {
   TextInput,
   Provider as PaperProvider,
   DefaultTheme,
+  ActivityIndicator,
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import DateTimePicker from '@react-native-community/datetimepicker';
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+import supabase from '../lib/supbase'; // ← استورد supabase
 
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const theme = {
   ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: '#0A1124',
-    outline: '#EEE',
-  },
+  colors: { ...DefaultTheme.colors, primary: '#0A1124', outline: '#EEE' },
 };
 
-// مكون الإدخال الموحد (نفس الستايل للشاشة الأولى)
 const CustomInput = ({
   label,
   value,
@@ -58,7 +56,6 @@ const CustomInput = ({
             )}
           />
         }
-        // إضافة سهم لأسفل في حالة اختيار "النوع"
         right={
           icon === 'gender-male-female' ? (
             <TextInput.Icon icon="chevron-down" color="#666" />
@@ -69,13 +66,63 @@ const CustomInput = ({
   </View>
 );
 
-const ProfileCompletionUI: React.FC<any> = ({ navigation }) => {
+const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
+  // ← استقبل userId من Signup
+  const { userId } = route?.params || {};
+
   const [profileData, setProfileData] = useState({
     church: '',
     sect: '',
     birthDate: '',
     gender: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [showGenderModal, setShowGenderModal] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // ✅ دالة حفظ البروفايل في Supabase
+  const handleCreateAccount = async () => {
+    setLoading(true);
+    try {
+      // ✅ تأكد إن اليوزر logged in فعلاً
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUserId = sessionData?.session?.user?.id;
+
+      console.log('userId from params:', userId);
+      console.log('userId from session:', currentUserId);
+
+      // استخدم الـ session userId دايماً أأمن
+      const finalUserId = currentUserId || userId;
+
+      if (!finalUserId) {
+        Alert.alert('خطأ', 'لازم تسجل دخول الأول');
+        return;
+      }
+
+      const { error } = await supabase.from('profiles').upsert({
+        id: finalUserId, // ← من الـ session مش params
+        church: profileData.church || null,
+        sect: profileData.sect || null,
+        birth_date: profileData.birthDate || null,
+        gender: profileData.gender || null,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (error) {
+        console.log('Supabase error:', error);
+        Alert.alert('خطأ', error.message);
+      } else {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'HomeScreen' }],
+        });
+      }
+    } catch (err: any) {
+      Alert.alert('خطأ', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <PaperProvider theme={theme}>
@@ -85,10 +132,8 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation }) => {
           translucent
           backgroundColor="transparent"
         />
-
         <View style={styles.darkHeaderLayer} />
 
-        {/* الهيدر مع زر الرجوع */}
         <View style={styles.headerContent}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -100,19 +145,15 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation }) => {
               color="white"
             />
           </TouchableOpacity>
-
           <Image
             source={require('../assets/images/logo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
-
           <Text style={styles.title}>إكمال الملف الشخصي</Text>
           <Text style={styles.headerSubtitle}>
             أهلاً وسهلاً في ملفك الشخصي! خلينا نتعرف عليك أكثر.
           </Text>
-
-          {/* شريط الخطوات - الحالة الثانية */}
           <View style={styles.stepContainer}>
             <View style={[styles.step, { backgroundColor: '#FFF' }]} />
             <View style={[styles.step, { backgroundColor: '#FFF' }]} />
@@ -127,7 +168,6 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation }) => {
             contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
             bounces={false}
-            showsVerticalScrollIndicator={false}
           >
             <View style={styles.formContainer}>
               <CustomInput
@@ -148,24 +188,80 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation }) => {
                 }
               />
 
+              {/* ✅ تاريخ الميلاد */}
               <CustomInput
-                label="تاريخ الميلاد (dd/mm/yy)"
+                label="تاريخ الميلاد"
                 icon="calendar-blank-outline"
                 value={profileData.birthDate}
-                // هنا يمكن ربط الـ DatePicker مستقبلاً
-                onPress={() => console.log('Open Date Picker')}
+                onPress={() => setShowDatePicker(true)}
               />
 
+              {showDatePicker && (
+                <View style={styles.datePickerRow}>
+                  {['اليوم', 'الشهر', 'السنة'].map((placeholder, i) => (
+                    <TextInput
+                      key={i}
+                      mode="outlined"
+                      placeholder={placeholder}
+                      keyboardType="numeric"
+                      style={styles.dateInput}
+                      outlineStyle={{ borderRadius: 10 }}
+                      onChangeText={t => {
+                        const parts = profileData.birthDate.split('/');
+                        parts[i] = t;
+                        setProfileData({
+                          ...profileData,
+                          birthDate: parts.join('/'),
+                        });
+                      }}
+                    />
+                  ))}
+                </View>
+              )}
+
+              {/* ✅ اختيار النوع */}
               <CustomInput
-                label="النوع"
+                label={profileData.gender || 'النوع'}
                 icon="gender-male-female"
                 value={profileData.gender}
-                // هنا يمكن فتح Modal للاختيار
-                onPress={() => console.log('Open Gender Selector')}
+                onPress={() => setShowGenderModal(true)}
               />
 
-              <TouchableOpacity style={styles.submitBtn} activeOpacity={0.8}>
-                <Text style={styles.submitText}>إنشاء حساب</Text>
+              {/* Modal اختيار النوع */}
+              <Modal visible={showGenderModal} transparent animationType="fade">
+                <TouchableOpacity
+                  style={styles.modalOverlay}
+                  onPress={() => setShowGenderModal(false)}
+                >
+                  <View style={styles.modalBox}>
+                    {['ذكر', 'أنثى'].map(g => (
+                      <TouchableOpacity
+                        key={g}
+                        style={styles.modalOption}
+                        onPress={() => {
+                          setProfileData({ ...profileData, gender: g });
+                          setShowGenderModal(false);
+                        }}
+                      >
+                        <Text style={styles.modalText}>{g}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </TouchableOpacity>
+              </Modal>
+
+              {/* ✅ زرار إنشاء الحساب */}
+              <TouchableOpacity
+                style={styles.submitBtn}
+                activeOpacity={0.8}
+                onPress={handleCreateAccount}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.submitText}>إنشاء حساب</Text>
+                )}
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -202,7 +298,6 @@ const styles = StyleSheet.create({
   },
   stepContainer: { flexDirection: 'row', marginTop: 15 },
   step: { height: 4, width: 45, borderRadius: 2, marginHorizontal: 4 },
-
   scrollContainer: { flexGrow: 1 },
   formContainer: {
     flex: 1,
@@ -225,6 +320,31 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   submitText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
+  datePickerRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  dateInput: { width: '30%', backgroundColor: '#FFF', height: 50 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBox: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    paddingVertical: 10,
+    width: 200,
+  },
+  modalOption: {
+    paddingVertical: 15,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  modalText: { fontSize: 18, color: '#0A1124', fontWeight: '600' },
 });
 
 export default ProfileCompletionUI;

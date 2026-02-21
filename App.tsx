@@ -18,19 +18,30 @@ import {
   LoginUi,
 } from './screens';
 import SignupStep1 from './components/Signup'; // Import your signup step
+import HomeScreen from './components/Home';
+import supabase from './lib/supbase';
 
 const Stack = createStackNavigator();
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
   const isDarkMode = useColorScheme() === 'dark';
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // ← هل logged in؟
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2000); // 2 seconds
+    const checkSession = async () => {
+      // اشيك لو في session محفوظة
+      const { data } = await supabase.auth.getSession();
+      console.log('Session data:', data); // 🔍 شوف السيشن في اللوج
+      if (data?.session) {
+        setIsLoggedIn(true); // ✅ logged in → روح HomeScreen
+      }
 
-    return () => clearTimeout(timer);
+      // بعد 2 ثانية خفي الـ Splash
+      setTimeout(() => setShowSplash(false), 2000);
+    };
+
+    checkSession();
   }, []);
 
   if (showSplash) {
@@ -41,7 +52,14 @@ function App() {
     <SafeAreaProvider>
       <NavigationContainer>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-        <Stack.Navigator initialRouteName="Welcome">
+        <Stack.Navigator
+          initialRouteName={isLoggedIn ? 'HomeScreen' : 'Welcome'}
+        >
+          <Stack.Screen
+            name="HomeScreen"
+            component={HomeScreen}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen
             name="Welcome"
             component={WelcomeScreen}
