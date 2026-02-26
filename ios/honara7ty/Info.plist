@@ -56,5 +56,14 @@
 		<string>antfill.ttf</string>
 		<string>antoutline.ttf</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>honara7ty</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

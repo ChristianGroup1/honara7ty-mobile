@@ -4,3 +4,4 @@ export { default as Signup } from '../components/Signup';
 export { default as ProfileCompletion } from '../components/ProfileCompletionUi';
 export { default as LoginUi } from '../components/LoginUi';
 export { default as ForgotPasswordUi } from '../components/ForgotPasswordUi';
+export { default as ResetPasswordUi } from '../components/ResetPasswordUi';
