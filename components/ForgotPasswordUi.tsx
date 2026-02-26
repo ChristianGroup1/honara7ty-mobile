@@ -132,7 +132,8 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
           overScrollMode="never"
           decelerationRate="normal"
           enableOnAndroid={true}
-          extraScrollHeight={20}
+          extraScrollHeight={80}
+          keyboardOpeningTime={0}
         >
             <View style={styles.formContainer} pointerEvents="box-none">
               {sent ? (
