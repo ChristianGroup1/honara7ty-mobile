@@ -16,6 +16,7 @@ import {
   SplashScreen,
   ProfileCompletion,
   LoginUi,
+  ForgotPasswordUi,
 } from './screens';
 import SignupStep1 from './components/Signup'; // Import your signup step
 import HomeScreen from './components/Home';
@@ -79,6 +80,11 @@ function App() {
             name="Login"
             component={LoginUi}
             options={{ headerShown: false }} // This line hides the white header
+          />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPasswordUi}
+            options={{ headerShown: false }}
           />
           {/* Add more screens here */}
         </Stack.Navigator>

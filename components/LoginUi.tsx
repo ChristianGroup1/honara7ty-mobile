@@ -263,7 +263,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
 
               {/* قسم "تذكرني" و "نسيت كلمة المرور" */}
               <View style={styles.extraOptions}>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
                   <Text style={styles.forgotPasswordText}>
                     نسيت كلمه المرور ؟
                   </Text>
