@@ -5,13 +5,12 @@ import {
   Text,
   Image,
   SafeAreaView,
-  KeyboardAvoidingView,
-  ScrollView,
   StatusBar,
   Platform,
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
   TextInput,
   Provider as PaperProvider,
@@ -195,20 +194,16 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.stepLabel}>الخطوة 1 من 2</Text>
         </View>
 
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior="padding"
+        <KeyboardAwareScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          overScrollMode="never"
+          decelerationRate="normal"
+          enableOnAndroid={true}
+          extraScrollHeight={20}
         >
-          <ScrollView
-            contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled"
-            bounces={false}
-            showsVerticalScrollIndicator={false}
-            overScrollMode="never"
-            nestedScrollEnabled={true}
-            decelerationRate="normal"
-            scrollEventThrottle={16}
-          >
             <View style={styles.formContainer} pointerEvents="box-none">
               <CustomInput
                 fieldLabel="الاسم الكامل"
@@ -302,8 +297,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.footerText}>لديك حساب بالفعل؟ </Text>
               </View>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+          </KeyboardAwareScrollView>
       </SafeAreaView>
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>

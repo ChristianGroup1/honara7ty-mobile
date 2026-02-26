@@ -4,13 +4,12 @@ import {
   View,
   Text,
   SafeAreaView,
-  KeyboardAvoidingView,
-  ScrollView,
   StatusBar,
   Platform,
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
   TextInput,
   Provider as PaperProvider,
@@ -119,20 +118,16 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
           </Text>
         </View>
 
-        <KeyboardAvoidingView
-          style={styles.flex1}
-          behavior="padding"
+        <KeyboardAwareScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          overScrollMode="never"
+          decelerationRate="normal"
+          enableOnAndroid={true}
+          extraScrollHeight={20}
         >
-          <ScrollView
-            contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled"
-            bounces={false}
-            showsVerticalScrollIndicator={false}
-            overScrollMode="never"
-            nestedScrollEnabled={true}
-            decelerationRate="normal"
-            scrollEventThrottle={16}
-          >
             <View style={styles.formContainer} pointerEvents="box-none">
               {done ? (
                 /* ── Success State ── */
@@ -285,8 +280,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
                 </>
               )}
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+          </KeyboardAwareScrollView>
       </SafeAreaView>
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
@@ -294,7 +288,6 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  flex1: { flex: 1 },
   container: { flex: 1, backgroundColor: '#F5F6FA' },
   darkHeaderLayer: {
     position: 'absolute',
