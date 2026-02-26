@@ -25,13 +25,16 @@ import CustomAlert, { AlertButton } from './CustomAlert';
 type Props = { navigation: any };
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+const GOLD = '#C9A84C';
+
 const theme = {
   ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, primary: '#0A1124', outline: '#EEE' },
+  colors: { ...DefaultTheme.colors, primary: '#0A1124', outline: '#E0E0E0' },
 };
 
 const CustomInput = ({
-  label,
+  fieldLabel,
+  placeholder,
   value,
   onChangeText,
   icon,
@@ -40,11 +43,12 @@ const CustomInput = ({
   setSecureText,
 }: any) => (
   <View style={styles.inputWrapper}>
+    {!!fieldLabel && <Text style={styles.fieldLabel}>{fieldLabel}</Text>}
     <TextInput
       value={value}
       onChangeText={onChangeText}
       mode="outlined"
-      placeholder={label}
+      placeholder={placeholder}
       secureTextEntry={isPassword ? secureText : false}
       textAlign="right"
       style={styles.inputStyle}
@@ -56,8 +60,8 @@ const CustomInput = ({
             icon={() => (
               <MaterialCommunityIcons
                 name={secureText ? 'eye-off-outline' : 'eye-outline'}
-                size={24}
-                color="#666"
+                size={22}
+                color="#999"
               />
             )}
             onPress={() => setSecureText(!secureText)}
@@ -65,7 +69,7 @@ const CustomInput = ({
         ) : (
           <TextInput.Icon
             icon={() => (
-              <MaterialCommunityIcons name={icon} size={24} color="#666" />
+              <MaterialCommunityIcons name={icon} size={22} color="#999" />
             )}
           />
         )
@@ -83,6 +87,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
     confirmPassword: '',
   });
   const [secureText, setSecureText] = useState(true);
+  const [secureConfirm, setSecureConfirm] = useState(true);
   const [loading, setLoading] = useState(false); // ← loading state
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
@@ -165,25 +170,29 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
           >
-            <MaterialCommunityIcons
-              name="chevron-left"
-              size={35}
-              color="white"
-            />
+            <View style={styles.backBtnCircle}>
+              <MaterialCommunityIcons
+                name="chevron-left"
+                size={28}
+                color="white"
+              />
+            </View>
           </TouchableOpacity>
           <Image
             source={require('../assets/images/logo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.title}>معلومات الحساب</Text>
+          <Text style={styles.title}>إنشاء حساب</Text>
+          <View style={styles.titleAccent} />
           <Text style={styles.headerSubtitle}>
             يرجى ملء المعلومات التالية لإنشاء حسابك بسهولة.
           </Text>
           <View style={styles.stepContainer}>
-            <View style={[styles.step, { backgroundColor: '#333' }]} />
-            <View style={[styles.step, { backgroundColor: '#FFF' }]} />
+            <View style={styles.stepActive} />
+            <View style={styles.stepInactive} />
           </View>
+          <Text style={styles.stepLabel}>الخطوة 1 من 2</Text>
         </View>
 
         <KeyboardAvoidingView
@@ -197,7 +206,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           >
             <View style={styles.formContainer}>
               <CustomInput
-                label="الأسم"
+                fieldLabel="الاسم الكامل"
+                placeholder="أدخل اسمك"
                 icon="account-outline"
                 value={formData.name}
                 onChangeText={(t: string) =>
@@ -205,7 +215,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                 }
               />
               <CustomInput
-                label="البريد الإلكتروني"
+                fieldLabel="البريد الإلكتروني"
+                placeholder="example@email.com"
                 icon="email-outline"
                 value={formData.email}
                 onChangeText={(t: string) =>
@@ -213,7 +224,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                 }
               />
               <CustomInput
-                label="رقم التليفون"
+                fieldLabel="رقم الهاتف"
+                placeholder="أدخل رقم هاتفك"
                 icon="phone-outline"
                 value={formData.phone}
                 onChangeText={(t: string) =>
@@ -221,7 +233,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                 }
               />
               <CustomInput
-                label="كلمة المرور"
+                fieldLabel="كلمة المرور"
+                placeholder="6 أحرف على الأقل"
                 isPassword={true}
                 secureText={secureText}
                 setSecureText={setSecureText}
@@ -231,17 +244,17 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                 }
               />
               <CustomInput
-                label="تأكيد كلمة المرور"
+                fieldLabel="تأكيد كلمة المرور"
+                placeholder="أعد إدخال كلمة المرور"
                 isPassword={true}
-                secureText={secureText}
-                setSecureText={setSecureText}
+                secureText={secureConfirm}
+                setSecureText={setSecureConfirm}
                 value={formData.confirmPassword}
                 onChangeText={(t: string) =>
                   setFormData({ ...formData, confirmPassword: t })
                 }
               />
 
-              {/* ✅ زرار التالي بيكول handleRegister */}
               <TouchableOpacity
                 style={styles.submitBtn}
                 activeOpacity={0.8}
@@ -251,9 +264,23 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                 {loading ? (
                   <ActivityIndicator color="#FFF" />
                 ) : (
-                  <Text style={styles.submitText}>التالى</Text>
+                  <View style={styles.submitRow}>
+                    <MaterialCommunityIcons
+                      name="chevron-left"
+                      size={22}
+                      color="#FFF"
+                      style={styles.submitIcon}
+                    />
+                    <Text style={styles.submitText}>التالي</Text>
+                  </View>
                 )}
               </TouchableOpacity>
+
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>أو</Text>
+                <View style={styles.dividerLine} />
+              </View>
 
               <TouchableOpacity style={styles.googleButton}>
                 <Image
@@ -262,6 +289,13 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                 />
                 <Text style={styles.googleText}>إنشاء حساب باستخدام جوجل</Text>
               </TouchableOpacity>
+
+              <View style={styles.footerContainer}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                  <Text style={styles.footerLink}>تسجيل الدخول</Text>
+                </TouchableOpacity>
+                <Text style={styles.footerText}>لديك حساب بالفعل؟ </Text>
+              </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -272,68 +306,161 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9F9F9' },
+  container: { flex: 1, backgroundColor: '#F5F6FA' },
   darkHeaderLayer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: SCREEN_HEIGHT * 0.4,
+    height: SCREEN_HEIGHT * 0.42,
     backgroundColor: '#0A1124',
   },
   headerContent: {
     alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? 40 : 10,
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'android' ? 44 : 14,
+    paddingBottom: 24,
   },
-  backBtn: { alignSelf: 'flex-start', marginLeft: 20 },
-  logo: { width: 90, height: 90 },
-  title: { color: '#FFF', fontSize: 22, fontWeight: 'bold', marginTop: 10 },
-  stepContainer: { flexDirection: 'row', marginTop: 15 },
-  step: { height: 4, width: 45, borderRadius: 2, marginHorizontal: 4 },
+  backBtn: { alignSelf: 'flex-start', marginLeft: 16, marginBottom: 6 },
+  backBtnCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logo: { width: 76, height: 76 },
+  title: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 10,
+    letterSpacing: 0.5,
+  },
+  titleAccent: {
+    width: 40,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: GOLD,
+    marginTop: 6,
+  },
   headerSubtitle: {
-    color: '#DDD',
-    fontSize: 14,
-    marginTop: 5,
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 13,
+    marginTop: 8,
     textAlign: 'center',
-    paddingHorizontal: 30,
+    paddingHorizontal: 40,
+    lineHeight: 20,
+  },
+  stepContainer: {
+    flexDirection: 'row',
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  stepActive: {
+    height: 5,
+    width: 36,
+    borderRadius: 3,
+    backgroundColor: GOLD,
+    marginHorizontal: 4,
+  },
+  stepInactive: {
+    height: 5,
+    width: 18,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    marginHorizontal: 4,
+  },
+  stepLabel: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+    marginTop: 6,
   },
   scrollContainer: { flexGrow: 1 },
   formContainer: {
     flex: 1,
-    backgroundColor: '#F9F9F9',
-    borderTopLeftRadius: 35,
-    borderTopRightRadius: 35,
-    paddingHorizontal: 25,
-    paddingTop: 30,
+    backgroundColor: '#F5F6FA',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 24,
+    paddingTop: 32,
     paddingBottom: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  inputWrapper: { marginBottom: 15 },
-  inputStyle: { backgroundColor: '#FFF', height: 55, textAlign: 'right' },
-  inputOutline: { borderRadius: 12 },
+  inputWrapper: { marginBottom: 14 },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0A1124',
+    marginBottom: 6,
+    textAlign: 'right',
+  },
+  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right' },
+  inputOutline: { borderRadius: 14, borderColor: '#E8E8E8' },
   submitBtn: {
     backgroundColor: '#0A1124',
-    height: 55,
-    borderRadius: 12,
+    height: 56,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
-    elevation: 2,
+    marginTop: 22,
+    elevation: 4,
+    shadowColor: '#0A1124',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
-  submitText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
+  submitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  submitIcon: { marginRight: 4 },
+  submitText: { color: '#FFF', fontSize: 17, fontWeight: 'bold' },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E0E0E0',
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    color: '#AAA',
+    fontSize: 13,
+    fontWeight: '500',
+  },
   googleButton: {
     flexDirection: 'row-reverse',
-    height: 55,
-    borderRadius: 12,
+    height: 54,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: '#E8E8E8',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 15,
     backgroundColor: '#FFF',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
   },
-  googleIcon: { width: 20, height: 20, marginLeft: 12 },
-  googleText: { fontSize: 15, color: '#444' },
+  googleIcon: { width: 20, height: 20, marginLeft: 10 },
+  googleText: { fontSize: 14, color: '#333', fontWeight: '500' },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 22,
+    paddingBottom: 10,
+  },
+  footerText: { color: '#888', fontSize: 14 },
+  footerLink: { color: GOLD, fontWeight: 'bold', fontSize: 14 },
 });
 
 export default SignupUI;

@@ -11,7 +11,6 @@ import {
   Platform,
   TouchableOpacity,
   Dimensions,
-  Modal,
 } from 'react-native';
 import {
   TextInput,
@@ -24,26 +23,35 @@ import supabase from '../lib/supbase'; // ← استورد supabase
 import CustomAlert, { AlertButton } from './CustomAlert';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+const GOLD = '#C9A84C';
+
 const theme = {
   ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, primary: '#0A1124', outline: '#EEE' },
+  colors: { ...DefaultTheme.colors, primary: '#0A1124', outline: '#E0E0E0' },
 };
 
 const CustomInput = ({
-  label,
+  fieldLabel,
+  placeholder,
   value,
   onChangeText,
   icon,
   editable = true,
   onPress,
+  badge,
 }: any) => (
   <View style={styles.inputWrapper}>
+    <View style={styles.fieldLabelRow}>
+      {!!fieldLabel && <Text style={styles.fieldLabel}>{fieldLabel}</Text>}
+      {!!badge && <Text style={styles.optionalBadge}>{badge}</Text>}
+    </View>
     <TouchableOpacity activeOpacity={onPress ? 0.7 : 1} onPress={onPress}>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         mode="outlined"
-        placeholder={label}
+        placeholder={placeholder || fieldLabel}
         editable={editable && !onPress}
         textAlign="right"
         style={styles.inputStyle}
@@ -52,13 +60,13 @@ const CustomInput = ({
         left={
           <TextInput.Icon
             icon={() => (
-              <MaterialCommunityIcons name={icon} size={24} color="#666" />
+              <MaterialCommunityIcons name={icon} size={22} color="#999" />
             )}
           />
         }
         right={
-          icon === 'gender-male-female' ? (
-            <TextInput.Icon icon="chevron-down" color="#666" />
+          onPress ? (
+            <TextInput.Icon icon="chevron-down" color="#999" />
           ) : null
         }
       />
@@ -77,7 +85,6 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
     gender: '',
   });
   const [loading, setLoading] = useState(false);
-  const [showGenderModal, setShowGenderModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
@@ -156,11 +163,13 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
           >
-            <MaterialCommunityIcons
-              name="chevron-left"
-              size={35}
-              color="white"
-            />
+            <View style={styles.backBtnCircle}>
+              <MaterialCommunityIcons
+                name="chevron-left"
+                size={28}
+                color="white"
+              />
+            </View>
           </TouchableOpacity>
           <Image
             source={require('../assets/images/logo.png')}
@@ -168,13 +177,15 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
             resizeMode="contain"
           />
           <Text style={styles.title}>إكمال الملف الشخصي</Text>
+          <View style={styles.titleAccent} />
           <Text style={styles.headerSubtitle}>
-            أهلاً وسهلاً في ملفك الشخصي! خلينا نتعرف عليك أكثر.
+            أهلاً وسهلاً! خلينا نتعرف عليك أكثر.
           </Text>
           <View style={styles.stepContainer}>
-            <View style={[styles.step, { backgroundColor: '#FFF' }]} />
-            <View style={[styles.step, { backgroundColor: '#FFF' }]} />
+            <View style={styles.stepDone} />
+            <View style={styles.stepActive} />
           </View>
+          <Text style={styles.stepLabel}>الخطوة 2 من 2</Text>
         </View>
 
         <KeyboardAvoidingView
@@ -187,9 +198,23 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
             bounces={false}
           >
             <View style={styles.formContainer}>
+
+              {/* ── Section: معلومات الكنيسة ── */}
+              <View style={styles.sectionHeader}>
+                <MaterialCommunityIcons
+                  name="church"
+                  size={18}
+                  color={GOLD}
+                  style={styles.sectionIcon}
+                />
+                <Text style={styles.sectionTitle}>معلومات الكنيسة</Text>
+              </View>
+
               <CustomInput
-                label="الكنيسة (اختياري)"
+                fieldLabel="الكنيسة"
+                placeholder="اسم الكنيسة"
                 icon="home-variant-outline"
+                badge="اختياري"
                 value={profileData.church}
                 onChangeText={(t: string) =>
                   setProfileData({ ...profileData, church: t })
@@ -197,77 +222,109 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
               />
 
               <CustomInput
-                label="الطائفة (اختياري)"
+                fieldLabel="الطائفة"
+                placeholder="اسم الطائفة"
                 icon="home-outline"
+                badge="اختياري"
                 value={profileData.sect}
                 onChangeText={(t: string) =>
                   setProfileData({ ...profileData, sect: t })
                 }
               />
 
-              {/* ✅ تاريخ الميلاد */}
+              {/* ── Section: معلومات شخصية ── */}
+              <View style={styles.sectionHeader2}>
+                <MaterialCommunityIcons
+                  name="account-details"
+                  size={18}
+                  color={GOLD}
+                  style={styles.sectionIcon}
+                />
+                <Text style={styles.sectionTitle}>معلومات شخصية</Text>
+              </View>
+
+              {/* تاريخ الميلاد */}
               <CustomInput
-                label="تاريخ الميلاد"
+                fieldLabel="تاريخ الميلاد"
+                placeholder="اضغط لاختيار التاريخ"
                 icon="calendar-blank-outline"
                 value={profileData.birthDate}
                 onPress={() => setShowDatePicker(true)}
               />
 
               {showDatePicker && (
-                <View style={styles.datePickerRow}>
-                  {['اليوم', 'الشهر', 'السنة'].map((placeholder, i) => (
-                    <TextInput
-                      key={i}
-                      mode="outlined"
-                      placeholder={placeholder}
-                      keyboardType="numeric"
-                      style={styles.dateInput}
-                      outlineStyle={{ borderRadius: 10 }}
-                      onChangeText={t => {
-                        const parts = profileData.birthDate.split('/');
-                        parts[i] = t;
-                        setProfileData({
-                          ...profileData,
-                          birthDate: parts.join('/'),
-                        });
-                      }}
-                    />
-                  ))}
+                <View style={styles.datePickerCard}>
+                  <Text style={styles.datePickerTitle}>اختر تاريخ الميلاد</Text>
+                  <View style={styles.datePickerRow}>
+                    {[
+                      { placeholder: 'اليوم', index: 0 },
+                      { placeholder: 'الشهر', index: 1 },
+                      { placeholder: 'السنة', index: 2 },
+                    ].map(({ placeholder, index }) => (
+                      <View key={index} style={styles.dateInputWrapper}>
+                        <Text style={styles.dateInputLabel}>{placeholder}</Text>
+                        <TextInput
+                          mode="outlined"
+                          placeholder="--"
+                          keyboardType="numeric"
+                          style={styles.dateInput}
+                          outlineStyle={{ borderRadius: 10 }}
+                          onChangeText={t => {
+                            const parts = profileData.birthDate.split('/');
+                            parts[index] = t;
+                            setProfileData({
+                              ...profileData,
+                              birthDate: parts.join('/'),
+                            });
+                          }}
+                        />
+                      </View>
+                    ))}
+                  </View>
                 </View>
               )}
 
-              {/* ✅ اختيار النوع */}
-              <CustomInput
-                label={profileData.gender || 'النوع'}
-                icon="gender-male-female"
-                value={profileData.gender}
-                onPress={() => setShowGenderModal(true)}
-              />
-
-              {/* Modal اختيار النوع */}
-              <Modal visible={showGenderModal} transparent animationType="fade">
-                <TouchableOpacity
-                  style={styles.modalOverlay}
-                  onPress={() => setShowGenderModal(false)}
-                >
-                  <View style={styles.modalBox}>
-                    {['ذكر', 'أنثى'].map(g => (
+              {/* الجنس – inline chips */}
+              <View style={styles.inputWrapper}>
+                <Text style={styles.fieldLabel}>الجنس</Text>
+                <View style={styles.genderRow}>
+                  {[
+                    { label: 'ذكر', icon: 'gender-male' },
+                    { label: 'أنثى', icon: 'gender-female' },
+                  ].map(({ label, icon }) => {
+                    const active = profileData.gender === label;
+                    return (
                       <TouchableOpacity
-                        key={g}
-                        style={styles.modalOption}
-                        onPress={() => {
-                          setProfileData({ ...profileData, gender: g });
-                          setShowGenderModal(false);
-                        }}
+                        key={label}
+                        style={[
+                          styles.genderChip,
+                          active && styles.genderChipActive,
+                        ]}
+                        activeOpacity={0.7}
+                        onPress={() =>
+                          setProfileData({ ...profileData, gender: label })
+                        }
                       >
-                        <Text style={styles.modalText}>{g}</Text>
+                        <MaterialCommunityIcons
+                          name={icon}
+                          size={22}
+                          color={active ? '#FFF' : '#666'}
+                        />
+                        <Text
+                          style={[
+                            styles.genderChipText,
+                            active && styles.genderChipTextActive,
+                          ]}
+                        >
+                          {label}
+                        </Text>
                       </TouchableOpacity>
-                    ))}
-                  </View>
-                </TouchableOpacity>
-              </Modal>
+                    );
+                  })}
+                </View>
+              </View>
 
-              {/* ✅ زرار إنشاء الحساب */}
+              {/* زرار إنشاء الحساب */}
               <TouchableOpacity
                 style={styles.submitBtn}
                 activeOpacity={0.8}
@@ -277,7 +334,15 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
                 {loading ? (
                   <ActivityIndicator color="#FFF" />
                 ) : (
-                  <Text style={styles.submitText}>إنشاء حساب</Text>
+                  <View style={styles.submitRow}>
+                    <MaterialCommunityIcons
+                      name="check"
+                      size={22}
+                      color="#FFF"
+                      style={styles.submitIcon}
+                    />
+                    <Text style={styles.submitText}>إنشاء الحساب</Text>
+                  </View>
                 )}
               </TouchableOpacity>
             </View>
@@ -290,79 +355,206 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9F9F9' },
+  container: { flex: 1, backgroundColor: '#F5F6FA' },
   darkHeaderLayer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: SCREEN_HEIGHT * 0.4,
+    height: SCREEN_HEIGHT * 0.42,
     backgroundColor: '#0A1124',
   },
   headerContent: {
     alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? 40 : 10,
-    paddingBottom: 20,
+    paddingTop: Platform.OS === 'android' ? 44 : 14,
+    paddingBottom: 24,
   },
-  backBtn: { alignSelf: 'flex-start', marginLeft: 20 },
-  logo: { width: 90, height: 90 },
-  title: { color: '#FFF', fontSize: 22, fontWeight: 'bold', marginTop: 10 },
+  backBtn: { alignSelf: 'flex-start', marginLeft: 16, marginBottom: 6 },
+  backBtnCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logo: { width: 76, height: 76 },
+  title: {
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 10,
+    letterSpacing: 0.5,
+  },
+  titleAccent: {
+    width: 40,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: GOLD,
+    marginTop: 6,
+  },
   headerSubtitle: {
-    color: '#DDD',
-    fontSize: 14,
-    marginTop: 5,
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 13,
+    marginTop: 8,
     textAlign: 'center',
     paddingHorizontal: 40,
+    lineHeight: 20,
   },
-  stepContainer: { flexDirection: 'row', marginTop: 15 },
-  step: { height: 4, width: 45, borderRadius: 2, marginHorizontal: 4 },
+  stepContainer: {
+    flexDirection: 'row',
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  stepDone: {
+    height: 5,
+    width: 18,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+    marginHorizontal: 4,
+  },
+  stepActive: {
+    height: 5,
+    width: 36,
+    borderRadius: 3,
+    backgroundColor: GOLD,
+    marginHorizontal: 4,
+  },
+  stepLabel: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+    marginTop: 6,
+  },
   scrollContainer: { flexGrow: 1 },
   formContainer: {
     flex: 1,
-    backgroundColor: '#F9F9F9',
-    borderTopLeftRadius: 35,
-    borderTopRightRadius: 35,
-    paddingHorizontal: 25,
-    paddingTop: 40,
+    backgroundColor: '#F5F6FA',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  inputWrapper: { marginBottom: 15 },
-  inputStyle: { backgroundColor: '#FFF', height: 55, textAlign: 'right' },
-  inputOutline: { borderRadius: 12 },
-  submitBtn: {
-    backgroundColor: '#0A1124',
-    height: 55,
-    borderRadius: 12,
-    justifyContent: 'center',
+  sectionHeader: {
+    flexDirection: 'row-reverse',
     alignItems: 'center',
-    marginTop: 30,
-    elevation: 2,
+    marginBottom: 12,
+    marginTop: 4,
   },
-  submitText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
+  sectionHeader2: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    marginBottom: 12,
+    marginTop: 12,
+  },
+  sectionIcon: { marginLeft: 6 },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0A1124',
+  },
+  inputWrapper: { marginBottom: 14 },
+  fieldLabelRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0A1124',
+    textAlign: 'right',
+  },
+  optionalBadge: {
+    fontSize: 11,
+    color: '#AAA',
+    backgroundColor: '#F0F0F0',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    overflow: 'hidden',
+  },
+  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right' },
+  inputOutline: { borderRadius: 14, borderColor: '#E8E8E8' },
+  datePickerCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+  },
+  datePickerTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0A1124',
+    textAlign: 'right',
+    marginBottom: 12,
+  },
   datePickerRow: {
     flexDirection: 'row-reverse',
     justifyContent: 'space-between',
-    marginBottom: 15,
   },
-  dateInput: { width: '30%', backgroundColor: '#FFF', height: 50 },
-  modalOverlay: {
+  dateInputWrapper: { width: '30%', alignItems: 'center' },
+  dateInputLabel: {
+    fontSize: 11,
+    color: '#888',
+    marginBottom: 4,
+  },
+  dateInput: { width: '100%', backgroundColor: '#FFF', height: 48 },
+  genderRow: {
+    flexDirection: 'row-reverse',
+    gap: 12,
+  },
+  genderChip: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
+    backgroundColor: '#FFF',
+    gap: 8,
+  },
+  genderChipActive: {
+    backgroundColor: '#0A1124',
+    borderColor: '#0A1124',
+  },
+  genderChipText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#555',
+  },
+  genderChipTextActive: {
+    color: '#FFF',
+  },
+  submitBtn: {
+    backgroundColor: '#0A1124',
+    height: 56,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 24,
+    elevation: 4,
+    shadowColor: '#0A1124',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
-  modalBox: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    paddingVertical: 10,
-    width: 200,
-  },
-  modalOption: {
-    paddingVertical: 15,
+  submitRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
   },
-  modalText: { fontSize: 18, color: '#0A1124', fontWeight: '600' },
+  submitIcon: { marginLeft: 8 },
+  submitText: { color: '#FFF', fontSize: 17, fontWeight: 'bold' },
 });
 
 export default ProfileCompletionUI;
