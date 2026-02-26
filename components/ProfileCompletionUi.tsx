@@ -202,7 +202,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
             decelerationRate="normal"
             scrollEventThrottle={16}
           >
-            <View style={styles.formContainer}>
+            <View style={styles.formContainer} pointerEvents="box-none">
 
               {/* ── Section: معلومات الكنيسة ── */}
               <View style={styles.sectionHeader}>

@@ -209,7 +209,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
             decelerationRate="normal"
             scrollEventThrottle={16}
           >
-            <View style={styles.formContainer}>
+            <View style={styles.formContainer} pointerEvents="box-none">
               <CustomInput
                 fieldLabel="الاسم الكامل"
                 placeholder="أدخل اسمك"

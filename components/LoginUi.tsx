@@ -248,7 +248,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
             decelerationRate="normal"
             scrollEventThrottle={16}
           >
-            <View style={styles.formContainer}>
+            <View style={styles.formContainer} pointerEvents="box-none">
               <CustomInput
                 label="الأسم أو البريد الإلكتروني"
                 icon="account-outline"

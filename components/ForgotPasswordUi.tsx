@@ -139,7 +139,7 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
             decelerationRate="normal"
             scrollEventThrottle={16}
           >
-            <View style={styles.formContainer}>
+            <View style={styles.formContainer} pointerEvents="box-none">
               {sent ? (
                 /* ── Success State ── */
                 <View style={styles.successBox}>
