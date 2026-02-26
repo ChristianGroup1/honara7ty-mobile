@@ -90,7 +90,8 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   const [secureText, setSecureText] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
   const navigation2 = useNavigation();
-  const [loading, setLoading] = useState(true); // Loading state
+  const [loading, setLoading] = useState(false); // Login action loading state
+  const [initializing, setInitializing] = useState(true); // Initial Google check
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -115,7 +116,29 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     } catch (error) {
       console.log('User not signed in:', error);
     } finally {
-      setLoading(false); // Hide loader after checking
+      setInitializing(false); // Hide loader after checking
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      return Alert.alert('خطأ', 'يرجى إدخال البريد الإلكتروني وكلمة المرور');
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        Alert.alert('خطأ في تسجيل الدخول', error.message);
+      } else {
+        navigation.replace('HomeScreen', { user: data.user });
+      }
+    } catch (err: any) {
+      Alert.alert('خطأ', err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -159,9 +182,9 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     }
   };
 
-  if (loading) {
+  if (initializing) {
     return (
-      <View>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A1124' }}>
         <ActivityIndicator size="large" color="#ffffff" />
       </View>
     );
@@ -241,8 +264,17 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.submitBtn}>
-                <Text style={styles.submitText}>تسجيل الدخول</Text>
+              <TouchableOpacity
+                style={styles.submitBtn}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.submitText}>تسجيل الدخول</Text>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -259,7 +291,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
               </TouchableOpacity>
 
               <View style={styles.footerContainer}>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate('SignupStep1')}>
                   <Text style={styles.footerLink}>إنشاء حساب جديد</Text>
                 </TouchableOpacity>
                 <Text style={styles.footerText}>ليس لديك حساب؟ </Text>
