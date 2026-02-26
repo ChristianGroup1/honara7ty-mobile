@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,10 +11,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import {
-  useScrollIntoView,
-  wrapScrollView,
-} from 'react-native-scroll-into-view';
 import TextInputInteractive from 'react-native-text-input-interactive';
 import {
   Provider as PaperProvider,
@@ -35,9 +31,6 @@ const theme = {
   colors: { ...DefaultTheme.colors, primary: '#0A1124', outline: '#E0E0E0' },
 };
 
-const ScrollIntoViewKeyboardAwareScrollView =
-  wrapScrollView(KeyboardAwareScrollView);
-
 const CustomInput = ({
   fieldLabel,
   placeholder,
@@ -47,7 +40,6 @@ const CustomInput = ({
   isPassword = false,
   secureText,
   setSecureText,
-  onFocus,
 }: any) => (
   <View style={styles.inputWrapper}>
     {!!fieldLabel && <Text style={styles.fieldLabel}>{fieldLabel}</Text>}
@@ -73,7 +65,6 @@ const CustomInput = ({
       textInputStyle={[styles.inputStyle, { paddingLeft: 48 }]}
       mainColor="#0A1124"
       originalColor="#E8E8E8"
-      onFocus={onFocus}
     />
   </View>
 );
@@ -89,12 +80,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
   const [secureText, setSecureText] = useState(true);
   const [secureConfirm, setSecureConfirm] = useState(true);
   const [loading, setLoading] = useState(false); // ← loading state
-  const scrollIntoView = useScrollIntoView();
-  const nameRef = useRef<View>(null);
-  const emailRef = useRef<View>(null);
-  const phoneRef = useRef<View>(null);
-  const passwordRef = useRef<View>(null);
-  const confirmPasswordRef = useRef<View>(null);
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -113,13 +98,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
   const hideAlert = () =>
     setAlertConfig(prev => ({ ...prev, visible: false }));
 
-  const handleFocus = (ref: React.RefObject<View>) => () => {
-    if (ref.current) {
-      scrollIntoView(ref.current);
-    }
-  };
-
-  // ✅ دالة التسجيل بـ Supabase
   const handleRegister = async () => {
     const { name, email, phone, password, confirmPassword } = formData;
 
@@ -207,7 +185,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.stepLabel}>الخطوة 1 من 2</Text>
         </View>
 
-        <ScrollIntoViewKeyboardAwareScrollView
+        <KeyboardAwareScrollView
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="handled"
           bounces={false}
@@ -216,74 +194,58 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           decelerationRate="normal"
           enableOnAndroid={true}
           extraScrollHeight={80}
-          extraHeight={80}
           keyboardOpeningTime={0}
         >
             <View style={styles.formContainer} pointerEvents="box-none">
-              <View ref={nameRef} collapsable={false}>
-                <CustomInput
-                  fieldLabel="الاسم الكامل"
-                  placeholder="أدخل اسمك"
-                  icon="account-outline"
-                  value={formData.name}
-                  onChangeText={(t: string) =>
-                    setFormData({ ...formData, name: t })
-                  }
-                  onFocus={handleFocus(nameRef)}
-                />
-              </View>
-              <View ref={emailRef} collapsable={false}>
-                <CustomInput
-                  fieldLabel="البريد الإلكتروني"
-                  placeholder="أدخل بريدك الإلكتروني"
-                  icon="email-outline"
-                  value={formData.email}
-                  onChangeText={(t: string) =>
-                    setFormData({ ...formData, email: t })
-                  }
-                  onFocus={handleFocus(emailRef)}
-                />
-              </View>
-              <View ref={phoneRef} collapsable={false}>
-                <CustomInput
-                  fieldLabel="رقم الهاتف"
-                  placeholder="أدخل رقم هاتفك"
-                  icon="phone-outline"
-                  value={formData.phone}
-                  onChangeText={(t: string) =>
-                    setFormData({ ...formData, phone: t })
-                  }
-                  onFocus={handleFocus(phoneRef)}
-                />
-              </View>
-              <View ref={passwordRef} collapsable={false}>
-                <CustomInput
-                  fieldLabel="كلمة المرور"
-                  placeholder="6 أحرف على الأقل"
-                  isPassword={true}
-                  secureText={secureText}
-                  setSecureText={setSecureText}
-                  value={formData.password}
-                  onChangeText={(t: string) =>
-                    setFormData({ ...formData, password: t })
-                  }
-                  onFocus={handleFocus(passwordRef)}
-                />
-              </View>
-              <View ref={confirmPasswordRef} collapsable={false}>
-                <CustomInput
-                  fieldLabel="تأكيد كلمة المرور"
-                  placeholder="أعد إدخال كلمة المرور"
-                  isPassword={true}
-                  secureText={secureConfirm}
-                  setSecureText={setSecureConfirm}
-                  value={formData.confirmPassword}
-                  onChangeText={(t: string) =>
-                    setFormData({ ...formData, confirmPassword: t })
-                  }
-                  onFocus={handleFocus(confirmPasswordRef)}
-                />
-              </View>
+              <CustomInput
+                fieldLabel="الاسم الكامل"
+                placeholder="أدخل اسمك"
+                icon="account-outline"
+                value={formData.name}
+                onChangeText={(t: string) =>
+                  setFormData({ ...formData, name: t })
+                }
+              />
+              <CustomInput
+                fieldLabel="البريد الإلكتروني"
+                placeholder="أدخل بريدك الإلكتروني"
+                icon="email-outline"
+                value={formData.email}
+                onChangeText={(t: string) =>
+                  setFormData({ ...formData, email: t })
+                }
+              />
+              <CustomInput
+                fieldLabel="رقم الهاتف"
+                placeholder="أدخل رقم هاتفك"
+                icon="phone-outline"
+                value={formData.phone}
+                onChangeText={(t: string) =>
+                  setFormData({ ...formData, phone: t })
+                }
+              />
+              <CustomInput
+                fieldLabel="كلمة المرور"
+                placeholder="6 أحرف على الأقل"
+                isPassword={true}
+                secureText={secureText}
+                setSecureText={setSecureText}
+                value={formData.password}
+                onChangeText={(t: string) =>
+                  setFormData({ ...formData, password: t })
+                }
+              />
+              <CustomInput
+                fieldLabel="تأكيد كلمة المرور"
+                placeholder="أعد إدخال كلمة المرور"
+                isPassword={true}
+                secureText={secureConfirm}
+                setSecureText={setSecureConfirm}
+                value={formData.confirmPassword}
+                onChangeText={(t: string) =>
+                  setFormData({ ...formData, confirmPassword: t })
+                }
+              />
 
               <TouchableOpacity
                 style={styles.submitBtn}
@@ -327,7 +289,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.footerText}>لديك حساب بالفعل؟ </Text>
               </View>
             </View>
-          </ScrollIntoViewKeyboardAwareScrollView>
+          </KeyboardAwareScrollView>
       </SafeAreaView>
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
