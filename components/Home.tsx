@@ -5,15 +5,32 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import supabase from '../lib/supbase';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import CustomAlert, { AlertButton } from './CustomAlert';
 
 const HomeScreen = ({ route, navigation }: any) => {
   const userFromParams = route?.params?.user;
   const [user, setUser] = useState<any>(userFromParams || null);
   const [loading, setLoading] = useState(!userFromParams);
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message?: string;
+    type?: 'error' | 'warning' | 'success' | 'info';
+    buttons?: AlertButton[];
+  }>({ visible: false, title: '' });
+
+  const showAlert = (
+    title: string,
+    message?: string,
+    buttons?: AlertButton[],
+    type: 'error' | 'warning' | 'success' | 'info' = 'error',
+  ) => setAlertConfig({ visible: true, title, message, buttons, type });
+
+  const hideAlert = () =>
+    setAlertConfig(prev => ({ ...prev, visible: false }));
 
   useEffect(() => {
     if (!userFromParams) {
@@ -28,32 +45,31 @@ const HomeScreen = ({ route, navigation }: any) => {
     }
   }, []);
 
-  // ✅ دالة الـ Logout
   const handleLogout = async () => {
-    Alert.alert('تسجيل الخروج', 'هل أنت متأكد أنك تريد تسجيل الخروج؟', [
-      { text: 'إلغاء', style: 'cancel' },
-      {
-        text: 'خروج',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            // 1️⃣ Sign out from Supabase (يمسح السيشن من الـ storage)
-            await supabase.auth.signOut();
-
-            // 2️⃣ Sign out from Google (يمسح الـ Google cached account)
-            await GoogleSignin.signOut();
-
-            // 3️⃣ روح على Welcome Screen ومتخليش رجوع
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Welcome' }],
-            });
-          } catch (error: any) {
-            Alert.alert('خطأ', error.message);
-          }
+    showAlert(
+      'تسجيل الخروج',
+      'هل أنت متأكد أنك تريد تسجيل الخروج؟',
+      [
+        { text: 'إلغاء', style: 'cancel' },
+        {
+          text: 'خروج',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await supabase.auth.signOut();
+              await GoogleSignin.signOut();
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Welcome' }],
+              });
+            } catch (error: any) {
+              showAlert('خطأ', error.message);
+            }
+          },
         },
-      },
-    ]);
+      ],
+      'warning',
+    );
   };
 
   if (loading) {
@@ -73,10 +89,10 @@ const HomeScreen = ({ route, navigation }: any) => {
       )}
       {user?.email && <Text style={styles.email}>{user.email}</Text>}
 
-      {/* ✅ زرار الـ Logout */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
         <Text style={styles.logoutText}>تسجيل الخروج</Text>
       </TouchableOpacity>
+      <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </View>
   );
 };

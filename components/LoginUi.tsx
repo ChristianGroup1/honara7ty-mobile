@@ -11,8 +11,8 @@ import {
   Platform,
   TouchableOpacity,
   Dimensions,
-  Alert,
 } from 'react-native';
+import CustomAlert, { AlertButton } from './CustomAlert';
 import {
   TextInput,
   Provider as PaperProvider,
@@ -92,6 +92,23 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   const navigation2 = useNavigation();
   const [loading, setLoading] = useState(false); // Login action loading state
   const [initializing, setInitializing] = useState(true); // Initial Google check
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message?: string;
+    type?: 'error' | 'warning' | 'success' | 'info';
+    buttons?: AlertButton[];
+  }>({ visible: false, title: '' });
+
+  const showAlert = (
+    title: string,
+    message?: string,
+    buttons?: AlertButton[],
+    type: 'error' | 'warning' | 'success' | 'info' = 'error',
+  ) => setAlertConfig({ visible: true, title, message, buttons, type });
+
+  const hideAlert = () =>
+    setAlertConfig(prev => ({ ...prev, visible: false }));
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -122,7 +139,8 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      return Alert.alert('خطأ', 'يرجى إدخال البريد الإلكتروني وكلمة المرور');
+      showAlert('خطأ', 'يرجى إدخال البريد الإلكتروني وكلمة المرور');
+      return;
     }
     setLoading(true);
     try {
@@ -131,12 +149,12 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         password,
       });
       if (error) {
-        Alert.alert('خطأ في تسجيل الدخول', error.message);
+        showAlert('خطأ في تسجيل الدخول', error.message);
       } else {
         navigation.replace('HomeScreen', { user: data.user });
       }
     } catch (err: any) {
-      Alert.alert('خطأ', err.message);
+      showAlert('خطأ', err.message);
     } finally {
       setLoading(false);
     }
@@ -157,7 +175,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         console.log('Supabase Auth Response:', { data, error });
 
         if (error) {
-          Alert.alert('Error', error.message);
+          showAlert('خطأ', error.message);
         } else {
           console.log('Signed in with Google successfully');
           navigation.replace('HomeScreen', { user: userInfo.data.user });
@@ -168,16 +186,13 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        Alert.alert('Sign In Cancelled', 'User cancelled the login flow.');
+        showAlert('تم الإلغاء', 'تم إلغاء عملية تسجيل الدخول.', undefined, 'warning');
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        Alert.alert('Sign In In Progress', 'Sign in is already in progress.');
+        showAlert('جاري تسجيل الدخول', 'عملية تسجيل الدخول جارية بالفعل.', undefined, 'warning');
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert(
-          'Play Services Error',
-          'Google Play services not available or outdated.',
-        );
+        showAlert('خطأ', 'خدمات Google Play غير متاحة أو قديمة.', undefined, 'warning');
       } else {
-        Alert.alert('Error', error.message);
+        showAlert('خطأ', error.message);
       }
     }
   };
@@ -300,6 +315,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
   );
 };

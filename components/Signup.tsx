@@ -11,7 +11,6 @@ import {
   Platform,
   TouchableOpacity,
   Dimensions,
-  Alert,
 } from 'react-native';
 import {
   TextInput,
@@ -21,6 +20,7 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase'; // ← استورد supabase
+import CustomAlert, { AlertButton } from './CustomAlert';
 
 type Props = { navigation: any };
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -84,6 +84,23 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
   });
   const [secureText, setSecureText] = useState(true);
   const [loading, setLoading] = useState(false); // ← loading state
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message?: string;
+    type?: 'error' | 'warning' | 'success' | 'info';
+    buttons?: AlertButton[];
+  }>({ visible: false, title: '' });
+
+  const showAlert = (
+    title: string,
+    message?: string,
+    buttons?: AlertButton[],
+    type: 'error' | 'warning' | 'success' | 'info' = 'error',
+  ) => setAlertConfig({ visible: true, title, message, buttons, type });
+
+  const hideAlert = () =>
+    setAlertConfig(prev => ({ ...prev, visible: false }));
 
   // ✅ دالة التسجيل بـ Supabase
   const handleRegister = async () => {
@@ -91,13 +108,16 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
 
     // Validation
     if (!name || !email || !phone || !password || !confirmPassword) {
-      return Alert.alert('خطأ', 'يرجى ملء جميع الحقول');
+      showAlert('خطأ', 'يرجى ملء جميع الحقول');
+      return;
     }
     if (password !== confirmPassword) {
-      return Alert.alert('خطأ', 'كلمة المرور غير متطابقة');
+      showAlert('خطأ', 'كلمة المرور غير متطابقة');
+      return;
     }
     if (password.length < 6) {
-      return Alert.alert('خطأ', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      showAlert('خطأ', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      return;
     }
 
     setLoading(true);
@@ -115,7 +135,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
       });
 
       if (error) {
-        Alert.alert('خطأ في التسجيل', error.message);
+        showAlert('خطأ في التسجيل', error.message);
       } else {
         // 2️⃣ روح على ProfileCompletion وبعت userId معاه
         navigation.navigate('ProfileCompletion', {
@@ -124,7 +144,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         });
       }
     } catch (err: any) {
-      Alert.alert('خطأ', err.message);
+      showAlert('خطأ', err.message);
     } finally {
       setLoading(false);
     }
@@ -246,6 +266,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
   );
 };

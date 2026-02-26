@@ -11,7 +11,6 @@ import {
   Platform,
   TouchableOpacity,
   Dimensions,
-  Alert,
   Modal,
 } from 'react-native';
 import {
@@ -22,6 +21,7 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase'; // ← استورد supabase
+import CustomAlert, { AlertButton } from './CustomAlert';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const theme = {
@@ -79,6 +79,23 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message?: string;
+    type?: 'error' | 'warning' | 'success' | 'info';
+    buttons?: AlertButton[];
+  }>({ visible: false, title: '' });
+
+  const showAlert = (
+    title: string,
+    message?: string,
+    buttons?: AlertButton[],
+    type: 'error' | 'warning' | 'success' | 'info' = 'error',
+  ) => setAlertConfig({ visible: true, title, message, buttons, type });
+
+  const hideAlert = () =>
+    setAlertConfig(prev => ({ ...prev, visible: false }));
 
   // ✅ دالة حفظ البروفايل في Supabase
   const handleCreateAccount = async () => {
@@ -95,7 +112,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
       const finalUserId = currentUserId || userId;
 
       if (!finalUserId) {
-        Alert.alert('خطأ', 'لازم تسجل دخول الأول');
+        showAlert('خطأ', 'لازم تسجل دخول الأول');
         return;
       }
 
@@ -110,7 +127,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
 
       if (error) {
         console.log('Supabase error:', error);
-        Alert.alert('خطأ', error.message);
+        showAlert('خطأ', error.message);
       } else {
         navigation.reset({
           index: 0,
@@ -118,7 +135,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
         });
       }
     } catch (err: any) {
-      Alert.alert('خطأ', err.message);
+      showAlert('خطأ', err.message);
     } finally {
       setLoading(false);
     }
@@ -267,6 +284,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
   );
 };
