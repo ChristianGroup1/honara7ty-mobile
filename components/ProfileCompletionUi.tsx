@@ -190,7 +190,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
 
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior="padding"
         >
           <ScrollView
             contentContainerStyle={styles.scrollContainer}

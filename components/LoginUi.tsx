@@ -8,7 +8,6 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   StatusBar,
-  Platform,
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
@@ -236,7 +235,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
 
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior="padding"
         >
           <ScrollView
             contentContainerStyle={styles.scrollContainer}

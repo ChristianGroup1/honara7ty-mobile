@@ -121,7 +121,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
 
         <KeyboardAvoidingView
           style={styles.flex1}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior="padding"
         >
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
