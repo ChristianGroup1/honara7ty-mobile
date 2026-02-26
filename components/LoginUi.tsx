@@ -339,12 +339,12 @@ const styles = StyleSheet.create({
 
   scrollContainer: { flexGrow: 1 },
   formContainer: {
-    flex: 1,
     backgroundColor: '#F9F9F9',
     borderTopLeftRadius: 35,
     borderTopRightRadius: 35,
     paddingHorizontal: 25,
     paddingTop: 40,
+    paddingBottom: 40,
   },
   inputWrapper: { marginBottom: 15 },
   inputStyle: { backgroundColor: '#FFF', height: 55 },

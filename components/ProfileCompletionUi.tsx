@@ -190,7 +190,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
 
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
@@ -429,7 +429,6 @@ const styles = StyleSheet.create({
   },
   scrollContainer: { flexGrow: 1 },
   formContainer: {
-    flex: 1,
     backgroundColor: '#F5F6FA',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
