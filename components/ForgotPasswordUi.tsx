@@ -135,6 +135,7 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
             bounces={false}
             showsVerticalScrollIndicator={false}
             overScrollMode="never"
+            nestedScrollEnabled={true}
           >
             <View style={styles.formContainer}>
               {sent ? (
