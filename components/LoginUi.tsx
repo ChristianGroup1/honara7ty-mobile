@@ -10,9 +10,9 @@ import {
   Dimensions,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import TextInputInteractive from 'react-native-text-input-interactive';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import {
-  TextInput,
   Provider as PaperProvider,
   DefaultTheme,
   Checkbox,
@@ -47,37 +47,25 @@ const CustomInput = ({
   setSecureText,
 }: any) => (
   <View style={styles.inputWrapper}>
-    <TextInput
+    <TextInputInteractive
       value={value}
       onChangeText={onChangeText}
-      mode="outlined"
       placeholder={label}
       secureTextEntry={isPassword ? secureText : false}
       textAlign="right"
-      style={styles.inputStyle}
-      outlineStyle={styles.inputOutline}
-      contentStyle={{ writingDirection: 'rtl', textAlign: 'right' }}
-      // الأيقونات في اليمين حسب تصميم شاشة تسجيل الدخول
-      right={
-        isPassword ? (
-          <TextInput.Icon
-            icon={() => (
-              <MaterialCommunityIcons
-                name={secureText ? 'eye-off-outline' : 'eye-outline'}
-                size={24}
-                color="#666"
-              />
-            )}
-            onPress={() => setSecureText(!secureText)}
-          />
-        ) : (
-          <TextInput.Icon
-            icon={() => (
-              <MaterialCommunityIcons name={icon} size={24} color="#666" />
-            )}
-          />
-        )
-      }
+      style={{ width: '100%' }}
+      textInputStyle={styles.inputStyle}
+      mainColor="#0A1124"
+      originalColor="#EEE"
+      enableIcon
+      onIconPress={isPassword ? () => setSecureText(!secureText) : undefined}
+      ImageComponent={() => (
+        <MaterialCommunityIcons
+          name={isPassword ? (secureText ? 'eye-off-outline' : 'eye-outline') : icon}
+          size={24}
+          color="#666"
+        />
+      )}
     />
   </View>
 );
@@ -343,8 +331,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   inputWrapper: { marginBottom: 15 },
-  inputStyle: { backgroundColor: '#FFF', height: 55 },
-  inputOutline: { borderRadius: 12 },
+  inputStyle: { backgroundColor: '#FFF', height: 55, borderRadius: 12, width: '100%' },
 
   extraOptions: {
     flexDirection: 'row',

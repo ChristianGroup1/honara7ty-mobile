@@ -11,8 +11,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import TextInputInteractive from 'react-native-text-input-interactive';
 import {
-  TextInput,
   Provider as PaperProvider,
   DefaultTheme,
   ActivityIndicator,
@@ -46,28 +46,23 @@ const CustomInput = ({
       {!!badge && <Text style={styles.optionalBadge}>{badge}</Text>}
     </View>
     <TouchableOpacity activeOpacity={onPress ? 0.7 : 1} onPress={onPress}>
-      <TextInput
+      <View style={styles.inputIconLeft}>
+        <MaterialCommunityIcons name={icon} size={22} color="#999" />
+      </View>
+      <TextInputInteractive
         value={value}
         onChangeText={onChangeText}
-        mode="outlined"
         placeholder={placeholder || fieldLabel}
         editable={editable && !onPress}
         textAlign="right"
-        style={styles.inputStyle}
-        outlineStyle={styles.inputOutline}
-        contentStyle={{ writingDirection: 'rtl', textAlign: 'right' }}
-        left={
-          <TextInput.Icon
-            icon={() => (
-              <MaterialCommunityIcons name={icon} size={22} color="#999" />
-            )}
-          />
-        }
-        right={
-          onPress ? (
-            <TextInput.Icon icon="chevron-down" color="#999" />
-          ) : null
-        }
+        style={{ width: '100%' }}
+        textInputStyle={[styles.inputStyle, { paddingLeft: 48, paddingRight: onPress ? 48 : 16 }]}
+        mainColor="#0A1124"
+        originalColor="#E8E8E8"
+        enableIcon={!!onPress}
+        ImageComponent={() => (
+          <MaterialCommunityIcons name="chevron-down" size={22} color="#999" />
+        )}
       />
     </TouchableOpacity>
   </View>
@@ -263,13 +258,13 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
                     ].map(({ placeholder, index }) => (
                       <View key={index} style={styles.dateInputWrapper}>
                         <Text style={styles.dateInputLabel}>{placeholder}</Text>
-                        <TextInput
-                          mode="outlined"
+                        <TextInputInteractive
                           placeholder="--"
                           keyboardType="numeric"
-                          style={styles.dateInput}
-                          outlineStyle={{ borderRadius: 10 }}
-                          onChangeText={t => {
+                          textInputStyle={styles.dateInput}
+                          mainColor="#0A1124"
+                          originalColor="#E8E8E8"
+                          onChangeText={(t: string) => {
                             const parts = profileData.birthDate.split('/');
                             parts[index] = t;
                             setProfileData({
@@ -452,6 +447,14 @@ const styles = StyleSheet.create({
     color: '#0A1124',
   },
   inputWrapper: { marginBottom: 14 },
+  inputIconLeft: {
+    position: 'absolute',
+    left: 12,
+    bottom: 0,
+    height: 54,
+    justifyContent: 'center',
+    zIndex: 1,
+  },
   fieldLabelRow: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
@@ -473,8 +476,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     overflow: 'hidden',
   },
-  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right' },
-  inputOutline: { borderRadius: 14, borderColor: '#E8E8E8' },
+  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right', borderRadius: 14, width: '100%' },
   datePickerCard: {
     backgroundColor: '#FFF',
     borderRadius: 16,
@@ -500,7 +502,7 @@ const styles = StyleSheet.create({
     color: '#888',
     marginBottom: 4,
   },
-  dateInput: { width: '100%', backgroundColor: '#FFF', height: 48 },
+  dateInput: { width: '100%', backgroundColor: '#FFF', height: 48, borderRadius: 10 },
   genderRow: {
     flexDirection: 'row-reverse',
     gap: 12,

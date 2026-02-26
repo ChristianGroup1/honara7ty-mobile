@@ -11,8 +11,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import TextInputInteractive from 'react-native-text-input-interactive';
 import {
-  TextInput,
   Provider as PaperProvider,
   DefaultTheme,
   ActivityIndicator,
@@ -43,36 +43,28 @@ const CustomInput = ({
 }: any) => (
   <View style={styles.inputWrapper}>
     {!!fieldLabel && <Text style={styles.fieldLabel}>{fieldLabel}</Text>}
-    <TextInput
+    <TouchableOpacity
+      activeOpacity={1}
+      onPress={isPassword ? () => setSecureText(!secureText) : undefined}
+      style={styles.inputIconLeft}
+      accessibilityLabel={isPassword ? (secureText ? 'إظهار كلمة المرور' : 'إخفاء كلمة المرور') : fieldLabel}
+    >
+      <MaterialCommunityIcons
+        name={isPassword ? (secureText ? 'eye-off-outline' : 'eye-outline') : icon}
+        size={22}
+        color="#999"
+      />
+    </TouchableOpacity>
+    <TextInputInteractive
       value={value}
       onChangeText={onChangeText}
-      mode="outlined"
       placeholder={placeholder}
       secureTextEntry={isPassword ? secureText : false}
       textAlign="right"
-      style={styles.inputStyle}
-      outlineStyle={styles.inputOutline}
-      contentStyle={{ writingDirection: 'rtl', textAlign: 'right' }}
-      left={
-        isPassword ? (
-          <TextInput.Icon
-            icon={() => (
-              <MaterialCommunityIcons
-                name={secureText ? 'eye-off-outline' : 'eye-outline'}
-                size={22}
-                color="#999"
-              />
-            )}
-            onPress={() => setSecureText(!secureText)}
-          />
-        ) : (
-          <TextInput.Icon
-            icon={() => (
-              <MaterialCommunityIcons name={icon} size={22} color="#999" />
-            )}
-          />
-        )
-      }
+      style={{ width: '100%' }}
+      textInputStyle={[styles.inputStyle, { paddingLeft: 48 }]}
+      mainColor="#0A1124"
+      originalColor="#E8E8E8"
     />
   </View>
 );
@@ -385,6 +377,14 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   inputWrapper: { marginBottom: 14 },
+  inputIconLeft: {
+    position: 'absolute',
+    left: 12,
+    bottom: 0,
+    height: 54,
+    justifyContent: 'center',
+    zIndex: 1,
+  },
   fieldLabel: {
     fontSize: 13,
     fontWeight: '600',
@@ -392,8 +392,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     textAlign: 'right',
   },
-  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right' },
-  inputOutline: { borderRadius: 14, borderColor: '#E8E8E8' },
+  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right', borderRadius: 14, width: '100%' },
   submitBtn: {
     backgroundColor: '#0A1124',
     height: 56,

@@ -10,8 +10,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import TextInputInteractive from 'react-native-text-input-interactive';
 import {
-  TextInput,
   Provider as PaperProvider,
   DefaultTheme,
   ActivityIndicator,
@@ -196,28 +196,24 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
                 <>
                   <Text style={styles.fieldLabel}>البريد الإلكتروني</Text>
                   <View style={styles.inputWrapper}>
-                    <TextInput
+                    <View style={styles.inputIconLeft}>
+                      <MaterialCommunityIcons
+                        name="email-outline"
+                        size={22}
+                        color="#999"
+                      />
+                    </View>
+                    <TextInputInteractive
                       value={email}
                       onChangeText={setEmail}
-                      mode="outlined"
                       placeholder="example@email.com"
                       keyboardType="email-address"
                       autoCapitalize="none"
                       textAlign="right"
-                      style={styles.inputStyle}
-                      outlineStyle={styles.inputOutline}
-                      contentStyle={styles.inputContent}
-                      left={
-                        <TextInput.Icon
-                          icon={() => (
-                            <MaterialCommunityIcons
-                              name="email-outline"
-                              size={22}
-                              color="#999"
-                            />
-                          )}
-                        />
-                      }
+                      style={{ width: '100%' }}
+                      textInputStyle={[styles.inputStyle, { paddingLeft: 48 }]}
+                      mainColor={NAVY}
+                      originalColor="#E8E8E8"
                     />
                   </View>
 
@@ -329,9 +325,15 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   inputWrapper: { marginBottom: 22 },
-  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right' },
-  inputOutline: { borderRadius: 14, borderColor: '#E8E8E8' },
-  inputContent: { writingDirection: 'rtl', textAlign: 'right' },
+  inputIconLeft: {
+    position: 'absolute',
+    left: 12,
+    bottom: 0,
+    height: 54,
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right', borderRadius: 14, width: '100%' },
   submitBtn: {
     backgroundColor: NAVY,
     height: 56,

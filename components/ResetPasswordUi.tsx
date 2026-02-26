@@ -10,8 +10,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import TextInputInteractive from 'react-native-text-input-interactive';
 import {
-  TextInput,
   Provider as PaperProvider,
   DefaultTheme,
   ActivityIndicator,
@@ -165,83 +165,63 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
                 <>
                   <Text style={styles.fieldLabel}>كلمة المرور الجديدة</Text>
                   <View style={styles.inputWrapper}>
-                    <TextInput
+                    <View style={styles.inputIconLeft}>
+                      <MaterialCommunityIcons
+                        name="lock-outline"
+                        size={22}
+                        color="#999"
+                      />
+                    </View>
+                    <TextInputInteractive
                       value={password}
                       onChangeText={setPassword}
-                      mode="outlined"
                       placeholder="••••••••"
                       secureTextEntry={securePassword}
                       textAlign="right"
-                      style={styles.inputStyle}
-                      outlineStyle={styles.inputOutline}
-                      contentStyle={styles.inputContent}
-                      right={
-                        <TextInput.Icon
-                          icon={() => (
-                            <MaterialCommunityIcons
-                              name={
-                                securePassword
-                                  ? 'eye-off-outline'
-                                  : 'eye-outline'
-                              }
-                              size={22}
-                              color="#999"
-                            />
-                          )}
-                          onPress={() => setSecurePassword(v => !v)}
+                      style={{ width: '100%' }}
+                      textInputStyle={[styles.inputStyle, { paddingLeft: 48 }]}
+                      mainColor={NAVY}
+                      originalColor="#E8E8E8"
+                      enableIcon
+                      onIconPress={() => setSecurePassword(v => !v)}
+                      ImageComponent={() => (
+                        <MaterialCommunityIcons
+                          name={securePassword ? 'eye-off-outline' : 'eye-outline'}
+                          size={22}
+                          color="#999"
                         />
-                      }
-                      left={
-                        <TextInput.Icon
-                          icon={() => (
-                            <MaterialCommunityIcons
-                              name="lock-outline"
-                              size={22}
-                              color="#999"
-                            />
-                          )}
-                        />
-                      }
+                      )}
                     />
                   </View>
 
                   <Text style={styles.fieldLabel}>تأكيد كلمة المرور</Text>
                   <View style={styles.inputWrapper}>
-                    <TextInput
+                    <View style={styles.inputIconLeft}>
+                      <MaterialCommunityIcons
+                        name="lock-check-outline"
+                        size={22}
+                        color="#999"
+                      />
+                    </View>
+                    <TextInputInteractive
                       value={confirm}
                       onChangeText={setConfirm}
-                      mode="outlined"
                       placeholder="••••••••"
                       secureTextEntry={secureConfirm}
                       textAlign="right"
-                      style={styles.inputStyle}
-                      outlineStyle={styles.inputOutline}
-                      contentStyle={styles.inputContent}
-                      right={
-                        <TextInput.Icon
-                          icon={() => (
-                            <MaterialCommunityIcons
-                              name={
-                                secureConfirm ? 'eye-off-outline' : 'eye-outline'
-                              }
-                              size={22}
-                              color="#999"
-                            />
-                          )}
-                          onPress={() => setSecureConfirm(v => !v)}
+                      style={{ width: '100%' }}
+                      textInputStyle={[styles.inputStyle, { paddingLeft: 48 }]}
+                      mainColor={NAVY}
+                      originalColor="#E8E8E8"
+                      enableIcon
+                      onIconPress={() => setSecureConfirm(v => !v)}
+                      ImageComponent={() => (
+                        <MaterialCommunityIcons
+                          name={secureConfirm ? 'eye-off-outline' : 'eye-outline'}
+                          size={22}
+                          color="#999"
                         />
-                      }
-                      left={
-                        <TextInput.Icon
-                          icon={() => (
-                            <MaterialCommunityIcons
-                              name="lock-check-outline"
-                              size={22}
-                              color="#999"
-                            />
-                          )}
-                        />
-                      }
+                      )}
                     />
                   </View>
 
@@ -349,9 +329,15 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   inputWrapper: { marginBottom: 20 },
-  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right' },
-  inputOutline: { borderRadius: 14, borderColor: '#E8E8E8' },
-  inputContent: { writingDirection: 'rtl', textAlign: 'right' },
+  inputIconLeft: {
+    position: 'absolute',
+    left: 12,
+    bottom: 0,
+    height: 54,
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right', borderRadius: 14, width: '100%' },
   hintRow: {
     flexDirection: 'row',
     alignItems: 'center',
