@@ -56,7 +56,7 @@ const CustomInput = ({
         textAlign="right"
         style={styles.inputStyle}
         outlineStyle={styles.inputOutline}
-        contentStyle={{ writingDirection: 'rtl' }}
+        contentStyle={{ writingDirection: 'rtl', textAlign: 'right' }}
         left={
           <TextInput.Icon
             icon={() => (
@@ -196,6 +196,8 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
             contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
             bounces={false}
+            showsVerticalScrollIndicator={false}
+            overScrollMode="never"
           >
             <View style={styles.formContainer}>
 
@@ -434,11 +436,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 28,
     paddingBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 6,
   },
   sectionHeader: {
     flexDirection: 'row-reverse',

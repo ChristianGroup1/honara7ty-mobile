@@ -58,7 +58,7 @@ const CustomInput = ({
       textAlign="right"
       style={styles.inputStyle}
       outlineStyle={styles.inputOutline}
-      contentStyle={{ writingDirection: 'rtl' }}
+      contentStyle={{ writingDirection: 'rtl', textAlign: 'right' }}
       // الأيقونات في اليمين حسب تصميم شاشة تسجيل الدخول
       right={
         isPassword ? (
@@ -242,6 +242,8 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
             contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
             bounces={false}
+            showsVerticalScrollIndicator={false}
+            overScrollMode="never"
           >
             <View style={styles.formContainer}>
               <CustomInput

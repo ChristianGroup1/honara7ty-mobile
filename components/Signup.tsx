@@ -53,7 +53,7 @@ const CustomInput = ({
       textAlign="right"
       style={styles.inputStyle}
       outlineStyle={styles.inputOutline}
-      contentStyle={{ writingDirection: 'rtl' }}
+      contentStyle={{ writingDirection: 'rtl', textAlign: 'right' }}
       left={
         isPassword ? (
           <TextInput.Icon
@@ -203,6 +203,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
             contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
             bounces={false}
+            showsVerticalScrollIndicator={false}
+            overScrollMode="never"
           >
             <View style={styles.formContainer}>
               <CustomInput
@@ -216,7 +218,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               />
               <CustomInput
                 fieldLabel="البريد الإلكتروني"
-                placeholder="example@email.com"
+                placeholder="أدخل بريدك الإلكتروني"
                 icon="email-outline"
                 value={formData.email}
                 onChangeText={(t: string) =>
@@ -385,11 +387,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 32,
     paddingBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 6,
   },
   inputWrapper: { marginBottom: 14 },
   fieldLabel: {

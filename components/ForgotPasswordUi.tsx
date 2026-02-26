@@ -133,6 +133,8 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
             contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
             bounces={false}
+            showsVerticalScrollIndicator={false}
+            overScrollMode="never"
           >
             <View style={styles.formContainer}>
               {sent ? (
@@ -323,11 +325,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 32,
     paddingBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 6,
   },
   fieldLabel: {
     fontSize: 13,
@@ -339,7 +336,7 @@ const styles = StyleSheet.create({
   inputWrapper: { marginBottom: 22 },
   inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right' },
   inputOutline: { borderRadius: 14, borderColor: '#E8E8E8' },
-  inputContent: { writingDirection: 'rtl' },
+  inputContent: { writingDirection: 'rtl', textAlign: 'right' },
   submitBtn: {
     backgroundColor: NAVY,
     height: 56,
