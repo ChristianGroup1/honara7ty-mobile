@@ -127,6 +127,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
           decelerationRate="normal"
           enableOnAndroid={true}
           extraScrollHeight={80}
+          extraHeight={80}
           keyboardOpeningTime={0}
         >
             <View style={styles.formContainer} pointerEvents="box-none">
