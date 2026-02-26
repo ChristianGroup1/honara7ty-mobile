@@ -199,6 +199,8 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
             showsVerticalScrollIndicator={false}
             overScrollMode="never"
             nestedScrollEnabled={true}
+            decelerationRate="normal"
+            scrollEventThrottle={16}
           >
             <View style={styles.formContainer}>
 

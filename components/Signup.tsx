@@ -206,6 +206,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
             showsVerticalScrollIndicator={false}
             overScrollMode="never"
             nestedScrollEnabled={true}
+            decelerationRate="normal"
+            scrollEventThrottle={16}
           >
             <View style={styles.formContainer}>
               <CustomInput
