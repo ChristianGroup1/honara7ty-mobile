@@ -20,6 +20,7 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase'; // ← استورد supabase
 import CustomAlert, { AlertButton } from './CustomAlert';
+import CustomInput from './CustomInput';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -29,44 +30,6 @@ const theme = {
   ...DefaultTheme,
   colors: { ...DefaultTheme.colors, primary: '#0A1124', outline: '#E0E0E0' },
 };
-
-const CustomInput = ({
-  fieldLabel,
-  placeholder,
-  value,
-  onChangeText,
-  icon,
-  editable = true,
-  onPress,
-  badge,
-}: any) => (
-  <View style={styles.inputWrapper}>
-    <View style={styles.fieldLabelRow}>
-      {!!fieldLabel && <Text style={styles.fieldLabel}>{fieldLabel}</Text>}
-      {!!badge && <Text style={styles.optionalBadge}>{badge}</Text>}
-    </View>
-    <TouchableOpacity activeOpacity={onPress ? 0.7 : 1} onPress={onPress}>
-      <View style={styles.inputIconLeft}>
-        <MaterialCommunityIcons name={icon} size={22} color="#999" />
-      </View>
-      <TextInputInteractive
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder || fieldLabel}
-        editable={editable && !onPress}
-        textAlign="right"
-        style={{ width: '100%' }}
-        textInputStyle={[styles.inputStyle, { paddingLeft: 48, paddingRight: onPress ? 48 : 16 }]}
-        mainColor="#0A1124"
-        originalColor="#E8E8E8"
-        enableIcon={!!onPress}
-        ImageComponent={() => (
-          <MaterialCommunityIcons name="chevron-down" size={22} color="#999" />
-        )}
-      />
-    </TouchableOpacity>
-  </View>
-);
 
 const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
   // ← استقبل userId من Signup
@@ -449,36 +412,13 @@ const styles = StyleSheet.create({
     color: '#0A1124',
   },
   inputWrapper: { marginBottom: 14 },
-  inputIconLeft: {
-    position: 'absolute',
-    left: 12,
-    bottom: 0,
-    height: 54,
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  fieldLabelRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
   fieldLabel: {
     fontSize: 13,
     fontWeight: '600',
     color: '#0A1124',
     textAlign: 'right',
+    marginBottom: 6,
   },
-  optionalBadge: {
-    fontSize: 11,
-    color: '#AAA',
-    backgroundColor: '#F0F0F0',
-    borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    overflow: 'hidden',
-  },
-  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right', borderRadius: 14, width: '100%' },
   datePickerCard: {
     backgroundColor: '#FFF',
     borderRadius: 16,

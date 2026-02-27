@@ -10,7 +10,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import TextInputInteractive from 'react-native-text-input-interactive';
 import {
   Provider as PaperProvider,
   DefaultTheme,
@@ -19,6 +18,7 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
 import CustomAlert, { AlertButton } from './CustomAlert';
+import CustomInput from './CustomInput';
 
 type Props = { navigation: any };
 
@@ -35,6 +35,7 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [emailError, setEmailError] = useState('');
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -56,14 +57,15 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
   const handleSend = async () => {
     const trimmed = email.trim();
     if (!trimmed) {
-      showAlert('خطأ', 'يرجى إدخال البريد الإلكتروني');
+      setEmailError('يرجى إدخال البريد الإلكتروني');
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmed)) {
-      showAlert('خطأ', 'يرجى إدخال بريد إلكتروني صحيح');
+      setEmailError('يرجى إدخال بريد إلكتروني صحيح');
       return;
     }
+    setEmailError('');
 
     setLoading(true);
     try {
@@ -196,28 +198,19 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
               ) : (
                 /* ── Email Input State ── */
                 <>
-                  <Text style={styles.fieldLabel}>البريد الإلكتروني</Text>
-                  <View style={styles.inputWrapper}>
-                    <View style={styles.inputIconLeft}>
-                      <MaterialCommunityIcons
-                        name="email-outline"
-                        size={22}
-                        color="#999"
-                      />
-                    </View>
-                    <TextInputInteractive
-                      value={email}
-                      onChangeText={setEmail}
-                      placeholder="example@email.com"
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      textAlign="right"
-                      style={{ width: '100%' }}
-                      textInputStyle={[styles.inputStyle, { paddingLeft: 48 }]}
-                      mainColor={NAVY}
-                      originalColor="#E8E8E8"
-                    />
-                  </View>
+                  <CustomInput
+                    fieldLabel="البريد الإلكتروني"
+                    placeholder="example@email.com"
+                    icon="email-outline"
+                    value={email}
+                    onChangeText={t => {
+                      setEmail(t);
+                      if (emailError) setEmailError('');
+                    }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    error={emailError}
+                  />
 
                   <TouchableOpacity
                     style={styles.submitBtn}
@@ -319,23 +312,6 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     paddingBottom: 40,
   },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: NAVY,
-    textAlign: 'right',
-    marginBottom: 6,
-  },
-  inputWrapper: { marginBottom: 22 },
-  inputIconLeft: {
-    position: 'absolute',
-    left: 12,
-    bottom: 0,
-    height: 54,
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right', borderRadius: 14, width: '100%' },
   submitBtn: {
     backgroundColor: NAVY,
     height: 56,

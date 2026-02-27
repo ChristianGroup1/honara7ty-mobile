@@ -18,9 +18,9 @@ import {
   ActivityIndicator,
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import TextInputInteractive from 'react-native-text-input-interactive';
 import supabase from '../lib/supbase';
 import CustomAlert, { AlertButton } from './CustomAlert';
+import CustomInput from './CustomInput';
 
 type Props = { navigation: any };
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -30,70 +30,6 @@ const GOLD = '#C9A84C';
 const theme = {
   ...DefaultTheme,
   colors: { ...DefaultTheme.colors, primary: '#0A1124', outline: '#E0E0E0' },
-};
-
-const CustomInput = ({
-  fieldLabel,
-  placeholder,
-  value,
-  onChangeText,
-  icon,
-  isPassword = false,
-  secureText,
-  setSecureText,
-  error,
-}: any) => {
-  return (
-    <View style={styles.inputWrapper}>
-      {!!fieldLabel && <Text style={styles.fieldLabel}>{fieldLabel}</Text>}
-
-      <View style={styles.textInputContainer}>
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={isPassword ? () => setSecureText(!secureText) : undefined}
-          style={styles.inputIconLeft}
-          accessibilityLabel={
-            isPassword
-              ? secureText
-                ? 'إظهار كلمة المرور'
-                : 'إخفاء كلمة المرور'
-              : fieldLabel
-          }
-        >
-          <MaterialCommunityIcons
-            name={
-              isPassword
-                ? secureText
-                  ? 'eye-off-outline'
-                  : 'eye-outline'
-                : icon
-            }
-            size={22}
-            color="#999"
-          />
-        </TouchableOpacity>
-
-        <TextInputInteractive
-          textInputStyle={styles.interactiveInput}
-          placeholder={placeholder}
-          value={value}
-          onChangeText={(text: string) => onChangeText(text.replace(/\n/g, ''))}
-          secureTextEntry={isPassword ? secureText : false}
-          mainColor="#0A1124"
-          originalColor="#E0E0E0"
-          animatedPlaceholderTextColor="#999"
-          enableIcon={false}
-          // --- THE SINGLE-LINE HACK (from first TextInput) ---
-          multiline={true}
-          returnKeyType="done"
-          textAlignVertical="center"
-          scrollEnabled={false}
-          // --- Scroll-aware editable & focus guard ---
-        />
-      </View>
-      {!!error && <Text style={styles.fieldError}>{error}</Text>}
-    </View>
-  );
 };
 
 const SignupUI: React.FC<Props> = ({ navigation }) => {
@@ -325,6 +261,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
             <CustomInput
               fieldLabel="كلمة المرور"
               placeholder="6 أحرف على الأقل"
+              icon="lock-outline"
               isPassword={true}
               secureText={secureText}
               setSecureText={setSecureText}
@@ -338,6 +275,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
             <CustomInput
               fieldLabel="تأكيد كلمة المرور"
               placeholder="أعد إدخال كلمة المرور"
+              icon="lock-check-outline"
               isPassword={true}
               secureText={secureConfirm}
               setSecureText={setSecureConfirm}
@@ -477,39 +415,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 32,
     paddingBottom: 40,
-  },
-  inputWrapper: { marginBottom: 14 },
-  fieldError: {
-    color: '#E53935',
-    fontSize: 12,
-    marginTop: 4,
-    textAlign: 'right',
-  },
-  textInputContainer: {
-    width: '100%',
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  inputIconLeft: {
-    position: 'absolute',
-    left: 12,
-    height: 54,
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0A1124',
-    marginBottom: 6,
-    textAlign: 'right',
-  },
-  interactiveInput: {
-    textAlign: 'right',
-    paddingLeft: 48,
-    paddingRight: 16,
-    color: '#0A1124',
-    fontSize: 14,
   },
   submitBtn: {
     backgroundColor: '#0A1124',

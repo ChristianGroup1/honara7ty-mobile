@@ -10,8 +10,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import TextInputInteractive from 'react-native-text-input-interactive';
 import CustomAlert, { AlertButton } from './CustomAlert';
+import CustomInput from './CustomInput';
 import {
   Provider as PaperProvider,
   DefaultTheme,
@@ -37,39 +37,6 @@ const theme = {
   },
 };
 
-const CustomInput = ({
-  label,
-  value,
-  onChangeText,
-  icon,
-  isPassword = false,
-  secureText,
-  setSecureText,
-}: any) => (
-  <View style={styles.inputWrapper}>
-    <TextInputInteractive
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={label}
-      secureTextEntry={isPassword ? secureText : false}
-      textAlign="right"
-      style={{ width: '100%' }}
-      textInputStyle={styles.inputStyle}
-      mainColor="#0A1124"
-      originalColor="#EEE"
-      enableIcon
-      onIconPress={isPassword ? () => setSecureText(!secureText) : undefined}
-      ImageComponent={() => (
-        <MaterialCommunityIcons
-          name={isPassword ? (secureText ? 'eye-off-outline' : 'eye-outline') : icon}
-          size={24}
-          color="#666"
-        />
-      )}
-    />
-  </View>
-);
-
 const LoginUI: React.FC<any> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -78,6 +45,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   const navigation2 = useNavigation();
   const [loading, setLoading] = useState(false); // Login action loading state
   const [initializing, setInitializing] = useState(true); // Initial Google check
+  const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -124,10 +92,19 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   };
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      showAlert('خطأ', 'يرجى إدخال البريد الإلكتروني وكلمة المرور');
-      return;
+    const errors = { email: '', password: '' };
+    let hasError = false;
+    if (!email) {
+      errors.email = 'يرجى إدخال البريد الإلكتروني';
+      hasError = true;
     }
+    if (!password) {
+      errors.password = 'يرجى إدخال كلمة المرور';
+      hasError = true;
+    }
+    setFieldErrors(errors);
+    if (hasError) return;
+
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -234,20 +211,30 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         >
             <View style={styles.formContainer} pointerEvents="box-none">
               <CustomInput
-                label="الأسم أو البريد الإلكتروني"
+                fieldLabel="البريد الإلكتروني"
+                placeholder="أدخل بريدك الإلكتروني"
                 icon="account-outline"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={t => {
+                  setEmail(t);
+                  if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
+                }}
+                error={fieldErrors.email}
               />
 
               <CustomInput
-                label="كلمه المرور"
+                fieldLabel="كلمة المرور"
+                placeholder="أدخل كلمة المرور"
                 icon="lock-outline"
                 isPassword={true}
                 secureText={secureText}
                 setSecureText={setSecureText}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={t => {
+                  setPassword(t);
+                  if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: '' }));
+                }}
+                error={fieldErrors.password}
               />
 
               {/* قسم "تذكرني" و "نسيت كلمة المرور" */}
@@ -332,9 +319,6 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 40,
   },
-  inputWrapper: { marginBottom: 15 },
-  inputStyle: { backgroundColor: '#FFF', height: 55, borderRadius: 12, width: '100%' },
-
   extraOptions: {
     flexDirection: 'row',
     justifyContent: 'space-between',

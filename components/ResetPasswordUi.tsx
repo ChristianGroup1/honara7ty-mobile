@@ -10,7 +10,6 @@ import {
   Dimensions,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import TextInputInteractive from 'react-native-text-input-interactive';
 import {
   Provider as PaperProvider,
   DefaultTheme,
@@ -19,6 +18,7 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
 import CustomAlert, { AlertButton } from './CustomAlert';
+import CustomInput from './CustomInput';
 
 type Props = { navigation: any };
 
@@ -39,6 +39,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
   const [secureConfirm, setSecureConfirm] = useState(true);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({ password: '', confirm: '' });
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -58,21 +59,24 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
     setAlertConfig(prev => ({ ...prev, visible: false }));
 
   const handleUpdate = async () => {
+    const errors = { password: '', confirm: '' };
+    let hasError = false;
     if (!password) {
-      showAlert('خطأ', 'يرجى إدخال كلمة المرور الجديدة');
-      return;
+      errors.password = 'يرجى إدخال كلمة المرور الجديدة';
+      hasError = true;
+    } else if (password.length < MIN_PASSWORD_LENGTH) {
+      errors.password = `كلمة المرور يجب أن تكون ${MIN_PASSWORD_LENGTH} أحرف على الأقل`;
+      hasError = true;
     }
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      showAlert(
-        'خطأ',
-        `كلمة المرور يجب أن تكون ${MIN_PASSWORD_LENGTH} أحرف على الأقل`,
-      );
-      return;
+    if (!confirm) {
+      errors.confirm = 'يرجى تأكيد كلمة المرور';
+      hasError = true;
+    } else if (password !== confirm) {
+      errors.confirm = 'كلمتا المرور غير متطابقتين';
+      hasError = true;
     }
-    if (password !== confirm) {
-      showAlert('خطأ', 'كلمتا المرور غير متطابقتين');
-      return;
-    }
+    setFieldErrors(errors);
+    if (hasError) return;
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
@@ -165,67 +169,35 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
               ) : (
                 /* ── Form ── */
                 <>
-                  <Text style={styles.fieldLabel}>كلمة المرور الجديدة</Text>
-                  <View style={styles.inputWrapper}>
-                    <View style={styles.inputIconLeft}>
-                      <MaterialCommunityIcons
-                        name="lock-outline"
-                        size={22}
-                        color="#999"
-                      />
-                    </View>
-                    <TextInputInteractive
-                      value={password}
-                      onChangeText={setPassword}
-                      placeholder="••••••••"
-                      secureTextEntry={securePassword}
-                      textAlign="right"
-                      style={{ width: '100%' }}
-                      textInputStyle={[styles.inputStyle, { paddingLeft: 48 }]}
-                      mainColor={NAVY}
-                      originalColor="#E8E8E8"
-                      enableIcon
-                      onIconPress={() => setSecurePassword(v => !v)}
-                      ImageComponent={() => (
-                        <MaterialCommunityIcons
-                          name={securePassword ? 'eye-off-outline' : 'eye-outline'}
-                          size={22}
-                          color="#999"
-                        />
-                      )}
-                    />
-                  </View>
+                  <CustomInput
+                    fieldLabel="كلمة المرور الجديدة"
+                    placeholder="••••••••"
+                    icon="lock-outline"
+                    isPassword={true}
+                    secureText={securePassword}
+                    setSecureText={setSecurePassword}
+                    value={password}
+                    onChangeText={t => {
+                      setPassword(t);
+                      if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: '' }));
+                    }}
+                    error={fieldErrors.password}
+                  />
 
-                  <Text style={styles.fieldLabel}>تأكيد كلمة المرور</Text>
-                  <View style={styles.inputWrapper}>
-                    <View style={styles.inputIconLeft}>
-                      <MaterialCommunityIcons
-                        name="lock-check-outline"
-                        size={22}
-                        color="#999"
-                      />
-                    </View>
-                    <TextInputInteractive
-                      value={confirm}
-                      onChangeText={setConfirm}
-                      placeholder="••••••••"
-                      secureTextEntry={secureConfirm}
-                      textAlign="right"
-                      style={{ width: '100%' }}
-                      textInputStyle={[styles.inputStyle, { paddingLeft: 48 }]}
-                      mainColor={NAVY}
-                      originalColor="#E8E8E8"
-                      enableIcon
-                      onIconPress={() => setSecureConfirm(v => !v)}
-                      ImageComponent={() => (
-                        <MaterialCommunityIcons
-                          name={secureConfirm ? 'eye-off-outline' : 'eye-outline'}
-                          size={22}
-                          color="#999"
-                        />
-                      )}
-                    />
-                  </View>
+                  <CustomInput
+                    fieldLabel="تأكيد كلمة المرور"
+                    placeholder="••••••••"
+                    icon="lock-check-outline"
+                    isPassword={true}
+                    secureText={secureConfirm}
+                    setSecureText={setSecureConfirm}
+                    value={confirm}
+                    onChangeText={t => {
+                      setConfirm(t);
+                      if (fieldErrors.confirm) setFieldErrors(prev => ({ ...prev, confirm: '' }));
+                    }}
+                    error={fieldErrors.confirm}
+                  />
 
                   <View style={styles.hintRow}>
                     <MaterialCommunityIcons
@@ -323,23 +295,6 @@ const styles = StyleSheet.create({
     paddingTop: 32,
     paddingBottom: 40,
   },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: NAVY,
-    textAlign: 'right',
-    marginBottom: 6,
-  },
-  inputWrapper: { marginBottom: 20 },
-  inputIconLeft: {
-    position: 'absolute',
-    left: 12,
-    bottom: 0,
-    height: 54,
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right', borderRadius: 14, width: '100%' },
   hintRow: {
     flexDirection: 'row',
     alignItems: 'center',
