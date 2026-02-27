@@ -41,6 +41,7 @@ const CustomInput = ({
   isPassword = false,
   secureText,
   setSecureText,
+  error,
 }: any) => {
   return (
     <View style={styles.inputWrapper}>
@@ -90,6 +91,7 @@ const CustomInput = ({
           // --- Scroll-aware editable & focus guard ---
         />
       </View>
+      {!!error && <Text style={styles.fieldError}>{error}</Text>}
     </View>
   );
 };
@@ -105,6 +107,13 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
   const [secureText, setSecureText] = useState(true);
   const [secureConfirm, setSecureConfirm] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -158,18 +167,44 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
   const handleRegister = async () => {
     const { name, email, phone, password, confirmPassword } = formData;
 
-    if (!name || !email || !phone || !password || !confirmPassword) {
-      showAlert('خطأ', 'يرجى ملء جميع الحقول');
-      return;
+    const errors = {
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
+    };
+    let hasError = false;
+
+    if (!name) {
+      errors.name = 'يرجى إدخال الاسم الكامل';
+      hasError = true;
     }
-    if (password !== confirmPassword) {
-      showAlert('خطأ', 'كلمة المرور غير متطابقة');
-      return;
+    if (!email) {
+      errors.email = 'يرجى إدخال البريد الإلكتروني';
+      hasError = true;
     }
-    if (password.length < 6) {
-      showAlert('خطأ', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
-      return;
+    if (!phone) {
+      errors.phone = 'يرجى إدخال رقم الهاتف';
+      hasError = true;
     }
+    if (!password) {
+      errors.password = 'يرجى إدخال كلمة المرور';
+      hasError = true;
+    } else if (password.length < 6) {
+      errors.password = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+      hasError = true;
+    }
+    if (!confirmPassword) {
+      errors.confirmPassword = 'يرجى تأكيد كلمة المرور';
+      hasError = true;
+    } else if (password !== confirmPassword) {
+      errors.confirmPassword = 'كلمة المرور غير متطابقة';
+      hasError = true;
+    }
+
+    setFieldErrors(errors);
+    if (hasError) return;
 
     setLoading(true);
     try {
@@ -259,27 +294,33 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               placeholder="أدخل اسمك"
               icon="account-outline"
               value={formData.name}
-              onChangeText={(t: string) =>
-                setFormData({ ...formData, name: t })
-              }
+              onChangeText={(t: string) => {
+                setFormData(prev => ({ ...prev, name: t }));
+                if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: '' }));
+              }}
+              error={fieldErrors.name}
             />
             <CustomInput
               fieldLabel="البريد الإلكتروني"
               placeholder="أدخل بريدك الإلكتروني"
               icon="email-outline"
               value={formData.email}
-              onChangeText={(t: string) =>
-                setFormData({ ...formData, email: t })
-              }
+              onChangeText={(t: string) => {
+                setFormData(prev => ({ ...prev, email: t }));
+                if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
+              }}
+              error={fieldErrors.email}
             />
             <CustomInput
               fieldLabel="رقم الهاتف"
               placeholder="أدخل رقم هاتفك"
               icon="phone-outline"
               value={formData.phone}
-              onChangeText={(t: string) =>
-                setFormData({ ...formData, phone: t })
-              }
+              onChangeText={(t: string) => {
+                setFormData(prev => ({ ...prev, phone: t }));
+                if (fieldErrors.phone) setFieldErrors(prev => ({ ...prev, phone: '' }));
+              }}
+              error={fieldErrors.phone}
             />
             <CustomInput
               fieldLabel="كلمة المرور"
@@ -288,9 +329,11 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               secureText={secureText}
               setSecureText={setSecureText}
               value={formData.password}
-              onChangeText={(t: string) =>
-                setFormData({ ...formData, password: t })
-              }
+              onChangeText={(t: string) => {
+                setFormData(prev => ({ ...prev, password: t }));
+                if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: '' }));
+              }}
+              error={fieldErrors.password}
             />
             <CustomInput
               fieldLabel="تأكيد كلمة المرور"
@@ -299,9 +342,11 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               secureText={secureConfirm}
               setSecureText={setSecureConfirm}
               value={formData.confirmPassword}
-              onChangeText={(t: string) =>
-                setFormData({ ...formData, confirmPassword: t })
-              }
+              onChangeText={(t: string) => {
+                setFormData(prev => ({ ...prev, confirmPassword: t }));
+                if (fieldErrors.confirmPassword) setFieldErrors(prev => ({ ...prev, confirmPassword: '' }));
+              }}
+              error={fieldErrors.confirmPassword}
             />
 
             <TouchableOpacity
@@ -434,6 +479,12 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   inputWrapper: { marginBottom: 14 },
+  fieldError: {
+    color: '#E53935',
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'right',
+  },
   textInputContainer: {
     width: '100%',
     position: 'relative',
