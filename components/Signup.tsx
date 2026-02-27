@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,16 +9,17 @@ import {
   Platform,
   TouchableOpacity,
   Dimensions,
+  Keyboard,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import TextInputInteractive from 'react-native-text-input-interactive';
 import {
   Provider as PaperProvider,
   DefaultTheme,
   ActivityIndicator,
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import supabase from '../lib/supbase'; // ← استورد supabase
+import TextInputInteractive from 'react-native-text-input-interactive';
+import supabase from '../lib/supbase';
 import CustomAlert, { AlertButton } from './CustomAlert';
 
 type Props = { navigation: any };
@@ -40,34 +41,58 @@ const CustomInput = ({
   isPassword = false,
   secureText,
   setSecureText,
-}: any) => (
-  <View style={styles.inputWrapper}>
-    {!!fieldLabel && <Text style={styles.fieldLabel}>{fieldLabel}</Text>}
-    <TouchableOpacity
-      activeOpacity={1}
-      onPress={isPassword ? () => setSecureText(!secureText) : undefined}
-      style={styles.inputIconLeft}
-      accessibilityLabel={isPassword ? (secureText ? 'إظهار كلمة المرور' : 'إخفاء كلمة المرور') : fieldLabel}
-    >
-      <MaterialCommunityIcons
-        name={isPassword ? (secureText ? 'eye-off-outline' : 'eye-outline') : icon}
-        size={22}
-        color="#999"
-      />
-    </TouchableOpacity>
-    <TextInputInteractive
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={placeholder}
-      secureTextEntry={isPassword ? secureText : false}
-      textAlign="right"
-      style={{ width: '100%' }}
-      textInputStyle={[styles.inputStyle, { paddingLeft: 48 }]}
-      mainColor="#0A1124"
-      originalColor="#E8E8E8"
-    />
-  </View>
-);
+}: any) => {
+  return (
+    <View style={styles.inputWrapper}>
+      {!!fieldLabel && <Text style={styles.fieldLabel}>{fieldLabel}</Text>}
+
+      <View style={styles.textInputContainer}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={isPassword ? () => setSecureText(!secureText) : undefined}
+          style={styles.inputIconLeft}
+          accessibilityLabel={
+            isPassword
+              ? secureText
+                ? 'إظهار كلمة المرور'
+                : 'إخفاء كلمة المرور'
+              : fieldLabel
+          }
+        >
+          <MaterialCommunityIcons
+            name={
+              isPassword
+                ? secureText
+                  ? 'eye-off-outline'
+                  : 'eye-outline'
+                : icon
+            }
+            size={22}
+            color="#999"
+          />
+        </TouchableOpacity>
+
+        <TextInputInteractive
+          textInputStyle={styles.interactiveInput}
+          placeholder={placeholder}
+          value={value}
+          onChangeText={(text: string) => onChangeText(text.replace(/\n/g, ''))}
+          secureTextEntry={isPassword ? secureText : false}
+          mainColor="#0A1124"
+          originalColor="#E0E0E0"
+          animatedPlaceholderTextColor="#999"
+          enableIcon={false}
+          // --- THE SINGLE-LINE HACK (from first TextInput) ---
+          multiline={true}
+          returnKeyType="done"
+          textAlignVertical="center"
+          scrollEnabled={false}
+          // --- Scroll-aware editable & focus guard ---
+        />
+      </View>
+    </View>
+  );
+};
 
 const SignupUI: React.FC<Props> = ({ navigation }) => {
   const [formData, setFormData] = useState({
@@ -79,7 +104,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
   });
   const [secureText, setSecureText] = useState(true);
   const [secureConfirm, setSecureConfirm] = useState(true);
-  const [loading, setLoading] = useState(false); // ← loading state
+  const [loading, setLoading] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -88,6 +113,39 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
     buttons?: AlertButton[];
   }>({ visible: false, title: '' });
 
+  // --- Scroll State ---
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const handleScrollBegin = useCallback(() => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+  }, []);
+
+  const handleScrollEnd = useCallback(() => {
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  }, []);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => setKeyboardVisible(true),
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => setKeyboardVisible(false),
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
   const showAlert = (
     title: string,
     message?: string,
@@ -95,13 +153,11 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
     type: 'error' | 'warning' | 'success' | 'info' = 'error',
   ) => setAlertConfig({ visible: true, title, message, buttons, type });
 
-  const hideAlert = () =>
-    setAlertConfig(prev => ({ ...prev, visible: false }));
+  const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   const handleRegister = async () => {
     const { name, email, phone, password, confirmPassword } = formData;
 
-    // Validation
     if (!name || !email || !phone || !password || !confirmPassword) {
       showAlert('خطأ', 'يرجى ملء جميع الحقول');
       return;
@@ -117,13 +173,12 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
 
     setLoading(true);
     try {
-      // 1️⃣ سجّل اليوزر في Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            full_name: name, // ← بيانات إضافية في user_metadata
+            full_name: name,
             phone: phone,
           },
         },
@@ -132,7 +187,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
       if (error) {
         showAlert('خطأ في التسجيل', error.message);
       } else {
-        // 2️⃣ روح على ProfileCompletion وبعت userId معاه
         navigation.navigate('ProfileCompletion', {
           userId: data.user?.id,
           email,
@@ -186,110 +240,113 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <KeyboardAwareScrollView
+          onScrollBeginDrag={handleScrollBegin}
+          onMomentumScrollBegin={handleScrollBegin}
+          onMomentumScrollEnd={handleScrollEnd}
+          onScrollEndDrag={handleScrollEnd}
           contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
           bounces={false}
           showsVerticalScrollIndicator={false}
           overScrollMode="never"
-          decelerationRate="normal"
           enableOnAndroid={true}
-          extraScrollHeight={80}
-          keyboardOpeningTime={0}
+          enableResetScrollToCoords={false}
+          enableAutomaticScroll={Platform.OS === 'ios'}
         >
-            <View style={styles.formContainer} pointerEvents="box-none">
-              <CustomInput
-                fieldLabel="الاسم الكامل"
-                placeholder="أدخل اسمك"
-                icon="account-outline"
-                value={formData.name}
-                onChangeText={(t: string) =>
-                  setFormData({ ...formData, name: t })
-                }
-              />
-              <CustomInput
-                fieldLabel="البريد الإلكتروني"
-                placeholder="أدخل بريدك الإلكتروني"
-                icon="email-outline"
-                value={formData.email}
-                onChangeText={(t: string) =>
-                  setFormData({ ...formData, email: t })
-                }
-              />
-              <CustomInput
-                fieldLabel="رقم الهاتف"
-                placeholder="أدخل رقم هاتفك"
-                icon="phone-outline"
-                value={formData.phone}
-                onChangeText={(t: string) =>
-                  setFormData({ ...formData, phone: t })
-                }
-              />
-              <CustomInput
-                fieldLabel="كلمة المرور"
-                placeholder="6 أحرف على الأقل"
-                isPassword={true}
-                secureText={secureText}
-                setSecureText={setSecureText}
-                value={formData.password}
-                onChangeText={(t: string) =>
-                  setFormData({ ...formData, password: t })
-                }
-              />
-              <CustomInput
-                fieldLabel="تأكيد كلمة المرور"
-                placeholder="أعد إدخال كلمة المرور"
-                isPassword={true}
-                secureText={secureConfirm}
-                setSecureText={setSecureConfirm}
-                value={formData.confirmPassword}
-                onChangeText={(t: string) =>
-                  setFormData({ ...formData, confirmPassword: t })
-                }
-              />
+          <View style={styles.formContainer}>
+            <CustomInput
+              fieldLabel="الاسم الكامل"
+              placeholder="أدخل اسمك"
+              icon="account-outline"
+              value={formData.name}
+              onChangeText={(t: string) =>
+                setFormData({ ...formData, name: t })
+              }
+            />
+            <CustomInput
+              fieldLabel="البريد الإلكتروني"
+              placeholder="أدخل بريدك الإلكتروني"
+              icon="email-outline"
+              value={formData.email}
+              onChangeText={(t: string) =>
+                setFormData({ ...formData, email: t })
+              }
+            />
+            <CustomInput
+              fieldLabel="رقم الهاتف"
+              placeholder="أدخل رقم هاتفك"
+              icon="phone-outline"
+              value={formData.phone}
+              onChangeText={(t: string) =>
+                setFormData({ ...formData, phone: t })
+              }
+            />
+            <CustomInput
+              fieldLabel="كلمة المرور"
+              placeholder="6 أحرف على الأقل"
+              isPassword={true}
+              secureText={secureText}
+              setSecureText={setSecureText}
+              value={formData.password}
+              onChangeText={(t: string) =>
+                setFormData({ ...formData, password: t })
+              }
+            />
+            <CustomInput
+              fieldLabel="تأكيد كلمة المرور"
+              placeholder="أعد إدخال كلمة المرور"
+              isPassword={true}
+              secureText={secureConfirm}
+              setSecureText={setSecureConfirm}
+              value={formData.confirmPassword}
+              onChangeText={(t: string) =>
+                setFormData({ ...formData, confirmPassword: t })
+              }
+            />
 
-              <TouchableOpacity
-                style={styles.submitBtn}
-                activeOpacity={0.8}
-                onPress={handleRegister}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#FFF" />
-                ) : (
-                  <View style={styles.submitRow}>
-                    <MaterialCommunityIcons
-                      name="chevron-left"
-                      size={22}
-                      color="#FFF"
-                      style={styles.submitIcon}
-                    />
-                    <Text style={styles.submitText}>التالي</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.submitBtn}
+              activeOpacity={0.8}
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <View style={styles.submitRow}>
+                  <MaterialCommunityIcons
+                    name="chevron-left"
+                    size={22}
+                    color="#FFF"
+                    style={styles.submitIcon}
+                  />
+                  <Text style={styles.submitText}>التالي</Text>
+                </View>
+              )}
+            </TouchableOpacity>
 
-              <View style={styles.dividerRow}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>أو</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              <TouchableOpacity style={styles.googleButton}>
-                <Image
-                  source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
-                  style={styles.googleIcon}
-                />
-                <Text style={styles.googleText}>إنشاء حساب باستخدام جوجل</Text>
-              </TouchableOpacity>
-
-              <View style={styles.footerContainer}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                  <Text style={styles.footerLink}>تسجيل الدخول</Text>
-                </TouchableOpacity>
-                <Text style={styles.footerText}>لديك حساب بالفعل؟ </Text>
-              </View>
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>أو</Text>
+              <View style={styles.dividerLine} />
             </View>
-          </KeyboardAwareScrollView>
+
+            <TouchableOpacity style={styles.googleButton}>
+              <Image
+                source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
+                style={styles.googleIcon}
+              />
+              <Text style={styles.googleText}>إنشاء حساب باستخدام جوجل</Text>
+            </TouchableOpacity>
+
+            <View style={styles.footerContainer}>
+              <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Text style={styles.footerLink}>تسجيل الدخول</Text>
+              </TouchableOpacity>
+              <Text style={styles.footerText}>لديك حساب بالفعل؟ </Text>
+            </View>
+          </View>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
@@ -377,13 +434,17 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   inputWrapper: { marginBottom: 14 },
+  textInputContainer: {
+    width: '100%',
+    position: 'relative',
+    justifyContent: 'center',
+  },
   inputIconLeft: {
     position: 'absolute',
     left: 12,
-    bottom: 0,
     height: 54,
     justifyContent: 'center',
-    zIndex: 1,
+    zIndex: 2,
   },
   fieldLabel: {
     fontSize: 13,
@@ -392,7 +453,13 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     textAlign: 'right',
   },
-  inputStyle: { backgroundColor: '#FFF', height: 54, textAlign: 'right', borderRadius: 14, width: '100%' },
+  interactiveInput: {
+    textAlign: 'right',
+    paddingLeft: 48,
+    paddingRight: 16,
+    color: '#0A1124',
+    fontSize: 14,
+  },
   submitBtn: {
     backgroundColor: '#0A1124',
     height: 56,

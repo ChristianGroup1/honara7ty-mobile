@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 // EXPO_PUBLIC_SUPABASE_KEY=sb_publishable_FxT1TCTwcaDoc5twrn37Mw_nr3HpUeg
 
 const supabaseUrl = "https://pphbwecwwotrfqjyrsai.supabase.co";
-const supabaseAnonKey = "sb_publishable_FxT1TCTwcaDoc5twrn37Mw_nr3HpUeg";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwaGJ3ZWN3d290cmZxanlyc2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyMTkxNzIsImV4cCI6MjA4Mjc5NTE3Mn0.WzIqb_CoAny83-QgyAxK4SWm_-xqUrh_9dITbkA_MYQ";
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
