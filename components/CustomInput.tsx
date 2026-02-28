@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,12 +12,18 @@ import TextInputInteractive from 'react-native-text-input-interactive';
 interface Props {
   fieldLabel?: string;
   placeholder?: string;
-  value: string;
-  onChangeText?: (text: string) => void;
+  value: string; // real value
+  onChangeText?: (text: string) => void; // receives real value
   icon: string;
   isPassword?: boolean;
+
+  // when true => password is hidden (shows ***). when false => shows real text
   secureText?: boolean;
   setSecureText?: (val: boolean) => void;
+
+  // NEW: if true, we will mask with '*' manually and NOT use secureTextEntry
+  maskPasswordWithAsterisk?: boolean;
+
   error?: string;
   badge?: string;
   editable?: boolean;
@@ -35,6 +41,7 @@ const CustomInput: React.FC<Props> = ({
   isPassword = false,
   secureText = true,
   setSecureText,
+  maskPasswordWithAsterisk = false,
   error,
   badge,
   editable = true,
@@ -42,6 +49,52 @@ const CustomInput: React.FC<Props> = ({
   keyboardType,
   autoCapitalize,
 }) => {
+  const lastRealValueRef = useRef(value);
+  lastRealValueRef.current = value;
+
+  const isManualAsteriskMask = isPassword;
+
+  const displayValue = useMemo(() => {
+    if (!isManualAsteriskMask) return value;
+    return secureText ? '*'.repeat(value.length) : value;
+  }, [isManualAsteriskMask, secureText, value]);
+
+  const handleChangeText = (text: string) => {
+    if (!onChangeText) return;
+
+    // remove new lines always (your original behavior)
+    const cleaned = text.replace(/\n/g, '');
+
+    // normal input OR password visible => pass-through
+    if (!isManualAsteriskMask || !secureText) {
+      onChangeText(cleaned);
+      return;
+    }
+
+    // Manual '*' masking + hidden:
+    // We infer edits by comparing with the previous "display" (which was *****).
+    // This works best for typical typing/backspace at the end.
+    const prevReal = lastRealValueRef.current;
+    const prevDisplay = '*'.repeat(prevReal.length);
+
+    if (cleaned.length < prevDisplay.length) {
+      // user deleted characters (assume delete from end)
+      onChangeText(prevReal.slice(0, cleaned.length));
+      return;
+    }
+
+    if (cleaned.length > prevDisplay.length) {
+      // user added characters (assume typed/pasted at end)
+      const addedCount = cleaned.length - prevDisplay.length;
+      const added = cleaned.slice(-addedCount);
+      onChangeText(prevReal + added);
+      return;
+    }
+
+    // same length: ignore
+    onChangeText(prevReal);
+  };
+
   const inputArea = (
     <View style={styles.textInputContainer}>
       <TouchableOpacity
@@ -76,14 +129,15 @@ const CustomInput: React.FC<Props> = ({
           onPress ? { paddingRight: 48 } : {},
         ]}
         placeholder={placeholder}
-        value={value}
-        onChangeText={
-          onChangeText
-            ? (text: string) => onChangeText(text.replace(/\n/g, ''))
-            : undefined
-        }
+        value={displayValue}
+        onChangeText={handleChangeText}
         multiline={true}
-        secureTextEntry={isPassword ? secureText : false}
+        // IMPORTANT:
+        // - if manual mask => do NOT use secureTextEntry
+        // - else use native secureTextEntry
+        secureTextEntry={
+          isManualAsteriskMask ? false : isPassword ? secureText : false
+        }
         mainColor="#0A1124"
         originalColor="#E0E0E0"
         animatedPlaceholderTextColor="#999"
