@@ -1,5 +1,32 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
+# Supabase Configuration (Required)
+
+Before the **Reset Password** flow works end-to-end, you must configure the following in the
+[Supabase Dashboard](https://supabase.com/dashboard) for your project:
+
+## 1 — Add the app deep-link to Redirect URLs
+
+`Authentication` → `URL Configuration` → **Redirect URLs** → click **Add URL**
+
+```
+honara7ty://reset-password
+```
+
+Without this entry, Supabase ignores the `redirectTo` value sent by the app and falls back to
+the **Site URL** (which is `http://localhost:3000` by default), causing the email link to open
+a browser page instead of the app.
+
+## 2 — Update the Site URL (optional but recommended)
+
+`Authentication` → `URL Configuration` → **Site URL**
+
+Change `http://localhost:3000` to a real URL for your project (e.g. your production domain, or
+leave as-is for local development). This URL is only used as a fallback when no matching Redirect
+URL is found.
+
+---
+
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
