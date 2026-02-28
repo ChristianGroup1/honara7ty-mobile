@@ -23,7 +23,7 @@ import CustomInput from './CustomInput';
 type Props = { navigation: any };
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const GOLD = '#C9A84C';
+const GOLD = '#fdfcf9ff';
 const NAVY = '#0A1124';
 
 const theme = {
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   footerText: { color: '#888', fontSize: 14 },
-  footerLink: { color: GOLD, fontWeight: 'bold', fontSize: 14 },
+  footerLink: { color: '#0A1124', fontWeight: 'bold', fontSize: 14 },
 
   /* ── Success State ── */
   successBox: {

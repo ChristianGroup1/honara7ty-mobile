@@ -24,7 +24,7 @@ import CustomInput from './CustomInput';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const GOLD = '#C9A84C';
+const GOLD = '#fdfcf9ff';
 
 const theme = {
   ...DefaultTheme,
@@ -58,8 +58,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
     type: 'error' | 'warning' | 'success' | 'info' = 'error',
   ) => setAlertConfig({ visible: true, title, message, buttons, type });
 
-  const hideAlert = () =>
-    setAlertConfig(prev => ({ ...prev, visible: false }));
+  const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   // ✅ دالة حفظ البروفايل في Supabase
   const handleCreateAccount = async () => {
@@ -157,156 +156,155 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
           extraHeight={80}
           keyboardOpeningTime={0}
         >
-            <View style={styles.formContainer} pointerEvents="box-none">
+          <View style={styles.formContainer} pointerEvents="box-none">
+            {/* ── Section: معلومات الكنيسة ── */}
+            <View style={styles.sectionHeader}>
+              <MaterialCommunityIcons
+                name="church"
+                size={18}
+                color={GOLD}
+                style={styles.sectionIcon}
+              />
+              <Text style={styles.sectionTitle}>معلومات الكنيسة</Text>
+            </View>
 
-              {/* ── Section: معلومات الكنيسة ── */}
-              <View style={styles.sectionHeader}>
-                <MaterialCommunityIcons
-                  name="church"
-                  size={18}
-                  color={GOLD}
-                  style={styles.sectionIcon}
-                />
-                <Text style={styles.sectionTitle}>معلومات الكنيسة</Text>
+            <CustomInput
+              fieldLabel="الكنيسة"
+              placeholder="اسم الكنيسة"
+              icon="home-variant-outline"
+              badge="اختياري"
+              value={profileData.church}
+              onChangeText={(t: string) =>
+                setProfileData({ ...profileData, church: t })
+              }
+            />
+
+            <CustomInput
+              fieldLabel="الطائفة"
+              placeholder="اسم الطائفة"
+              icon="home-outline"
+              badge="اختياري"
+              value={profileData.sect}
+              onChangeText={(t: string) =>
+                setProfileData({ ...profileData, sect: t })
+              }
+            />
+
+            {/* ── Section: معلومات شخصية ── */}
+            <View style={styles.sectionHeader2}>
+              <MaterialCommunityIcons
+                name="account-details"
+                size={18}
+                color={GOLD}
+                style={styles.sectionIcon}
+              />
+              <Text style={styles.sectionTitle}>معلومات شخصية</Text>
+            </View>
+
+            {/* تاريخ الميلاد */}
+            <CustomInput
+              fieldLabel="تاريخ الميلاد"
+              placeholder="اضغط لاختيار التاريخ"
+              icon="calendar-blank-outline"
+              value={profileData.birthDate}
+              onPress={() => setShowDatePicker(true)}
+            />
+
+            {showDatePicker && (
+              <View style={styles.datePickerCard}>
+                <Text style={styles.datePickerTitle}>اختر تاريخ الميلاد</Text>
+                <View style={styles.datePickerRow}>
+                  {[
+                    { placeholder: 'اليوم', index: 0 },
+                    { placeholder: 'الشهر', index: 1 },
+                    { placeholder: 'السنة', index: 2 },
+                  ].map(({ placeholder, index }) => (
+                    <View key={index} style={styles.dateInputWrapper}>
+                      <Text style={styles.dateInputLabel}>{placeholder}</Text>
+                      <TextInputInteractive
+                        placeholder="--"
+                        keyboardType="numeric"
+                        textInputStyle={styles.dateInput}
+                        mainColor="#0A1124"
+                        originalColor="#E8E8E8"
+                        onChangeText={(t: string) => {
+                          const parts = profileData.birthDate.split('/');
+                          parts[index] = t;
+                          setProfileData({
+                            ...profileData,
+                            birthDate: parts.join('/'),
+                          });
+                        }}
+                      />
+                    </View>
+                  ))}
+                </View>
               </View>
+            )}
 
-              <CustomInput
-                fieldLabel="الكنيسة"
-                placeholder="اسم الكنيسة"
-                icon="home-variant-outline"
-                badge="اختياري"
-                value={profileData.church}
-                onChangeText={(t: string) =>
-                  setProfileData({ ...profileData, church: t })
-                }
-              />
-
-              <CustomInput
-                fieldLabel="الطائفة"
-                placeholder="اسم الطائفة"
-                icon="home-outline"
-                badge="اختياري"
-                value={profileData.sect}
-                onChangeText={(t: string) =>
-                  setProfileData({ ...profileData, sect: t })
-                }
-              />
-
-              {/* ── Section: معلومات شخصية ── */}
-              <View style={styles.sectionHeader2}>
-                <MaterialCommunityIcons
-                  name="account-details"
-                  size={18}
-                  color={GOLD}
-                  style={styles.sectionIcon}
-                />
-                <Text style={styles.sectionTitle}>معلومات شخصية</Text>
+            {/* الجنس – inline chips */}
+            <View style={styles.inputWrapper}>
+              <Text style={styles.fieldLabel}>الجنس</Text>
+              <View style={styles.genderRow}>
+                {[
+                  { label: 'ذكر', icon: 'gender-male' },
+                  { label: 'أنثى', icon: 'gender-female' },
+                ].map(({ label, icon }) => {
+                  const active = profileData.gender === label;
+                  return (
+                    <TouchableOpacity
+                      key={label}
+                      style={[
+                        styles.genderChip,
+                        active && styles.genderChipActive,
+                      ]}
+                      activeOpacity={0.7}
+                      onPress={() =>
+                        setProfileData({ ...profileData, gender: label })
+                      }
+                    >
+                      <MaterialCommunityIcons
+                        name={icon}
+                        size={22}
+                        color={active ? '#FFF' : '#666'}
+                      />
+                      <Text
+                        style={[
+                          styles.genderChipText,
+                          active && styles.genderChipTextActive,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
+            </View>
 
-              {/* تاريخ الميلاد */}
-              <CustomInput
-                fieldLabel="تاريخ الميلاد"
-                placeholder="اضغط لاختيار التاريخ"
-                icon="calendar-blank-outline"
-                value={profileData.birthDate}
-                onPress={() => setShowDatePicker(true)}
-              />
-
-              {showDatePicker && (
-                <View style={styles.datePickerCard}>
-                  <Text style={styles.datePickerTitle}>اختر تاريخ الميلاد</Text>
-                  <View style={styles.datePickerRow}>
-                    {[
-                      { placeholder: 'اليوم', index: 0 },
-                      { placeholder: 'الشهر', index: 1 },
-                      { placeholder: 'السنة', index: 2 },
-                    ].map(({ placeholder, index }) => (
-                      <View key={index} style={styles.dateInputWrapper}>
-                        <Text style={styles.dateInputLabel}>{placeholder}</Text>
-                        <TextInputInteractive
-                          placeholder="--"
-                          keyboardType="numeric"
-                          textInputStyle={styles.dateInput}
-                          mainColor="#0A1124"
-                          originalColor="#E8E8E8"
-                          onChangeText={(t: string) => {
-                            const parts = profileData.birthDate.split('/');
-                            parts[index] = t;
-                            setProfileData({
-                              ...profileData,
-                              birthDate: parts.join('/'),
-                            });
-                          }}
-                        />
-                      </View>
-                    ))}
-                  </View>
+            {/* زرار إنشاء الحساب */}
+            <TouchableOpacity
+              style={styles.submitBtn}
+              activeOpacity={0.8}
+              onPress={handleCreateAccount}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <View style={styles.submitRow}>
+                  <MaterialCommunityIcons
+                    name="check"
+                    size={22}
+                    color="#FFF"
+                    style={styles.submitIcon}
+                  />
+                  <Text style={styles.submitText}>إنشاء الحساب</Text>
                 </View>
               )}
-
-              {/* الجنس – inline chips */}
-              <View style={styles.inputWrapper}>
-                <Text style={styles.fieldLabel}>الجنس</Text>
-                <View style={styles.genderRow}>
-                  {[
-                    { label: 'ذكر', icon: 'gender-male' },
-                    { label: 'أنثى', icon: 'gender-female' },
-                  ].map(({ label, icon }) => {
-                    const active = profileData.gender === label;
-                    return (
-                      <TouchableOpacity
-                        key={label}
-                        style={[
-                          styles.genderChip,
-                          active && styles.genderChipActive,
-                        ]}
-                        activeOpacity={0.7}
-                        onPress={() =>
-                          setProfileData({ ...profileData, gender: label })
-                        }
-                      >
-                        <MaterialCommunityIcons
-                          name={icon}
-                          size={22}
-                          color={active ? '#FFF' : '#666'}
-                        />
-                        <Text
-                          style={[
-                            styles.genderChipText,
-                            active && styles.genderChipTextActive,
-                          ]}
-                        >
-                          {label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* زرار إنشاء الحساب */}
-              <TouchableOpacity
-                style={styles.submitBtn}
-                activeOpacity={0.8}
-                onPress={handleCreateAccount}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#FFF" />
-                ) : (
-                  <View style={styles.submitRow}>
-                    <MaterialCommunityIcons
-                      name="check"
-                      size={22}
-                      color="#FFF"
-                      style={styles.submitIcon}
-                    />
-                    <Text style={styles.submitText}>إنشاء الحساب</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
-          </KeyboardAwareScrollView>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
@@ -444,7 +442,12 @@ const styles = StyleSheet.create({
     color: '#888',
     marginBottom: 4,
   },
-  dateInput: { width: '100%', backgroundColor: '#FFF', height: 48, borderRadius: 10 },
+  dateInput: {
+    width: '100%',
+    backgroundColor: '#FFF',
+    height: 48,
+    borderRadius: 10,
+  },
   genderRow: {
     flexDirection: 'row-reverse',
     gap: 12,

@@ -61,8 +61,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     type: 'error' | 'warning' | 'success' | 'info' = 'error',
   ) => setAlertConfig({ visible: true, title, message, buttons, type });
 
-  const hideAlert = () =>
-    setAlertConfig(prev => ({ ...prev, visible: false }));
+  const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -149,11 +148,26 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        showAlert('تم الإلغاء', 'تم إلغاء عملية تسجيل الدخول.', undefined, 'warning');
+        showAlert(
+          'تم الإلغاء',
+          'تم إلغاء عملية تسجيل الدخول.',
+          undefined,
+          'warning',
+        );
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        showAlert('جاري تسجيل الدخول', 'عملية تسجيل الدخول جارية بالفعل.', undefined, 'warning');
+        showAlert(
+          'جاري تسجيل الدخول',
+          'عملية تسجيل الدخول جارية بالفعل.',
+          undefined,
+          'warning',
+        );
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        showAlert('خطأ', 'خدمات Google Play غير متاحة أو قديمة.', undefined, 'warning');
+        showAlert(
+          'خطأ',
+          'خدمات Google Play غير متاحة أو قديمة.',
+          undefined,
+          'warning',
+        );
       } else {
         showAlert('خطأ', error.message);
       }
@@ -162,7 +176,14 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
 
   if (initializing) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A1124' }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#0A1124',
+        }}
+      >
         <ActivityIndicator size="large" color="#ffffff" />
       </View>
     );
@@ -183,11 +204,13 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
           >
-            <MaterialCommunityIcons
-              name="chevron-left"
-              size={35}
-              color="white"
-            />
+            <View style={styles.backBtnCircle}>
+              <MaterialCommunityIcons
+                name="chevron-left"
+                size={28}
+                color="white"
+              />
+            </View>
           </TouchableOpacity>
           <Image
             source={require('../assets/images/logo.png')}
@@ -209,86 +232,90 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           extraHeight={80}
           keyboardOpeningTime={0}
         >
-            <View style={styles.formContainer} pointerEvents="box-none">
-              <CustomInput
-                fieldLabel="البريد الإلكتروني"
-                placeholder="أدخل بريدك الإلكتروني"
-                icon="account-outline"
-                value={email}
-                onChangeText={t => {
-                  setEmail(t);
-                  if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
-                }}
-                error={fieldErrors.email}
-              />
+          <View style={styles.formContainer} pointerEvents="box-none">
+            <CustomInput
+              fieldLabel="البريد الإلكتروني"
+              placeholder="أدخل بريدك الإلكتروني"
+              icon="account-outline"
+              value={email}
+              onChangeText={t => {
+                setEmail(t);
+                if (fieldErrors.email)
+                  setFieldErrors(prev => ({ ...prev, email: '' }));
+              }}
+              error={fieldErrors.email}
+            />
 
-              <CustomInput
-                fieldLabel="كلمة المرور"
-                placeholder="أدخل كلمة المرور"
-                icon="lock-outline"
-                isPassword={true}
-                secureText={secureText}
-                setSecureText={setSecureText}
-                value={password}
-                onChangeText={t => {
-                  setPassword(t);
-                  if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: '' }));
-                }}
-                error={fieldErrors.password}
-              />
+            <CustomInput
+              fieldLabel="كلمة المرور  "
+              placeholder="أدخل كلمة المرور"
+              icon="lock-outline"
+              isPassword={true}
+              secureText={secureText}
+              setSecureText={setSecureText}
+              value={password}
+              onChangeText={t => {
+                setPassword(t);
+                if (fieldErrors.password)
+                  setFieldErrors(prev => ({ ...prev, password: '' }));
+              }}
+              error={fieldErrors.password}
+            />
 
-              {/* قسم "تذكرني" و "نسيت كلمة المرور" */}
-              <View style={styles.extraOptions}>
-                <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-                  <Text style={styles.forgotPasswordText}>
-                    نسيت كلمه المرور ؟
-                  </Text>
-                </TouchableOpacity>
-
-                <View style={styles.rememberMeRow}>
-                  <Text style={styles.rememberMeText}>ذكرني</Text>
-                  <Checkbox
-                    status={rememberMe ? 'checked' : 'unchecked'}
-                    onPress={() => setRememberMe(!rememberMe)}
-                    color="#0A1124"
-                  />
-                </View>
-              </View>
-
+            {/* قسم "تذكرني" و "نسيت كلمة المرور" */}
+            <View style={styles.extraOptions}>
               <TouchableOpacity
-                style={styles.submitBtn}
-                onPress={handleLogin}
-                disabled={loading}
-                activeOpacity={0.8}
+                onPress={() => navigation.navigate('ForgotPassword')}
               >
-                {loading ? (
-                  <ActivityIndicator color="#FFF" />
-                ) : (
-                  <Text style={styles.submitText}>تسجيل الدخول</Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.googleButton}
-                onPress={handleGoogleSignIn}
-              >
-                <Image
-                  source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
-                  style={styles.googleIcon}
-                />
-                <Text style={styles.googleText}>
-                  تسجيل الدخول باستخدام جوجل
+                <Text style={styles.forgotPasswordText}>
+                  نسيت كلمه المرور ؟
                 </Text>
               </TouchableOpacity>
 
-              <View style={styles.footerContainer}>
-                <TouchableOpacity onPress={() => navigation.navigate('SignupStep1')}>
-                  <Text style={styles.footerLink}>إنشاء حساب جديد</Text>
-                </TouchableOpacity>
-                <Text style={styles.footerText}>ليس لديك حساب؟ </Text>
+              <View style={styles.rememberMeRow}>
+                <Text style={styles.rememberMeText}>ذكرني</Text>
+                <Checkbox
+                  status={rememberMe ? 'checked' : 'unchecked'}
+                  onPress={() => setRememberMe(!rememberMe)}
+                  color="#0A1124"
+                />
               </View>
             </View>
-          </KeyboardAwareScrollView>
+
+            <TouchableOpacity
+              style={styles.submitBtn}
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.submitText}>تسجيل الدخول</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleSignIn}
+            >
+              <Image
+                source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
+                style={styles.googleIcon}
+              />
+              <Text style={styles.googleText}>تسجيل الدخول باستخدام جوجل</Text>
+            </TouchableOpacity>
+
+            <View style={styles.footerContainer}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SignupStep1')}
+              >
+                <Text style={styles.footerLink}>إنشاء حساب جديد</Text>
+              </TouchableOpacity>
+              <Text style={styles.footerText}>ليس لديك حساب؟ </Text>
+            </View>
+          </View>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
@@ -352,7 +379,14 @@ const styles = StyleSheet.create({
   },
   googleIcon: { width: 20, height: 20, marginLeft: 12 },
   googleText: { fontSize: 15, color: '#444' },
-
+  backBtnCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   footerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',

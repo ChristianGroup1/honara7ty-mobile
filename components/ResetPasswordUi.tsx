@@ -23,7 +23,7 @@ import CustomInput from './CustomInput';
 type Props = { navigation: any };
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const GOLD = '#C9A84C';
+const GOLD = '#fdfcf9ff';
 const NAVY = '#0A1124';
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -55,8 +55,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
     type: 'error' | 'warning' | 'success' | 'info' = 'error',
   ) => setAlertConfig({ visible: true, title, message, buttons, type });
 
-  const hideAlert = () =>
-    setAlertConfig(prev => ({ ...prev, visible: false }));
+  const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   const handleUpdate = async () => {
     const errors = { password: '', confirm: '' };
@@ -134,107 +133,108 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
           extraHeight={80}
           keyboardOpeningTime={0}
         >
-            <View style={styles.formContainer} pointerEvents="box-none">
-              {done ? (
-                /* ── Success State ── */
-                <View style={styles.successBox}>
-                  <View style={styles.successIconCircle}>
+          <View style={styles.formContainer} pointerEvents="box-none">
+            {done ? (
+              /* ── Success State ── */
+              <View style={styles.successBox}>
+                <View style={styles.successIconCircle}>
+                  <MaterialCommunityIcons
+                    name="shield-check-outline"
+                    size={52}
+                    color={GOLD}
+                  />
+                </View>
+                <Text style={styles.successTitle}>تم بنجاح!</Text>
+                <Text style={styles.successMessage}>
+                  تم تعيين كلمة مرورك الجديدة بنجاح. يمكنك الآن تسجيل الدخول
+                  باستخدامها.
+                </Text>
+                <TouchableOpacity
+                  style={styles.submitBtn}
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('Login')}
+                >
+                  <View style={styles.submitRow}>
                     <MaterialCommunityIcons
-                      name="shield-check-outline"
-                      size={52}
-                      color={GOLD}
+                      name="login"
+                      size={20}
+                      color="#FFF"
+                      style={styles.submitIcon}
                     />
+                    <Text style={styles.submitText}>تسجيل الدخول</Text>
                   </View>
-                  <Text style={styles.successTitle}>تم بنجاح!</Text>
-                  <Text style={styles.successMessage}>
-                    تم تعيين كلمة مرورك الجديدة بنجاح. يمكنك الآن تسجيل
-                    الدخول باستخدامها.
+                </TouchableOpacity>
+              </View>
+            ) : (
+              /* ── Form ── */
+              <>
+                <CustomInput
+                  fieldLabel="كلمة المرور الجديدة "
+                  placeholder="••••••••"
+                  icon="lock-outline"
+                  isPassword={true}
+                  secureText={securePassword}
+                  setSecureText={setSecurePassword}
+                  value={password}
+                  onChangeText={t => {
+                    setPassword(t);
+                    if (fieldErrors.password)
+                      setFieldErrors(prev => ({ ...prev, password: '' }));
+                  }}
+                  error={fieldErrors.password}
+                />
+
+                <CustomInput
+                  fieldLabel="تأكيد كلمة المرور "
+                  placeholder="••••••••"
+                  icon="lock-check-outline"
+                  isPassword={true}
+                  secureText={secureConfirm}
+                  setSecureText={setSecureConfirm}
+                  value={confirm}
+                  onChangeText={t => {
+                    setConfirm(t);
+                    if (fieldErrors.confirm)
+                      setFieldErrors(prev => ({ ...prev, confirm: '' }));
+                  }}
+                  error={fieldErrors.confirm}
+                />
+
+                <View style={styles.hintRow}>
+                  <MaterialCommunityIcons
+                    name="information-outline"
+                    size={14}
+                    color="#AAA"
+                  />
+                  <Text style={styles.hintText}>
+                    كلمة المرور يجب أن تكون {MIN_PASSWORD_LENGTH} أحرف على الأقل
                   </Text>
-                  <TouchableOpacity
-                    style={styles.submitBtn}
-                    activeOpacity={0.8}
-                    onPress={() => navigation.navigate('Login')}
-                  >
+                </View>
+
+                <TouchableOpacity
+                  style={styles.submitBtn}
+                  activeOpacity={0.8}
+                  onPress={handleUpdate}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#FFF" />
+                  ) : (
                     <View style={styles.submitRow}>
                       <MaterialCommunityIcons
-                        name="login"
+                        name="check-bold"
                         size={20}
                         color="#FFF"
                         style={styles.submitIcon}
                       />
-                      <Text style={styles.submitText}>تسجيل الدخول</Text>
+                      <Text style={styles.submitText}>تعيين كلمة المرور</Text>
                     </View>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                /* ── Form ── */
-                <>
-                  <CustomInput
-                    fieldLabel="كلمة المرور الجديدة"
-                    placeholder="••••••••"
-                    icon="lock-outline"
-                    isPassword={true}
-                    secureText={securePassword}
-                    setSecureText={setSecurePassword}
-                    value={password}
-                    onChangeText={t => {
-                      setPassword(t);
-                      if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: '' }));
-                    }}
-                    error={fieldErrors.password}
-                  />
-
-                  <CustomInput
-                    fieldLabel="تأكيد كلمة المرور"
-                    placeholder="••••••••"
-                    icon="lock-check-outline"
-                    isPassword={true}
-                    secureText={secureConfirm}
-                    setSecureText={setSecureConfirm}
-                    value={confirm}
-                    onChangeText={t => {
-                      setConfirm(t);
-                      if (fieldErrors.confirm) setFieldErrors(prev => ({ ...prev, confirm: '' }));
-                    }}
-                    error={fieldErrors.confirm}
-                  />
-
-                  <View style={styles.hintRow}>
-                    <MaterialCommunityIcons
-                      name="information-outline"
-                      size={14}
-                      color="#AAA"
-                    />
-                    <Text style={styles.hintText}>
-                      كلمة المرور يجب أن تكون {MIN_PASSWORD_LENGTH} أحرف على
-                      الأقل
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.submitBtn}
-                    activeOpacity={0.8}
-                    onPress={handleUpdate}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <ActivityIndicator color="#FFF" />
-                    ) : (
-                      <View style={styles.submitRow}>
-                        <MaterialCommunityIcons
-                          name="check-bold"
-                          size={20}
-                          color="#FFF"
-                          style={styles.submitIcon}
-                        />
-                        <Text style={styles.submitText}>تعيين كلمة المرور</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          </KeyboardAwareScrollView>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>

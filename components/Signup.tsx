@@ -25,7 +25,7 @@ import CustomInput from './CustomInput';
 type Props = { navigation: any };
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const GOLD = '#C9A84C';
+const GOLD = '#fdfcf9ff';
 
 const theme = {
   ...DefaultTheme,
@@ -232,7 +232,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               value={formData.name}
               onChangeText={(t: string) => {
                 setFormData(prev => ({ ...prev, name: t }));
-                if (fieldErrors.name) setFieldErrors(prev => ({ ...prev, name: '' }));
+                if (fieldErrors.name)
+                  setFieldErrors(prev => ({ ...prev, name: '' }));
               }}
               error={fieldErrors.name}
             />
@@ -243,7 +244,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               value={formData.email}
               onChangeText={(t: string) => {
                 setFormData(prev => ({ ...prev, email: t }));
-                if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: '' }));
+                if (fieldErrors.email)
+                  setFieldErrors(prev => ({ ...prev, email: '' }));
               }}
               error={fieldErrors.email}
             />
@@ -254,12 +256,13 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               value={formData.phone}
               onChangeText={(t: string) => {
                 setFormData(prev => ({ ...prev, phone: t }));
-                if (fieldErrors.phone) setFieldErrors(prev => ({ ...prev, phone: '' }));
+                if (fieldErrors.phone)
+                  setFieldErrors(prev => ({ ...prev, phone: '' }));
               }}
               error={fieldErrors.phone}
             />
             <CustomInput
-              fieldLabel="كلمة المرور"
+              fieldLabel="كلمة المرور "
               placeholder="6 أحرف على الأقل"
               icon="lock-outline"
               isPassword={true}
@@ -268,12 +271,13 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               value={formData.password}
               onChangeText={(t: string) => {
                 setFormData(prev => ({ ...prev, password: t }));
-                if (fieldErrors.password) setFieldErrors(prev => ({ ...prev, password: '' }));
+                if (fieldErrors.password)
+                  setFieldErrors(prev => ({ ...prev, password: '' }));
               }}
               error={fieldErrors.password}
             />
             <CustomInput
-              fieldLabel="تأكيد كلمة المرور"
+              fieldLabel="تأكيد كلمة المرور "
               placeholder="أعد إدخال كلمة المرور"
               icon="lock-check-outline"
               isPassword={true}
@@ -282,7 +286,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               value={formData.confirmPassword}
               onChangeText={(t: string) => {
                 setFormData(prev => ({ ...prev, confirmPassword: t }));
-                if (fieldErrors.confirmPassword) setFieldErrors(prev => ({ ...prev, confirmPassword: '' }));
+                if (fieldErrors.confirmPassword)
+                  setFieldErrors(prev => ({ ...prev, confirmPassword: '' }));
               }}
               error={fieldErrors.confirmPassword}
             />
@@ -475,7 +480,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   footerText: { color: '#888', fontSize: 14 },
-  footerLink: { color: GOLD, fontWeight: 'bold', fontSize: 14 },
+  footerLink: { color: '#0A1124', fontWeight: 'bold', fontSize: 14 },
 });
 
 export default SignupUI;
