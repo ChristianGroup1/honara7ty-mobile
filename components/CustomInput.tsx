@@ -68,6 +68,7 @@ const CustomInput: React.FC<Props> = ({
       </TouchableOpacity>
 
       <TextInputInteractive
+        style={{ width: '100%' }}
         textInputStyle={[
           styles.interactiveInput,
           onPress ? { paddingRight: 48 } : {},
@@ -171,6 +172,10 @@ const styles = StyleSheet.create({
     paddingRight: 16,
     color: '#0A1124',
     fontSize: 14,
+    backgroundColor: '#FFF',
+    height: 54,
+    borderRadius: 14,
+    width: '100%',
   },
   fieldError: {
     color: '#E53935',
