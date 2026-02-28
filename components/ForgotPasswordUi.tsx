@@ -51,8 +51,7 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
     type: 'error' | 'warning' | 'success' | 'info' = 'error',
   ) => setAlertConfig({ visible: true, title, message, buttons, type });
 
-  const hideAlert = () =>
-    setAlertConfig(prev => ({ ...prev, visible: false }));
+  const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   const handleSend = async () => {
     const trimmed = email.trim();
@@ -110,11 +109,7 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
           </TouchableOpacity>
 
           <View style={styles.iconCircleHeader}>
-            <MaterialCommunityIcons
-              name="lock-reset"
-              size={38}
-              color={GOLD}
-            />
+            <MaterialCommunityIcons name="lock-reset" size={38} color={GOLD} />
           </View>
 
           <Text style={styles.title}>نسيت كلمة المرور؟</Text>
@@ -138,111 +133,113 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
           extraHeight={80}
           keyboardOpeningTime={0}
         >
-            <View style={styles.formContainer} pointerEvents="box-none">
-              {sent ? (
-                /* ── Success State ── */
-                <View style={styles.successBox}>
-                  <View style={styles.successIconCircle}>
+          <View style={styles.formContainer} pointerEvents="box-none">
+            {sent ? (
+              /* ── Success State ── */
+              <View style={styles.successBox}>
+                <View style={styles.successIconCircle}>
+                  <MaterialCommunityIcons
+                    name="email-check-outline"
+                    size={52}
+                    color={GOLD}
+                  />
+                </View>
+
+                <Text style={styles.successTitle}>تحقق من بريدك!</Text>
+                <Text style={styles.successMessage}>
+                  لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى:
+                </Text>
+                <View style={styles.emailBadge}>
+                  <MaterialCommunityIcons
+                    name="email-outline"
+                    size={16}
+                    color={NAVY}
+                    style={styles.emailBadgeIcon}
+                  />
+                  <Text style={styles.emailBadgeText}>{email.trim()}</Text>
+                </View>
+
+                <Text style={styles.successHint}>
+                  إذا لم تجد الرسالة، تحقق من مجلد الرسائل غير المرغوب فيها.
+                </Text>
+
+                <TouchableOpacity
+                  style={styles.resendBtn}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    setSent(false);
+                    setEmail('');
+                  }}
+                >
+                  <Text style={styles.resendText}>إرسال مرة أخرى</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.submitBtn}
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('Login')}
+                >
+                  <View style={styles.submitRow}>
                     <MaterialCommunityIcons
-                      name="email-check-outline"
-                      size={52}
-                      color={GOLD}
+                      name="chevron-left"
+                      size={22}
+                      color="#FFF"
+                      style={styles.submitIcon}
                     />
+                    <Text style={styles.submitText}>العودة لتسجيل الدخول</Text>
                   </View>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              /* ── Email Input State ── */
+              <>
+                <CustomInput
+                  fieldLabel="البريد الإلكتروني"
+                  icon="email-outline"
+                  placeholder="أدخل بريدك الإلكتروني"
+                  value={email}
+                  onChangeText={t => {
+                    setEmail(t);
+                    if (emailError) setEmailError('');
+                  }}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  error={emailError}
+                />
 
-                  <Text style={styles.successTitle}>تحقق من بريدك!</Text>
-                  <Text style={styles.successMessage}>
-                    لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى:
-                  </Text>
-                  <View style={styles.emailBadge}>
-                    <MaterialCommunityIcons
-                      name="email-outline"
-                      size={16}
-                      color={NAVY}
-                      style={styles.emailBadgeIcon}
-                    />
-                    <Text style={styles.emailBadgeText}>{email.trim()}</Text>
-                  </View>
-
-                  <Text style={styles.successHint}>
-                    إذا لم تجد الرسالة، تحقق من مجلد الرسائل غير المرغوب فيها.
-                  </Text>
-
-                  <TouchableOpacity
-                    style={styles.resendBtn}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      setSent(false);
-                      setEmail('');
-                    }}
-                  >
-                    <Text style={styles.resendText}>إرسال مرة أخرى</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.submitBtn}
-                    activeOpacity={0.8}
-                    onPress={() => navigation.navigate('Login')}
-                  >
+                <TouchableOpacity
+                  style={styles.submitBtn}
+                  activeOpacity={0.8}
+                  onPress={handleSend}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#FFF" />
+                  ) : (
                     <View style={styles.submitRow}>
                       <MaterialCommunityIcons
-                        name="chevron-left"
-                        size={22}
+                        name="send"
+                        size={20}
                         color="#FFF"
                         style={styles.submitIcon}
                       />
-                      <Text style={styles.submitText}>العودة لتسجيل الدخول</Text>
+                      <Text style={styles.submitText}>
+                        إرسال رابط الاستعادة
+                      </Text>
                     </View>
+                  )}
+                </TouchableOpacity>
+
+                <View style={styles.footerContainer}>
+                  <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Text style={styles.footerLink}>تسجيل الدخول</Text>
                   </TouchableOpacity>
+                  <Text style={styles.footerText}>تذكرت كلمة المرور؟ </Text>
                 </View>
-              ) : (
-                /* ── Email Input State ── */
-                <>
-                  <CustomInput
-                    fieldLabel="البريد الإلكتروني"
-                    placeholder="example@email.com"
-                    icon="email-outline"
-                    value={email}
-                    onChangeText={t => {
-                      setEmail(t);
-                      if (emailError) setEmailError('');
-                    }}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    error={emailError}
-                  />
-
-                  <TouchableOpacity
-                    style={styles.submitBtn}
-                    activeOpacity={0.8}
-                    onPress={handleSend}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <ActivityIndicator color="#FFF" />
-                    ) : (
-                      <View style={styles.submitRow}>
-                        <MaterialCommunityIcons
-                          name="send"
-                          size={20}
-                          color="#FFF"
-                          style={styles.submitIcon}
-                        />
-                        <Text style={styles.submitText}>إرسال رابط الاستعادة</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-
-                  <View style={styles.footerContainer}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
-                      <Text style={styles.footerLink}>تسجيل الدخول</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.footerText}>تذكرت كلمة المرور؟ </Text>
-                  </View>
-                </>
-              )}
-            </View>
-          </KeyboardAwareScrollView>
+              </>
+            )}
+          </View>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
