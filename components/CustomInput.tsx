@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, KeyboardTypeOptions } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  KeyboardTypeOptions,
+} from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import TextInputInteractive from 'react-native-text-input-interactive';
 
@@ -56,11 +62,7 @@ const CustomInput: React.FC<Props> = ({
       >
         <MaterialCommunityIcons
           name={
-            isPassword
-              ? secureText
-                ? 'eye-off-outline'
-                : 'eye-outline'
-              : icon
+            isPassword ? (secureText ? 'eye-off-outline' : 'eye-outline') : icon
           }
           size={22}
           color="#999"
@@ -80,6 +82,7 @@ const CustomInput: React.FC<Props> = ({
             ? (text: string) => onChangeText(text.replace(/\n/g, ''))
             : undefined
         }
+        multiline={true}
         secureTextEntry={isPassword ? secureText : false}
         mainColor="#0A1124"
         originalColor="#E0E0E0"
@@ -109,9 +112,7 @@ const CustomInput: React.FC<Props> = ({
     <View style={styles.inputWrapper}>
       {(!!fieldLabel || !!badge) && (
         <View style={styles.fieldLabelRow}>
-          {!!fieldLabel && (
-            <Text style={styles.fieldLabel}>{fieldLabel}</Text>
-          )}
+          {!!fieldLabel && <Text style={styles.fieldLabel}>{fieldLabel}</Text>}
           {!!badge && <Text style={styles.optionalBadge}>{badge}</Text>}
         </View>
       )}
