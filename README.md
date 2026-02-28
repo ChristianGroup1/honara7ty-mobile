@@ -17,7 +17,23 @@ Without this entry, Supabase ignores the `redirectTo` value sent by the app and 
 the **Site URL** (which is `http://localhost:3000` by default), causing the email link to open
 a browser page instead of the app.
 
-## 2 — Update the Site URL (optional but recommended)
+## 2 — Apply the Reset Password email template
+
+`Authentication` → `Email Templates` → **Reset Password**
+
+1. Open `supabase/email-templates/reset-password.html` in this repository.
+2. Copy the **entire file contents**.
+3. In the Supabase Dashboard, clear the existing template body and paste the copied HTML.
+4. Set the **Subject** field to:
+   ```
+   إعادة تعيين كلمة المرور – هنار حتي
+   ```
+5. Click **Save**.
+
+The template uses the `{{ .ConfirmationURL }}` variable which Supabase replaces automatically
+with the one-time reset link.
+
+## 3 — Update the Site URL (optional but recommended)
 
 `Authentication` → `URL Configuration` → **Site URL**
 
