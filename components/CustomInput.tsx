@@ -96,10 +96,8 @@ const CustomInput: React.FC<Props> = ({
               )
             : undefined
         }
-        multiline={true}
         returnKeyType="done"
         textAlignVertical="center"
-        scrollEnabled={false}
         editable={editable && !onPress}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize}
