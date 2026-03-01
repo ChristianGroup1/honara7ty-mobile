@@ -197,7 +197,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
               <MaterialCommunityIcons
                 name="church"
                 size={18}
-                color={GOLD}
+                color={theme.colors.primary}
                 style={styles.sectionIcon}
               />
               <Text style={styles.sectionTitle}>معلومات الكنيسة</Text>
@@ -230,7 +230,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
               <MaterialCommunityIcons
                 name="account-details"
                 size={18}
-                color={GOLD}
+                color={theme.colors.primary}
                 style={styles.sectionIcon}
               />
               <Text style={styles.sectionTitle}>معلومات شخصية</Text>
@@ -257,7 +257,9 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
                   <View style={styles.pickerSheet}>
                     <View style={styles.pickerHandle} />
                     <View style={styles.pickerHeader}>
-                      <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                      <TouchableOpacity
+                        onPress={() => setShowDatePicker(false)}
+                      >
                         <Text style={styles.pickerCancelText}>إلغاء</Text>
                       </TouchableOpacity>
                       <Text style={styles.pickerTitle}>تاريخ الميلاد</Text>
