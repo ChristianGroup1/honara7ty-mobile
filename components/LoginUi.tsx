@@ -20,11 +20,11 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
+import { localizeAuthError } from '../lib/authErrors';
 import {
   GoogleSignin,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { useNavigation } from '@react-navigation/native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -42,7 +42,6 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
-  const navigation2 = useNavigation();
   const [loading, setLoading] = useState(false); // Login action loading state
   const [initializing, setInitializing] = useState(true); // Initial Google check
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
@@ -88,18 +87,6 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     } finally {
       setInitializing(false); // Hide loader after checking
     }
-  };
-
-  const localizeAuthError = (message: string): string => {
-    if (/invalid login credentials/i.test(message))
-      return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
-    if (/email not confirmed/i.test(message))
-      return 'يرجى تأكيد بريدك الإلكتروني أولاً';
-    if (/too many requests/i.test(message))
-      return 'محاولات كثيرة، يرجى الانتظار قليلاً والمحاولة مجدداً';
-    if (/user not found/i.test(message))
-      return 'لا يوجد حساب مرتبط بهذا البريد الإلكتروني';
-    return message;
   };
 
   const handleLogin = async () => {
@@ -252,7 +239,9 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
             <CustomInput
               fieldLabel="البريد الإلكتروني"
               placeholder="أدخل بريدك الإلكتروني"
-              icon="account-outline"
+              icon="email-outline"
+              keyboardType="email-address"
+              autoCapitalize="none"
               value={email}
               onChangeText={t => {
                 setEmail(t);

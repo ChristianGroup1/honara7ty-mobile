@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,7 +9,6 @@ import {
   Platform,
   TouchableOpacity,
   Dimensions,
-  Keyboard,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import {
@@ -19,6 +18,7 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
+import { localizeAuthError, MIN_PASSWORD_LENGTH } from '../lib/authErrors';
 import {
   GoogleSignin,
   statusCodes,
@@ -32,7 +32,6 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const GOLD = '#fdfcf9ff';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^\+?[0-9]{9,15}$/;
-const MIN_PASSWORD_LENGTH = 8;
 
 const theme = {
   ...DefaultTheme,
@@ -65,39 +64,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
     buttons?: AlertButton[];
   }>({ visible: false, title: '' });
 
-  // --- Scroll State ---
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
-
-  const handleScrollBegin = useCallback(() => {
-    setIsScrolling(true);
-    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-  }, []);
-
-  const handleScrollEnd = useCallback(() => {
-    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-    scrollTimeout.current = setTimeout(() => {
-      setIsScrolling(false);
-    }, 150);
-  }, []);
-
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => setKeyboardVisible(true),
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => setKeyboardVisible(false),
-    );
-
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
-  }, []);
-
   const showAlert = (
     title: string,
     message?: string,
@@ -106,18 +72,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
   ) => setAlertConfig({ visible: true, title, message, buttons, type });
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
-
-  const localizeAuthError = (message: string): string => {
-    if (/user already registered/i.test(message))
-      return 'هذا البريد الإلكتروني مسجل مسبقاً';
-    if (/email already in use/i.test(message))
-      return 'هذا البريد الإلكتروني مستخدم بالفعل';
-    if (/too many requests/i.test(message))
-      return 'محاولات كثيرة، يرجى الانتظار قليلاً والمحاولة مجدداً';
-    if (/password should be at least/i.test(message))
-      return `كلمة المرور يجب أن تكون ${MIN_PASSWORD_LENGTH} أحرف على الأقل`;
-    return message;
-  };
 
   const handleRegister = async () => {
     const trimmedName = formData.name.trim();
@@ -271,10 +225,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <KeyboardAwareScrollView
-          onScrollBeginDrag={handleScrollBegin}
-          onMomentumScrollBegin={handleScrollBegin}
-          onMomentumScrollEnd={handleScrollEnd}
-          onScrollEndDrag={handleScrollEnd}
           contentContainerStyle={styles.scrollContainer}
           keyboardShouldPersistTaps="always"
           bounces={false}
@@ -301,6 +251,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               fieldLabel="البريد الإلكتروني"
               placeholder="أدخل بريدك الإلكتروني"
               icon="email-outline"
+              keyboardType="email-address"
+              autoCapitalize="none"
               value={formData.email}
               onChangeText={(t: string) => {
                 setFormData(prev => ({ ...prev, email: t }));
@@ -313,6 +265,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               fieldLabel="رقم الهاتف"
               placeholder="أدخل رقم هاتفك"
               icon="phone-outline"
+              keyboardType="phone-pad"
               value={formData.phone}
               onChangeText={(t: string) => {
                 setFormData(prev => ({ ...prev, phone: t }));

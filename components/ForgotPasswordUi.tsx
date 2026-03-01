@@ -17,6 +17,7 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
+import { localizeAuthError } from '../lib/authErrors';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import CustomInput from './CustomInput';
 
@@ -72,12 +73,12 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
         redirectTo: 'honara7ty://reset-password',
       });
       if (error) {
-        showAlert('خطأ', error.message);
+        showAlert('خطأ', localizeAuthError(error.message));
       } else {
         setSent(true);
       }
     } catch (err: any) {
-      showAlert('خطأ', err.message);
+      showAlert('خطأ', localizeAuthError(err.message));
     } finally {
       setLoading(false);
     }
