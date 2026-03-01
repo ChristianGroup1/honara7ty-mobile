@@ -4,6 +4,11 @@
 export const MIN_PASSWORD_LENGTH = 8;
 
 /**
+ * Shared email format regex used across all auth screens.
+ */
+export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
  * Translates common Supabase auth error messages to Arabic.
  */
 export const localizeAuthError = (message: string): string => {
@@ -24,7 +29,7 @@ export const localizeAuthError = (message: string): string => {
   if (/same password/i.test(message))
     return 'كلمة المرور الجديدة يجب أن تختلف عن القديمة';
   if (/token has expired|jwt expired|invalid token|invalid refresh token/i.test(message))
-    return 'رابط إعادة التعيين غير صالح أو منتهي الصلاحية';
+    return 'الرمز غير صالح أو منتهي الصلاحية';
   if (/invalid email/i.test(message))
     return 'يرجى إدخال بريد إلكتروني صحيح';
   return message;

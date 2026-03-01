@@ -18,7 +18,7 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
-import { localizeAuthError, MIN_PASSWORD_LENGTH } from '../lib/authErrors';
+import { localizeAuthError, MIN_PASSWORD_LENGTH, EMAIL_REGEX } from '../lib/authErrors';
 import {
   GoogleSignin,
   statusCodes,
@@ -30,7 +30,6 @@ type Props = { navigation: any };
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const GOLD = '#fdfcf9ff';
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^\+?[0-9]{9,15}$/;
 
 const theme = {

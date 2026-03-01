@@ -20,7 +20,7 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
-import { localizeAuthError } from '../lib/authErrors';
+import { localizeAuthError, EMAIL_REGEX } from '../lib/authErrors';
 import {
   GoogleSignin,
   statusCodes,
@@ -96,7 +96,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     if (!trimmedEmail) {
       errors.email = 'يرجى إدخال البريد الإلكتروني';
       hasError = true;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    } else if (!EMAIL_REGEX.test(trimmedEmail)) {
       errors.email = 'يرجى إدخال بريد إلكتروني صحيح';
       hasError = true;
     }

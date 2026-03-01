@@ -17,7 +17,7 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
-import { localizeAuthError } from '../lib/authErrors';
+import { localizeAuthError, EMAIL_REGEX } from '../lib/authErrors';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import CustomInput from './CustomInput';
 
@@ -60,8 +60,7 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
       setEmailError('يرجى إدخال البريد الإلكتروني');
       return;
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmed)) {
+    if (!EMAIL_REGEX.test(trimmed)) {
       setEmailError('يرجى إدخال بريد إلكتروني صحيح');
       return;
     }
