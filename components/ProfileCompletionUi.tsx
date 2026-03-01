@@ -9,9 +9,12 @@ import {
   Platform,
   TouchableOpacity,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import TextInputInteractive from 'react-native-text-input-interactive';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import {
   Provider as PaperProvider,
   DefaultTheme,
@@ -43,6 +46,12 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
   });
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  // The actual Date object driving the picker; defaults to 18 years ago.
+  const [pickerDate, setPickerDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 18);
+    return d;
+  });
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -59,6 +68,32 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
   ) => setAlertConfig({ visible: true, title, message, buttons, type });
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
+
+  const formatDate = (d: Date): string => {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const handleDateChange = (event: DateTimePickerEvent, selected?: Date) => {
+    if (event.type === 'dismissed') {
+      setShowDatePicker(false);
+      return;
+    }
+    if (selected) {
+      setPickerDate(selected);
+      if (Platform.OS === 'android') {
+        setShowDatePicker(false);
+        setProfileData({ ...profileData, birthDate: formatDate(selected) });
+      }
+    }
+  };
+
+  const confirmDate = () => {
+    setShowDatePicker(false);
+    setProfileData({ ...profileData, birthDate: formatDate(pickerDate) });
+  };
 
   // ✅ دالة حفظ البروفايل في Supabase
   const handleCreateAccount = async () => {
@@ -210,36 +245,50 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
               onPress={() => setShowDatePicker(true)}
             />
 
-            {showDatePicker && (
-              <View style={styles.datePickerCard}>
-                <Text style={styles.datePickerTitle}>اختر تاريخ الميلاد</Text>
-                <View style={styles.datePickerRow}>
-                  {[
-                    { placeholder: 'اليوم', index: 0 },
-                    { placeholder: 'الشهر', index: 1 },
-                    { placeholder: 'السنة', index: 2 },
-                  ].map(({ placeholder, index }) => (
-                    <View key={index} style={styles.dateInputWrapper}>
-                      <Text style={styles.dateInputLabel}>{placeholder}</Text>
-                      <TextInputInteractive
-                        placeholder="--"
-                        keyboardType="numeric"
-                        textInputStyle={styles.dateInput}
-                        mainColor="#0A1124"
-                        originalColor="#E8E8E8"
-                        onChangeText={(t: string) => {
-                          const parts = profileData.birthDate.split('/');
-                          parts[index] = t;
-                          setProfileData({
-                            ...profileData,
-                            birthDate: parts.join('/'),
-                          });
-                        }}
-                      />
+            {/* ── Date Picker Modal (iOS bottom sheet / Android native) ── */}
+            {Platform.OS === 'ios' ? (
+              <Modal
+                visible={showDatePicker}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.pickerSheet}>
+                    <View style={styles.pickerHandle} />
+                    <View style={styles.pickerHeader}>
+                      <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                        <Text style={styles.pickerCancelText}>إلغاء</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.pickerTitle}>تاريخ الميلاد</Text>
+                      <TouchableOpacity onPress={confirmDate}>
+                        <Text style={styles.pickerConfirmText}>تأكيد</Text>
+                      </TouchableOpacity>
                     </View>
-                  ))}
+                    <DateTimePicker
+                      value={pickerDate}
+                      mode="date"
+                      display="spinner"
+                      onChange={handleDateChange}
+                      maximumDate={new Date()}
+                      minimumDate={new Date(1900, 0, 1)}
+                      locale="ar"
+                      style={styles.pickerSpinner}
+                    />
+                  </View>
                 </View>
-              </View>
+              </Modal>
+            ) : (
+              showDatePicker && (
+                <DateTimePicker
+                  value={pickerDate}
+                  mode="date"
+                  display="default"
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(1900, 0, 1)}
+                />
+              )
             )}
 
             {/* الجنس – inline chips */}
@@ -417,36 +466,53 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginBottom: 6,
   },
-  datePickerCard: {
+  /* ── Date Picker Modal ── */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  pickerSheet: {
     backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 16,
+    paddingHorizontal: 20,
   },
-  datePickerTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#0A1124',
-    textAlign: 'right',
-    marginBottom: 12,
+  pickerHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#DDD',
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 8,
   },
-  datePickerRow: {
-    flexDirection: 'row-reverse',
+  pickerHeader: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
   },
-  dateInputWrapper: { width: '30%', alignItems: 'center' },
-  dateInputLabel: {
-    fontSize: 11,
+  pickerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0A1124',
+  },
+  pickerCancelText: {
+    fontSize: 15,
     color: '#888',
-    marginBottom: 4,
   },
-  dateInput: {
+  pickerConfirmText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0A1124',
+  },
+  pickerSpinner: {
+    height: 220,
     width: '100%',
-    backgroundColor: '#FFF',
-    height: 48,
-    borderRadius: 10,
   },
   genderRow: {
     flexDirection: 'row-reverse',
