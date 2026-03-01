@@ -57,6 +57,7 @@ function parseFragment(fragment: string): Record<string, string> {
  * Supports both auth flows:
  *   PKCE (default in v2):  honara7ty://reset-password?code=<auth_code>
  *   Implicit:              honara7ty://reset-password#access_token=...&type=recovery
+ *   Error (expired/used):  honara7ty://reset-password#error=access_denied&error_code=otp_expired&...
  */
 async function handleRecoveryUrl(
   url: string | null,
@@ -82,12 +83,19 @@ async function handleRecoveryUrl(
     }
   }
 
-  // ─── Implicit flow: #access_token=...&type=recovery ───
+  // ─── Implicit flow: #access_token=...&type=recovery  OR  #error=... ───
   const hashIndex = url.indexOf('#');
   if (hashIndex === -1) {
     return { isRecovery: false, isValid: false };
   }
   const params = parseFragment(url.slice(hashIndex + 1));
+
+  // Supabase error redirect (e.g. expired OTP):
+  // honara7ty://reset-password#error=access_denied&error_code=otp_expired&...
+  if (isResetUrl && params.error) {
+    return { isRecovery: true, isValid: false };
+  }
+
   if (
     params.type === 'recovery' &&
     params.access_token &&
