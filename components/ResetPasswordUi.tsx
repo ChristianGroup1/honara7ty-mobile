@@ -17,7 +17,11 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
-import { localizeAuthError, MIN_PASSWORD_LENGTH, EMAIL_REGEX } from '../lib/authErrors';
+import {
+  localizeAuthError,
+  MIN_PASSWORD_LENGTH,
+  EMAIL_REGEX,
+} from '../lib/authErrors';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import CustomInput from './CustomInput';
 
@@ -145,7 +149,9 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
         ? 'تم إرسال رابط جديد إلى بريدك الإلكتروني.'
         : 'أدخل بريدك الإلكتروني لإرسال رابط استعادة جديد.';
     }
-    return done ? 'تم تغيير كلمة مرورك بنجاح.' : 'أدخل كلمة المرور الجديدة وأكدها.';
+    return done
+      ? 'تم تغيير كلمة مرورك بنجاح.'
+      : 'أدخل كلمة المرور الجديدة وأكدها.';
   };
 
   return (
@@ -222,7 +228,9 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                       color={NAVY}
                       style={styles.emailBadgeIcon}
                     />
-                    <Text style={styles.emailBadgeText}>{requestEmail.trim()}</Text>
+                    <Text style={styles.emailBadgeText}>
+                      {requestEmail.trim()}
+                    </Text>
                   </View>
                   <Text style={styles.successHint}>
                     إذا لم تجد الرسالة، تحقق من مجلد الرسائل غير المرغوب فيها.
@@ -249,7 +257,9 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                         color="#FFF"
                         style={styles.submitIcon}
                       />
-                      <Text style={styles.submitText}>العودة لتسجيل الدخول</Text>
+                      <Text style={styles.submitText}>
+                        العودة لتسجيل الدخول
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -302,7 +312,9 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                     )}
                   </TouchableOpacity>
                   <View style={styles.footerContainer}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate('Login')}
+                    >
                       <Text style={styles.footerLink}>تسجيل الدخول</Text>
                     </TouchableOpacity>
                     <Text style={styles.footerText}>تذكرت كلمة المرور؟ </Text>
@@ -345,7 +357,6 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
               <>
                 <CustomInput
                   fieldLabel="كلمة المرور الجديدة "
-                  placeholder="••••••••"
                   icon="lock-outline"
                   isPassword={true}
                   secureText={securePassword}
@@ -361,7 +372,6 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
 
                 <CustomInput
                   fieldLabel="تأكيد كلمة المرور "
-                  placeholder="••••••••"
                   icon="lock-check-outline"
                   isPassword={true}
                   secureText={secureConfirm}
