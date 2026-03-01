@@ -90,11 +90,27 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     }
   };
 
+  const localizeAuthError = (message: string): string => {
+    if (/invalid login credentials/i.test(message))
+      return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+    if (/email not confirmed/i.test(message))
+      return 'يرجى تأكيد بريدك الإلكتروني أولاً';
+    if (/too many requests/i.test(message))
+      return 'محاولات كثيرة، يرجى الانتظار قليلاً والمحاولة مجدداً';
+    if (/user not found/i.test(message))
+      return 'لا يوجد حساب مرتبط بهذا البريد الإلكتروني';
+    return message;
+  };
+
   const handleLogin = async () => {
+    const trimmedEmail = email.trim();
     const errors = { email: '', password: '' };
     let hasError = false;
-    if (!email) {
+    if (!trimmedEmail) {
       errors.email = 'يرجى إدخال البريد الإلكتروني';
+      hasError = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      errors.email = 'يرجى إدخال بريد إلكتروني صحيح';
       hasError = true;
     }
     if (!password) {
@@ -107,16 +123,16 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: trimmedEmail,
         password,
       });
       if (error) {
-        showAlert('خطأ في تسجيل الدخول', error.message);
+        showAlert('خطأ في تسجيل الدخول', localizeAuthError(error.message));
       } else {
         navigation.replace('HomeScreen', { user: data.user });
       }
     } catch (err: any) {
-      showAlert('خطأ', err.message);
+      showAlert('خطأ', localizeAuthError(err.message));
     } finally {
       setLoading(false);
     }
@@ -137,7 +153,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         console.log('Supabase Auth Response:', { data, error });
 
         if (error) {
-          showAlert('خطأ', error.message);
+          showAlert('خطأ', localizeAuthError(error.message));
         } else {
           console.log('Signed in with Google successfully');
           navigation.replace('HomeScreen', { user: userInfo.data.user });
@@ -169,7 +185,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           'warning',
         );
       } else {
-        showAlert('خطأ', error.message);
+        showAlert('خطأ', localizeAuthError(error.message));
       }
     }
   };

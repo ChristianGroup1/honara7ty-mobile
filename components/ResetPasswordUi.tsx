@@ -25,7 +25,7 @@ type Props = { navigation: any };
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const GOLD = '#fdfcf9ff';
 const NAVY = '#0A1124';
-const MIN_PASSWORD_LENGTH = 6;
+const MIN_PASSWORD_LENGTH = 8;
 
 const theme = {
   ...DefaultTheme,
@@ -103,6 +103,20 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
 
         {/* ── Header ── */}
         <View style={styles.headerContent}>
+          {!done && (
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => navigation.goBack()}
+            >
+              <View style={styles.backBtnCircle}>
+                <MaterialCommunityIcons
+                  name="chevron-left"
+                  size={28}
+                  color="white"
+                />
+              </View>
+            </TouchableOpacity>
+          )}
           <View style={styles.iconCircleHeader}>
             <MaterialCommunityIcons
               name={done ? 'shield-check' : 'lock-reset'}
@@ -255,6 +269,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: Platform.OS === 'android' ? 44 : 14,
     paddingBottom: 24,
+  },
+  backBtn: { alignSelf: 'flex-start', marginLeft: 16, marginBottom: 12 },
+  backBtnCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   iconCircleHeader: {
     width: 80,

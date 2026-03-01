@@ -19,6 +19,10 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import CustomInput from './CustomInput';
 
@@ -26,6 +30,9 @@ type Props = { navigation: any };
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const GOLD = '#fdfcf9ff';
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^\+?[0-9]{9,15}$/;
+const MIN_PASSWORD_LENGTH = 8;
 
 const theme = {
   ...DefaultTheme,
@@ -100,8 +107,23 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
+  const localizeAuthError = (message: string): string => {
+    if (/user already registered/i.test(message))
+      return 'هذا البريد الإلكتروني مسجل مسبقاً';
+    if (/email already in use/i.test(message))
+      return 'هذا البريد الإلكتروني مستخدم بالفعل';
+    if (/too many requests/i.test(message))
+      return 'محاولات كثيرة، يرجى الانتظار قليلاً والمحاولة مجدداً';
+    if (/password should be at least/i.test(message))
+      return `كلمة المرور يجب أن تكون ${MIN_PASSWORD_LENGTH} أحرف على الأقل`;
+    return message;
+  };
+
   const handleRegister = async () => {
-    const { name, email, phone, password, confirmPassword } = formData;
+    const trimmedName = formData.name.trim();
+    const trimmedEmail = formData.email.trim();
+    const trimmedPhone = formData.phone.trim();
+    const { password, confirmPassword } = formData;
 
     const errors = {
       name: '',
@@ -112,23 +134,29 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
     };
     let hasError = false;
 
-    if (!name) {
+    if (!trimmedName) {
       errors.name = 'يرجى إدخال الاسم الكامل';
       hasError = true;
     }
-    if (!email) {
+    if (!trimmedEmail) {
       errors.email = 'يرجى إدخال البريد الإلكتروني';
       hasError = true;
+    } else if (!EMAIL_REGEX.test(trimmedEmail)) {
+      errors.email = 'يرجى إدخال بريد إلكتروني صحيح';
+      hasError = true;
     }
-    if (!phone) {
+    if (!trimmedPhone) {
       errors.phone = 'يرجى إدخال رقم الهاتف';
+      hasError = true;
+    } else if (!PHONE_REGEX.test(trimmedPhone)) {
+      errors.phone = 'يرجى إدخال رقم هاتف صحيح';
       hasError = true;
     }
     if (!password) {
       errors.password = 'يرجى إدخال كلمة المرور';
       hasError = true;
-    } else if (password.length < 6) {
-      errors.password = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+    } else if (password.length < MIN_PASSWORD_LENGTH) {
+      errors.password = `كلمة المرور يجب أن تكون ${MIN_PASSWORD_LENGTH} أحرف على الأقل`;
       hasError = true;
     }
     if (!confirmPassword) {
@@ -145,28 +173,60 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: trimmedEmail,
         password,
         options: {
           data: {
-            full_name: name,
-            phone: phone,
+            full_name: trimmedName,
+            phone: trimmedPhone,
           },
         },
       });
 
       if (error) {
-        showAlert('خطأ في التسجيل', error.message);
+        showAlert('خطأ في التسجيل', localizeAuthError(error.message));
       } else {
         navigation.navigate('ProfileCompletion', {
           userId: data.user?.id,
-          email,
+          email: trimmedEmail,
         });
       }
     } catch (err: any) {
-      showAlert('خطأ', err.message);
+      showAlert('خطأ', localizeAuthError(err.message));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo: any = await GoogleSignin.signIn();
+
+      if (userInfo.data.idToken) {
+        const { data, error } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: userInfo.data.idToken,
+        });
+
+        if (error) {
+          showAlert('خطأ', localizeAuthError(error.message));
+        } else {
+          navigation.replace('HomeScreen', { user: data.user });
+        }
+      } else {
+        throw new Error('No ID token present!');
+      }
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        showAlert('تم الإلغاء', 'تم إلغاء عملية التسجيل.', undefined, 'warning');
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        showAlert('جاري التسجيل', 'عملية التسجيل جارية بالفعل.', undefined, 'warning');
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        showAlert('خطأ', 'خدمات Google Play غير متاحة أو قديمة.', undefined, 'warning');
+      } else {
+        showAlert('خطأ', localizeAuthError(error.message));
+      }
     }
   };
 
@@ -263,7 +323,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
             />
             <CustomInput
               fieldLabel="كلمة المرور "
-              placeholder="6 أحرف على الأقل"
+              placeholder="8 أحرف على الأقل"
               icon="lock-outline"
               isPassword={true}
               secureText={secureText}
@@ -319,7 +379,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               <View style={styles.dividerLine} />
             </View>
 
-            <TouchableOpacity style={styles.googleButton}>
+            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignUp}>
               <Image
                 source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
                 style={styles.googleIcon}
