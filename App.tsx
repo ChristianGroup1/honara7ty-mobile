@@ -53,7 +53,10 @@ function parseFragment(fragment: string): Record<string, string> {
 /**
  * Detects a Supabase password-recovery deep link, establishes the session,
  * and returns whether the recovery URL was present and whether it was valid.
- * Expected URL format: honara7ty://reset-password#access_token=...&type=recovery
+ *
+ * Supports both auth flows:
+ *   PKCE (default in v2):  honara7ty://reset-password?code=<auth_code>
+ *   Implicit:              honara7ty://reset-password#access_token=...&type=recovery
  */
 async function handleRecoveryUrl(
   url: string | null,
@@ -61,6 +64,25 @@ async function handleRecoveryUrl(
   if (!url) {
     return { isRecovery: false, isValid: false };
   }
+
+  const isResetUrl = url.startsWith('honara7ty://reset-password');
+
+  // ─── PKCE flow: ?code=... ───
+  if (isResetUrl) {
+    const questionIndex = url.indexOf('?');
+    if (questionIndex !== -1) {
+      const queryString = url.slice(questionIndex + 1).split('#')[0];
+      const queryParams = parseFragment(queryString);
+      if (queryParams.code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(
+          queryParams.code,
+        );
+        return { isRecovery: true, isValid: !error };
+      }
+    }
+  }
+
+  // ─── Implicit flow: #access_token=...&type=recovery ───
   const hashIndex = url.indexOf('#');
   if (hashIndex === -1) {
     return { isRecovery: false, isValid: false };

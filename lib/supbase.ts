@@ -14,6 +14,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,    // ← ده ا��لي بيحفظ السيشن
     detectSessionInUrl: false,
+    flowType: 'pkce',
   },
 }); 
 export default supabase;
