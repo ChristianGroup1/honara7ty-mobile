@@ -21,7 +21,7 @@ import { localizeAuthError, MIN_PASSWORD_LENGTH } from '../lib/authErrors';
 import CustomAlert, { AlertButton } from './CustomAlert';
 import CustomInput from './CustomInput';
 
-type Props = { navigation: any };
+type Props = { navigation: any; route: any };
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const GOLD = '#fdfcf9ff';
@@ -32,7 +32,9 @@ const theme = {
   colors: { ...DefaultTheme.colors, primary: NAVY, outline: '#E0E0E0' },
 };
 
-const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
+const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
+  // Default to true so navigating here normally (without a deep link) shows the form.
+  const linkValid = route?.params?.linkValid !== false;
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [securePassword, setSecurePassword] = useState(true);
@@ -47,6 +49,8 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
     type?: 'error' | 'warning' | 'success' | 'info';
     buttons?: AlertButton[];
   }>({ visible: false, title: '' });
+
+  const shouldShowBackButton = !done && linkValid;
 
   const showAlert = (
     title: string,
@@ -103,7 +107,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
 
         {/* ── Header ── */}
         <View style={styles.headerContent}>
-          {!done && (
+          {shouldShowBackButton && (
             <TouchableOpacity
               style={styles.backBtn}
               onPress={() => navigation.goBack()}
@@ -119,17 +123,19 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
           )}
           <View style={styles.iconCircleHeader}>
             <MaterialCommunityIcons
-              name={done ? 'shield-check' : 'lock-reset'}
+              name={!linkValid ? 'link-off' : done ? 'shield-check' : 'lock-reset'}
               size={38}
               color={GOLD}
             />
           </View>
           <Text style={styles.title}>
-            {done ? 'تم التغيير!' : 'تعيين كلمة مرور جديدة'}
+            {!linkValid ? 'رابط غير صالح' : done ? 'تم التغيير!' : 'تعيين كلمة مرور جديدة'}
           </Text>
           <View style={styles.titleAccent} />
           <Text style={styles.headerSubtitle}>
-            {done
+            {!linkValid
+              ? 'رابط إعادة التعيين غير صالح أو منتهي الصلاحية.'
+              : done
               ? 'تم تغيير كلمة مرورك بنجاح.'
               : 'أدخل كلمة المرور الجديدة وأكدها.'}
           </Text>
@@ -148,7 +154,38 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation }) => {
           keyboardOpeningTime={0}
         >
           <View style={styles.formContainer} pointerEvents="box-none">
-            {done ? (
+            {!linkValid ? (
+              /* ── Invalid Link State ── */
+              <View style={styles.successBox}>
+                <View style={styles.invalidIconCircle}>
+                  <MaterialCommunityIcons
+                    name="link-off"
+                    size={52}
+                    color="#E53935"
+                  />
+                </View>
+                <Text style={styles.invalidTitle}>الرابط غير صالح</Text>
+                <Text style={styles.invalidMessage}>
+                  رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية.{'\n'}
+                  يرجى طلب رابط جديد.
+                </Text>
+                <TouchableOpacity
+                  style={styles.submitBtn}
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('ForgotPassword')}
+                >
+                  <View style={styles.submitRow}>
+                    <MaterialCommunityIcons
+                      name="email-sync-outline"
+                      size={20}
+                      color="#FFF"
+                      style={styles.submitIcon}
+                    />
+                    <Text style={styles.submitText}>طلب رابط جديد</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            ) : done ? (
               /* ── Success State ── */
               <View style={styles.successBox}>
                 <View style={styles.successIconCircle}>
@@ -368,6 +405,33 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   successMessage: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 28,
+    paddingHorizontal: 10,
+  },
+
+  /* ── Invalid Link State ── */
+  invalidIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(229,57,53,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(229,57,53,0.25)',
+  },
+  invalidTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#E53935',
+    marginBottom: 10,
+  },
+  invalidMessage: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',

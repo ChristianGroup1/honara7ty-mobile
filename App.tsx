@@ -33,7 +33,7 @@ type RootStackParamList = {
   ProfileCompletion: undefined;
   Login: undefined;
   ForgotPassword: undefined;
-  ResetPassword: undefined;
+  ResetPassword: { linkValid?: boolean };
 };
 
 /** Parse a URL fragment string (key=value&key2=value2) into a plain object. */
@@ -52,16 +52,18 @@ function parseFragment(fragment: string): Record<string, string> {
 
 /**
  * Detects a Supabase password-recovery deep link, establishes the session,
- * and returns true if recovery mode should be activated.
+ * and returns whether the recovery URL was present and whether it was valid.
  * Expected URL format: honara7ty://reset-password#access_token=...&type=recovery
  */
-async function handleRecoveryUrl(url: string | null): Promise<boolean> {
+async function handleRecoveryUrl(
+  url: string | null,
+): Promise<{ isRecovery: boolean; isValid: boolean }> {
   if (!url) {
-    return false;
+    return { isRecovery: false, isValid: false };
   }
   const hashIndex = url.indexOf('#');
   if (hashIndex === -1) {
-    return false;
+    return { isRecovery: false, isValid: false };
   }
   const params = parseFragment(url.slice(hashIndex + 1));
   if (
@@ -69,13 +71,13 @@ async function handleRecoveryUrl(url: string | null): Promise<boolean> {
     params.access_token &&
     params.refresh_token
   ) {
-    await supabase.auth.setSession({
+    const { error } = await supabase.auth.setSession({
       access_token: params.access_token,
       refresh_token: params.refresh_token,
     });
-    return true;
+    return { isRecovery: true, isValid: !error };
   }
-  return false;
+  return { isRecovery: false, isValid: false };
 }
 
 function App() {
@@ -83,14 +85,18 @@ function App() {
   const isDarkMode = useColorScheme() === 'dark';
   const [isLoggedIn, setIsLoggedIn] = useState(false); // ← هل logged in؟
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  // Stores whether the cold-start reset link was valid; default true so the
+  // form is shown for any non-deep-link navigation into ResetPassword.
+  const [recoveryLinkValid, setRecoveryLinkValid] = useState(true);
 
   useEffect(() => {
     const checkSession = async () => {
       // Check for a password-recovery deep link first (cold start)
       const initialUrl = await Linking.getInitialURL();
-      const isRecovery = await handleRecoveryUrl(initialUrl);
+      const { isRecovery, isValid } = await handleRecoveryUrl(initialUrl);
       if (isRecovery) {
         setIsRecoveryMode(true);
+        setRecoveryLinkValid(isValid);
         setTimeout(() => setShowSplash(false), 800);
         return;
       }
@@ -110,9 +116,9 @@ function App() {
 
     // Warm deep-link handler (app already open when link is clicked)
     const sub = Linking.addEventListener('url', async ({ url }) => {
-      const isRecovery = await handleRecoveryUrl(url);
+      const { isRecovery, isValid } = await handleRecoveryUrl(url);
       if (isRecovery && navigationRef.isReady()) {
-        navigationRef.navigate('ResetPassword');
+        navigationRef.navigate('ResetPassword', { linkValid: isValid });
       }
     });
 
@@ -170,6 +176,7 @@ function App() {
             name="ResetPassword"
             component={ResetPasswordUi}
             options={{ headerShown: false }}
+            initialParams={{ linkValid: recoveryLinkValid }}
           />
           {/* Add more screens here */}
         </Stack.Navigator>

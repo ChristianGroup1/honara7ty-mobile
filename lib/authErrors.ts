@@ -23,6 +23,8 @@ export const localizeAuthError = (message: string): string => {
     return `كلمة المرور يجب أن تكون ${MIN_PASSWORD_LENGTH} أحرف على الأقل`;
   if (/same password/i.test(message))
     return 'كلمة المرور الجديدة يجب أن تختلف عن القديمة';
+  if (/token has expired|jwt expired|invalid token|invalid refresh token/i.test(message))
+    return 'رابط إعادة التعيين غير صالح أو منتهي الصلاحية';
   if (/invalid email/i.test(message))
     return 'يرجى إدخال بريد إلكتروني صحيح';
   return message;
