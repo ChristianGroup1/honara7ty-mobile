@@ -44,7 +44,6 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
   const [securePassword, setSecurePassword] = useState(true);
   const [secureConfirm, setSecureConfirm] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({ password: '', confirm: '' });
 
   // ── Request-new-link state (used when linkValid === false) ──
@@ -60,7 +59,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
     buttons?: AlertButton[];
   }>({ visible: false, title: '' });
 
-  const shouldShowBackButton = !done && linkValid;
+  const shouldShowBackButton = linkValid;
 
   const showAlert = (
     title: string,
@@ -89,14 +88,23 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
       hasError = true;
     }
     setFieldErrors(errors);
-    if (hasError) return;
+    if (hasError) {
+      const firstError = errors.password || errors.confirm;
+      showAlert('تحقق من البيانات', firstError, undefined, 'error');
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) {
         showAlert('خطأ', localizeAuthError(error.message));
       } else {
-        setDone(true);
+        showAlert(
+          'تم بنجاح! 🎉',
+          'تم تغيير كلمة مرورك بنجاح. يمكنك الآن تسجيل الدخول باستخدامها.',
+          [{ text: 'تسجيل الدخول', onPress: () => navigation.navigate('Login') }],
+          'success',
+        );
       }
     } catch (err: any) {
       showAlert('خطأ', localizeAuthError(err.message));
@@ -135,12 +143,12 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
 
   const getHeaderIconName = (): string => {
     if (!linkValid) return requestSent ? 'email-check-outline' : 'link-off';
-    return done ? 'shield-check' : 'lock-reset';
+    return 'lock-reset';
   };
 
   const getHeaderTitle = (): string => {
     if (!linkValid) return requestSent ? 'تم الإرسال!' : 'رابط غير صالح';
-    return done ? 'تم التغيير!' : 'تعيين كلمة مرور جديدة';
+    return 'تعيين كلمة مرور جديدة';
   };
 
   const getHeaderSubtitle = (): string => {
@@ -149,9 +157,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
         ? 'تم إرسال رابط جديد إلى بريدك الإلكتروني.'
         : 'أدخل بريدك الإلكتروني لإرسال رابط استعادة جديد.';
     }
-    return done
-      ? 'تم تغيير كلمة مرورك بنجاح.'
-      : 'أدخل كلمة المرور الجديدة وأكدها.';
+    return 'أدخل كلمة المرور الجديدة وأكدها.';
   };
 
   return (
@@ -321,37 +327,6 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                   </View>
                 </View>
               )
-            ) : done ? (
-              /* ── Success State ── */
-              <View style={styles.successBox}>
-                <View style={styles.successIconCircle}>
-                  <MaterialCommunityIcons
-                    name="shield-check-outline"
-                    size={52}
-                    color={GOLD}
-                  />
-                </View>
-                <Text style={styles.successTitle}>تم بنجاح!</Text>
-                <Text style={styles.successMessage}>
-                  تم تعيين كلمة مرورك الجديدة بنجاح. يمكنك الآن تسجيل الدخول
-                  باستخدامها.
-                </Text>
-                <TouchableOpacity
-                  style={styles.submitBtn}
-                  activeOpacity={0.8}
-                  onPress={() => navigation.navigate('Login')}
-                >
-                  <View style={styles.submitRow}>
-                    <MaterialCommunityIcons
-                      name="login"
-                      size={20}
-                      color="#FFF"
-                      style={styles.submitIcon}
-                    />
-                    <Text style={styles.submitText}>تسجيل الدخول</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
             ) : (
               /* ── Form ── */
               <>
@@ -516,7 +491,7 @@ const styles = StyleSheet.create({
   submitIcon: { marginRight: 8 },
   submitText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
 
-  /* ── Success State ── */
+  /* ── Sent Confirmation ── */
   successBox: {
     alignItems: 'center',
     paddingTop: 10,
@@ -544,7 +519,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 28,
-    paddingHorizontal: 10,
   },
 
   /* ── Invalid Link State ── */
