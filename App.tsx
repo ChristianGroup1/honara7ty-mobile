@@ -19,6 +19,13 @@ import {
   ForgotPasswordUi,
   ResetPasswordUi,
   OnboardingScreen,
+  PrayerNotesScreen,
+  SpiritualReflectionScreen,
+  DailyNotificationsScreen,
+  BibleReaderScreen,
+  BibleMemorizationScreen,
+  BadgesScreen,
+  TestimoniesScreen,
 } from './screens';
 import SignupStep1 from './components/Signup'; // Import your signup step
 import HomeScreen from './components/Home';
@@ -36,6 +43,13 @@ type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { linkValid?: boolean };
   Onboarding: undefined;
+  PrayerNotes: undefined;
+  SpiritualReflection: undefined;
+  DailyNotifications: undefined;
+  BibleReader: undefined;
+  BibleMemorization: undefined;
+  Badges: undefined;
+  Testimonies: undefined;
 };
 
 /** Parse a URL fragment string (key=value&key2=value2) into a plain object. */
@@ -226,7 +240,41 @@ function App() {
             component={OnboardingScreen}
             options={{ headerShown: false }}
           />
-          {/* Add more screens here */}
+          <Stack.Screen
+            name="PrayerNotes"
+            component={PrayerNotesScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="SpiritualReflection"
+            component={SpiritualReflectionScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="DailyNotifications"
+            component={DailyNotificationsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="BibleReader"
+            component={BibleReaderScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="BibleMemorization"
+            component={BibleMemorizationScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Badges"
+            component={BadgesScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Testimonies"
+            component={TestimoniesScreen}
+            options={{ headerShown: false }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
