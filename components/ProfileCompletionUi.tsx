@@ -127,9 +127,10 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
         console.log('Supabase error:', error);
         showAlert('خطأ', error.message);
       } else {
+        // New users always go through onboarding after completing their profile
         navigation.reset({
           index: 0,
-          routes: [{ name: 'HomeScreen' }],
+          routes: [{ name: 'Onboarding' }],
         });
       }
     } catch (err: any) {

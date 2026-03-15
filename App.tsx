@@ -18,6 +18,7 @@ import {
   LoginUi,
   ForgotPasswordUi,
   ResetPasswordUi,
+  OnboardingScreen,
 } from './screens';
 import SignupStep1 from './components/Signup'; // Import your signup step
 import HomeScreen from './components/Home';
@@ -34,6 +35,7 @@ type RootStackParamList = {
   Login: undefined;
   ForgotPassword: undefined;
   ResetPassword: { linkValid?: boolean };
+  Onboarding: undefined;
 };
 
 /** Parse a URL fragment string (key=value&key2=value2) into a plain object. */
@@ -118,6 +120,8 @@ function App() {
   // Stores whether the cold-start reset link was valid; default true so the
   // form is shown for any non-deep-link navigation into ResetPassword.
   const [recoveryLinkValid, setRecoveryLinkValid] = useState(true);
+  // True when the user is logged in but hasn't completed onboarding yet
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -135,7 +139,14 @@ function App() {
       const { data } = await supabase.auth.getSession();
       console.log('Session data:', data); // 🔍 شوف السيشن في اللوج
       if (data?.session) {
-        setIsLoggedIn(true); // ✅ logged in → روح HomeScreen
+        const onboardingDone =
+          data.session.user?.user_metadata?.onboarding_completed === true;
+        if (onboardingDone) {
+          setIsLoggedIn(true); // ✅ logged in → روح HomeScreen
+        } else {
+          setIsLoggedIn(true);
+          setNeedsOnboarding(true); // ← first time → روح Onboarding
+        }
       }
 
       // بعد 2 ثانية خفي الـ Splash
@@ -168,7 +179,9 @@ function App() {
             isRecoveryMode
               ? 'ResetPassword'
               : isLoggedIn
-              ? 'HomeScreen'
+              ? needsOnboarding
+                ? 'Onboarding'
+                : 'HomeScreen'
               : 'Welcome'
           }
         >
@@ -207,6 +220,11 @@ function App() {
             component={ResetPasswordUi}
             options={{ headerShown: false }}
             initialParams={{ linkValid: recoveryLinkValid }}
+          />
+          <Stack.Screen
+            name="Onboarding"
+            component={OnboardingScreen}
+            options={{ headerShown: false }}
           />
           {/* Add more screens here */}
         </Stack.Navigator>

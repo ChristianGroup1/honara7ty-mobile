@@ -62,6 +62,16 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
+  /** Navigate to Onboarding for first-time users, otherwise to HomeScreen. */
+  const navigateAfterLogin = (user: any) => {
+    const onboardingDone = user?.user_metadata?.onboarding_completed === true;
+    if (onboardingDone) {
+      navigation.replace('HomeScreen', { user });
+    } else {
+      navigation.replace('Onboarding');
+    }
+  };
+
   useEffect(() => {
     GoogleSignin.configure({
       scopes: ['https://www.googleapis.com/auth/drive.readonly'],
@@ -116,7 +126,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
       if (error) {
         showAlert('خطأ في تسجيل الدخول', localizeAuthError(error.message));
       } else {
-        navigation.replace('HomeScreen', { user: data.user });
+        navigateAfterLogin(data.user);
       }
     } catch (err: any) {
       showAlert('خطأ', localizeAuthError(err.message));
@@ -143,7 +153,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           showAlert('خطأ', localizeAuthError(error.message));
         } else {
           console.log('Signed in with Google successfully');
-          navigation.replace('HomeScreen', { user: userInfo.data.user });
+          navigateAfterLogin(data?.user ?? userInfo.data.user);
         }
       } else {
         throw new Error('No ID token present!');

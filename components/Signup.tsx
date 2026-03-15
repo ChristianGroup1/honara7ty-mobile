@@ -165,7 +165,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         if (error) {
           showAlert('خطأ', localizeAuthError(error.message));
         } else {
-          navigation.replace('HomeScreen', { user: data.user });
+          navigation.replace('Onboarding');
         }
       } else {
         throw new Error('No ID token present!');
