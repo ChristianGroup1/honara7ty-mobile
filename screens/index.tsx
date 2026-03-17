@@ -13,3 +13,5 @@ export { default as BibleReaderScreen } from '../components/BibleReaderScreen';
 export { default as BibleMemorizationScreen } from '../components/BibleMemorizationScreen';
 export { default as BadgesScreen } from '../components/BadgesScreen';
 export { default as TestimoniesScreen } from '../components/TestimoniesScreen';
+export { default as ProfileScreen } from '../components/ProfileScreen';
+export { default as MoreScreen } from '../components/MoreScreen';

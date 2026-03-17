@@ -11,6 +11,8 @@ import { Linking, StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   WelcomeScreen,
   SplashScreen,
@@ -27,12 +29,18 @@ import {
   BadgesScreen,
   TestimoniesScreen,
 } from './screens';
-import SignupStep1 from './components/Signup'; // Import your signup step
+import SignupStep1 from './components/Signup';
 import HomeScreen from './components/Home';
+import ProfileScreen from './components/ProfileScreen';
+import MoreScreen from './components/MoreScreen';
 import supabase from './lib/supbase';
 
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
+const ACCENT_BLUE = '#2A7BBA';
+const CARD_DARK = '#152040';
 
 type RootStackParamList = {
   HomeScreen: { user?: any };
@@ -126,10 +134,61 @@ async function handleRecoveryUrl(
   return { isRecovery: false, isValid: false };
 }
 
+/** Main bottom tab navigator – shown after the user logs in */
+const TAB_ICONS: Record<string, string> = {
+  Home: 'home-variant-outline',
+  Profile: 'account-circle-outline',
+  Settings: 'cog-outline',
+  More: 'dots-horizontal-circle-outline',
+};
+
+const TAB_BAR_STYLE = {
+  backgroundColor: CARD_DARK,
+  borderTopColor: 'rgba(255,255,255,0.08)',
+  height: 62,
+  paddingBottom: 8,
+  paddingTop: 4,
+};
+
+const TAB_LABEL_STYLE = { fontSize: 11 };
+
+function makeTabOptions(label: string, routeName: string) {
+  return {
+    tabBarLabel: label,
+    tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+      <MaterialCommunityIcons
+        name={TAB_ICONS[routeName] ?? 'circle-outline'}
+        size={size}
+        color={color}
+      />
+    ),
+  };
+}
+
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      initialRouteName="Home"
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: TAB_BAR_STYLE,
+        tabBarActiveTintColor: ACCENT_BLUE,
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.45)',
+        tabBarLabelStyle: TAB_LABEL_STYLE,
+      }}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} options={makeTabOptions('الرئيسية', 'Home')} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={makeTabOptions('الملف الشخصي', 'Profile')} />
+      <Tab.Screen name="Settings" component={DailyNotificationsScreen} options={makeTabOptions('الإعدادات', 'Settings')} />
+      <Tab.Screen name="More" component={MoreScreen} options={makeTabOptions('المزيد', 'More')} />
+    </Tab.Navigator>
+  );
+}
+
 function App() {
   const [showSplash, setShowSplash] = useState(true);
   const isDarkMode = useColorScheme() === 'dark';
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // ← هل logged in؟
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   // Stores whether the cold-start reset link was valid; default true so the
   // form is shown for any non-deep-link navigation into ResetPassword.
@@ -199,9 +258,10 @@ function App() {
               : 'Welcome'
           }
         >
+          {/* Main tabs (home, profile, settings, more) */}
           <Stack.Screen
             name="HomeScreen"
-            component={HomeScreen}
+            component={MainTabs}
             options={{ headerShown: false }}
           />
           <Stack.Screen
@@ -212,17 +272,17 @@ function App() {
           <Stack.Screen
             name="SignupStep1"
             component={SignupStep1}
-            options={{ headerShown: false }} // This line hides the white header
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="ProfileCompletion"
             component={ProfileCompletion}
-            options={{ headerShown: false }} // This line hides the white header
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="Login"
             component={LoginUi}
-            options={{ headerShown: false }} // This line hides the white header
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="ForgotPassword"
