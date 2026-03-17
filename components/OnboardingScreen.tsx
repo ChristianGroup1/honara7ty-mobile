@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Platform,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -11,53 +11,83 @@ import {
   View,
   ViewToken,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// ─── Responsive helpers ──────────────────────────────────────────────────────
+const { width: W, height: H } = Dimensions.get('window');
+const TOP_RATIO = 0.52;   // illustration panel = 52% of screen height
+const BOT_RATIO = 0.48;   // text panel        = 48% of screen height
+
 const NAVY = '#0A1124';
-const GOLD = '#C9A84C';
+
+// Icon background colours
+const LIGHT_ICON_BG = 'rgba(255,255,255,0.12)';
+const DARK_ICON_BG  = 'rgba(10,17,36,0.08)';
+
+// Icon wrap sizing multipliers
+const ICON_WRAP_SIZE_FACTOR   = 1.6;   // wrapper diameter relative to icon size
+const ICON_WRAP_RADIUS_FACTOR = 0.8;   // border-radius = half the wrapper = circle
+
+// Card overlap: how many px the white card climbs over the top panel
+const CARD_OVERLAP = W * 0.07;
+const CARD_RADIUS  = W * 0.07;   // rounded top corners of the white card
+const BTN_RADIUS   = W * 0.12;   // pill-shaped button
 
 // ─── Slide definitions ───────────────────────────────────────────────────────
-const SLIDES = [
+interface Slide {
+  key: string;
+  /** MaterialCommunityIcons name shown in the top illustration panel */
+  icon: string;
+  iconColor: string;
+  iconBg: string;
+  /** Whether the top panel is dark (navy) or light */
+  darkTop: boolean;
+  title?: string;
+  body: string;
+  verse?: string;
+  verseRef?: string;
+  /** Text shown below the illustration on the last slide */
+  cta?: string;
+}
+
+const SLIDES: Slide[] = [
   {
     key: '1',
-    icon: 'cross',
-    title: 'مرحباً في هنا راحتي',
-    subtitle: 'تطبيقك الروحي اليومي',
-    body:
-      'التطبيق ده مصمم خصيصاً عشان يساعدك تقرب من الله كل يوم.\n' +
-      'هتلاقي قراءة يومية من الكتاب المقدس، مكان تسجّل فيه أفكارك، وتتابع رحلتك الروحية.',
-    color: '#1A2A4A',
+    icon: 'book-open-page-variant',
+    iconColor: '#FFFFFF',
+    iconBg: LIGHT_ICON_BG,
+    darkTop: true,
+    verse: 'وُجِدَ كَلاَمُكَ فَأَكَلْتُهُ، فَكَانَ كَلاَمُكَ لِي\nلِلسُّرُورِ وَلِفَرَحِ قَلْبِي',
+    verseRef: 'إرميا 15 : 16',
   },
   {
     key: '2',
-    icon: 'book-open-page-variant',
-    title: 'قراءة الكتاب المقدس يومياً',
-    subtitle: 'استمع لصوت الله من خلال كلمته',
-    body:
-      'اقرأ الكتاب المقدس بالعربي بأسلوب سهل ومنظم.\n' +
-      'سجّل ملاحظات الصلاة، واحفظ آيات تبني إيمانك وتثبّتك في الحق.',
-    color: '#1E3555',
+    icon: 'account-group',
+    iconColor: NAVY,
+    iconBg: DARK_ICON_BG,
+    darkTop: false,
+    title: 'مرحباً بك في تطبيق حفظ الآيات',
+    body: '"هنا نساعدك تفتح كتابك المقدس وتقرأ فيه كل يوم بانتظام، وفي وقت محدد يناسبك علشان تفضل ثابت في علاقتك مع كلمة الله."',
   },
   {
     key: '3',
-    icon: 'medal-outline',
-    title: 'الاستمرارية والنمو',
-    subtitle: 'واظب واكسب شارات الإنجاز',
-    body:
-      'كل ما اتعبّدت يوم بعد يوم، اكتسبت شارات أسبوعية وشهرية وسنوية.\n' +
-      'شارك شهادتك مع الآخرين وكن مصدر تشجيع لمجتمعك المسيحي.',
-    color: '#0F2240',
+    icon: 'book-open-variant',
+    iconColor: '#FFFFFF',
+    iconBg: LIGHT_ICON_BG,
+    darkTop: true,
+    cta: 'ابدأ معنا!',
   },
 ];
 
 type Props = { navigation: any };
 
 const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [finishing, setFinishing] = useState(false);
-  const listRef = useRef<FlatList<typeof SLIDES[0]>>(null);
+  const listRef = useRef<FlatList<Slide>>(null);
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -67,9 +97,16 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
     },
   ).current;
 
+  const goTo = (idx: number) => {
+    listRef.current?.scrollToIndex({ index: idx, animated: true });
+  };
+
+  const goPrev = () => {
+    if (currentIndex > 0) { goTo(currentIndex - 1); }
+  };
   const goNext = () => {
     if (currentIndex < SLIDES.length - 1) {
-      listRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
+      goTo(currentIndex + 1);
     } else {
       handleFinish();
     }
@@ -78,53 +115,72 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   const handleFinish = async () => {
     setFinishing(true);
     try {
-      // Mark onboarding as completed in Supabase user metadata
-      await supabase.auth.updateUser({
-        data: { onboarding_completed: true },
-      });
-    } catch (_) {
-      // Non-critical – proceed regardless
+      await supabase.auth.updateUser({ data: { onboarding_completed: true } });
+    } catch (err) {
+      console.warn('[Onboarding] updateUser error:', err); // non-critical – proceed regardless
     } finally {
       setFinishing(false);
       navigation.reset({ index: 0, routes: [{ name: 'HomeScreen' }] });
     }
   };
 
-  const handleSkip = () => handleFinish();
+  const isFirst = currentIndex === 0;
+  const isLast  = currentIndex === SLIDES.length - 1;
 
-  const renderSlide = ({ item }: { item: typeof SLIDES[0] }) => (
-    <View style={[styles.slide, { backgroundColor: item.color }]}>
-      {/* Icon circle */}
-      <View style={styles.iconCircle}>
-        <MaterialCommunityIcons name={item.icon} size={72} color={GOLD} />
+  // Heights – clamp so nothing breaks on very small screens
+  const topH = Math.max(H * TOP_RATIO, 200);
+  const botH = Math.max(H * BOT_RATIO, 220);
+
+  const renderSlide = ({ item }: { item: Slide }) => {
+    const topBg  = item.darkTop ? NAVY : '#F0F2F5';
+    const iconSz = Math.round(W * 0.28);   // ~28 % of screen width
+
+    return (
+      <View style={{ width: W }}>
+        {/* ── Top illustration panel ── */}
+        <View style={[styles.topPanel, { height: topH, backgroundColor: topBg }]}>
+          <View style={[styles.iconWrap, {
+            width: iconSz * ICON_WRAP_SIZE_FACTOR,
+            height: iconSz * ICON_WRAP_SIZE_FACTOR,
+            borderRadius: iconSz * ICON_WRAP_RADIUS_FACTOR,
+            backgroundColor: item.iconBg,
+          }]}>
+            <MaterialCommunityIcons name={item.icon} size={iconSz} color={item.iconColor} />
+          </View>
+        </View>
+
+        {/* ── Bottom text card ── */}
+        <View style={[styles.card, { minHeight: botH }]}>
+          {/* Title (optional) */}
+          {item.title ? (
+            <Text style={styles.slideTitle}>{item.title}</Text>
+          ) : null}
+
+          {/* Body */}
+          <Text style={[
+            styles.slideBody,
+            !item.title && !item.verse && styles.slideBodyLarge,
+          ]}>
+            {item.body}
+          </Text>
+
+          {/* Verse block */}
+          {item.verse ? (
+            <View style={styles.verseBlock}>
+              <Text style={styles.verseText}>{item.verse}</Text>
+              <Text style={styles.verseRef}>{item.verseRef}</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
-
-      {/* Text */}
-      <Text style={styles.slideTitle}>{item.title}</Text>
-      <View style={styles.titleAccent} />
-      <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
-      <Text style={styles.slideBody}>{item.body}</Text>
-    </View>
-  );
-
-  const isLast = currentIndex === SLIDES.length - 1;
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        translucent
-        backgroundColor="transparent"
-      />
+    <View style={[styles.root, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* Skip button (hidden on last slide) */}
-      {!isLast && (
-        <TouchableOpacity style={styles.skipBtn} onPress={handleSkip}>
-          <Text style={styles.skipText}>تخطى</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Slides */}
+      {/* ── Horizontal slides ── */}
       <FlatList
         ref={listRef}
         data={SLIDES}
@@ -136,168 +192,183 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
         scrollEventThrottle={16}
-        style={styles.list}
+        scrollEnabled={!finishing}
       />
 
-      {/* Bottom bar */}
-      <View style={styles.bottomBar}>
-        {/* Dot indicators */}
+      {/* ── Footer (dots + buttons) ── */}
+      <View style={[styles.footer, {
+        paddingBottom: Math.max(insets.bottom, 16),
+        backgroundColor: '#FFFFFF',
+      }]}>
+        {/* Dots */}
         <View style={styles.dotsRow}>
           {SLIDES.map((_, i) => (
-            <View
-              key={i}
-              style={[styles.dot, i === currentIndex && styles.dotActive]}
-            />
+            <View key={i} style={[styles.dot, i === currentIndex && styles.dotActive]} />
           ))}
         </View>
 
-        {/* Next / Start button */}
-        <TouchableOpacity
-          style={[styles.nextBtn, isLast && styles.nextBtnLast]}
-          onPress={goNext}
-          activeOpacity={0.85}
-          disabled={finishing}
-        >
-          {finishing ? (
-            <MaterialCommunityIcons name="loading" size={24} color="#FFF" />
-          ) : isLast ? (
-            <View style={styles.btnRow}>
-              <MaterialCommunityIcons
-                name="check-bold"
-                size={20}
-                color="#FFF"
-                style={styles.btnIcon}
-              />
-              <Text style={styles.nextBtnText}>ابدأ رحلتك</Text>
-            </View>
-          ) : (
-            <View style={styles.btnRow}>
-              <Text style={styles.nextBtnText}>التالي</Text>
-              <MaterialCommunityIcons
-                name="chevron-left"
-                size={22}
-                color="#FFF"
-                style={styles.btnIconRight}
-              />
-            </View>
-          )}
-        </TouchableOpacity>
+        {/* Buttons */}
+        {isLast ? (
+          // Last slide: single full-width start button
+          <TouchableOpacity
+            style={[styles.startBtn, finishing && styles.btnDisabled]}
+            onPress={handleFinish}
+            activeOpacity={0.85}
+            disabled={finishing}
+          >
+            {finishing
+              ? <ActivityIndicator color="#FFF" />
+              : <Text style={styles.startBtnText}>ابدأ معنا!</Text>}
+          </TouchableOpacity>
+        ) : (
+          // Other slides: Previous (right) + Next (left) — RTL
+          <View style={styles.navRow}>
+            {/* Previous — right side in RTL */}
+            <TouchableOpacity
+              style={[styles.navBtn, isFirst && styles.navBtnHidden]}
+              onPress={goPrev}
+              disabled={isFirst}
+            >
+              <Text style={styles.navBtnText}>← سابق</Text>
+            </TouchableOpacity>
+
+            {/* Next — left side in RTL */}
+            <TouchableOpacity style={styles.navBtn} onPress={goNext}>
+              <Text style={styles.navBtnText}>لاحق →</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: NAVY },
-  list: { flex: 1 },
+  root: { flex: 1, backgroundColor: '#FFFFFF' },
 
-  /* ── Slides ── */
-  slide: {
-    width: SCREEN_WIDTH,
-    flex: 1,
+  /* top illustration */
+  topPanel: {
+    width: W,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingTop: Platform.OS === 'android' ? 48 : 20,
-    paddingBottom: 16,
   },
-  iconCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(201,168,76,0.12)',
-    borderWidth: 2,
-    borderColor: 'rgba(201,168,76,0.3)',
+  iconWrap: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
   },
+
+  /* white card */
+  card: {
+    width: W,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: CARD_RADIUS,
+    borderTopRightRadius: CARD_RADIUS,
+    marginTop: -CARD_OVERLAP,   // overlap the top panel slightly
+    paddingHorizontal: W * 0.06,
+    paddingTop: W * 0.07,
+    paddingBottom: 8,
+    alignItems: 'center',
+  },
+
   slideTitle: {
-    color: '#FFF',
-    fontSize: 26,
+    fontSize: Math.max(W * 0.055, 20),
     fontWeight: 'bold',
+    color: '#111',
     textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-  titleAccent: {
-    width: 48,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: GOLD,
-    marginVertical: 12,
-  },
-  slideSubtitle: {
-    color: GOLD,
-    fontSize: 15,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: W * 0.04,
   },
   slideBody: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 15,
+    fontSize: Math.max(W * 0.042, 15),
+    color: '#333',
     textAlign: 'center',
-    lineHeight: 26,
+    lineHeight: Math.max(W * 0.07, 26),
+  },
+  slideBodyLarge: {
+    fontSize: Math.max(W * 0.05, 18),
+    color: '#888',
+    fontWeight: '500',
   },
 
-  /* ── Skip button ── */
-  skipBtn: {
-    position: 'absolute',
-    top: Platform.OS === 'android' ? 48 : 16,
-    left: 20,
-    zIndex: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  skipText: { color: 'rgba(255,255,255,0.7)', fontSize: 14 },
-
-  /* ── Bottom bar ── */
-  bottomBar: {
-    flexDirection: 'row',
+  verseBlock: {
+    marginTop: W * 0.05,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    backgroundColor: NAVY,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
   },
-  dotsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  verseText: {
+    fontSize: Math.max(W * 0.048, 17),
+    fontWeight: 'bold',
+    color: '#111',
+    textAlign: 'center',
+    lineHeight: Math.max(W * 0.075, 28),
+  },
+  verseRef: {
+    marginTop: 8,
+    fontSize: Math.max(W * 0.038, 14),
+    color: '#777',
+    textAlign: 'center',
+  },
+
+  /* footer */
+  footer: {
+    backgroundColor: '#FFF',
+    paddingTop: 12,
+    paddingHorizontal: W * 0.05,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: '#D0D0D0',
   },
   dotActive: {
     width: 24,
-    backgroundColor: GOLD,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: NAVY,
   },
 
-  /* ── Next / Start button ── */
-  nextBtn: {
-    backgroundColor: GOLD,
-    height: 50,
-    borderRadius: 25,
-    paddingHorizontal: 28,
-    justifyContent: 'center',
+  /* two-button nav row */
+  navRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  navBtn: {
+    backgroundColor: NAVY,
+    borderRadius: BTN_RADIUS,
+    paddingVertical: Math.max(H * 0.018, 13),
+    paddingHorizontal: W * 0.1,
+    minWidth: W * 0.35,
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: GOLD,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
   },
-  nextBtnLast: {
-    backgroundColor: '#2A7A2A',
-    paddingHorizontal: 36,
+  navBtnHidden: { opacity: 0 },
+  navBtnText: {
+    color: '#FFF',
+    fontSize: Math.max(W * 0.04, 15),
+    fontWeight: '600',
   },
-  btnRow: { flexDirection: 'row', alignItems: 'center' },
-  btnIcon: { marginLeft: 8 },
-  btnIconRight: { marginRight: 4 },
-  nextBtnText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+
+  /* last slide — full width start button */
+  startBtn: {
+    backgroundColor: NAVY,
+    borderRadius: BTN_RADIUS,
+    paddingVertical: Math.max(H * 0.02, 14),
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  startBtnText: {
+    color: '#FFF',
+    fontSize: Math.max(W * 0.045, 16),
+    fontWeight: 'bold',
+  },
+  btnDisabled: { opacity: 0.6 },
 });
 
 export default OnboardingScreen;
