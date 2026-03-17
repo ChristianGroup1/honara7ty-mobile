@@ -45,7 +45,7 @@ interface Slide {
   /** Whether the top panel is dark (navy) or light */
   darkTop: boolean;
   title?: string;
-  body: string;
+  body?: string;
   verse?: string;
   verseRef?: string;
   /** Text shown below the illustration on the last slide */
@@ -55,16 +55,17 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     key: '1',
-    icon: 'book-open-page-variant',
-    iconColor: '#FFFFFF',
-    iconBg: LIGHT_ICON_BG,
-    darkTop: true,
+    icon: 'account-group',
+    iconColor: NAVY,
+    iconBg: DARK_ICON_BG,
+    darkTop: false,
+    body: 'اقرأ كتابك كل يوم، فيه قوة ليومك ونور لطريقك.',
     verse: 'وُجِدَ كَلاَمُكَ فَأَكَلْتُهُ، فَكَانَ كَلاَمُكَ لِي\nلِلسُّرُورِ وَلِفَرَحِ قَلْبِي',
     verseRef: 'إرميا 15 : 16',
   },
   {
     key: '2',
-    icon: 'account-group',
+    icon: 'book-open-page-variant',
     iconColor: NAVY,
     iconBg: DARK_ICON_BG,
     darkTop: false,
@@ -77,6 +78,7 @@ const SLIDES: Slide[] = [
     iconColor: '#FFFFFF',
     iconBg: LIGHT_ICON_BG,
     darkTop: true,
+    body: 'خلّي البداية اليوم',
     cta: 'ابدأ معنا!',
   },
 ];
@@ -157,12 +159,14 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
           ) : null}
 
           {/* Body */}
-          <Text style={[
-            styles.slideBody,
-            !item.title && !item.verse && styles.slideBodyLarge,
-          ]}>
-            {item.body}
-          </Text>
+          {item.body ? (
+            <Text style={[
+              styles.slideBody,
+              !item.title && !item.verse && styles.slideBodyLarge,
+            ]}>
+              {item.body}
+            </Text>
+          ) : null}
 
           {/* Verse block */}
           {item.verse ? (
