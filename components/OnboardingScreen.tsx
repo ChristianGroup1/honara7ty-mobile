@@ -22,14 +22,6 @@ const BOT_RATIO = 0.48;   // text panel        = 48% of screen height
 
 const NAVY = '#0A1124';
 
-// Icon background colours
-const LIGHT_ICON_BG = 'rgba(255,255,255,0.12)';
-const DARK_ICON_BG  = 'rgba(10,17,36,0.08)';
-
-// Icon wrap sizing multipliers
-const ICON_WRAP_SIZE_FACTOR   = 1.6;   // wrapper diameter relative to icon size
-const ICON_WRAP_RADIUS_FACTOR = 0.8;   // border-radius = half the wrapper = circle
-
 // Card overlap: how many px the white card climbs over the top panel
 const CARD_OVERLAP = W * 0.07;
 const CARD_RADIUS  = W * 0.07;   // rounded top corners of the white card
@@ -38,50 +30,106 @@ const BTN_RADIUS   = W * 0.12;   // pill-shaped button
 // ─── Slide definitions ───────────────────────────────────────────────────────
 interface Slide {
   key: string;
-  /** MaterialCommunityIcons name shown in the top illustration panel */
-  icon: string;
-  iconColor: string;
-  iconBg: string;
-  /** Whether the top panel is dark (navy) or light */
-  darkTop: boolean;
   title?: string;
   body?: string;
   verse?: string;
   verseRef?: string;
-  /** Text shown below the illustration on the last slide */
-  cta?: string;
 }
 
 const SLIDES: Slide[] = [
   {
     key: '1',
-    icon: 'account-group',
-    iconColor: NAVY,
-    iconBg: DARK_ICON_BG,
-    darkTop: false,
     body: 'اقرأ كتابك كل يوم، فيه قوة ليومك ونور لطريقك.',
     verse: 'وُجِدَ كَلاَمُكَ فَأَكَلْتُهُ، فَكَانَ كَلاَمُكَ لِي\nلِلسُّرُورِ وَلِفَرَحِ قَلْبِي',
     verseRef: 'إرميا 15 : 16',
   },
   {
     key: '2',
-    icon: 'book-open-page-variant',
-    iconColor: NAVY,
-    iconBg: DARK_ICON_BG,
-    darkTop: false,
     title: 'مرحباً بك في تطبيق حفظ الآيات',
     body: '"هنا نساعدك تفتح كتابك المقدس وتقرأ فيه كل يوم بانتظام، وفي وقت محدد يناسبك علشان تفضل ثابت في علاقتك مع كلمة الله."',
   },
   {
     key: '3',
-    icon: 'book-open-variant',
-    iconColor: '#FFFFFF',
-    iconBg: LIGHT_ICON_BG,
-    darkTop: true,
-    body: 'خلّي البداية اليوم',
-    cta: 'ابدأ معنا!',
+    title: 'خلّي البداية اليوم',
+    body: 'ابدأ من النهارده حدد وقت تقابل فيه مع الله وتتغذى فيه من كلمته الحيه ومتكسلش يلا بينا',
   },
 ];
+
+// ─── Slide illustrations ─────────────────────────────────────────────────────
+const ArchIllustration: React.FC = () => {
+  const archW  = W * 0.21;
+  const shortH = W * 0.52;
+  const tallH  = W * 0.68;
+  const radius = archW / 2;
+  const iconSz = Math.round(archW * 0.62);
+
+  const arch = (height: number, opacity: number) => ({
+    width: archW, height,
+    borderTopLeftRadius: radius, borderTopRightRadius: radius,
+    backgroundColor: `rgba(255,255,255,${opacity})`,
+    alignItems: 'center' as const, justifyContent: 'flex-end' as const,
+    paddingBottom: W * 0.04,
+  });
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: W * 0.035 }}>
+      <View style={arch(shortH, 0.10)}>
+        <MaterialCommunityIcons name="human-female" size={iconSz} color="rgba(255,255,255,0.9)" />
+      </View>
+      <View style={arch(tallH, 0.16)}>
+        <MaterialCommunityIcons name="book-open-page-variant" size={Math.round(iconSz * 1.15)} color="#FFFFFF" />
+      </View>
+      <View style={arch(shortH, 0.10)}>
+        <MaterialCommunityIcons name="human-male" size={iconSz} color="rgba(255,255,255,0.9)" />
+      </View>
+    </View>
+  );
+};
+
+const GroupIllustration: React.FC = () => {
+  const big  = Math.round(W * 0.22);
+  const med  = Math.round(W * 0.16);
+  const sm   = Math.round(W * 0.13);
+  const glow = W * 0.72;
+
+  return (
+    <View style={{ width: glow, height: glow, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ position: 'absolute', width: glow, height: glow, borderRadius: glow / 2, backgroundColor: 'rgba(255,255,255,0.04)' }} />
+      <View style={{ position: 'absolute', width: glow * 0.65, height: glow * 0.65, borderRadius: glow * 0.325, backgroundColor: 'rgba(255,255,255,0.07)' }} />
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: W * 0.03 }}>
+        <MaterialCommunityIcons name="account" size={med} color="rgba(255,255,255,0.65)" />
+        <MaterialCommunityIcons name="account" size={big} color="#FFFFFF" />
+        <MaterialCommunityIcons name="account" size={med} color="rgba(255,255,255,0.65)" />
+      </View>
+      <MaterialCommunityIcons name="book-open-variant" size={big} color="#F9C74F" />
+      <View style={{ flexDirection: 'row', gap: W * 0.06 }}>
+        <MaterialCommunityIcons name="account" size={sm} color="rgba(255,255,255,0.55)" />
+        <MaterialCommunityIcons name="account" size={sm} color="rgba(255,255,255,0.55)" />
+        <MaterialCommunityIcons name="account" size={sm} color="rgba(255,255,255,0.55)" />
+      </View>
+    </View>
+  );
+};
+
+const BookIllustration: React.FC = () => {
+  const bookSz = Math.round(W * 0.5);
+  const glow   = W * 0.78;
+
+  return (
+    <View style={{ width: glow, height: glow, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ position: 'absolute', width: glow, height: glow, borderRadius: glow / 2, backgroundColor: 'rgba(255,255,255,0.04)' }} />
+      <View style={{ position: 'absolute', width: glow * 0.7, height: glow * 0.7, borderRadius: glow * 0.35, backgroundColor: 'rgba(255,255,255,0.07)' }} />
+      <View style={{ position: 'absolute', width: glow * 0.45, height: glow * 0.45, borderRadius: glow * 0.225, backgroundColor: 'rgba(255,255,255,0.05)' }} />
+      <MaterialCommunityIcons name="book-open-page-variant" size={bookSz} color="#FFFFFF" />
+    </View>
+  );
+};
+
+const ILLUSTRATIONS: Record<string, React.FC> = {
+  '1': ArchIllustration,
+  '2': GroupIllustration,
+  '3': BookIllustration,
+};
 
 type Props = { navigation: any };
 
@@ -134,21 +182,13 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   const botH = Math.max(H * BOT_RATIO, 220);
 
   const renderSlide = ({ item }: { item: Slide }) => {
-    const topBg  = item.darkTop ? NAVY : '#F0F2F5';
-    const iconSz = Math.round(W * 0.28);   // ~28 % of screen width
+    const Illustration = ILLUSTRATIONS[item.key];
 
     return (
       <View style={{ width: W }}>
         {/* ── Top illustration panel ── */}
-        <View style={[styles.topPanel, { height: topH, backgroundColor: topBg }]}>
-          <View style={[styles.iconWrap, {
-            width: iconSz * ICON_WRAP_SIZE_FACTOR,
-            height: iconSz * ICON_WRAP_SIZE_FACTOR,
-            borderRadius: iconSz * ICON_WRAP_RADIUS_FACTOR,
-            backgroundColor: item.iconBg,
-          }]}>
-            <MaterialCommunityIcons name={item.icon} size={iconSz} color={item.iconColor} />
-          </View>
+        <View style={[styles.topPanel, { height: topH, backgroundColor: NAVY }]}>
+          {Illustration ? <Illustration /> : null}
         </View>
 
         {/* ── Bottom text card ── */}
@@ -257,11 +297,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWrap: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
   /* white card */
   card: {
     width: W,
