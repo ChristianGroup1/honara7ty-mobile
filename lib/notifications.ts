@@ -13,8 +13,9 @@
  */
 
 import notifee, {
+  AlarmType,
   AndroidImportance,
-  AndroidAlarmType,
+  AndroidVisibility,
   AuthorizationStatus,
   RepeatFrequency,
   TimestampTrigger,
@@ -79,10 +80,10 @@ export async function scheduleDailyDevotionReminder(
     type: TriggerType.TIMESTAMP,
     timestamp: trigger.getTime(),
     repeatFrequency: RepeatFrequency.DAILY,
-    // Use SET_EXACT_AND_ALLOW_WHILE_IDLE to fire reliably on Android 12+
+    // Use AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE to fire reliably on Android 12+
     // even when the device is in Doze mode.
     alarmManager: {
-      type: AndroidAlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,
+      type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,
     },
   };
 
@@ -97,7 +98,7 @@ export async function scheduleDailyDevotionReminder(
         smallIcon: 'ic_notification',
         pressAction: { id: 'default' },
         // Show on lock screen
-        visibility: 1, // AndroidVisibility.PUBLIC
+        visibility: AndroidVisibility.PUBLIC,
       },
     },
     timestampTrigger,
