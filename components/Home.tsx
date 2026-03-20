@@ -232,7 +232,7 @@ const HomeScreen = ({ route, navigation }: any) => {
           <TouchableOpacity
             style={styles.quickBtn}
             activeOpacity={0.8}
-            onPress={() => navigation.navigate('Onboarding')}
+            onPress={() => navigation.navigate('DevotionGuide')}
           >
             <MaterialCommunityIcons name="head-cog-outline" size={26} color={NAVY} />
             <Text style={styles.quickBtnText}>شرح الخلوة</Text>

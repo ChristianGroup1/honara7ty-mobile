@@ -30,6 +30,7 @@ import {
   TestimoniesScreen,
   MoreScreen,
   ProfileScreen,
+  DevotionGuideScreen,
 } from './screens';
 import SignupStep1 from './components/Signup';
 import HomeScreen from './components/Home';
@@ -59,6 +60,7 @@ type RootStackParamList = {
   Badges: undefined;
   Testimonies: undefined;
   DailyNotifications: undefined;
+  DevotionGuide: undefined;
 };
 
 /**
@@ -335,6 +337,11 @@ function App() {
           <Stack.Screen
             name="Testimonies"
             component={TestimoniesScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="DevotionGuide"
+            component={DevotionGuideScreen}
             options={{ headerShown: false }}
           />
         </Stack.Navigator>
