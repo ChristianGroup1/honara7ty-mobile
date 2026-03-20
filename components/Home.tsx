@@ -22,6 +22,23 @@ const BG = '#F2F4F8';
 
 const DAILY_QUESTION = 'هل أخذت خلوتك اليوم؟';
 
+/** Encouraging messages shown when the user answers YES */
+const YES_MESSAGES = [
+  'رائع! 🎉 ثابر على هذا الوقت الثمين مع الله يومياً\n"أَقِيمُوا فِيَّ وَأَنَا فِيكُمْ" يوحنا ١٥:٤',
+  'أحسنت! 🙌 وقتك مع الله هو أثمن لحظات يومك\n"طُوبَى لِلَّذِينَ يَجُوعُونَ وَيَعْطَشُونَ إِلَى الْبِرِّ" متى ٥:٦',
+  'بارك الله خلوتك ✨ استمر في هذا العهد مع ربك كل يوم',
+];
+
+/** Motivating messages shown when the user answers NO */
+const NO_MESSAGES = [
+  'لا بأس 💙 لا يزال الوقت أمامك اليوم\nحتى ١٠ دقائق هادئة مع الله تغيّر يومك بالكامل\n"اسْكُتُوا وَاعْلَمُوا أَنِّي أَنَا اللهُ" مزامير ٤٦:١٠',
+  'الله ينتظرك الآن 🙏 أغلق كل شيء لدقائق وتحدث إليه\n"اُقْتَرِبُوا مِنَ اللهِ فَيَقْتَرِبَ مِنْكُمْ" يعقوب ٤:٨',
+  'هيّا ١٥ دقيقة الآن! 📖 افتح الكتاب المقدس وصلّ\nخلوتك مع الله هي قوتك ليومك كله',
+];
+
+const getRandomMessage = (arr: string[]) =>
+  arr[Math.floor(Math.random() * arr.length)];
+
 const getTodayDate = () => {
   const d = new Date();
   const year = d.getFullYear();
@@ -87,7 +104,7 @@ const HomeScreen = ({ route, navigation }: any) => {
     }, []),
   );
 
-  /* ── Save devotion answer ── */
+  /* ── Save devotion answer + show smart response ── */
   const handleDevotionAnswer = async (completed: boolean) => {
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
@@ -102,6 +119,28 @@ const HomeScreen = ({ route, navigation }: any) => {
 
     if (!error) {
       setDevotionAnswer(completed);
+      if (completed) {
+        showAlert(
+          'أحسنت! استمر مع الله 🙏',
+          getRandomMessage(YES_MESSAGES),
+          undefined,
+          'success',
+        );
+      } else {
+        showAlert(
+          'لا بأس، الله ينتظرك 💙',
+          getRandomMessage(NO_MESSAGES),
+          [
+            {
+              text: 'ابدأ خلوتي الآن',
+              style: 'default',
+              onPress: () => navigation.navigate('SpiritualReflection'),
+            },
+            { text: 'لاحقاً', style: 'cancel' },
+          ],
+          'info',
+        );
+      }
     }
   };
 
@@ -134,7 +173,7 @@ const HomeScreen = ({ route, navigation }: any) => {
   const handleAnswerNow = () => {
     showAlert(
       DAILY_QUESTION,
-      'اختر إجابتك',
+      'قضيت وقتاً مع الله اليوم؟',
       [
         {
           text: 'نعم ✓',
@@ -143,7 +182,7 @@ const HomeScreen = ({ route, navigation }: any) => {
         },
         {
           text: 'لا ✗',
-          style: 'cancel',
+          style: 'destructive',
           onPress: () => handleDevotionAnswer(false),
         },
       ],
@@ -252,21 +291,15 @@ const HomeScreen = ({ route, navigation }: any) => {
             >
               <Text style={styles.answerBtnText}>جاوب الآن</Text>
             </TouchableOpacity>
+          ) : devotionAnswer ? (
+            <View style={styles.answeredYesCard}>
+              <MaterialCommunityIcons name="check-circle" size={22} color="#fff" />
+              <Text style={styles.answeredYesText}>أجبت بنعم اليوم 🎉 بارك الله خلوتك!</Text>
+            </View>
           ) : (
-            <View style={styles.answeredRow}>
-              <MaterialCommunityIcons
-                name={devotionAnswer ? 'check-circle' : 'close-circle'}
-                size={20}
-                color={devotionAnswer ? '#2D9C5A' : '#C0392B'}
-              />
-              <Text
-                style={[
-                  styles.answeredText,
-                  { color: devotionAnswer ? '#2D9C5A' : '#C0392B' },
-                ]}
-              >
-                {devotionAnswer ? 'أجبت بنعم اليوم 🎉' : 'أجبت بلا اليوم'}
-              </Text>
+            <View style={styles.answeredNoCard}>
+              <MaterialCommunityIcons name="clock-alert-outline" size={22} color="#fff" />
+              <Text style={styles.answeredNoText}>لم تأخذ خلوتك بعد — لا يزال الوقت أمامك 💙</Text>
             </View>
           )}
         </View>
@@ -426,13 +459,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   answerBtnText: { color: '#FFF', fontSize: 15, fontWeight: '600' },
-  answeredRow: {
+  answeredYesCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 6,
+    gap: 8,
+    backgroundColor: '#2D9C5A',
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
   },
-  answeredText: { fontSize: 14, fontWeight: '600' },
+  answeredYesText: { color: '#FFF', fontSize: 13, fontWeight: '600', textAlign: 'center', flex: 1 },
+  answeredNoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#E67E22',
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+  },
+  answeredNoText: { color: '#FFF', fontSize: 13, fontWeight: '600', textAlign: 'center', flex: 1 },
 
   /* ── Feature cards (prayer / journal) ── */
   featureCard: {

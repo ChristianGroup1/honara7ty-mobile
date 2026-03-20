@@ -15,6 +15,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
+import { scheduleDailyDevotionReminder } from '../lib/notifications';
 import CustomAlert, { AlertButton } from './CustomAlert';
 
 const NAVY = '#0A1124';
@@ -28,7 +29,9 @@ const TIPS = [
   { icon: 'timer-outline', text: 'حتى 15 دقيقة يومياً كافية للبدء — الاستمرارية هي المفتاح.' },
 ];
 
-const DailyNotificationsScreen = ({ navigation }: any) => {
+const DailyNotificationsScreen = ({ navigation, route }: any) => {
+  /** When opened as a bottom tab there is no stack to go back to. */
+  const isTab = route?.name === 'الإعدادات';
   const [devotionTime, setDevotionTime] = useState<Date>(() => {
     const d = new Date();
     d.setHours(7, 0, 0, 0);
@@ -92,7 +95,9 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
     const userId = sessionData?.session?.user?.id;
     if (!userId) { setSaving(false); return; }
 
-    const timeString = `${String(devotionTime.getHours()).padStart(2, '0')}:${String(devotionTime.getMinutes()).padStart(2, '0')}`;
+    const hours = devotionTime.getHours();
+    const minutes = devotionTime.getMinutes();
+    const timeString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 
     // Upsert into profiles table
     const { error } = await supabase
@@ -102,10 +107,17 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
     if (error) {
       showAlert('خطأ في الحفظ', error.message);
     } else {
+      // Schedule the daily reminder notification
+      try {
+        await scheduleDailyDevotionReminder(hours, minutes);
+      } catch {
+        // Notification scheduling is best-effort; don't block saving on failure.
+      }
+
       setSaved(true);
       showAlert(
         'تم الحفظ ✅',
-        `تم حفظ وقت تعبّدك: ${timeString}\nستبقى ذاكرتنا معك دائماً 🙏`,
+        `تم حفظ وقت تعبّدك: ${timeString}\nهنبعتلك تذكير كل يوم عشان ماتفوتش وقتك مع الله 🙏`,
         undefined,
         'success',
       );
@@ -132,9 +144,12 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <MaterialCommunityIcons name="arrow-right" size={24} color="#FFF" />
-        </TouchableOpacity>
+        {!isTab && (
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <MaterialCommunityIcons name="arrow-right" size={24} color="#FFF" />
+          </TouchableOpacity>
+        )}
+        {isTab && <View style={{ width: 40 }} />}
         <Text style={styles.headerTitle}>وقت التعبد اليومي</Text>
         <View style={{ width: 40 }} />
       </View>

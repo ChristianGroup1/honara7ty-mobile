@@ -7,10 +7,12 @@
 
 import 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
-import { Linking, StatusBar, useColorScheme } from 'react-native';
+import { Linking, Platform, StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   WelcomeScreen,
   SplashScreen,
@@ -26,16 +28,23 @@ import {
   BibleMemorizationScreen,
   BadgesScreen,
   TestimoniesScreen,
+  MoreScreen,
+  ProfileScreen,
 } from './screens';
-import SignupStep1 from './components/Signup'; // Import your signup step
+import SignupStep1 from './components/Signup';
 import HomeScreen from './components/Home';
 import supabase from './lib/supbase';
 
+const NAVY = '#0A1124';
+const GOLD = '#C9A84C';
+
+// ─── Navigators ───────────────────────────────────────────────────────────────
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 type RootStackParamList = {
-  HomeScreen: { user?: any };
+  MainTabs: undefined;
   Welcome: undefined;
   SignupStep1: undefined;
   ProfileCompletion: undefined;
@@ -45,12 +54,63 @@ type RootStackParamList = {
   Onboarding: undefined;
   PrayerNotes: undefined;
   SpiritualReflection: undefined;
-  DailyNotifications: undefined;
   BibleReader: undefined;
   BibleMemorization: undefined;
   Badges: undefined;
   Testimonies: undefined;
+  DailyNotifications: undefined;
 };
+
+/**
+ * Bottom tab navigator — the main logged-in shell.
+ * Each tab gets access to the root stack's navigation so deep screens
+ * (PrayerNotes, BibleReader, etc.) can still be pushed on the stack.
+ */
+function MainTabNavigator() {
+  return (
+    <Tab.Navigator
+      initialRouteName="الرئيسية"
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: GOLD,
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.45)',
+        tabBarStyle: {
+          backgroundColor: NAVY,
+          borderTopWidth: 0,
+          paddingBottom: Platform.OS === 'android' ? 8 : 4,
+          paddingTop: 8,
+          height: Platform.OS === 'android' ? 60 : 80,
+          elevation: 12,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginBottom: 2 },
+        tabBarIcon: ({ color, focused }) => {
+          const icons: Record<string, string> = {
+            'الرئيسية': focused ? 'home' : 'home-outline',
+            'الملف الشخصي': focused ? 'account' : 'account-outline',
+            'الإعدادات': focused ? 'cog' : 'cog-outline',
+            'المزيد': focused ? 'dots-horizontal-circle' : 'dots-horizontal-circle-outline',
+          };
+          return (
+            <MaterialCommunityIcons
+              name={icons[route.name] ?? 'circle'}
+              size={24}
+              color={color}
+            />
+          );
+        },
+      })}
+    >
+      <Tab.Screen name="الرئيسية" component={HomeScreen} />
+      <Tab.Screen name="الملف الشخصي" component={ProfileScreen} />
+      <Tab.Screen name="الإعدادات" component={DailyNotificationsScreen} />
+      <Tab.Screen name="المزيد" component={MoreScreen} />
+    </Tab.Navigator>
+  );
+}
 
 /** Parse a URL fragment string (key=value&key2=value2) into a plain object. */
 function parseFragment(fragment: string): Record<string, string> {
@@ -187,7 +247,7 @@ function App() {
   return (
     <SafeAreaProvider>
       <NavigationContainer ref={navigationRef}>
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+        <StatusBar barStyle="light-content" backgroundColor={NAVY} />
         <Stack.Navigator
           initialRouteName={
             isRecoveryMode
@@ -195,13 +255,14 @@ function App() {
               : isLoggedIn
               ? needsOnboarding
                 ? 'Onboarding'
-                : 'HomeScreen'
+                : 'MainTabs'
               : 'Welcome'
           }
         >
+          {/* ── Main logged-in shell (bottom tabs) ── */}
           <Stack.Screen
-            name="HomeScreen"
-            component={HomeScreen}
+            name="MainTabs"
+            component={MainTabNavigator}
             options={{ headerShown: false }}
           />
           <Stack.Screen
@@ -212,17 +273,17 @@ function App() {
           <Stack.Screen
             name="SignupStep1"
             component={SignupStep1}
-            options={{ headerShown: false }} // This line hides the white header
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="ProfileCompletion"
             component={ProfileCompletion}
-            options={{ headerShown: false }} // This line hides the white header
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="Login"
             component={LoginUi}
-            options={{ headerShown: false }} // This line hides the white header
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="ForgotPassword"
@@ -240,6 +301,7 @@ function App() {
             component={OnboardingScreen}
             options={{ headerShown: false }}
           />
+          {/* ── Detail screens pushed from tabs ── */}
           <Stack.Screen
             name="PrayerNotes"
             component={PrayerNotesScreen}
