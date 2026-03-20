@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
@@ -17,63 +18,24 @@ import CustomAlert, { AlertButton } from './CustomAlert';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
+const BG = '#F2F4F8';
 
-const FEATURES = [
-  {
-    key: 'DailyNotifications',
-    icon: 'bell-outline',
-    title: 'تنبيهات يومية',
-    subtitle: 'اختر وقت تعبّدك',
-    color: '#1A6B9A',
-  },
-  {
-    key: 'PrayerNotes',
-    icon: 'hands-pray',
-    title: 'ملاحظات الصلاة',
-    subtitle: 'سجّل طلبات الصلاة',
-    color: '#4A7A3A',
-  },
-  {
-    key: 'SpiritualReflection',
-    icon: 'notebook-heart-outline',
-    title: 'التأمل الروحي',
-    subtitle: 'ماذا كلّمك الله؟',
-    color: '#7A4A9A',
-  },
-  {
-    key: 'BibleReader',
-    icon: 'book-open-variant',
-    title: 'قراءة الكتاب المقدس',
-    subtitle: 'تصفح أسفار الكتاب المقدس',
-    color: '#9A6A1A',
-  },
-  {
-    key: 'BibleMemorization',
-    icon: 'brain',
-    title: 'حفظ الكتاب المقدس',
-    subtitle: 'اختبر حفظك للآيات',
-    color: '#1A7A7A',
-  },
-  {
-    key: 'Badges',
-    icon: 'medal-outline',
-    title: 'شارات الثبات',
-    subtitle: 'انظر إنجازاتك',
-    color: '#9A3A3A',
-  },
-  {
-    key: 'Testimonies',
-    icon: 'share-variant-outline',
-    title: 'الشهادات',
-    subtitle: 'شارك ما صنعه الله',
-    color: '#3A4A9A',
-  },
-];
+const DAILY_QUESTION = 'هل أخذت خلوتك اليوم؟';
+
+const getTodayDate = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const HomeScreen = ({ route, navigation }: any) => {
   const userFromParams = route?.params?.user;
   const [user, setUser] = useState<any>(userFromParams || null);
   const [loading, setLoading] = useState(!userFromParams);
+  /** null = not yet answered today, true = answered yes, false = answered no */
+  const [devotionAnswer, setDevotionAnswer] = useState<boolean | null>(null);
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -86,26 +48,65 @@ const HomeScreen = ({ route, navigation }: any) => {
     title: string,
     message?: string,
     buttons?: AlertButton[],
-    type: 'error' | 'warning' | 'success' | 'info' = 'error',
+    type: 'error' | 'warning' | 'success' | 'info' = 'info',
   ) => setAlertConfig({ visible: true, title, message, buttons, type });
 
   const hideAlert = () =>
     setAlertConfig(prev => ({ ...prev, visible: false }));
 
+  /* ── Load user once ── */
   useEffect(() => {
     if (!userFromParams) {
-      const loadUser = async () => {
-        const { data } = await supabase.auth.getSession();
+      supabase.auth.getSession().then(({ data }) => {
         if (data?.session?.user) {
           setUser(data.session.user);
         }
         setLoading(false);
-      };
-      loadUser();
+      });
     }
   }, []);
 
-  const handleLogout = async () => {
+  /* ── Check today's devotion answer whenever screen is focused ── */
+  useFocusEffect(
+    useCallback(() => {
+      const checkDevotion = async () => {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) { return; }
+
+        const { data } = await supabase
+          .from('devotion_log')
+          .select('completed')
+          .eq('user_id', userId)
+          .eq('date', getTodayDate())
+          .maybeSingle();
+
+        setDevotionAnswer(data ? (data.completed as boolean) : null);
+      };
+      checkDevotion();
+    }, []),
+  );
+
+  /* ── Save devotion answer ── */
+  const handleDevotionAnswer = async (completed: boolean) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData?.session?.user?.id;
+    if (!userId) { return; }
+
+    const { error } = await supabase
+      .from('devotion_log')
+      .upsert(
+        { user_id: userId, date: getTodayDate(), completed },
+        { onConflict: 'user_id,date' },
+      );
+
+    if (!error) {
+      setDevotionAnswer(completed);
+    }
+  };
+
+  /* ── Logout ── */
+  const handleLogout = () => {
     showAlert(
       'تسجيل الخروج',
       'هل أنت متأكد أنك تريد تسجيل الخروج؟',
@@ -119,13 +120,34 @@ const HomeScreen = ({ route, navigation }: any) => {
               await supabase.auth.signOut();
               await GoogleSignin.signOut();
               navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
-            } catch (error: any) {
-              showAlert('خطأ', error.message);
+            } catch (err: any) {
+              showAlert('خطأ', err.message, undefined, 'error');
             }
           },
         },
       ],
       'warning',
+    );
+  };
+
+  /* ── Show question dialog ── */
+  const handleAnswerNow = () => {
+    showAlert(
+      DAILY_QUESTION,
+      'اختر إجابتك',
+      [
+        {
+          text: 'نعم ✓',
+          style: 'default',
+          onPress: () => handleDevotionAnswer(true),
+        },
+        {
+          text: 'لا ✗',
+          style: 'cancel',
+          onPress: () => handleDevotionAnswer(false),
+        },
+      ],
+      'info',
     );
   };
 
@@ -143,43 +165,143 @@ const HomeScreen = ({ route, navigation }: any) => {
     user?.email?.split('@')[0] ||
     'مستخدم';
 
+  const initials = displayName
+    .split(' ')
+    .filter((w: string) => w.length > 0)
+    .slice(0, 2)
+    .map((w: string) => w[0] ?? '')
+    .join('')
+    .toUpperCase() || '🙏';
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
 
       {/* ─── Header ─── */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>مرحباً 👋</Text>
-          <Text style={styles.name}>{displayName}</Text>
-        </View>
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <MaterialCommunityIcons name="logout" size={22} color="#FFF" />
+          <MaterialCommunityIcons name="logout" size={20} color="rgba(255,255,255,0.7)" />
         </TouchableOpacity>
+
+        <View style={styles.headerCenter}>
+          <Text style={styles.greeting}>مرحباً يا بطل 👋</Text>
+          <Text style={styles.subGreeting}>جاهز لوقتك مع الله النهاردة؟</Text>
+        </View>
+
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{initials}</Text>
+        </View>
       </View>
 
-      {/* ─── Feature Grid ─── */}
       <ScrollView
-        contentContainerStyle={styles.grid}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>تعبّدك اليومي</Text>
-        <View style={styles.row}>
-          {FEATURES.map(f => (
-            <TouchableOpacity
-              key={f.key}
-              style={[styles.card, { borderTopColor: f.color }]}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate(f.key)}
-            >
-              <View style={[styles.iconCircle, { backgroundColor: f.color + '22' }]}>
-                <MaterialCommunityIcons name={f.icon} size={30} color={f.color} />
-              </View>
-              <Text style={styles.cardTitle}>{f.title}</Text>
-              <Text style={styles.cardSub}>{f.subtitle}</Text>
-            </TouchableOpacity>
-          ))}
+        {/* ─── 4 Quick-Action Buttons ─── */}
+        <View style={styles.buttonsGrid}>
+          <TouchableOpacity
+            style={styles.quickBtn}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('Onboarding')}
+          >
+            <MaterialCommunityIcons name="head-cog-outline" size={26} color={NAVY} />
+            <Text style={styles.quickBtnText}>شرح الخلوة</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickBtn}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('DailyNotifications')}
+          >
+            <MaterialCommunityIcons name="cog-outline" size={26} color={NAVY} />
+            <Text style={styles.quickBtnText}>اعدادات الخلوة</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickBtn}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('Badges')}
+          >
+            <MaterialCommunityIcons name="medal-outline" size={26} color={NAVY} />
+            <Text style={styles.quickBtnText}>الأوسمة والجوائز</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickBtn}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('BibleMemorization')}
+          >
+            <MaterialCommunityIcons name="book-open-outline" size={26} color={NAVY} />
+            <Text style={styles.quickBtnText}>حفظ الكتاب المقدس</Text>
+          </TouchableOpacity>
         </View>
+
+        {/* ─── Daily Question Card ─── */}
+        <View style={styles.questionCard}>
+          {/* decorative circle */}
+          <View style={styles.questionDecor} />
+
+          <Text style={styles.questionCardLabel}>سؤال اليوم المتغير</Text>
+          <Text style={styles.questionText}>{DAILY_QUESTION}</Text>
+
+          {devotionAnswer === null ? (
+            <TouchableOpacity
+              style={styles.answerBtn}
+              activeOpacity={0.85}
+              onPress={handleAnswerNow}
+            >
+              <Text style={styles.answerBtnText}>جاوب الآن</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.answeredRow}>
+              <MaterialCommunityIcons
+                name={devotionAnswer ? 'check-circle' : 'close-circle'}
+                size={20}
+                color={devotionAnswer ? '#2D9C5A' : '#C0392B'}
+              />
+              <Text
+                style={[
+                  styles.answeredText,
+                  { color: devotionAnswer ? '#2D9C5A' : '#C0392B' },
+                ]}
+              >
+                {devotionAnswer ? 'أجبت بنعم اليوم 🎉' : 'أجبت بلا اليوم'}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* ─── Prayer Notes Card ─── */}
+        <TouchableOpacity
+          style={styles.featureCard}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('PrayerNotes')}
+        >
+          <MaterialCommunityIcons name="chevron-right" size={22} color="#CCC" />
+          <View style={styles.featureCardBody}>
+            <Text style={styles.featureCardTitle}>طلبات الصلاة</Text>
+            <Text style={styles.featureCardSub}>شارك صلواتك وطلباتك</Text>
+          </View>
+          <View style={styles.featureIconCircle}>
+            <MaterialCommunityIcons name="hands-pray" size={26} color={NAVY} />
+          </View>
+        </TouchableOpacity>
+
+        {/* ─── Journal / Reflections Card ─── */}
+        <TouchableOpacity
+          style={styles.featureCard}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('SpiritualReflection')}
+        >
+          <MaterialCommunityIcons name="chevron-right" size={22} color="#CCC" />
+          <View style={styles.featureCardBody}>
+            <Text style={styles.featureCardTitle}>اليوميات</Text>
+            <Text style={styles.featureCardSub}>سجل خواطرك اليومية</Text>
+          </View>
+          <View style={styles.featureIconCircle}>
+            <MaterialCommunityIcons name="notebook-outline" size={26} color={NAVY} />
+          </View>
+        </TouchableOpacity>
       </ScrollView>
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
@@ -188,77 +310,164 @@ const HomeScreen = ({ route, navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F4F8' },
+  container: { flex: 1, backgroundColor: BG },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
-  /* header */
+  /* ── Header ── */
   header: {
     backgroundColor: NAVY,
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 20,
+    paddingBottom: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  headerLeft: { flex: 1 },
-  greeting: { color: 'rgba(255,255,255,0.65)', fontSize: 14 },
-  name: { color: '#FFF', fontSize: 20, fontWeight: 'bold', marginTop: 2 },
   logoutBtn: {
     backgroundColor: 'rgba(255,255,255,0.12)',
-    padding: 10,
+    padding: 9,
     borderRadius: 20,
   },
-
-  /* grid */
-  sectionTitle: {
-    fontSize: 18,
+  headerCenter: { flex: 1, alignItems: 'center' },
+  greeting: {
+    color: '#FFF',
+    fontSize: 20,
     fontWeight: 'bold',
-    color: NAVY,
-    marginBottom: 16,
-    textAlign: 'right',
+    textAlign: 'center',
   },
-  grid: { padding: 16, paddingBottom: 32 },
-  row: {
+  subGreeting: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 13,
+    marginTop: 3,
+    textAlign: 'center',
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: GOLD,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: { color: NAVY, fontSize: 16, fontWeight: 'bold' },
+
+  /* ── Scroll content ── */
+  scrollContent: { padding: 16, paddingBottom: 36 },
+
+  /* ── 4-button grid ── */
+  buttonsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 12,
+    marginBottom: 16,
   },
-
-  /* card */
-  card: {
+  quickBtn: {
     width: '47%',
     backgroundColor: '#FFF',
     borderRadius: 14,
-    padding: 16,
-    borderTopWidth: 4,
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+    alignItems: 'flex-end',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07,
     shadowRadius: 6,
-    alignItems: 'flex-end',
   },
-  iconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  cardTitle: {
+  quickBtnText: {
+    marginTop: 10,
     fontSize: 14,
+    fontWeight: '600',
+    color: NAVY,
+    textAlign: 'right',
+  },
+
+  /* ── Daily question card ── */
+  questionCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 14,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+  },
+  questionDecor: {
+    position: 'absolute',
+    top: -30,
+    left: -30,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: 'rgba(10,17,36,0.06)',
+  },
+  questionCardLabel: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'right',
+    marginBottom: 8,
+  },
+  questionText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: NAVY,
+    textAlign: 'right',
+    marginBottom: 18,
+    lineHeight: 24,
+  },
+  answerBtn: {
+    backgroundColor: NAVY,
+    borderRadius: 25,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  answerBtnText: { color: '#FFF', fontSize: 15, fontWeight: '600' },
+  answeredRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 6,
+  },
+  answeredText: { fontSize: 14, fontWeight: '600' },
+
+  /* ── Feature cards (prayer / journal) ── */
+  featureCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+  },
+  featureCardBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-end' },
+  featureCardTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: NAVY,
     textAlign: 'right',
   },
-  cardSub: {
-    fontSize: 11,
-    color: '#888',
+  featureCardSub: {
+    fontSize: 12,
+    color: '#999',
     marginTop: 4,
     textAlign: 'right',
+  },
+  featureIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(10,17,36,0.07)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

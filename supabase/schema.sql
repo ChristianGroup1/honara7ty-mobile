@@ -124,3 +124,27 @@ CREATE POLICY "testimonies: own rows only"
 
 CREATE INDEX IF NOT EXISTS testimonies_user_created_idx
   ON public.testimonies (user_id, created_at DESC);
+
+
+-- ──────────────────────────────────────────────────────────────
+-- 6. DEVOTION_LOG
+--    Tracks whether the user completed their daily خلوة (quiet time).
+--    One row per user per day. Answered via the "سؤال اليوم المتغير"
+--    card on the Home screen.
+-- ──────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.devotion_log (
+  user_id    UUID    NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  date       DATE    NOT NULL,   -- YYYY-MM-DD (local date of answer)
+  completed  BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  PRIMARY KEY (user_id, date)
+);
+
+ALTER TABLE public.devotion_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "devotion_log: own rows only"
+  ON public.devotion_log
+  FOR ALL
+  USING  (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
