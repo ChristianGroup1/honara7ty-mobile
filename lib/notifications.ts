@@ -7,11 +7,14 @@
  *   Android: no extra steps — Notifee auto-links.
  *   iOS:     cd ios && pod install
  *
- * Permissions are requested lazily on first call to scheduleDailyDevotionReminder.
+ * Android permissions required in AndroidManifest.xml:
+ *   POST_NOTIFICATIONS, USE_EXACT_ALARM, SCHEDULE_EXACT_ALARM,
+ *   RECEIVE_BOOT_COMPLETED, WAKE_LOCK
  */
 
 import notifee, {
   AndroidImportance,
+  AndroidAlarmType,
   AuthorizationStatus,
   RepeatFrequency,
   TimestampTrigger,
@@ -47,6 +50,9 @@ export async function requestNotificationPermission(): Promise<boolean> {
  * Schedule (or reschedule) a daily devotion reminder at the given hour/minute.
  * Any previously scheduled reminder with the same ID is cancelled first.
  *
+ * Requires AndroidManifest permissions:
+ *   USE_EXACT_ALARM (API 33+) / SCHEDULE_EXACT_ALARM (API 31-32)
+ *
  * @param hours   0-23
  * @param minutes 0-59
  */
@@ -73,20 +79,25 @@ export async function scheduleDailyDevotionReminder(
     type: TriggerType.TIMESTAMP,
     timestamp: trigger.getTime(),
     repeatFrequency: RepeatFrequency.DAILY,
+    // Use SET_EXACT_AND_ALLOW_WHILE_IDLE to fire reliably on Android 12+
+    // even when the device is in Doze mode.
     alarmManager: {
-      allowWhileIdle: true,
+      type: AndroidAlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,
     },
   };
 
   await notifee.createTriggerNotification(
     {
       id: NOTIFICATION_ID,
-      title: '⏰ وقت خلوتك مع الله',
-      body: 'تذكّر تأخذ خلوتك النهارده 🙏',
+      title: '✝️ وقت خلوتك مع الله',
+      body: 'تذكّر خلوتك النهارده 🙏 "أَقِيمُوا فِيَّ وَأَنَا فِيكُمْ" يو ١٥:٤',
       android: {
         channelId: CHANNEL_ID,
-        smallIcon: 'ic_launcher',
+        // ic_notification is a white monochrome drawable (required for Android 5+)
+        smallIcon: 'ic_notification',
         pressAction: { id: 'default' },
+        // Show on lock screen
+        visibility: 1, // AndroidVisibility.PUBLIC
       },
     },
     timestampTrigger,

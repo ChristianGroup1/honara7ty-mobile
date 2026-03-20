@@ -22,22 +22,13 @@ const BG = '#F2F4F8';
 
 const DAILY_QUESTION = 'هل أخذت خلوتك اليوم؟';
 
-/** Encouraging messages shown when the user answers YES */
-const YES_MESSAGES = [
-  'رائع! 🎉 ثابر على هذا الوقت الثمين مع الله يومياً\n"أَقِيمُوا فِيَّ وَأَنَا فِيكُمْ" يوحنا ١٥:٤',
-  'أحسنت! 🙌 وقتك مع الله هو أثمن لحظات يومك\n"طُوبَى لِلَّذِينَ يَجُوعُونَ وَيَعْطَشُونَ إِلَى الْبِرِّ" متى ٥:٦',
-  'بارك الله خلوتك ✨ استمر في هذا العهد مع ربك كل يوم',
-];
+/** Message shown when the user answers YES — encouraging them to keep going with God */
+const YES_MESSAGE =
+  'رائع! 🎉 ثابر على هذا الوقت الثمين مع الله يومياً\n"أَقِيمُوا فِيَّ وَأَنَا فِيكُمْ" يوحنا ١٥:٤';
 
-/** Motivating messages shown when the user answers NO */
-const NO_MESSAGES = [
-  'لا بأس 💙 لا يزال الوقت أمامك اليوم\nحتى ١٠ دقائق هادئة مع الله تغيّر يومك بالكامل\n"اسْكُتُوا وَاعْلَمُوا أَنِّي أَنَا اللهُ" مزامير ٤٦:١٠',
-  'الله ينتظرك الآن 🙏 أغلق كل شيء لدقائق وتحدث إليه\n"اُقْتَرِبُوا مِنَ اللهِ فَيَقْتَرِبَ مِنْكُمْ" يعقوب ٤:٨',
-  'هيّا ١٥ دقيقة الآن! 📖 افتح الكتاب المقدس وصلّ\nخلوتك مع الله هي قوتك ليومك كله',
-];
-
-const getRandomMessage = (arr: string[]) =>
-  arr[Math.floor(Math.random() * arr.length)];
+/** Message shown when the user answers NO — motivating them to take their devotion time */
+const NO_MESSAGE =
+  'لا بأس 💙 لا يزال الوقت أمامك اليوم\nحتى ١٠ دقائق هادئة مع الله تغيّر يومك بالكامل';
 
 const getTodayDate = () => {
   const d = new Date();
@@ -122,14 +113,14 @@ const HomeScreen = ({ route, navigation }: any) => {
       if (completed) {
         showAlert(
           'أحسنت! استمر مع الله 🙏',
-          getRandomMessage(YES_MESSAGES),
+          YES_MESSAGE,
           undefined,
           'success',
         );
       } else {
         showAlert(
           'لا بأس، الله ينتظرك 💙',
-          getRandomMessage(NO_MESSAGES),
+          NO_MESSAGE,
           [
             {
               text: 'ابدأ خلوتي الآن',
