@@ -105,8 +105,8 @@ export async function scheduleDailyDevotionReminder(
         visibility: AndroidVisibility.PUBLIC,
         // Classify as a reminder so the OS ranks it appropriately
         category: AndroidCategory.REMINDER,
-        // Gentle double-pulse vibration
-        vibrationPattern: [0, 300, 200, 300],
+        // Gentle double-pulse vibration (all values must be > 0 for notifee validation)
+        vibrationPattern: [100, 300, 200, 300],
         // Expanded (BigText) style shows the full verse when swiped down
         style: {
           type: AndroidStyle.BIGTEXT,
