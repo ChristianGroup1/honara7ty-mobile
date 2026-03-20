@@ -14,7 +14,9 @@
 
 import notifee, {
   AlarmType,
+  AndroidCategory,
   AndroidImportance,
+  AndroidStyle,
   AndroidVisibility,
   AuthorizationStatus,
   RepeatFrequency,
@@ -90,15 +92,28 @@ export async function scheduleDailyDevotionReminder(
   await notifee.createTriggerNotification(
     {
       id: NOTIFICATION_ID,
-      title: '✝️ وقت خلوتك مع الله',
-      body: 'تذكّر خلوتك النهارده 🙏 "أَقِيمُوا فِيَّ وَأَنَا فِيكُمْ" يو ١٥:٤',
+      title: '📖 وقت كلمة الله',
+      body: '"فَتْحُ كَلاَمِكَ يُنِيرُ، يُعَقِّلُ الْجُهَّالَ." (مز ١١٩: ١٣٠)',
       android: {
         channelId: CHANNEL_ID,
         // ic_notification is a white monochrome drawable (required for Android 5+)
         smallIcon: 'ic_notification',
+        // Gold accent colour matching the app theme
+        color: '#C9A84C',
         pressAction: { id: 'default' },
         // Show on lock screen
         visibility: AndroidVisibility.PUBLIC,
+        // Classify as a reminder so the OS ranks it appropriately
+        category: AndroidCategory.REMINDER,
+        // Gentle double-pulse vibration
+        vibrationPattern: [0, 300, 200, 300],
+        // Expanded (BigText) style shows the full verse when swiped down
+        style: {
+          type: AndroidStyle.BIGTEXT,
+          text: '📖 "فَتْحُ كَلاَمِكَ يُنِيرُ، يُعَقِّلُ الْجُهَّالَ."\n(مز ١١٩: ١٣٠)\n\nاضغط لتبدأ خلوتك مع الله 🙏',
+          title: 'وقت كلمة الله',
+          summary: 'مز ١١٩: ١٣٠',
+        },
       },
     },
     timestampTrigger,
