@@ -179,6 +179,17 @@ const ARTICLES: Article[] = [
 
 type Props = { navigation: any };
 
+// Soft per-article accent colours cycling through a palette
+const CARD_ACCENTS = ['#4A6FA5', '#6B4C9A', '#2E8B7A', '#C05C5C', '#B07B2A'];
+
+/** Convert a 6-char hex colour + 0–1 alpha to an rgba() string */
+const hexToRgba = (hex: string, alpha: number) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
   const [openArticleId, setOpenArticleId] = useState<string | null>(null);
 
@@ -186,12 +197,15 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
 
   // ── Article detail view ────────────────────────────────────────────────────
   if (openArticle) {
+    const articleIdx = ARTICLES.findIndex(a => a.id === openArticle.id);
+    const accent = CARD_ACCENTS[articleIdx % CARD_ACCENTS.length];
+
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <StatusBar barStyle="light-content" backgroundColor={NAVY} />
 
-        {/* Header */}
-        <View style={styles.header}>
+        {/* ── Slim back-button bar ── */}
+        <View style={[styles.detailTopBar, { backgroundColor: NAVY }]}>
           <TouchableOpacity
             style={styles.backBtn}
             onPress={() => setOpenArticleId(null)}
@@ -199,11 +213,9 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
           >
             <MaterialCommunityIcons name="arrow-right" size={22} color="#FFF" />
           </TouchableOpacity>
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle} numberOfLines={2}>
-              {openArticle.title}
-            </Text>
-          </View>
+          <Text style={styles.detailTopBarLabel} numberOfLines={1}>
+            {openArticle.title}
+          </Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -211,26 +223,66 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
           contentContainerStyle={styles.articleContent}
           showsVerticalScrollIndicator={false}
         >
-          {openArticle.sections.map((section, idx) => (
-            <View key={idx} style={styles.sectionBlock}>
-              {section.heading ? (
-                <Text style={styles.sectionHeading}>{section.heading}</Text>
-              ) : null}
-
-              {section.body ? (
-                <Text style={styles.sectionBody}>{section.body}</Text>
-              ) : null}
-
-              {section.items
-                ? section.items.map((item, i) => (
-                    <View key={i} style={styles.bulletRow}>
-                      <Text style={styles.bulletNumber}>{i + 1}</Text>
-                      <Text style={styles.bulletText}>{item}</Text>
-                    </View>
-                  ))
-                : null}
+          {/* ── Hero block ── */}
+          <View style={[styles.detailHero, { backgroundColor: accent }]}>
+            <View style={styles.detailHeroIconRing}>
+              <MaterialCommunityIcons name={openArticle.icon} size={36} color={accent} />
             </View>
-          ))}
+            <Text style={styles.detailHeroTitle}>{openArticle.title}</Text>
+            <Text style={styles.detailHeroSub}>{openArticle.summary}</Text>
+          </View>
+
+          {/* ── Sections ── */}
+          {openArticle.sections.map((section, idx) => {
+            const isFirstAndNoHeading = idx === 0 && !section.heading && section.body;
+            return (
+              <View key={idx} style={isFirstAndNoHeading ? styles.quoteBlock : styles.sectionBlock}>
+                {isFirstAndNoHeading ? (
+                  /* Opening quote styling */
+                  <>
+                    <MaterialCommunityIcons
+                      name="format-quote-open"
+                      size={28}
+                      color={GOLD}
+                      style={{ alignSelf: 'flex-end', marginBottom: 4 }}
+                    />
+                    <Text style={styles.quoteText}>{section.body}</Text>
+                    <MaterialCommunityIcons
+                      name="format-quote-close"
+                      size={28}
+                      color={GOLD}
+                      style={{ alignSelf: 'flex-start', marginTop: 4 }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    {section.heading ? (
+                      <View style={[styles.sectionHeadingRow, { borderRightColor: accent }]}>
+                        <Text style={[styles.sectionHeading, { color: accent }]}>
+                          {section.heading}
+                        </Text>
+                      </View>
+                    ) : null}
+
+                    {section.body ? (
+                      <Text style={styles.sectionBody}>{section.body}</Text>
+                    ) : null}
+
+                    {section.items
+                      ? section.items.map((item, i) => (
+                          <View key={i} style={styles.bulletRow}>
+                            <View style={[styles.bulletDot, { backgroundColor: accent }]}>
+                              <Text style={styles.bulletNumber}>{i + 1}</Text>
+                            </View>
+                            <Text style={styles.bulletText}>{item}</Text>
+                          </View>
+                        ))
+                      : null}
+                  </>
+                )}
+              </View>
+            );
+          })}
         </ScrollView>
       </SafeAreaView>
     );
@@ -241,7 +293,7 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
 
-      {/* Header */}
+      {/* ── Header banner ── */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -251,43 +303,52 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
           <MaterialCommunityIcons name="arrow-right" size={22} color="#FFF" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
+          <MaterialCommunityIcons name="book-open-page-variant" size={28} color={GOLD} />
           <Text style={styles.headerTitle}>شرح الخلوة</Text>
           <Text style={styles.headerSub}>مقالات لمساعدتك في وقتك مع الله</Text>
         </View>
         <View style={{ width: 40 }} />
       </View>
 
+      {/* ── Decorative wave ── */}
+      <View style={styles.wave} />
+
       <ScrollView
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       >
-        {ARTICLES.map(article => (
-          <TouchableOpacity
-            key={article.id}
-            style={styles.articleCard}
-            activeOpacity={0.82}
-            onPress={() => setOpenArticleId(article.id)}
-          >
-            {/* Icon circle */}
-            <View style={styles.articleIconCircle}>
-              <MaterialCommunityIcons
-                name={article.icon}
-                size={26}
-                color={NAVY}
-              />
-            </View>
+        <Text style={styles.listSectionLabel}>المقالات</Text>
+        {ARTICLES.map((article, idx) => {
+          const accent = CARD_ACCENTS[idx % CARD_ACCENTS.length];
+          return (
+            <TouchableOpacity
+              key={article.id}
+              style={[styles.articleCard, { borderLeftColor: accent }]}
+              activeOpacity={0.82}
+              onPress={() => setOpenArticleId(article.id)}
+            >
+              {/* Number badge */}
+              <View style={[styles.articleBadge, { backgroundColor: accent }]}>
+                <Text style={styles.articleBadgeText}>{idx + 1}</Text>
+              </View>
 
-            {/* Text */}
-            <View style={styles.articleCardBody}>
-              <Text style={styles.articleCardTitle}>{article.title}</Text>
-              <Text style={styles.articleCardSummary} numberOfLines={2}>
-                {article.summary}
-              </Text>
-            </View>
+              {/* Icon circle */}
+              <View style={[styles.articleIconCircle, { backgroundColor: hexToRgba(accent, 0.12) }]}>
+                <MaterialCommunityIcons name={article.icon} size={26} color={accent} />
+              </View>
 
-            <MaterialCommunityIcons name="chevron-left" size={22} color="#CCC" />
-          </TouchableOpacity>
-        ))}
+              {/* Text */}
+              <View style={styles.articleCardBody}>
+                <Text style={[styles.articleCardTitle, { color: NAVY }]}>{article.title}</Text>
+                <Text style={styles.articleCardSummary} numberOfLines={2}>
+                  {article.summary}
+                </Text>
+              </View>
+
+              <MaterialCommunityIcons name="chevron-left" size={20} color="#BCC0C8" />
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -298,12 +359,12 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
 
-  /* ── Header ── */
+  /* ── Header / banner ── */
   header: {
     backgroundColor: NAVY,
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 20,
+    paddingBottom: 28,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -319,105 +380,232 @@ const styles = StyleSheet.create({
   headerCenter: { flex: 1, alignItems: 'center', paddingHorizontal: 8 },
   headerTitle: {
     color: '#FFF',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
+    marginTop: 6,
   },
   headerSub: {
-    color: 'rgba(255,255,255,0.6)',
+    color: 'rgba(255,255,255,0.65)',
     fontSize: 12,
-    marginTop: 3,
+    marginTop: 4,
     textAlign: 'center',
   },
 
-  /* ── Articles list ── */
-  listContent: { padding: 16, paddingBottom: 36 },
+  /* Decorative curved wave between header and list */
+  wave: {
+    height: 22,
+    backgroundColor: NAVY,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    marginBottom: 4,
+  },
+
+  /* ── List ── */
+  listContent: { paddingHorizontal: 16, paddingBottom: 40, paddingTop: 8 },
+
+  listSectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#8A8FA0',
+    textAlign: 'right',
+    marginBottom: 12,
+    letterSpacing: 0.5,
+  },
 
   articleCard: {
     backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
     marginBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
+    borderLeftWidth: 4,
+    elevation: 3,
+    shadowColor: '#0A1124',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  articleBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    position: 'absolute',
+    top: -8,
+    left: 14,
+  },
+  articleBadgeText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   articleIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(201,168,76,0.15)',
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
+    flexShrink: 0,
   },
-  articleCardBody: { flex: 1, alignItems: 'flex-end' },
+  articleCardBody: { flex: 1, alignItems: 'flex-end', paddingRight: 4 },
   articleCardTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: NAVY,
     textAlign: 'right',
-    marginBottom: 4,
+    marginBottom: 5,
   },
   articleCardSummary: {
     fontSize: 12,
-    color: '#777',
+    color: '#888',
     textAlign: 'right',
-    lineHeight: 18,
+    lineHeight: 19,
   },
 
-  /* ── Article detail ── */
-  articleContent: {
-    padding: 20,
-    paddingBottom: 48,
+  /* ── Detail top bar ── */
+  detailTopBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingBottom: 12,
+    justifyContent: 'space-between',
   },
+  detailTopBarLabel: {
+    flex: 1,
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginHorizontal: 8,
+  },
+
+  /* ── Detail hero ── */
+  detailHero: {
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 22,
+  },
+  detailHeroIconRing: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  detailHeroTitle: {
+    color: '#FFF',
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  detailHeroSub: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+
+  /* ── Article detail content ── */
+  articleContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 52,
+  },
+
+  /* Opening quote block */
+  quoteBlock: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(201, 168, 76, 0.25)',
+    shadowColor: 'rgba(201, 168, 76, 0.8)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  quoteText: {
+    fontSize: 15,
+    color: '#444',
+    textAlign: 'right',
+    lineHeight: 27,
+    fontStyle: 'italic',
+  },
+
+  /* Regular section card */
   sectionBlock: {
-    marginBottom: 20,
+    backgroundColor: '#FFF',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  sectionHeadingRow: {
+    borderRightWidth: 4,
+    paddingRight: 10,
+    marginBottom: 10,
   },
   sectionHeading: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: NAVY,
     textAlign: 'right',
-    marginBottom: 10,
-    borderRightWidth: 3,
-    borderRightColor: GOLD,
-    paddingRight: 10,
   },
   sectionBody: {
-    fontSize: 15,
-    color: '#333',
+    fontSize: 14,
+    color: '#444',
     textAlign: 'right',
     lineHeight: 26,
   },
+
+  /* Bullet items */
   bulletRow: {
     flexDirection: 'row-reverse',
     alignItems: 'flex-start',
-    marginTop: 10,
+    marginTop: 12,
     gap: 10,
   },
+  bulletDot: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
+    flexShrink: 0,
+  },
   bulletNumber: {
-    minWidth: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: NAVY,
     color: '#FFF',
     fontSize: 12,
     fontWeight: 'bold',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginLeft: 4,
   },
   bulletText: {
     flex: 1,
     fontSize: 14,
-    color: '#333',
+    color: '#444',
     textAlign: 'right',
-    lineHeight: 22,
+    lineHeight: 23,
   },
 });
 
