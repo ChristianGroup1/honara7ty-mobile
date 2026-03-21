@@ -232,7 +232,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
-  }, { paddingHorizontal: 16, paddingBottom: 32 },
+  },
+  list: { paddingHorizontal: 16, paddingBottom: 32 },
   noteCard: {
     backgroundColor: '#FFF',
     borderRadius: 12,
