@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   quoteText: {
     fontSize: 15,
     color: '#444',
-    textAlign: 'left',
+    textAlign: 'right',
     lineHeight: 27,
     fontStyle: 'italic',
   },
@@ -265,12 +265,12 @@ const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'left',
+    textAlign: 'right',
   },
   sectionBody: {
     fontSize: 14,
     color: '#444',
-    textAlign: 'left',
+    textAlign: 'right',
     lineHeight: 26,
   },
 
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 4,
+    marginLeft: 4,
     flexShrink: 0,
   },
   bulletNumber: {
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: '#444',
-    textAlign: 'left',
+    textAlign: 'right',
     lineHeight: 23,
   },
 

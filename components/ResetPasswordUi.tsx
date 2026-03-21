@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   hintText: {
     fontSize: 12,
     color: '#AAA',
-    marginRight: 4,
+    marginLeft: 4,
   },
   submitBtn: {
     backgroundColor: NAVY,
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   submitRow: { flexDirection: 'row', alignItems: 'center' },
-  submitIcon: { marginRight: 8 },
+  submitIcon: { marginLeft: 8 },
   submitText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
 
   /* ── Sent Confirmation ── */
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
   },
-  emailBadgeIcon: { marginRight: 6 },
+  emailBadgeIcon: { marginLeft: 6 },
   emailBadgeText: {
     fontSize: 14,
     fontWeight: '600',

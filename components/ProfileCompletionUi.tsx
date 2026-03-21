@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginTop: 12,
   },
-  sectionIcon: { marginRight: 6 },
+  sectionIcon: { marginLeft: 6 },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#0A1124',
-    textAlign: 'left',
+    textAlign: 'right',
     marginBottom: 6,
   },
   /* ── Date Picker Modal ── */
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  submitIcon: { marginRight: 8 },
+  submitIcon: { marginLeft: 8 },
   submitText: { color: '#FFF', fontSize: 17, fontWeight: 'bold' },
 });
 

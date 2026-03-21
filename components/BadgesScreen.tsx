@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: NAVY,
-    textAlign: 'left',
+    textAlign: 'right',
     marginBottom: 12,
   },
 
@@ -248,12 +248,12 @@ const styles = StyleSheet.create({
     borderRadius: 34,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginLeft: 14,
   },
-  badgeInfo: { flex: 1, alignItems: 'flex-start' },
+  badgeInfo: { flex: 1, alignItems: 'flex-end' },
   badgeTitle: { fontSize: 16, fontWeight: 'bold', color: NAVY },
   badgeTitleLocked: { color: '#AAA' },
-  badgeSub: { fontSize: 12, color: '#888', marginTop: 4, textAlign: 'left' },
+  badgeSub: { fontSize: 12, color: '#888', marginTop: 4, textAlign: 'right' },
   badgeDaysLeft: { fontSize: 12, color: GOLD, marginTop: 4, fontWeight: '600' },
   shareBtn: {
     width: 40,
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 4,
+    marginLeft: 4,
   },
 
   encourageCard: {
@@ -281,9 +281,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: '#444',
-    textAlign: 'left',
+    textAlign: 'right',
     lineHeight: 24,
-    marginLeft: 14,
+    marginRight: 14,
     fontStyle: 'italic',
   },
 });

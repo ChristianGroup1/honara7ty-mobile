@@ -349,9 +349,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 14,
     color: '#888',
-    textAlign: 'left',
-    marginBottom: 8,
-    marginTop: 16,
+    textAlign: 'right',
   },
 
   bookScroll: { marginBottom: 4 },

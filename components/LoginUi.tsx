@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 15,
   },
-  googleIcon: { width: 20, height: 20, marginRight: 12 },
+  googleIcon: { width: 20, height: 20, marginLeft: 12 },
   googleText: { fontSize: 15, color: '#444' },
   backBtnCircle: {
     width: 38,

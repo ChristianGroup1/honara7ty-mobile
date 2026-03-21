@@ -78,7 +78,7 @@ const CustomInput: React.FC<Props> = ({
         style={{ width: '100%' }}
         textInputStyle={[
           styles.interactiveInput,
-          onPress ? { paddingRight: 48 } : {},
+          onPress ? { paddingLeft: 48 } : {},
         ]}
         placeholder={placeholder}
         value={value}
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#0A1124',
-    textAlign: 'left',
+    textAlign: 'right',
   },
   optionalBadge: {
     fontSize: 11,
@@ -164,15 +164,15 @@ const styles = StyleSheet.create({
   },
   inputIconLeft: {
     position: 'absolute',
-    left: 12,
+    right: 12,
     height: 54,
     justifyContent: 'center',
     zIndex: 2,
   },
   interactiveInput: {
-    textAlign: 'left',
-    paddingLeft: 48,
-    paddingRight: 16,
+    textAlign: 'right',
+    paddingRight: 48,
+    paddingLeft: 16,
     color: '#0A1124',
     fontSize: 14,
     backgroundColor: '#FFF',
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     color: '#E53935',
     fontSize: 12,
     marginTop: 4,
-    textAlign: 'left',
+    textAlign: 'right',
   },
 });
 

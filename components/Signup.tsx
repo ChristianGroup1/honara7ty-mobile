@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  submitIcon: { marginRight: 4 },
+  submitIcon: { marginLeft: 4 },
   submitText: { color: '#FFF', fontSize: 17, fontWeight: 'bold' },
   dividerRow: {
     flexDirection: 'row',
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 6,
   },
-  googleIcon: { width: 20, height: 20, marginRight: 10 },
+  googleIcon: { width: 20, height: 20, marginLeft: 10 },
   googleText: { fontSize: 14, color: '#333', fontWeight: '500' },
   footerContainer: {
     flexDirection: 'row',
