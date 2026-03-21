@@ -9,7 +9,10 @@ import 'react-native-gesture-handler';
 import React, { useEffect, useState } from 'react';
 import { Linking, Platform, StatusBar, useColorScheme } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -31,6 +34,7 @@ import {
   MoreScreen,
   ProfileScreen,
   DevotionGuideScreen,
+  DevotionDetailScreen,
 } from './screens';
 import SignupStep1 from './components/Signup';
 import HomeScreen from './components/Home';
@@ -61,6 +65,7 @@ type RootStackParamList = {
   Testimonies: undefined;
   DailyNotifications: undefined;
   DevotionGuide: undefined;
+  DevotionDetail: undefined;
 };
 
 /**
@@ -91,10 +96,12 @@ function MainTabNavigator() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginBottom: 2 },
         tabBarIcon: ({ color, focused }) => {
           const icons: Record<string, string> = {
-            'الرئيسية': focused ? 'home' : 'home-outline',
+            الرئيسية: focused ? 'home' : 'home-outline',
             'الملف الشخصي': focused ? 'account' : 'account-outline',
-            'الإعدادات': focused ? 'cog' : 'cog-outline',
-            'المزيد': focused ? 'dots-horizontal-circle' : 'dots-horizontal-circle-outline',
+            الإعدادات: focused ? 'cog' : 'cog-outline',
+            المزيد: focused
+              ? 'dots-horizontal-circle'
+              : 'dots-horizontal-circle-outline',
           };
           return (
             <MaterialCommunityIcons
@@ -342,6 +349,11 @@ function App() {
           <Stack.Screen
             name="DevotionGuide"
             component={DevotionGuideScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="DevotionDetail"
+            component={DevotionDetailScreen}
             options={{ headerShown: false }}
           />
         </Stack.Navigator>
