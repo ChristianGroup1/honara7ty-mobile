@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   googleButton: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     height: 54,
     borderRadius: 14,
     borderWidth: 1,
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 6,
   },
-  googleIcon: { width: 20, height: 20, marginLeft: 10 },
+  googleIcon: { width: 20, height: 20, marginRight: 10 },
   googleText: { fontSize: 14, color: '#333', fontWeight: '500' },
   footerContainer: {
     flexDirection: 'row',

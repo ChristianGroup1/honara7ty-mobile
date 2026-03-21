@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
   },
-  emailBadgeIcon: { marginLeft: 6 },
+  emailBadgeIcon: { marginRight: 6 },
   emailBadgeText: {
     fontSize: 14,
     fontWeight: '600',

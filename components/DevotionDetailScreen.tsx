@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
 
   /* ── Header ── */
   header: {
-    flexDirection: 'row-reverse', // للعربي
+    flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   quoteText: {
     fontSize: 15,
     color: '#444',
-    textAlign: 'right',
+    textAlign: 'left',
     lineHeight: 27,
     fontStyle: 'italic',
   },
@@ -265,17 +265,17 @@ const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'right',
+    textAlign: 'left',
   },
   sectionBody: {
     fontSize: 14,
     color: '#444',
-    textAlign: 'right',
+    textAlign: 'left',
     lineHeight: 26,
   },
 
   bulletRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'flex-start',
     marginTop: 12,
     gap: 10,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 4,
+    marginRight: 4,
     flexShrink: 0,
   },
   bulletNumber: {
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: '#444',
-    textAlign: 'right',
+    textAlign: 'left',
     lineHeight: 23,
   },
 

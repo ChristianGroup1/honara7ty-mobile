@@ -171,7 +171,7 @@ const PrayerNotesScreen = ({ navigation }: any) => {
           value={newNote}
           onChangeText={setNewNote}
           multiline
-          textAlign="right"
+          textAlign="left"
         />
       </View>
 
@@ -231,10 +231,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
-  },
-
-  list: { paddingHorizontal: 16, paddingBottom: 32 },
+    marginRight: 8,
+  }, { paddingHorizontal: 16, paddingBottom: 32 },
   noteCard: {
     backgroundColor: '#FFF',
     borderRadius: 12,
@@ -249,8 +247,8 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   noteAnswered: { opacity: 0.6 },
-  checkBtn: { marginLeft: 10 },
-  noteText: { flex: 1, fontSize: 15, color: '#333', textAlign: 'right', marginRight: 8 },
+  checkBtn: { marginRight: 10 },
+  noteText: { flex: 1, fontSize: 15, color: '#333', textAlign: 'left', marginLeft: 8 },
   noteTextAnswered: { textDecorationLine: 'line-through', color: '#999' },
   empty: {
     textAlign: 'center',

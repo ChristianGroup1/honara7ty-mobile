@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   submitText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
 
   googleButton: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     height: 55,
     borderRadius: 12,
     borderWidth: 1,
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 15,
   },
-  googleIcon: { width: 20, height: 20, marginLeft: 12 },
+  googleIcon: { width: 20, height: 20, marginRight: 12 },
   googleText: { fontSize: 15, color: '#444' },
   backBtnCircle: {
     width: 38,

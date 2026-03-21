@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     paddingHorizontal: 20,
     marginBottom: 40,
   },
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#FFFFFF',
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 20,
     fontFamily: 'System',
   },

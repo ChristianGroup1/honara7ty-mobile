@@ -137,7 +137,7 @@ const CustomInput: React.FC<Props> = ({
 const styles = StyleSheet.create({
   inputWrapper: { marginBottom: 14 },
   fieldLabelRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 6,
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#0A1124',
-    textAlign: 'right',
+    textAlign: 'left',
   },
   optionalBadge: {
     fontSize: 11,
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   interactiveInput: {
-    textAlign: 'right',
+    textAlign: 'left',
     paddingLeft: 48,
     paddingRight: 16,
     color: '#0A1124',
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     color: '#E53935',
     fontSize: 12,
     marginTop: 4,
-    textAlign: 'right',
+    textAlign: 'left',
   },
 });
 

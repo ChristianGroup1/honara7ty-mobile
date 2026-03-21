@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   bookNum: { color: '#FFF', fontSize: 13, fontWeight: 'bold' },
-  bookInfo: { flex: 1, alignItems: 'flex-end', marginRight: 10 },
+  bookInfo: { flex: 1, alignItems: 'flex-start', marginLeft: 10 },
   bookName: { fontSize: 15, color: NAVY, fontWeight: '600' },
   bookSub: { fontSize: 12, color: '#888', marginTop: 2 },
 
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     lineHeight: 30,
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 8,
   },
 });

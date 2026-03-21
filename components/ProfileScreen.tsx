@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   infoRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
   infoLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   infoLabel: { fontSize: 14, color: NAVY, fontWeight: '600' },
-  infoValue: { fontSize: 14, color: '#666', textAlign: 'right', flex: 1, marginRight: 12 },
+  infoValue: { fontSize: 14, color: '#666', textAlign: 'left', flex: 1, marginLeft: 12 },
   logoutBtn: {
     backgroundColor: '#E74C3C',
     borderRadius: 14,

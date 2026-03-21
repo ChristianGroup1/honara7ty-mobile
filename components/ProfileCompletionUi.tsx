@@ -444,18 +444,18 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   sectionHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
     marginTop: 4,
   },
   sectionHeader2: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
     marginTop: 12,
   },
-  sectionIcon: { marginLeft: 6 },
+  sectionIcon: { marginRight: 6 },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#0A1124',
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 6,
   },
   /* ── Date Picker Modal ── */
@@ -518,12 +518,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   genderRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     gap: 12,
   },
   genderChip: {
     flex: 1,
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     height: 52,
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  submitIcon: { marginLeft: 8 },
+  submitIcon: { marginRight: 8 },
   submitText: { color: '#FFF', fontSize: 17, fontWeight: 'bold' },
 });
 

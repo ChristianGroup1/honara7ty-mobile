@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   hintText: {
     fontSize: 12,
     color: '#AAA',
-    marginLeft: 4,
+    marginRight: 4,
   },
   submitBtn: {
     backgroundColor: NAVY,
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 16,
   },
-  emailBadgeIcon: { marginLeft: 6 },
+  emailBadgeIcon: { marginRight: 6 },
   emailBadgeText: {
     fontSize: 14,
     fontWeight: '600',

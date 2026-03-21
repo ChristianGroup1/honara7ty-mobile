@@ -2,10 +2,13 @@
  * @format
  */
 
-import { AppRegistry } from 'react-native';
+import { AppRegistry, I18nManager } from 'react-native';
 import App from './App';
 import { name as appName } from './app.json';
 import notifee from '@notifee/react-native';
+
+I18nManager.allowRTL(false);
+I18nManager.forceRTL(false);
 
 // Required by notifee: handle notification events when the app is in the
 // background or has been killed. Without this registration, trigger

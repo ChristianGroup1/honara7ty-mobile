@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 18,
     paddingHorizontal: 14,
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: NAVY,
-    textAlign: 'right',
+    textAlign: 'left',
   },
 
   /* ── Daily question card ── */
@@ -432,14 +432,14 @@ const styles = StyleSheet.create({
   questionCardLabel: {
     fontSize: 12,
     color: '#999',
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 8,
   },
   questionText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: NAVY,
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 18,
     lineHeight: 24,
   },
@@ -487,18 +487,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.07,
     shadowRadius: 6,
   },
-  featureCardBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-end' },
+  featureCardBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-start' },
   featureCardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: NAVY,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   featureCardSub: {
     fontSize: 12,
     color: '#999',
     marginTop: 4,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   featureIconCircle: {
     width: 50,

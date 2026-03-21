@@ -200,7 +200,7 @@ const TestimoniesScreen = ({ navigation }: any) => {
               placeholderTextColor="#AAA"
               value={newText}
               onChangeText={setNewText}
-              textAlign="right"
+              textAlign="left"
               autoFocus
             />
             <View style={styles.modalActions}>
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
-  bannerText: { flex: 1, color: 'rgba(255,255,255,0.75)', fontSize: 13, textAlign: 'right', lineHeight: 20 },
+  bannerText: { flex: 1, color: 'rgba(255,255,255,0.75)', fontSize: 13, textAlign: 'left', lineHeight: 20 },
 
   list: { padding: 16, paddingBottom: 32 },
   card: {
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   dateText: { color: '#888', fontSize: 12 },
   cardActions: { flexDirection: 'row', gap: 8 },
   actionBtn: { padding: 4 },
-  cardContent: { fontSize: 15, color: '#333', lineHeight: 26, textAlign: 'right' },
+  cardContent: { fontSize: 15, color: '#333', lineHeight: 26, textAlign: 'left' },
 
   emptyContainer: { alignItems: 'center', marginTop: 60 },
   emptyText: {
@@ -317,8 +317,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24,
     padding: 24, paddingBottom: 40,
   },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: NAVY, textAlign: 'right' },
-  modalHint: { color: '#888', fontSize: 13, marginTop: 4, textAlign: 'right' },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: NAVY, textAlign: 'left' },
+  modalHint: { color: '#888', fontSize: 13, marginTop: 4, textAlign: 'left' },
   modalInput: {
     borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12,
     padding: 14, fontSize: 15, color: '#333', minHeight: 140,

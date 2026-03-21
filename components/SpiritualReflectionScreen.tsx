@@ -215,7 +215,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
               placeholderTextColor="#AAA"
               value={text}
               onChangeText={setText}
-              textAlign="right"
+              textAlign="left"
               autoFocus
             />
             <View style={styles.modalActions}>
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   dateText: { color: '#888', fontSize: 12 },
   cardActions: { flexDirection: 'row', gap: 8 },
   actionBtn: { padding: 4 },
-  cardContent: { fontSize: 15, color: '#333', lineHeight: 24, textAlign: 'right' },
+  cardContent: { fontSize: 15, color: '#333', lineHeight: 24, textAlign: 'left' },
 
   emptyContainer: { alignItems: 'center', marginTop: 60 },
   emptyText: {
@@ -309,8 +309,8 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 40,
   },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: NAVY, textAlign: 'right' },
-  modalHint: { color: '#888', fontSize: 13, marginTop: 4, textAlign: 'right' },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: NAVY, textAlign: 'left' },
+  modalHint: { color: '#888', fontSize: 13, marginTop: 4, textAlign: 'left' },
   modalInput: {
     borderWidth: 1,
     borderColor: '#E0E0E0',

@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: NAVY,
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 12,
   },
   tipCard: {
@@ -298,8 +298,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
   },
-  tipIcon: { marginLeft: 12 },
-  tipText: { flex: 1, fontSize: 14, color: '#444', textAlign: 'right', lineHeight: 22 },
+  tipIcon: { marginRight: 12 },
+  tipText: { flex: 1, fontSize: 14, color: '#444', textAlign: 'left', lineHeight: 22 },
 });
 
 export default DailyNotificationsScreen;

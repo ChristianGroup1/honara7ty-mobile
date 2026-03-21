@@ -101,9 +101,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.07,
     shadowRadius: 6,
   },
-  rowBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-end' },
-  rowTitle: { fontSize: 16, fontWeight: 'bold', color: NAVY, textAlign: 'right' },
-  rowSub: { fontSize: 12, color: '#999', marginTop: 4, textAlign: 'right' },
+  rowBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-start' },
+  rowTitle: { fontSize: 16, fontWeight: 'bold', color: NAVY, textAlign: 'left' },
+  rowSub: { fontSize: 12, color: '#999', marginTop: 4, textAlign: 'left' },
   iconCircle: {
     width: 50,
     height: 50,
