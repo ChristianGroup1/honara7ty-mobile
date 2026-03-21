@@ -109,17 +109,13 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    alignItems: 'flex-end',
-    paddingHorizontal: 20,
-    marginBottom: 40,
+    alignItems: 'flex-start',
   },
   welcomeTitle: {
     fontSize: 28,
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'right',
-    marginBottom: 20,
-    fontFamily: 'System',
   },
   description: {
     fontSize: 16,

@@ -5,16 +5,14 @@ import {
   Text,
   Image,
   SafeAreaView,
-  KeyboardAvoidingView,
-  ScrollView,
   StatusBar,
-  Platform,
   TouchableOpacity,
   Dimensions,
-  Alert,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import CustomAlert, { AlertButton } from './CustomAlert';
+import CustomInput from './CustomInput';
 import {
-  TextInput,
   Provider as PaperProvider,
   DefaultTheme,
   Checkbox,
@@ -22,11 +20,11 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
+import { localizeAuthError, EMAIL_REGEX } from '../lib/authErrors';
 import {
   GoogleSignin,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { useNavigation } from '@react-navigation/native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -39,58 +37,40 @@ const theme = {
   },
 };
 
-const CustomInput = ({
-  label,
-  value,
-  onChangeText,
-  icon,
-  isPassword = false,
-  secureText,
-  setSecureText,
-}: any) => (
-  <View style={styles.inputWrapper}>
-    <TextInput
-      value={value}
-      onChangeText={onChangeText}
-      mode="outlined"
-      placeholder={label}
-      secureTextEntry={isPassword ? secureText : false}
-      textAlign="right"
-      style={styles.inputStyle}
-      outlineStyle={styles.inputOutline}
-      contentStyle={{ writingDirection: 'rtl' }}
-      // الأيقونات في اليمين حسب تصميم شاشة تسجيل الدخول
-      right={
-        isPassword ? (
-          <TextInput.Icon
-            icon={() => (
-              <MaterialCommunityIcons
-                name={secureText ? 'eye-off-outline' : 'eye-outline'}
-                size={24}
-                color="#666"
-              />
-            )}
-            onPress={() => setSecureText(!secureText)}
-          />
-        ) : (
-          <TextInput.Icon
-            icon={() => (
-              <MaterialCommunityIcons name={icon} size={24} color="#666" />
-            )}
-          />
-        )
-      }
-    />
-  </View>
-);
-
 const LoginUI: React.FC<any> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
   const [rememberMe, setRememberMe] = useState(false);
-  const navigation2 = useNavigation();
-  const [loading, setLoading] = useState(true); // Loading state
+  const [loading, setLoading] = useState(false); // Login action loading state
+  const [initializing, setInitializing] = useState(true); // Initial Google check
+  const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message?: string;
+    type?: 'error' | 'warning' | 'success' | 'info';
+    buttons?: AlertButton[];
+  }>({ visible: false, title: '' });
+
+  const showAlert = (
+    title: string,
+    message?: string,
+    buttons?: AlertButton[],
+    type: 'error' | 'warning' | 'success' | 'info' = 'error',
+  ) => setAlertConfig({ visible: true, title, message, buttons, type });
+
+  const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
+
+  /** Navigate to Onboarding for first-time users, otherwise to HomeScreen. */
+  const navigateAfterLogin = (user: any) => {
+    const onboardingDone = user?.user_metadata?.onboarding_completed === true;
+    if (onboardingDone) {
+      navigation.replace('HomeScreen', { user });
+    } else {
+      navigation.replace('Onboarding');
+    }
+  };
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -115,7 +95,43 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     } catch (error) {
       console.log('User not signed in:', error);
     } finally {
-      setLoading(false); // Hide loader after checking
+      setInitializing(false); // Hide loader after checking
+    }
+  };
+
+  const handleLogin = async () => {
+    const trimmedEmail = email.trim();
+    const errors = { email: '', password: '' };
+    let hasError = false;
+    if (!trimmedEmail) {
+      errors.email = 'يرجى إدخال البريد الإلكتروني';
+      hasError = true;
+    } else if (!EMAIL_REGEX.test(trimmedEmail)) {
+      errors.email = 'يرجى إدخال بريد إلكتروني صحيح';
+      hasError = true;
+    }
+    if (!password) {
+      errors.password = 'يرجى إدخال كلمة المرور';
+      hasError = true;
+    }
+    setFieldErrors(errors);
+    if (hasError) return;
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password,
+      });
+      if (error) {
+        showAlert('خطأ في تسجيل الدخول', localizeAuthError(error.message));
+      } else {
+        navigateAfterLogin(data.user);
+      }
+    } catch (err: any) {
+      showAlert('خطأ', localizeAuthError(err.message));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -134,10 +150,10 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         console.log('Supabase Auth Response:', { data, error });
 
         if (error) {
-          Alert.alert('Error', error.message);
+          showAlert('خطأ', localizeAuthError(error.message));
         } else {
           console.log('Signed in with Google successfully');
-          navigation.replace('HomeScreen', { user: userInfo.data.user });
+          navigateAfterLogin(data?.user ?? userInfo.data.user);
         }
       } else {
         throw new Error('No ID token present!');
@@ -145,23 +161,42 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        Alert.alert('Sign In Cancelled', 'User cancelled the login flow.');
+        showAlert(
+          'تم الإلغاء',
+          'تم إلغاء عملية تسجيل الدخول.',
+          undefined,
+          'warning',
+        );
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        Alert.alert('Sign In In Progress', 'Sign in is already in progress.');
+        showAlert(
+          'جاري تسجيل الدخول',
+          'عملية تسجيل الدخول جارية بالفعل.',
+          undefined,
+          'warning',
+        );
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert(
-          'Play Services Error',
-          'Google Play services not available or outdated.',
+        showAlert(
+          'خطأ',
+          'خدمات Google Play غير متاحة أو قديمة.',
+          undefined,
+          'warning',
         );
       } else {
-        Alert.alert('Error', error.message);
+        showAlert('خطأ', localizeAuthError(error.message));
       }
     }
   };
 
-  if (loading) {
+  if (initializing) {
     return (
-      <View>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#0A1124',
+        }}
+      >
         <ActivityIndicator size="large" color="#ffffff" />
       </View>
     );
@@ -182,11 +217,13 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
           >
-            <MaterialCommunityIcons
-              name="chevron-left"
-              size={35}
-              color="white"
-            />
+            <View style={styles.backBtnCircle}>
+              <MaterialCommunityIcons
+                name="chevron-left"
+                size={28}
+                color="white"
+              />
+            </View>
           </TouchableOpacity>
           <Image
             source={require('../assets/images/logo.png')}
@@ -196,78 +233,106 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           <Text style={styles.title}>تسجيل الدخول</Text>
         </View>
 
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        <KeyboardAwareScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          overScrollMode="never"
+          decelerationRate="normal"
+          enableOnAndroid={true}
+          extraScrollHeight={80}
+          extraHeight={80}
+          keyboardOpeningTime={0}
         >
-          <ScrollView
-            contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled"
-            bounces={false}
-          >
-            <View style={styles.formContainer}>
-              <CustomInput
-                label="الأسم أو البريد الإلكتروني"
-                icon="account-outline"
-                value={email}
-                onChangeText={setEmail}
-              />
+          <View style={styles.formContainer} pointerEvents="box-none">
+            <CustomInput
+              fieldLabel="البريد الإلكتروني"
+              placeholder="أدخل بريدك الإلكتروني"
+              icon="email-outline"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={t => {
+                setEmail(t);
+                if (fieldErrors.email)
+                  setFieldErrors(prev => ({ ...prev, email: '' }));
+              }}
+              error={fieldErrors.email}
+            />
 
-              <CustomInput
-                label="كلمه المرور"
-                icon="lock-outline"
-                isPassword={true}
-                secureText={secureText}
-                setSecureText={setSecureText}
-                value={password}
-                onChangeText={setPassword}
-              />
+            <CustomInput
+              fieldLabel="كلمة المرور  "
+              placeholder="أدخل كلمة المرور"
+              icon="lock-outline"
+              isPassword={true}
+              secureText={secureText}
+              setSecureText={setSecureText}
+              value={password}
+              onChangeText={t => {
+                setPassword(t);
+                if (fieldErrors.password)
+                  setFieldErrors(prev => ({ ...prev, password: '' }));
+              }}
+              error={fieldErrors.password}
+            />
 
-              {/* قسم "تذكرني" و "نسيت كلمة المرور" */}
-              <View style={styles.extraOptions}>
-                <TouchableOpacity>
-                  <Text style={styles.forgotPasswordText}>
-                    نسيت كلمه المرور ؟
-                  </Text>
-                </TouchableOpacity>
-
-                <View style={styles.rememberMeRow}>
-                  <Text style={styles.rememberMeText}>ذكرني</Text>
-                  <Checkbox
-                    status={rememberMe ? 'checked' : 'unchecked'}
-                    onPress={() => setRememberMe(!rememberMe)}
-                    color="#0A1124"
-                  />
-                </View>
-              </View>
-
-              <TouchableOpacity style={styles.submitBtn}>
-                <Text style={styles.submitText}>تسجيل الدخول</Text>
-              </TouchableOpacity>
-
+            {/* قسم "تذكرني" و "نسيت كلمة المرور" */}
+            <View style={styles.extraOptions}>
               <TouchableOpacity
-                style={styles.googleButton}
-                onPress={handleGoogleSignIn}
+                onPress={() => navigation.navigate('ForgotPassword')}
               >
-                <Image
-                  source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
-                  style={styles.googleIcon}
-                />
-                <Text style={styles.googleText}>
-                  تسجيل الدخول باستخدام جوجل
+                <Text style={styles.forgotPasswordText}>
+                  نسيت كلمه المرور ؟
                 </Text>
               </TouchableOpacity>
 
-              <View style={styles.footerContainer}>
-                <TouchableOpacity>
-                  <Text style={styles.footerLink}>إنشاء حساب جديد</Text>
-                </TouchableOpacity>
-                <Text style={styles.footerText}>ليس لديك حساب؟ </Text>
+              <View style={styles.rememberMeRow}>
+                <Text style={styles.rememberMeText}>ذكرني</Text>
+                <Checkbox
+                  status={rememberMe ? 'checked' : 'unchecked'}
+                  onPress={() => setRememberMe(!rememberMe)}
+                  color="#0A1124"
+                />
               </View>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+
+            <TouchableOpacity
+              style={styles.submitBtn}
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.submitText}>تسجيل الدخول</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleSignIn}
+            >
+              <Image
+                source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
+                style={styles.googleIcon}
+              />
+              <Text style={styles.googleText}>تسجيل الدخول باستخدام جوجل</Text>
+            </TouchableOpacity>
+
+            <View style={styles.footerContainer}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SignupStep1')}
+              >
+                <Text style={styles.footerLink}>إنشاء حساب جديد</Text>
+              </TouchableOpacity>
+              <Text style={styles.footerText}>ليس لديك حساب؟ </Text>
+            </View>
+          </View>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
+      <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
   );
 };
@@ -289,17 +354,13 @@ const styles = StyleSheet.create({
 
   scrollContainer: { flexGrow: 1 },
   formContainer: {
-    flex: 1,
     backgroundColor: '#F9F9F9',
     borderTopLeftRadius: 35,
     borderTopRightRadius: 35,
     paddingHorizontal: 25,
     paddingTop: 40,
+    paddingBottom: 40,
   },
-  inputWrapper: { marginBottom: 15 },
-  inputStyle: { backgroundColor: '#FFF', height: 55 },
-  inputOutline: { borderRadius: 12 },
-
   extraOptions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -322,7 +383,7 @@ const styles = StyleSheet.create({
   submitText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
 
   googleButton: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     height: 55,
     borderRadius: 12,
     borderWidth: 1,
@@ -333,9 +394,16 @@ const styles = StyleSheet.create({
   },
   googleIcon: { width: 20, height: 20, marginLeft: 12 },
   googleText: { fontSize: 15, color: '#444' },
-
+  backBtnCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   footerContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'center',
     marginTop: 25,
     paddingBottom: 20,

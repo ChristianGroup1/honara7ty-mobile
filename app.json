@@ -1,4 +1,11 @@
 {
   "name": "honara7ty",
-  "displayName": "honara7ty"
+  "displayName": "honara7ty",
+   "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "softwareKeyboardLayoutMode": "pan" 
+    }
 }
