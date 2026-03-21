@@ -18,7 +18,11 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../lib/supbase';
-import { localizeAuthError, MIN_PASSWORD_LENGTH, EMAIL_REGEX } from '../lib/authErrors';
+import {
+  localizeAuthError,
+  MIN_PASSWORD_LENGTH,
+  EMAIL_REGEX,
+} from '../lib/authErrors';
 import {
   GoogleSignin,
   statusCodes,
@@ -172,11 +176,26 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
       }
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        showAlert('تم الإلغاء', 'تم إلغاء عملية التسجيل.', undefined, 'warning');
+        showAlert(
+          'تم الإلغاء',
+          'تم إلغاء عملية التسجيل.',
+          undefined,
+          'warning',
+        );
       } else if (error.code === statusCodes.IN_PROGRESS) {
-        showAlert('جاري التسجيل', 'عملية التسجيل جارية بالفعل.', undefined, 'warning');
+        showAlert(
+          'جاري التسجيل',
+          'عملية التسجيل جارية بالفعل.',
+          undefined,
+          'warning',
+        );
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        showAlert('خطأ', 'خدمات Google Play غير متاحة أو قديمة.', undefined, 'warning');
+        showAlert(
+          'خطأ',
+          'خدمات Google Play غير متاحة أو قديمة.',
+          undefined,
+          'warning',
+        );
       } else {
         showAlert('خطأ', localizeAuthError(error.message));
       }
@@ -331,7 +350,10 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
               <View style={styles.dividerLine} />
             </View>
 
-            <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignUp}>
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleSignUp}
+            >
               <Image
                 source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
                 style={styles.googleIcon}
@@ -486,7 +508,7 @@ const styles = StyleSheet.create({
   googleIcon: { width: 20, height: 20, marginLeft: 10 },
   googleText: { fontSize: 14, color: '#333', fontWeight: '500' },
   footerContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'center',
     marginTop: 22,
     paddingBottom: 10,

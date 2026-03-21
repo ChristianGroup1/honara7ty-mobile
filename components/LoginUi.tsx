@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'center',
     marginTop: 25,
     paddingBottom: 20,

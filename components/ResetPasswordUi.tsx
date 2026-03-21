@@ -102,7 +102,12 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
         showAlert(
           'تم بنجاح! 🎉',
           'تم تغيير كلمة مرورك بنجاح. يمكنك الآن تسجيل الدخول باستخدامها.',
-          [{ text: 'تسجيل الدخول', onPress: () => navigation.navigate('Login') }],
+          [
+            {
+              text: 'تسجيل الدخول',
+              onPress: () => navigation.navigate('Login'),
+            },
+          ],
           'success',
         );
       }
@@ -584,7 +589,7 @@ const styles = StyleSheet.create({
 
   /* ── Footer ── */
   footerContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'center',
     marginTop: 20,
   },

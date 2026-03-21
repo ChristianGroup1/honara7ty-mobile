@@ -95,14 +95,14 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                     name="format-quote-open"
                     size={28}
                     color={GOLD}
-                    style={{ alignSelf: 'flex-end', marginBottom: 4 }}
+                    style={{ alignSelf: 'flex-start', marginBottom: 4 }}
                   />
                   <Text style={styles.quoteText}>{section.body}</Text>
                   <MaterialCommunityIcons
                     name="format-quote-close"
                     size={28}
                     color={GOLD}
-                    style={{ alignSelf: 'flex-start', marginTop: 4 }}
+                    style={{ alignSelf: 'flex-end', marginTop: 4 }}
                   />
                 </>
               ) : (
@@ -111,7 +111,7 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                     <View
                       style={[
                         styles.sectionHeadingRow,
-                        { borderRightColor: accent },
+                        { borderLeftColor: accent },
                       ]}
                     >
                       <Text style={[styles.sectionHeading, { color: accent }]}>
@@ -237,11 +237,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 6,
     elevation: 2,
+    textAlign: 'right',
   },
   quoteText: {
     fontSize: 15,
     color: '#444',
-    textAlign: 'right',
+    textAlign: 'left',
     lineHeight: 27,
     fontStyle: 'italic',
   },
@@ -258,19 +259,19 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   sectionHeadingRow: {
-    borderRightWidth: 4,
-    paddingRight: 10,
+    borderLeftWidth: 4,
+    paddingLeft: 10,
     marginBottom: 10,
   },
   sectionHeading: {
     fontSize: 16,
     fontWeight: 'bold',
-    textAlign: 'right',
+    textAlign: 'left',
   },
   sectionBody: {
     fontSize: 14,
     color: '#444',
-    textAlign: 'right',
+    textAlign: 'left',
     lineHeight: 26,
   },
 
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: '#444',
-    textAlign: 'right',
+    textAlign: 'left',
     lineHeight: 23,
   },
 

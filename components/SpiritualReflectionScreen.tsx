@@ -67,17 +67,24 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
     setLoading(true);
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
-    if (!userId) { setLoading(false); return; }
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     const { data, error } = await supabase
       .from('reflections')
       .select('*')
       .eq('user_id', userId)
       .order('date', { ascending: false });
-    if (!error && data) { setReflections(data as Reflection[]); }
+    if (!error && data) {
+      setReflections(data as Reflection[]);
+    }
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchReflections(); }, [fetchReflections]);
+  useEffect(() => {
+    fetchReflections();
+  }, [fetchReflections]);
 
   const openNew = () => {
     setEditItem(null);
@@ -93,27 +100,34 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
 
   const handleSave = async () => {
     const trimmed = text.trim();
-    if (!trimmed) { return; }
+    if (!trimmed) {
+      return;
+    }
     setSaving(true);
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
-    if (!userId) { setSaving(false); return; }
+    if (!userId) {
+      setSaving(false);
+      return;
+    }
 
     if (editItem) {
       const { error } = await supabase
         .from('reflections')
         .update({ content: trimmed })
         .eq('id', editItem.id);
-      if (error) { showAlert('خطأ', error.message); }
+      if (error) {
+        showAlert('خطأ', error.message);
+      }
     } else {
-      const { error } = await supabase
-        .from('reflections')
-        .insert({
-          user_id: userId,
-          content: trimmed,
-          date: new Date().toISOString().split('T')[0],
-        });
-      if (error) { showAlert('خطأ', error.message); }
+      const { error } = await supabase.from('reflections').insert({
+        user_id: userId,
+        content: trimmed,
+        date: new Date().toISOString().split('T')[0],
+      });
+      if (error) {
+        showAlert('خطأ', error.message);
+      }
     }
 
     setSaving(false);
@@ -151,15 +165,33 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.cardActions}>
-          <TouchableOpacity onPress={() => deleteReflection(item)} style={styles.actionBtn}>
-            <MaterialCommunityIcons name="trash-can-outline" size={18} color="#FF3B30" />
+          <TouchableOpacity
+            onPress={() => deleteReflection(item)}
+            style={styles.actionBtn}
+          >
+            <MaterialCommunityIcons
+              name="trash-can-outline"
+              size={18}
+              color="#FF3B30"
+            />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => openEdit(item)} style={styles.actionBtn}>
-            <MaterialCommunityIcons name="pencil-outline" size={18} color={NAVY} />
+          <TouchableOpacity
+            onPress={() => openEdit(item)}
+            style={styles.actionBtn}
+          >
+            <MaterialCommunityIcons
+              name="pencil-outline"
+              size={18}
+              color={NAVY}
+            />
           </TouchableOpacity>
         </View>
         <View style={styles.dateRow}>
-          <MaterialCommunityIcons name="calendar-outline" size={14} color={GOLD} />
+          <MaterialCommunityIcons
+            name="calendar-outline"
+            size={14}
+            color={GOLD}
+          />
           <Text style={styles.dateText}>{formatDate(item.date)}</Text>
         </View>
       </View>
@@ -172,7 +204,10 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+        >
           <MaterialCommunityIcons name="arrow-right" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>التأمل الروحي</Text>
@@ -182,7 +217,11 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
       </View>
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} size="large" color={NAVY} />
+        <ActivityIndicator
+          style={{ marginTop: 40 }}
+          size="large"
+          color={NAVY}
+        />
       ) : (
         <FlatList
           data={reflections}
@@ -191,7 +230,11 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="notebook-heart-outline" size={64} color="#DDD" />
+              <MaterialCommunityIcons
+                name="notebook-heart-outline"
+                size={64}
+                color="#DDD"
+              />
               <Text style={styles.emptyText}>
                 لم تكتب أي تأمل بعد.{'\n'}اضغط "+" لتبدأ رحلتك الروحية!
               </Text>
@@ -216,6 +259,8 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
               value={text}
               onChangeText={setText}
               textAlign="right"
+            />
+            <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.cancelBtn}
                 onPress={() => setShowModal(false)}
@@ -227,9 +272,11 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
                 onPress={handleSave}
                 disabled={saving}
               >
-                {saving
-                  ? <ActivityIndicator color="#FFF" size="small" />
-                  : <Text style={styles.saveBtnText}>حفظ</Text>}
+                {saving ? (
+                  <ActivityIndicator color="#FFF" size="small" />
+                ) : (
+                  <Text style={styles.saveBtnText}>حفظ</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -282,7 +329,12 @@ const styles = StyleSheet.create({
   dateText: { color: '#888', fontSize: 12 },
   cardActions: { flexDirection: 'row', gap: 8 },
   actionBtn: { padding: 4 },
-  cardContent: { fontSize: 15, color: '#333', lineHeight: 24, textAlign: 'right' },
+  cardContent: {
+    fontSize: 15,
+    color: '#333',
+    lineHeight: 24,
+    textAlign: 'right',
+  },
 
   emptyContainer: { alignItems: 'center', marginTop: 60 },
   emptyText: {
@@ -306,7 +358,12 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 40,
   },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: NAVY, textAlign: 'right' },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: NAVY,
+    textAlign: 'right',
+  },
   modalHint: { color: '#888', fontSize: 13, marginTop: 4, textAlign: 'right' },
   modalInput: {
     borderWidth: 1,
@@ -319,7 +376,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlignVertical: 'top',
   },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 16 },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 16,
+  },
   cancelBtn: {
     paddingVertical: 12,
     paddingHorizontal: 24,

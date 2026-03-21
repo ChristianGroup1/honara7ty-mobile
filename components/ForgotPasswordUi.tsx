@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   submitIcon: { marginLeft: 8 },
   submitText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   footerContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'center',
     marginTop: 24,
   },

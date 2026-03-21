@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
   },
   welcomeTitle: {
     fontSize: 28,

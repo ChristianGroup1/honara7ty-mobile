@@ -50,25 +50,37 @@ const PrayerNotesScreen = ({ navigation }: any) => {
     setLoading(true);
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
-    if (!userId) { setLoading(false); return; }
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     const { data, error } = await supabase
       .from('prayer_notes')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    if (!error && data) { setNotes(data as PrayerNote[]); }
+    if (!error && data) {
+      setNotes(data as PrayerNote[]);
+    }
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchNotes(); }, [fetchNotes]);
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
 
   const addNote = async () => {
     const trimmed = newNote.trim();
-    if (!trimmed) { return; }
+    if (!trimmed) {
+      return;
+    }
     setSaving(true);
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
-    if (!userId) { setSaving(false); return; }
+    if (!userId) {
+      setSaving(false);
+      return;
+    }
     const { error } = await supabase
       .from('prayer_notes')
       .insert({ user_id: userId, content: trimmed, is_answered: false });
@@ -88,7 +100,9 @@ const PrayerNotesScreen = ({ navigation }: any) => {
       .eq('id', note.id);
     if (!error) {
       setNotes(prev =>
-        prev.map(n => n.id === note.id ? { ...n, is_answered: !n.is_answered } : n),
+        prev.map(n =>
+          n.id === note.id ? { ...n, is_answered: !n.is_answered } : n,
+        ),
       );
     }
   };
@@ -131,11 +145,17 @@ const PrayerNotesScreen = ({ navigation }: any) => {
           color={item.is_answered ? '#34C759' : '#AAAAAA'}
         />
       </TouchableOpacity>
-      <Text style={[styles.noteText, item.is_answered && styles.noteTextAnswered]}>
+      <Text
+        style={[styles.noteText, item.is_answered && styles.noteTextAnswered]}
+      >
         {item.content}
       </Text>
       <TouchableOpacity onPress={() => deleteNote(item)}>
-        <MaterialCommunityIcons name="trash-can-outline" size={20} color="#FF3B30" />
+        <MaterialCommunityIcons
+          name="trash-can-outline"
+          size={20}
+          color="#FF3B30"
+        />
       </TouchableOpacity>
     </View>
   );
@@ -146,7 +166,10 @@ const PrayerNotesScreen = ({ navigation }: any) => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+        >
           <MaterialCommunityIcons name="arrow-right" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>ملاحظات الصلاة</Text>
@@ -160,9 +183,11 @@ const PrayerNotesScreen = ({ navigation }: any) => {
           onPress={addNote}
           disabled={saving}
         >
-          {saving
-            ? <ActivityIndicator color="#FFF" size="small" />
-            : <MaterialCommunityIcons name="plus" size={22} color="#FFF" />}
+          {saving ? (
+            <ActivityIndicator color="#FFF" size="small" />
+          ) : (
+            <MaterialCommunityIcons name="plus" size={22} color="#FFF" />
+          )}
         </TouchableOpacity>
         <TextInput
           style={styles.input}
@@ -172,8 +197,14 @@ const PrayerNotesScreen = ({ navigation }: any) => {
           onChangeText={setNewNote}
           multiline
           textAlign="right"
+        />
+      </View>
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} size="large" color={NAVY} />
+        <ActivityIndicator
+          style={{ marginTop: 40 }}
+          size="large"
+          color={NAVY}
+        />
       ) : (
         <FlatList
           data={notes}
@@ -181,7 +212,9 @@ const PrayerNotesScreen = ({ navigation }: any) => {
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <Text style={styles.empty}>لا توجد طلبات صلاة بعد.\nأضف أولى طلباتك!</Text>
+            <Text style={styles.empty}>
+              لا توجد طلبات صلاة بعد.\nأضف أولى طلباتك!
+            </Text>
           }
         />
       )}
@@ -219,7 +252,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 4,
   },
-  input: { flex: 1, fontSize: 15, color: '#333', maxHeight: 80, paddingRight: 8 },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    color: '#333',
+    maxHeight: 80,
+    paddingRight: 8,
+  },
   addBtn: {
     backgroundColor: NAVY,
     width: 40,
@@ -245,7 +284,13 @@ const styles = StyleSheet.create({
   },
   noteAnswered: { opacity: 0.6 },
   checkBtn: { marginLeft: 10 },
-  noteText: { flex: 1, fontSize: 15, color: '#333', textAlign: 'right', marginRight: 8 },
+  noteText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#333',
+    textAlign: 'right',
+    marginRight: 8,
+  },
   noteTextAnswered: { textDecorationLine: 'line-through', color: '#999' },
   empty: {
     textAlign: 'center',

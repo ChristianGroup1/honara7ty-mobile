@@ -35,9 +35,13 @@ interface Testimony {
 function formatDate(iso: string): string {
   try {
     return new Date(iso).toLocaleDateString('ar-EG', {
-      year: 'numeric', month: 'long', day: 'numeric',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
-  } catch { return iso; }
+  } catch {
+    return iso;
+  }
 }
 
 const TestimoniesScreen = ({ navigation }: any) => {
@@ -47,38 +51,56 @@ const TestimoniesScreen = ({ navigation }: any) => {
   const [showModal, setShowModal] = useState(false);
   const [newText, setNewText] = useState('');
   const [alertConfig, setAlertConfig] = useState<{
-    visible: boolean; title: string; message?: string;
-    type?: 'error' | 'warning' | 'success' | 'info'; buttons?: AlertButton[];
+    visible: boolean;
+    title: string;
+    message?: string;
+    type?: 'error' | 'warning' | 'success' | 'info';
+    buttons?: AlertButton[];
   }>({ visible: false, title: '' });
 
-  const showAlert = (title: string, message?: string, buttons?: AlertButton[],
-    type: 'error' | 'warning' | 'success' | 'info' = 'error') =>
-    setAlertConfig({ visible: true, title, message, buttons, type });
+  const showAlert = (
+    title: string,
+    message?: string,
+    buttons?: AlertButton[],
+    type: 'error' | 'warning' | 'success' | 'info' = 'error',
+  ) => setAlertConfig({ visible: true, title, message, buttons, type });
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   const fetchTestimonies = useCallback(async () => {
     setLoading(true);
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
-    if (!userId) { setLoading(false); return; }
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     const { data, error } = await supabase
       .from('testimonies')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    if (!error && data) { setTestimonies(data as Testimony[]); }
+    if (!error && data) {
+      setTestimonies(data as Testimony[]);
+    }
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchTestimonies(); }, [fetchTestimonies]);
+  useEffect(() => {
+    fetchTestimonies();
+  }, [fetchTestimonies]);
 
   const handleSave = async () => {
     const trimmed = newText.trim();
-    if (!trimmed) { return; }
+    if (!trimmed) {
+      return;
+    }
     setSaving(true);
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
-    if (!userId) { setSaving(false); return; }
+    if (!userId) {
+      setSaving(false);
+      return;
+    }
     const { error } = await supabase
       .from('testimonies')
       .insert({ user_id: userId, content: trimmed });
@@ -97,7 +119,9 @@ const TestimoniesScreen = ({ navigation }: any) => {
       await Share.share({
         message: `🙏 شهادة: ${t.content}\n\n#هنا_راحتي #الله_يسمع_الصلوات`,
       });
-    } catch { /* user cancelled */ }
+    } catch {
+      /* user cancelled */
+    }
   };
 
   const handleDelete = (t: Testimony) => {
@@ -107,10 +131,13 @@ const TestimoniesScreen = ({ navigation }: any) => {
       [
         { text: 'إلغاء', style: 'cancel' },
         {
-          text: 'حذف', style: 'destructive',
+          text: 'حذف',
+          style: 'destructive',
           onPress: async () => {
             const { error } = await supabase
-              .from('testimonies').delete().eq('id', t.id);
+              .from('testimonies')
+              .delete()
+              .eq('id', t.id);
             if (!error) {
               setTestimonies(prev => prev.filter(x => x.id !== t.id));
             } else {
@@ -127,15 +154,33 @@ const TestimoniesScreen = ({ navigation }: any) => {
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.cardActions}>
-          <TouchableOpacity onPress={() => handleDelete(item)} style={styles.actionBtn}>
-            <MaterialCommunityIcons name="trash-can-outline" size={18} color="#FF3B30" />
+          <TouchableOpacity
+            onPress={() => handleDelete(item)}
+            style={styles.actionBtn}
+          >
+            <MaterialCommunityIcons
+              name="trash-can-outline"
+              size={18}
+              color="#FF3B30"
+            />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleShare(item)} style={styles.actionBtn}>
-            <MaterialCommunityIcons name="share-variant-outline" size={18} color={NAVY} />
+          <TouchableOpacity
+            onPress={() => handleShare(item)}
+            style={styles.actionBtn}
+          >
+            <MaterialCommunityIcons
+              name="share-variant-outline"
+              size={18}
+              color={NAVY}
+            />
           </TouchableOpacity>
         </View>
         <View style={styles.dateRow}>
-          <MaterialCommunityIcons name="calendar-heart" size={14} color={GOLD} />
+          <MaterialCommunityIcons
+            name="calendar-heart"
+            size={14}
+            color={GOLD}
+          />
           <Text style={styles.dateText}>{formatDate(item.created_at)}</Text>
         </View>
       </View>
@@ -148,12 +193,18 @@ const TestimoniesScreen = ({ navigation }: any) => {
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+        >
           <MaterialCommunityIcons name="arrow-right" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>الشهادات</Text>
         <TouchableOpacity
-          onPress={() => { setNewText(''); setShowModal(true); }}
+          onPress={() => {
+            setNewText('');
+            setShowModal(true);
+          }}
           style={styles.addHeaderBtn}
         >
           <MaterialCommunityIcons name="plus" size={24} color="#FFF" />
@@ -162,14 +213,22 @@ const TestimoniesScreen = ({ navigation }: any) => {
 
       {/* Banner */}
       <View style={styles.banner}>
-        <MaterialCommunityIcons name="heart-circle-outline" size={28} color={GOLD} />
+        <MaterialCommunityIcons
+          name="heart-circle-outline"
+          size={28}
+          color={GOLD}
+        />
         <Text style={styles.bannerText}>
           شارك كيف أجاب الله صلاتك وكن مصدر تشجيع للآخرين.
         </Text>
       </View>
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} size="large" color={NAVY} />
+        <ActivityIndicator
+          style={{ marginTop: 40 }}
+          size="large"
+          color={NAVY}
+        />
       ) : (
         <FlatList
           data={testimonies}
@@ -178,7 +237,11 @@ const TestimoniesScreen = ({ navigation }: any) => {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="hands-pray" size={64} color="#DDD" />
+              <MaterialCommunityIcons
+                name="hands-pray"
+                size={64}
+                color="#DDD"
+              />
               <Text style={styles.emptyText}>
                 لم تشارك أي شهادة بعد.{'\n'}اضغط "+" لتكتب أول شهاداتك!
               </Text>
@@ -201,11 +264,15 @@ const TestimoniesScreen = ({ navigation }: any) => {
               value={newText}
               onChangeText={setNewText}
               textAlign="right"
+            />
+            <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.shareModalBtn}
                 onPress={async () => {
                   const trimmed = newText.trim();
-                  if (!trimmed) { return; }
+                  if (!trimmed) {
+                    return;
+                  }
                   // Capture the text before handleSave clears newText
                   const textToShare = trimmed;
                   await handleSave();
@@ -213,11 +280,17 @@ const TestimoniesScreen = ({ navigation }: any) => {
                     await Share.share({
                       message: `🙏 شهادة: ${textToShare}\n\n#هنا_راحتي #الله_يسمع_الصلوات`,
                     });
-                  } catch { /* user cancelled */ }
+                  } catch {
+                    /* user cancelled */
+                  }
                 }}
                 disabled={saving}
               >
-                <MaterialCommunityIcons name="share-variant" size={18} color="#FFF" />
+                <MaterialCommunityIcons
+                  name="share-variant"
+                  size={18}
+                  color="#FFF"
+                />
                 <Text style={styles.shareModalBtnText}>احفظ وشارك</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -225,9 +298,11 @@ const TestimoniesScreen = ({ navigation }: any) => {
                 onPress={handleSave}
                 disabled={saving}
               >
-                {saving
-                  ? <ActivityIndicator color="#FFF" size="small" />
-                  : <Text style={styles.saveBtnText}>حفظ فقط</Text>}
+                {saving ? (
+                  <ActivityIndicator color="#FFF" size="small" />
+                ) : (
+                  <Text style={styles.saveBtnText}>حفظ فقط</Text>
+                )}
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.cancelBtn}
@@ -274,7 +349,13 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
-  bannerText: { flex: 1, color: 'rgba(255,255,255,0.75)', fontSize: 13, textAlign: 'right', lineHeight: 20 },
+  bannerText: {
+    flex: 1,
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 13,
+    textAlign: 'right',
+    lineHeight: 20,
+  },
 
   list: { padding: 16, paddingBottom: 32 },
   card: {
@@ -300,42 +381,83 @@ const styles = StyleSheet.create({
   dateText: { color: '#888', fontSize: 12 },
   cardActions: { flexDirection: 'row', gap: 8 },
   actionBtn: { padding: 4 },
-  cardContent: { fontSize: 15, color: '#333', lineHeight: 26, textAlign: 'right' },
+  cardContent: {
+    fontSize: 15,
+    color: '#333',
+    lineHeight: 26,
+    textAlign: 'right',
+  },
 
   emptyContainer: { alignItems: 'center', marginTop: 60 },
   emptyText: {
-    color: '#AAA', fontSize: 15, textAlign: 'center', marginTop: 16, lineHeight: 26,
+    color: '#AAA',
+    fontSize: 15,
+    textAlign: 'center',
+    marginTop: 16,
+    lineHeight: 26,
   },
 
   modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end',
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
   },
   modalBox: {
-    backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 24, paddingBottom: 40,
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
   },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: NAVY, textAlign: 'right' },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: NAVY,
+    textAlign: 'right',
+  },
   modalHint: { color: '#888', fontSize: 13, marginTop: 4, textAlign: 'right' },
   modalInput: {
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12,
-    padding: 14, fontSize: 15, color: '#333', minHeight: 140,
-    marginTop: 16, textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    color: '#333',
+    minHeight: 140,
+    marginTop: 16,
+    textAlignVertical: 'top',
   },
   modalActions: {
-    flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 16, flexWrap: 'wrap',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 16,
+    flexWrap: 'wrap',
   },
   shareModalBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: GOLD, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: GOLD,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
   shareModalBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 14 },
   saveBtn: {
-    paddingVertical: 12, paddingHorizontal: 20, borderRadius: 10, backgroundColor: NAVY,
-    minWidth: 80, alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    backgroundColor: NAVY,
+    minWidth: 80,
+    alignItems: 'center',
   },
   saveBtnText: { color: '#FFF', fontWeight: 'bold' },
   cancelBtn: {
-    paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, backgroundColor: '#F0F0F0',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: '#F0F0F0',
   },
   cancelBtnText: { color: '#555', fontWeight: '600' },
 });

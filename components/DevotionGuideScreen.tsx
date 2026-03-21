@@ -19,13 +19,6 @@ const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
 const BG = '#F2F4F8';
 
-const hexToRgba = (hex: string, alpha: number) => {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
-
 type Props = { navigation: any };
 
 const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
@@ -40,7 +33,14 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
 
       {/* ── Creative Header ── */}
       <View style={styles.header}>
-        <View style={{ width: 40 }} /> {/* Space on left */}
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <MaterialCommunityIcons name="arrow-left" size={22} color="#FFF" />
+        </TouchableOpacity>
+
         <View style={styles.headerCenter}>
           <View style={styles.headerIconContainer}>
             <View style={styles.iconBg}>
@@ -54,17 +54,11 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
           <Text style={styles.headerTitle}>شرح الخلوة</Text>
           <Text style={styles.headerSub}>مقالات لمساعدتك في وقتك مع الله</Text>
         </View>
-        {/* Back button on RIGHT side */}
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={22} color="#FFF" />
-        </TouchableOpacity>
+
+        <View style={{ width: 40 }} />
       </View>
 
-      {/* ── Rest of screen ── */}
+      {/* ── Decorative wave ── */}
       <View style={styles.wave} />
 
       {/* ── Articles List ── */}
@@ -87,7 +81,7 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
               <View
                 style={[
                   styles.articleIconCircle,
-                  { backgroundColor: hexToRgba(accent, 0.12) },
+                  { backgroundColor: `${accent}1F` },
                 ]}
               >
                 <MaterialCommunityIcons
@@ -121,15 +115,18 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: BG },
+  container: {
+    flex: 1,
+    backgroundColor: BG,
+  },
 
   /* ── Creative Header ── */
   header: {
     backgroundColor: NAVY,
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 32,
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -162,7 +159,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: '#FFF',
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '700',
     textAlign: 'center',
   },
   headerSub: {
@@ -182,12 +179,16 @@ const styles = StyleSheet.create({
   },
 
   /* ── List ── */
-  listContent: { paddingHorizontal: 16, paddingBottom: 40, paddingTop: 8 },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+    paddingTop: 16,
+  },
 
   articleCard: {
     backgroundColor: '#FFF',
     borderRadius: 18,
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 14,
     marginBottom: 14,
     flexDirection: 'row',
@@ -209,24 +210,21 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     flexShrink: 0,
   },
-  articleCardBody: { flex: 1, alignItems: 'flex-end', paddingRight: 4 },
+  articleCardBody: {
+    flex: 1,
+    marginHorizontal: 8,
+  },
   articleCardTitle: {
     fontSize: 15,
-    fontWeight: 'bold',
-    textAlign: 'right',
-    marginBottom: 5,
+    fontWeight: '700',
+    textAlign: 'left',
+    marginBottom: 6,
   },
   articleCardSummary: {
     fontSize: 12,
     color: '#888',
-    textAlign: 'right',
-    lineHeight: 19,
-  },
-  detailHeroTitle: {
-    color: '#FFF',
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    textAlign: 'left',
+    lineHeight: 20,
   },
 });
 

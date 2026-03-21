@@ -59,8 +59,7 @@ const HomeScreen = ({ route, navigation }: any) => {
     type: 'error' | 'warning' | 'success' | 'info' = 'info',
   ) => setAlertConfig({ visible: true, title, message, buttons, type });
 
-  const hideAlert = () =>
-    setAlertConfig(prev => ({ ...prev, visible: false }));
+  const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   /* ── Load user once ── */
   useEffect(() => {
@@ -80,7 +79,9 @@ const HomeScreen = ({ route, navigation }: any) => {
       const checkDevotion = async () => {
         const { data: sessionData } = await supabase.auth.getSession();
         const userId = sessionData?.session?.user?.id;
-        if (!userId) { return; }
+        if (!userId) {
+          return;
+        }
 
         const { data } = await supabase
           .from('devotion_log')
@@ -99,7 +100,9 @@ const HomeScreen = ({ route, navigation }: any) => {
   const handleDevotionAnswer = async (completed: boolean) => {
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
-    if (!userId) { return; }
+    if (!userId) {
+      return;
+    }
 
     const { error } = await supabase
       .from('devotion_log')
@@ -111,12 +114,7 @@ const HomeScreen = ({ route, navigation }: any) => {
     if (!error) {
       setDevotionAnswer(completed);
       if (completed) {
-        showAlert(
-          'أحسنت! استمر مع الله 🙏',
-          YES_MESSAGE,
-          undefined,
-          'success',
-        );
+        showAlert('أحسنت! استمر مع الله 🙏', YES_MESSAGE, undefined, 'success');
       } else {
         showAlert(
           'لا بأس، الله ينتظرك 💙',
@@ -195,13 +193,14 @@ const HomeScreen = ({ route, navigation }: any) => {
     user?.email?.split('@')[0] ||
     'مستخدم';
 
-  const initials = displayName
-    .split(' ')
-    .filter((w: string) => w.length > 0)
-    .slice(0, 2)
-    .map((w: string) => w[0] ?? '')
-    .join('')
-    .toUpperCase() || '🙏';
+  const initials =
+    displayName
+      .split(' ')
+      .filter((w: string) => w.length > 0)
+      .slice(0, 2)
+      .map((w: string) => w[0] ?? '')
+      .join('')
+      .toUpperCase() || '🙏';
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -210,7 +209,11 @@ const HomeScreen = ({ route, navigation }: any) => {
       {/* ─── Header ─── */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <MaterialCommunityIcons name="logout" size={20} color="rgba(255,255,255,0.7)" />
+          <MaterialCommunityIcons
+            name="logout"
+            size={20}
+            color="rgba(255,255,255,0.7)"
+          />
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
@@ -234,7 +237,11 @@ const HomeScreen = ({ route, navigation }: any) => {
             activeOpacity={0.8}
             onPress={() => navigation.navigate('DevotionGuide')}
           >
-            <MaterialCommunityIcons name="head-cog-outline" size={26} color={NAVY} />
+            <MaterialCommunityIcons
+              name="head-cog-outline"
+              size={26}
+              color={NAVY}
+            />
             <Text style={styles.quickBtnText}>شرح الخلوة</Text>
           </TouchableOpacity>
 
@@ -252,7 +259,11 @@ const HomeScreen = ({ route, navigation }: any) => {
             activeOpacity={0.8}
             onPress={() => navigation.navigate('Badges')}
           >
-            <MaterialCommunityIcons name="medal-outline" size={26} color={NAVY} />
+            <MaterialCommunityIcons
+              name="medal-outline"
+              size={26}
+              color={NAVY}
+            />
             <Text style={styles.quickBtnText}>الأوسمة والجوائز</Text>
           </TouchableOpacity>
 
@@ -261,7 +272,11 @@ const HomeScreen = ({ route, navigation }: any) => {
             activeOpacity={0.8}
             onPress={() => navigation.navigate('BibleMemorization')}
           >
-            <MaterialCommunityIcons name="book-open-outline" size={26} color={NAVY} />
+            <MaterialCommunityIcons
+              name="book-open-outline"
+              size={26}
+              color={NAVY}
+            />
             <Text style={styles.quickBtnText}>حفظ الكتاب المقدس</Text>
           </TouchableOpacity>
         </View>
@@ -284,13 +299,25 @@ const HomeScreen = ({ route, navigation }: any) => {
             </TouchableOpacity>
           ) : devotionAnswer ? (
             <View style={styles.answeredYesCard}>
-              <MaterialCommunityIcons name="check-circle" size={22} color="#fff" />
-              <Text style={styles.answeredYesText}>أجبت بنعم اليوم 🎉 بارك الله خلوتك!</Text>
+              <MaterialCommunityIcons
+                name="check-circle"
+                size={22}
+                color="#fff"
+              />
+              <Text style={styles.answeredYesText}>
+                أجبت بنعم اليوم 🎉 بارك الله خلوتك!
+              </Text>
             </View>
           ) : (
             <View style={styles.answeredNoCard}>
-              <MaterialCommunityIcons name="clock-alert-outline" size={22} color="#fff" />
-              <Text style={styles.answeredNoText}>لم تأخذ خلوتك بعد — لا يزال الوقت أمامك 💙</Text>
+              <MaterialCommunityIcons
+                name="clock-alert-outline"
+                size={22}
+                color="#fff"
+              />
+              <Text style={styles.answeredNoText}>
+                لم تأخذ خلوتك بعد — لا يزال الوقت أمامك 💙
+              </Text>
             </View>
           )}
         </View>
@@ -323,7 +350,11 @@ const HomeScreen = ({ route, navigation }: any) => {
             <Text style={styles.featureCardSub}>سجل خواطرك اليومية</Text>
           </View>
           <View style={styles.featureIconCircle}>
-            <MaterialCommunityIcons name="notebook-outline" size={26} color={NAVY} />
+            <MaterialCommunityIcons
+              name="notebook-outline"
+              size={26}
+              color={NAVY}
+            />
           </View>
         </TouchableOpacity>
       </ScrollView>
@@ -343,7 +374,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 12 : 8,
     paddingBottom: 24,
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -380,7 +411,7 @@ const styles = StyleSheet.create({
 
   /* ── 4-button grid ── */
   buttonsGrid: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 12,
@@ -392,8 +423,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 18,
     paddingHorizontal: 14,
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     marginTop: 10,
+  },
+  quickBtnText: {
     fontSize: 14,
     fontWeight: '600',
     color: NAVY,
@@ -416,7 +449,7 @@ const styles = StyleSheet.create({
   questionDecor: {
     position: 'absolute',
     top: -30,
-    left: -30,
+    right: -30,
     width: 110,
     height: 110,
     borderRadius: 55,
@@ -425,14 +458,14 @@ const styles = StyleSheet.create({
   questionCardLabel: {
     fontSize: 12,
     color: '#999',
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 8,
   },
   questionText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: NAVY,
-    textAlign: 'right',
+    textAlign: 'left',
     marginBottom: 18,
     lineHeight: 24,
   },
@@ -453,7 +486,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     justifyContent: 'center',
   },
-  answeredYesText: { color: '#FFF', fontSize: 13, fontWeight: '600', textAlign: 'center', flex: 1 },
+  answeredYesText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    flex: 1,
+  },
   answeredNoCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -464,7 +503,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     justifyContent: 'center',
   },
-  answeredNoText: { color: '#FFF', fontSize: 13, fontWeight: '600', textAlign: 'center', flex: 1 },
+  answeredNoText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    flex: 1,
+  },
 
   /* ── Feature cards (prayer / journal) ── */
   featureCard: {
@@ -472,7 +517,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 18,
     marginBottom: 14,
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     elevation: 2,
     shadowColor: '#000',
@@ -480,18 +525,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.07,
     shadowRadius: 6,
   },
-  featureCardBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-end' },
+  featureCardBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-start' },
   featureCardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: NAVY,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   featureCardSub: {
     fontSize: 12,
     color: '#999',
     marginTop: 4,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   featureIconCircle: {
     width: 50,
