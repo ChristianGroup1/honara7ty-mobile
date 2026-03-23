@@ -16,6 +16,7 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Dimensions,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -386,16 +387,14 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
 
       {/* ─── Detail modal: tap outside to close ─── */}
       <Modal visible={showDetail} animationType="slide" transparent>
-        <TouchableWithoutFeedback onPress={closeDetail}>
-          <View
-            style={[
-              styles.modalOverlay,
-              keyboardVisible ? { backgroundColor: 'transparent' } : null,
-            ]}
-          >
-            {/* inner touchable prevents outside-tap from closing when tapping inside box */}
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={[styles.modalBox, { paddingBottom: 8 }]}>
+        <View
+          style={[
+            styles.modalOverlay,
+            keyboardVisible ? { backgroundColor: 'transparent' } : null,
+          ]}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={closeDetail} />
+          <View style={[styles.modalBox, { paddingBottom: 8 }]}>
                 <Text style={styles.modalTitle}>تفاصيل التأمل</Text>
                 <Text style={styles.modalHint}>
                   {detailItem ? formatDate(detailItem.date) : ''}
@@ -454,10 +453,8 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
                     <Text style={styles.deleteBtnText}>حذف</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
-            </TouchableWithoutFeedback>
           </View>
-        </TouchableWithoutFeedback>
+          </View>
       </Modal>
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
