@@ -197,8 +197,8 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
 
   const deleteNote = (note: PrayerNote) => {
     showAlert(
-      'حذف الملاحظة',
-      'هل تريد حذف هذه الملاحظة؟',
+      'حذف طلبه الصلاة',
+      'هل تريد حذف هذه طلبه الصلاة؟',
       [
         { text: 'إلغاء', style: 'cancel' },
         {
@@ -301,14 +301,6 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     );
   };
 
-  const windowHeight = Dimensions.get('window').height;
-  // reserve header + modal paddings + actions height
-  const reservedModalSpace = insets.top + 140; // عدّل حسب الـ header والـ actions
-  const modalMaxHeight = Math.max(
-    windowHeight - reservedModalSpace,
-    windowHeight * 0.45,
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
@@ -407,88 +399,64 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Detail / View modal (scrollable content, actions fixed) */}
       <Modal visible={showDetailModal} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
+        <View
+          style={[
+            styles.modalOverlay,
+            keyboardVisible ? { backgroundColor: 'transparent' } : null,
+          ]}
+        >
           <Pressable style={StyleSheet.absoluteFill} onPress={closeDetail} />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={insets.top + 8}
-            style={{ flex: 1, justifyContent: 'flex-end' }}
-            pointerEvents="box-none"
-          >
-            <View
-              style={[
-                styles.modalBox,
-                { height: modalMaxHeight, paddingBottom: 0 },
-              ]}
+          <View style={[styles.modalBox, { paddingBottom: 8 }]}>
+            <Text style={styles.modalTitle}>تفاصيل طلبه الصلاة</Text>
+
+            <ScrollView
+              style={{
+                maxHeight: Dimensions.get('window').height * 0.6,
+                marginTop: 8,
+              }}
+              contentContainerStyle={{ paddingBottom: 20 }}
+              showsVerticalScrollIndicator
+              keyboardShouldPersistTaps="handled"
             >
-                  <Text style={styles.modalTitle}>تفاصيل طلبة الصلاة</Text>
-                  <Text style={styles.modalHint}>
-                    {detailItem
-                      ? new Date(detailItem.created_at).toLocaleString()
-                      : ''}
-                  </Text>
+              <Text style={[styles.cardText]}>{detailItem?.content ?? ''}</Text>
+            </ScrollView>
 
-                  <ScrollView
-                    keyboardShouldPersistTaps="handled"
-                    nestedScrollEnabled
-                    showsVerticalScrollIndicator
-                    style={{ flex: 1, marginTop: 12 }}
-                    contentContainerStyle={{
-                      paddingHorizontal: 12,
-                      paddingBottom:
-                        24 + (keyboardVisible ? keyboardHeight : 0),
-                    }}
-                  >
-                    <Text style={[styles.cardText, { textAlign: 'right' }]}>
-                      {detailItem?.content ?? ''}
-                    </Text>
-                  </ScrollView>
+            <View style={styles.detailActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={closeDetail}>
+                <Text style={styles.cancelBtnText}>إغلاق</Text>
+              </TouchableOpacity>
 
-                  <View style={{ paddingHorizontal: 12, paddingVertical: 10 }}>
-                    <View style={styles.detailActions}>
-                      <TouchableOpacity
-                        style={styles.cancelBtn}
-                        onPress={closeDetail}
-                      >
-                        <Text style={styles.cancelBtnText}>إغلاق</Text>
-                      </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: NAVY }]}
+                onPress={() => {
+                  if (detailItem) {
+                    closeDetail();
+                    openEdit(detailItem);
+                  }
+                }}
+              >
+                <Text style={[styles.saveBtnText, { color: '#FFF' }]}>
+                  تعديل
+                </Text>
+              </TouchableOpacity>
 
-                      <TouchableOpacity
-                        style={[styles.saveBtn, { backgroundColor: NAVY }]}
-                        onPress={() => {
-                          if (detailItem) {
-                            closeDetail();
-                            openEdit(detailItem);
-                          }
-                        }}
-                      >
-                        <Text style={[styles.saveBtnText, { color: '#FFF' }]}>
-                          تعديل
-                        </Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[
-                          styles.cancelBtn,
-                          { backgroundColor: DANGER, marginLeft: 8 },
-                        ]}
-                        onPress={() => {
-                          if (detailItem) {
-                            deleteNote(detailItem);
-                            closeDetail();
-                          }
-                        }}
-                      >
-                        <Text style={{ color: '#FFF', fontWeight: '700' }}>
-                          حذف
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
+              <TouchableOpacity
+                style={[
+                  styles.cancelBtn,
+                  { backgroundColor: DANGER, marginLeft: 8 },
+                ]}
+                onPress={() => {
+                  if (detailItem) {
+                    deleteNote(detailItem);
+                    closeDetail();
+                  }
+                }}
+              >
+                <Text style={{ color: '#FFF', fontWeight: '700' }}>حذف</Text>
+              </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
+          </View>
         </View>
       </Modal>
 
@@ -630,13 +598,20 @@ const styles = StyleSheet.create({
   },
   modalBox: {
     backgroundColor: '#FFF',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    paddingHorizontal: 18,
-    paddingTop: 14,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 18,
     paddingBottom: 12,
     width: '100%',
-    maxHeight: '86%',
+    maxHeight: '90%',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  detailModalBox: {
+    paddingBottom: 0,
+    maxHeight: '80%',
+    minHeight: 220,
   },
   modalTitle: {
     fontSize: 16,
