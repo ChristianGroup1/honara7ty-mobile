@@ -12,10 +12,9 @@ import {
   TouchableOpacity,
   View,
   KeyboardAvoidingView,
-  TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
-  Dimensions,
+  Pressable,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -301,14 +300,6 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     );
   };
 
-  const windowHeight = Dimensions.get('window').height;
-  // reserve header + modal paddings + actions height
-  const reservedModalSpace = insets.top + 140; // عدّل حسب الـ header والـ actions
-  const modalMaxHeight = Math.max(
-    windowHeight - reservedModalSpace,
-    windowHeight * 0.45,
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
@@ -407,22 +398,84 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
+      {/* Add / Edit modal */}
+      <Modal visible={showEditModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setShowEditModal(false)}
+          />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={insets.top + 8}
+            style={{ flex: 1, justifyContent: 'flex-end' }}
+            pointerEvents="box-none"
+          >
+            <View style={styles.modalBox}>
+              <Text style={styles.modalTitle}>
+                {editItem ? 'تعديل طلبة الصلاة' : 'طلبة صلاة جديدة'}
+              </Text>
+              <Text style={styles.modalHint}>اكتب الطلبة بالتفصيل</Text>
+
+              <ScrollView
+                contentContainerStyle={styles.modalScroll}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                <TextInput
+                  style={styles.modalInput}
+                  multiline
+                  placeholder="اكتب هنا..."
+                  placeholderTextColor="#AAA"
+                  value={text}
+                  onChangeText={setText}
+                  textAlign="right"
+                  textAlignVertical="top"
+                />
+              </ScrollView>
+
+              <View style={styles.detailActions}>
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => setShowEditModal(false)}
+                >
+                  <Text style={styles.cancelBtnText}>إلغاء</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+                  onPress={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <ActivityIndicator color="#FFF" size="small" />
+                  ) : (
+                    <Text style={[styles.saveBtnText, { color: '#FFF' }]}>
+                      {editItem ? 'حفظ التعديل' : 'إضافة'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
       {/* Detail / View modal (scrollable content, actions fixed) */}
       <Modal visible={showDetailModal} animationType="slide" transparent>
-        <TouchableWithoutFeedback onPress={closeDetail}>
-          <View style={[styles.modalOverlay]}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={insets.top + 8}
-                style={{ flex: 1, justifyContent: 'flex-end' }}
-              >
-                <View
-                  style={[
-                    styles.modalBox,
-                    { height: modalMaxHeight, paddingBottom: 0 },
-                  ]}
-                >
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={closeDetail} />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={insets.top + 8}
+            style={{ flex: 1, justifyContent: 'flex-end' }}
+            pointerEvents="box-none"
+          >
+            <View
+              style={[
+                styles.modalBox,
+                styles.detailModalBox,
+              ]}
+            >
                   <Text style={styles.modalTitle}>تفاصيل طلبة الصلاة</Text>
                   <Text style={styles.modalHint}>
                     {detailItem
@@ -487,11 +540,9 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
                       </TouchableOpacity>
                     </View>
                   </View>
-                </View>
-              </KeyboardAvoidingView>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
@@ -639,6 +690,11 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     width: '100%',
     maxHeight: '86%',
+  },
+  detailModalBox: {
+    paddingBottom: 0,
+    maxHeight: '80%',
+    minHeight: 220,
   },
   modalTitle: {
     fontSize: 16,
