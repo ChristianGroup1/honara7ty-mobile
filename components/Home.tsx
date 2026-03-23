@@ -424,6 +424,8 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 14,
     alignItems: 'flex-start',
+    display: 'flex',
+    flexDirection: 'row',
     marginTop: 10,
   },
   quickBtnText: {
@@ -431,6 +433,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: NAVY,
     textAlign: 'right',
+    paddingLeft: 5,
+    paddingTop: 2,
   },
 
   /* ── Daily question card ── */

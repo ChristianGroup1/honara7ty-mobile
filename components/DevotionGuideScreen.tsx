@@ -34,32 +34,22 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
       {/* ── Creative Header ── */}
       <View style={styles.header}>
         <TouchableOpacity
-          style={styles.backBtn}
           onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
+          style={styles.backBtn}
         >
-          <MaterialCommunityIcons name="arrow-left" size={22} color="#FFF" />
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-
-        <View style={styles.headerCenter}>
-          <View style={styles.headerIconContainer}>
-            <View style={styles.iconBg}>
-              <MaterialCommunityIcons
-                name="book-open-page-variant"
-                size={32}
-                color={GOLD}
-              />
-            </View>
-          </View>
-          <Text style={styles.headerTitle}>شرح الخلوة</Text>
-          <Text style={styles.headerSub}>مقالات لمساعدتك في وقتك مع الله</Text>
-        </View>
-
-        <View style={{ width: 40 }} />
+        <Text style={styles.headerTitle}>شرح الخلوة</Text>
+        {/* <TouchableOpacity
+                onPress={handleShareAll}
+                style={styles.shareHeaderBtn}
+              >
+                <MaterialCommunityIcons name="share-variant" size={22} color="#FFF" />
+              </TouchableOpacity> */}
       </View>
 
       {/* ── Decorative wave ── */}
-      <View style={styles.wave} />
+      {/* <View style={styles.wave} /> */}
 
       {/* ── Articles List ── */}
       <ScrollView
@@ -123,15 +113,15 @@ const styles = StyleSheet.create({
   /* ── Creative Header ── */
   header: {
     backgroundColor: NAVY,
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 32,
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'android' ? 12 : 8, // restored to common header spacing
+    paddingBottom: 18,
   },
   backBtn: {
-    width: 40,
+    width: 40, // match other screens
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.12)',
@@ -141,37 +131,38 @@ const styles = StyleSheet.create({
   headerCenter: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 0,
   },
   headerIconContainer: {
-    marginBottom: 12,
+    marginBottom: 6,
   },
   iconBg: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56, // slightly larger to match other screens' header emblem
+    height: 56,
+    borderRadius: 28,
     backgroundColor: 'rgba(201, 168, 76, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(201, 168, 76, 0.3)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(201, 168, 76, 0.25)',
   },
   headerTitle: {
     color: '#FFF',
-    fontSize: 22,
+    fontSize: 18, // match other screens
     fontWeight: '700',
+    flex: 1,
+    marginLeft: 20,
     textAlign: 'center',
   },
   headerSub: {
     color: 'rgba(255,255,255,0.65)',
     fontSize: 12,
-    marginTop: 6,
+    marginTop: 4,
     textAlign: 'center',
   },
-
   /* ── Wave decoration ── */
   wave: {
-    height: 22,
+    height: 12,
     backgroundColor: NAVY,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
