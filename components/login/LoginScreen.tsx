@@ -1,0 +1,407 @@
+import React, { useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  SafeAreaView,
+  StatusBar,
+  TouchableOpacity,
+  useWindowDimensions,
+} from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import CustomAlert, { AlertButton } from '../shared/CustomAlert';
+import CustomInput from '../shared/CustomInput';
+import {
+  Provider as PaperProvider,
+  Checkbox,
+  ActivityIndicator,
+} from 'react-native-paper';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import supabase from '../../lib/supbase';
+import { localizeAuthError, EMAIL_REGEX } from '../../lib/authErrors';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
+import { authPaperTheme, AUTH_NAVY } from '../auth/theme';
+
+const initializingContainerStyle = {
+  flex: 1,
+  justifyContent: 'center' as const,
+  alignItems: 'center' as const,
+  backgroundColor: AUTH_NAVY,
+};
+
+const LoginUI: React.FC<any> = ({ navigation }) => {
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [secureText, setSecureText] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false); // Login action loading state
+  const [initializing, setInitializing] = useState(true); // Initial Google check
+  const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message?: string;
+    type?: 'error' | 'warning' | 'success' | 'info';
+    buttons?: AlertButton[];
+  }>({ visible: false, title: '' });
+  const isCompactWidth = windowWidth < 360;
+
+  const showAlert = (
+    title: string,
+    message?: string,
+    buttons?: AlertButton[],
+    type: 'error' | 'warning' | 'success' | 'info' = 'error',
+  ) => setAlertConfig({ visible: true, title, message, buttons, type });
+
+  const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
+
+  /** Navigate to Onboarding for first-time users, otherwise to HomeScreen. */
+  const navigateAfterLogin = (user: any) => {
+    const onboardingDone = user?.user_metadata?.onboarding_completed === true;
+    if (onboardingDone) {
+      navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+    } else {
+      navigation.replace('Onboarding');
+    }
+  };
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+      webClientId:
+        '496533823141-ngb38njinb595ndm6qlu1ollommpg2sl.apps.googleusercontent.com',
+    });
+
+    // Check if user is already signed in
+    checkUserSignedIn();
+  }, []);
+
+  const checkUserSignedIn = async () => {
+    try {
+      const userInfo = await GoogleSignin.signInSilently(); // Auto sign-in if already logged in
+      if (userInfo && userInfo?.data?.user) {
+        return;
+      }
+    } catch {
+      return;
+    } finally {
+      setInitializing(false); // Hide loader after checking
+    }
+  };
+
+  const handleLogin = async () => {
+    const trimmedEmail = email.trim();
+    const errors = { email: '', password: '' };
+    let hasError = false;
+    if (!trimmedEmail) {
+      errors.email = 'يرجى إدخال البريد الإلكتروني';
+      hasError = true;
+    } else if (!EMAIL_REGEX.test(trimmedEmail)) {
+      errors.email = 'يرجى إدخال بريد إلكتروني صحيح';
+      hasError = true;
+    }
+    if (!password) {
+      errors.password = 'يرجى إدخال كلمة المرور';
+      hasError = true;
+    }
+    setFieldErrors(errors);
+    if (hasError) return;
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password,
+      });
+      if (error) {
+        showAlert('خطأ في تسجيل الدخول', localizeAuthError(error.message));
+      } else {
+        navigateAfterLogin(data.user);
+      }
+    } catch (err: any) {
+      showAlert('خطأ', localizeAuthError(err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo: any = await GoogleSignin.signIn();
+
+      if (userInfo.data.idToken) {
+        const { data, error } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: userInfo.data.idToken,
+        });
+
+        if (error) {
+          showAlert('خطأ', localizeAuthError(error.message));
+        } else {
+          navigateAfterLogin(data?.user ?? userInfo.data.user);
+        }
+      } else {
+        throw new Error('No ID token present!');
+      }
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        showAlert(
+          'تم الإلغاء',
+          'تم إلغاء عملية تسجيل الدخول.',
+          undefined,
+          'warning',
+        );
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        showAlert(
+          'جاري تسجيل الدخول',
+          'عملية تسجيل الدخول جارية بالفعل.',
+          undefined,
+          'warning',
+        );
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        showAlert(
+          'خطأ',
+          'خدمات Google Play غير متاحة أو قديمة.',
+          undefined,
+          'warning',
+        );
+      } else {
+        showAlert('خطأ', localizeAuthError(error.message));
+      }
+    }
+  };
+
+  if (initializing) {
+    return (
+      <View style={initializingContainerStyle}>
+        <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
+  }
+  return (
+    <PaperProvider theme={authPaperTheme}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar
+          barStyle="light-content"
+          translucent={false}
+          backgroundColor={AUTH_NAVY}
+        />
+
+        <View style={[styles.darkHeaderLayer, { height: windowHeight * 0.4 }]} />
+
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigation.goBack()}
+          >
+            <View style={styles.backBtnCircle}>
+              <MaterialCommunityIcons
+                name="chevron-left"
+                size={28}
+                color="white"
+              />
+            </View>
+          </TouchableOpacity>
+          <Image
+            source={require('../../assets/images/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.title}>تسجيل الدخول</Text>
+        </View>
+
+        <KeyboardAwareScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          overScrollMode="never"
+          decelerationRate="normal"
+          enableOnAndroid={true}
+          extraScrollHeight={80}
+          extraHeight={80}
+          keyboardOpeningTime={0}
+        >
+          <View style={styles.formContainer} pointerEvents="box-none">
+            <CustomInput
+              fieldLabel="البريد الإلكتروني"
+              placeholder="أدخل بريدك الإلكتروني"
+              icon="email-outline"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={t => {
+                setEmail(t);
+                if (fieldErrors.email)
+                  setFieldErrors(prev => ({ ...prev, email: '' }));
+              }}
+              error={fieldErrors.email}
+            />
+
+            <CustomInput
+              fieldLabel="كلمة المرور  "
+              placeholder="أدخل كلمة المرور"
+              icon="lock-outline"
+              isPassword={true}
+              secureText={secureText}
+              setSecureText={setSecureText}
+              value={password}
+              onChangeText={t => {
+                setPassword(t);
+                if (fieldErrors.password)
+                  setFieldErrors(prev => ({ ...prev, password: '' }));
+              }}
+              error={fieldErrors.password}
+            />
+
+            {/* قسم "تذكرني" و "نسيت كلمة المرور" */}
+            <View
+              style={[
+                styles.extraOptions,
+                isCompactWidth && styles.extraOptionsCompact,
+              ]}
+            >
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ForgotPassword')}
+              >
+                <Text style={styles.forgotPasswordText}>
+                  نسيت كلمه المرور ؟
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.rememberMeRow}>
+                <Text style={styles.rememberMeText}>ذكرني</Text>
+                <Checkbox
+                  status={rememberMe ? 'checked' : 'unchecked'}
+                  onPress={() => setRememberMe(!rememberMe)}
+                  color="#0A1124"
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              testID="login-submit"
+              style={styles.submitBtn}
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.submitText}>تسجيل الدخول</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleSignIn}
+            >
+              <Image
+                source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
+                style={styles.googleIcon}
+              />
+              <Text style={styles.googleText}>تسجيل الدخول باستخدام جوجل</Text>
+            </TouchableOpacity>
+
+            <View style={styles.footerContainer}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('SignupStep1')}
+              >
+                <Text style={styles.footerLink}>إنشاء حساب جديد</Text>
+              </TouchableOpacity>
+              <Text style={styles.footerText}>ليس لديك حساب؟ </Text>
+            </View>
+          </View>
+        </KeyboardAwareScrollView>
+      </SafeAreaView>
+      <CustomAlert {...alertConfig} onDismiss={hideAlert} />
+    </PaperProvider>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F9F9F9' },
+  darkHeaderLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#0A1124',
+  },
+  headerContent: { alignItems: 'center', paddingTop: 40, paddingBottom: 20 },
+  backBtn: { alignSelf: 'flex-start', marginLeft: 20 },
+  logo: { width: 100, height: 100 },
+  title: { color: '#FFF', fontSize: 24, fontWeight: 'bold', marginTop: 15 },
+
+  scrollContainer: { flexGrow: 1 },
+  formContainer: {
+    backgroundColor: '#F9F9F9',
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 25,
+    paddingTop: 40,
+    paddingBottom: 40,
+  },
+  extraOptions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: 5,
+  },
+  extraOptionsCompact: {
+    flexWrap: 'wrap',
+    rowGap: 8,
+  },
+  rememberMeRow: { flexDirection: 'row', alignItems: 'center' },
+  rememberMeText: { color: '#666', fontSize: 14 },
+  forgotPasswordText: { color: '#666', fontSize: 14 },
+
+  submitBtn: {
+    backgroundColor: '#0A1124',
+    height: 55,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  submitText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
+
+  googleButton: {
+    flexDirection: 'row',
+    height: 55,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#DDD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  googleIcon: { width: 20, height: 20, marginLeft: 12 },
+  googleText: { fontSize: 15, color: '#444' },
+  backBtnCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 25,
+    paddingBottom: 20,
+  },
+  footerText: { color: '#666', fontSize: 14 },
+  footerLink: { color: '#0A1124', fontWeight: 'bold', fontSize: 14 },
+});
+
+export default LoginUI;

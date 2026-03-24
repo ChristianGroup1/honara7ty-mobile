@@ -1,0 +1,19 @@
+export type RootStackParamList = {
+  MainTabs: undefined;
+  Welcome: undefined;
+  SignupStep1: undefined;
+  ProfileCompletion: undefined;
+  Login: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: { linkValid?: boolean };
+  Onboarding: undefined;
+  PrayerNotes: undefined;
+  SpiritualReflection: undefined;
+  BibleReader: undefined;
+  BibleMemorization: undefined;
+  Badges: undefined;
+  Testimonies: undefined;
+  DailyNotifications: undefined;
+  DevotionGuide: undefined;
+  DevotionDetail: undefined;
+};
