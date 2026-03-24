@@ -16,4 +16,5 @@ export type RootStackParamList = {
   DailyNotifications: undefined;
   DevotionGuide: undefined;
   DevotionDetail: undefined;
+  DevotionCalendar: undefined;
 };

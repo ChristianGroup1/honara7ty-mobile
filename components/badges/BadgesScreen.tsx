@@ -1,7 +1,8 @@
 /**
  * BadgesScreen
  * Shows consistency badges earned by the user.
- * Reads from Supabase `reading_log` table to compute streaks.
+ * Reads from Supabase `devotion_log` table to compute streaks.
+ * Only days answered with `completed = true` count toward the streak.
  * Awards weekly (7 days), monthly (30 days), and yearly (365 days) badges.
  */
 
@@ -49,9 +50,10 @@ const BadgesScreen = ({ navigation }: any) => {
         return;
       }
       const { data } = await supabase
-        .from('reading_log')
+        .from('devotion_log')
         .select('date')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('completed', true);
       const dates = (data ?? []).map((r: any) => r.date as string);
       const newStreak = computeStreak(dates);
       setStreak(newStreak);

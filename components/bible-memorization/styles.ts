@@ -3,6 +3,7 @@ import { GOLD, NAVY } from './utils';
 
 export const memorizationStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F4F8' },
+  flex: { flex: 1 },
   header: {
     backgroundColor: NAVY,
     flexDirection: 'row',

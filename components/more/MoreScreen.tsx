@@ -7,20 +7,16 @@ import {
   ScrollView,
   StatusBar,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
 
 const ITEMS = [
-  {
-    key: 'BibleReader',
-    icon: 'book-open-variant',
-    title: 'قراءة الكتاب المقدس',
-    subtitle: 'تصفح أسفار الكتاب المقدس',
-    color: '#9A6A1A',
-  },
   {
     key: 'BibleMemorization',
     icon: 'brain',
@@ -36,11 +32,11 @@ const ITEMS = [
     color: GOLD,
   },
   {
-    key: 'Testimonies',
-    icon: 'share-variant-outline',
-    title: 'الشهادات',
-    subtitle: 'شارك ما صنعه الله',
-    color: '#3A4A9A',
+    key: 'DevotionCalendar',
+    icon: 'calendar-check-outline',
+    title: 'تقويم الخلوة',
+    subtitle: 'راجع الأيام التي التزمت فيها',
+    color: '#2E8B57',
   },
 ];
 
@@ -55,7 +51,10 @@ const MoreScreen = ({ navigation }: any) => {
         <Text style={styles.headerTitle}>المزيد</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {ITEMS.map(item => (
           <TouchableOpacity
             key={item.key}
@@ -63,13 +62,26 @@ const MoreScreen = ({ navigation }: any) => {
             activeOpacity={0.8}
             onPress={() => navigation.navigate(item.key)}
           >
-            <MaterialCommunityIcons name="chevron-right" size={22} color="#CCC" />
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={22}
+              color="#CCC"
+            />
             <View style={styles.rowBody}>
               <Text style={styles.rowTitle}>{item.title}</Text>
               <Text style={styles.rowSub}>{item.subtitle}</Text>
             </View>
-            <View style={[styles.iconCircle, { backgroundColor: item.color + '22' }]}>
-              <MaterialCommunityIcons name={item.icon} size={26} color={item.color} />
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: item.color + '22' },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={item.icon}
+                size={26}
+                color={item.color}
+              />
             </View>
           </TouchableOpacity>
         ))}
@@ -103,7 +115,12 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   rowBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-end' },
-  rowTitle: { fontSize: 16, fontWeight: 'bold', color: NAVY, textAlign: 'left' },
+  rowTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: NAVY,
+    textAlign: 'left',
+  },
   rowSub: { fontSize: 12, color: '#999', marginTop: 4, textAlign: 'left' },
   iconCircle: {
     width: 50,

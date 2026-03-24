@@ -22,7 +22,6 @@ jest.mock('../lib/supbase', () => ({
 
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
-import BibleReaderScreen from '../components/bible-reader/BibleReaderScreen';
 import { BIBLE_BOOKS } from '../components/data/bibleMetadata';
 
 const navigation = {
@@ -31,12 +30,6 @@ const navigation = {
 
 test('bible reader opens a local chapter and renders its verses', async () => {
   let renderer: ReactTestRenderer.ReactTestRenderer;
-
-  await ReactTestRenderer.act(async () => {
-    renderer = ReactTestRenderer.create(
-      <BibleReaderScreen navigation={navigation} />,
-    );
-  });
 
   const bookButton = renderer!.root.findByProps({ testID: 'book-1' });
   await ReactTestRenderer.act(async () => {

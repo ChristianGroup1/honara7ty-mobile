@@ -9,11 +9,10 @@ export { default as OnboardingScreen } from '../components/onboarding/Onboarding
 export { default as PrayerNotesScreen } from '../components/prayer-notes/PrayerNotesScreen';
 export { default as SpiritualReflectionScreen } from '../components/spiritual-reflection/SpiritualReflectionScreen';
 export { default as DailyNotificationsScreen } from '../components/daily-notifications/DailyNotificationsScreen';
-export { default as BibleReaderScreen } from '../components/bible-reader/BibleReaderScreen';
 export { default as BibleMemorizationScreen } from '../components/bible-memorization/BibleMemorizationScreen';
 export { default as BadgesScreen } from '../components/badges/BadgesScreen';
-export { default as TestimoniesScreen } from '../components/testimonies/TestimoniesScreen';
 export { default as MoreScreen } from '../components/more/MoreScreen';
 export { default as ProfileScreen } from '../components/profile/ProfileScreen';
 export { default as DevotionGuideScreen } from '../components/devotion/DevotionGuideScreen';
 export { default as DevotionDetailScreen } from '../components/devotion/DevotionDetailScreen';
+export { default as DevotionCalendarScreen } from '../components/devotion-calendar/DevotionCalendarScreen';
