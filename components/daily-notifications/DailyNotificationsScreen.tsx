@@ -54,7 +54,7 @@ const TIPS = [
 const DailyNotificationsScreen = ({ navigation, route }: any) => {
   const insets = useSafeAreaInsets();
   /** When opened as a bottom tab there is no stack to go back to. */
-  const isTab = route?.name === 'الإعدادات';
+  const isTab = route?.name === 'DailyNotifications';
   const [devotionTime, setDevotionTime] = useState<Date>(() => {
     const d = new Date();
     d.setHours(7, 0, 0, 0);

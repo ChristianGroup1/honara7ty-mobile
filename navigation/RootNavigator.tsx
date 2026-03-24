@@ -9,14 +9,6 @@ import {
   ForgotPasswordUi,
   ResetPasswordUi,
   OnboardingScreen,
-  PrayerNotesScreen,
-  SpiritualReflectionScreen,
-  DailyNotificationsScreen,
-  BibleMemorizationScreen,
-  BadgesScreen,
-  DevotionGuideScreen,
-  DevotionDetailScreen,
-  DevotionCalendarScreen,
 } from '../screens';
 import SignupStep1 from '../components/signup/SignupScreen';
 import MainTabNavigator from './MainTabNavigator';
@@ -93,48 +85,6 @@ const RootNavigator = ({
         <Stack.Screen
           name="Onboarding"
           component={OnboardingScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="PrayerNotes"
-          component={PrayerNotesScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="SpiritualReflection"
-          component={SpiritualReflectionScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="DailyNotifications"
-          component={DailyNotificationsScreen}
-          options={{ headerShown: false }}
-        />
-
-        <Stack.Screen
-          name="BibleMemorization"
-          component={BibleMemorizationScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="Badges"
-          component={BadgesScreen}
-          options={{ headerShown: false }}
-        />
-
-        <Stack.Screen
-          name="DevotionGuide"
-          component={DevotionGuideScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="DevotionDetail"
-          component={DevotionDetailScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="DevotionCalendar"
-          component={DevotionCalendarScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

@@ -307,7 +307,15 @@ const ProfileScreen = ({ navigation }: any) => {
             try {
               await supabase.auth.signOut();
               await GoogleSignin.signOut();
-              navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+              const parentNavigation = navigation.getParent?.();
+              if (parentNavigation) {
+                parentNavigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Welcome' }],
+                });
+              } else {
+                navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+              }
             } catch (err: any) {
               showAlert('خطأ', err.message, undefined, 'error');
             }

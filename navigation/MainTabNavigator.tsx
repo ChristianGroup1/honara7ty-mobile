@@ -7,6 +7,13 @@ import HomeScreen from '../components/home/HomeScreen';
 import ProfileScreen from '../components/profile/ProfileScreen';
 import DailyNotificationsScreen from '../components/daily-notifications/DailyNotificationsScreen';
 import MoreScreen from '../components/more/MoreScreen';
+import PrayerNotesScreen from '../components/prayer-notes/PrayerNotesScreen';
+import SpiritualReflectionScreen from '../components/spiritual-reflection/SpiritualReflectionScreen';
+import BibleMemorizationScreen from '../components/bible-memorization/BibleMemorizationScreen';
+import BadgesScreen from '../components/badges/BadgesScreen';
+import DevotionGuideScreen from '../components/devotion/DevotionGuideScreen';
+import DevotionDetailScreen from '../components/devotion/DevotionDetailScreen';
+import DevotionCalendarScreen from '../components/devotion-calendar/DevotionCalendarScreen';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -19,10 +26,10 @@ function renderTabBarIcon(
   focused: boolean,
 ) {
   const icons: Record<string, string> = {
-    الرئيسية: focused ? 'home' : 'home-outline',
-    'الملف الشخصي': focused ? 'account' : 'account-outline',
-    الإعدادات: focused ? 'cog' : 'cog-outline',
-    المزيد: focused
+    Home: focused ? 'home' : 'home-outline',
+    Profile: focused ? 'account' : 'account-outline',
+    DailyNotifications: focused ? 'cog' : 'cog-outline',
+    More: focused
       ? 'dots-horizontal-circle'
       : 'dots-horizontal-circle-outline',
   };
@@ -36,12 +43,25 @@ function renderTabBarIcon(
   );
 }
 
+const TAB_LABELS: Record<string, string> = {
+  Home: 'الرئيسية',
+  Profile: 'الملف الشخصي',
+  DailyNotifications: 'الإعدادات',
+  More: 'المزيد',
+};
+
+const hiddenTabScreenOptions = {
+  tabBarButton: () => null,
+  tabBarItemStyle: { display: 'none' as const },
+};
+
 const MainTabNavigator = () => {
   const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
-      initialRouteName="الرئيسية"
+      initialRouteName="Home"
+      backBehavior="history"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: GOLD,
@@ -66,15 +86,54 @@ const MainTabNavigator = () => {
           shadowOpacity: 0.15,
           shadowRadius: 8,
         },
+        tabBarLabel: TAB_LABELS[route.name] ?? route.name,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginBottom: 2 },
         tabBarIcon: ({ color, focused }) =>
           renderTabBarIcon(route.name, color, focused),
       })}
     >
-      <Tab.Screen name="الرئيسية" component={HomeScreen} />
-      <Tab.Screen name="الملف الشخصي" component={ProfileScreen} />
-      <Tab.Screen name="الإعدادات" component={DailyNotificationsScreen} />
-      <Tab.Screen name="المزيد" component={MoreScreen} />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen
+        name="DailyNotifications"
+        component={DailyNotificationsScreen}
+      />
+      <Tab.Screen name="More" component={MoreScreen} />
+      <Tab.Screen
+        name="PrayerNotes"
+        component={PrayerNotesScreen}
+        options={hiddenTabScreenOptions}
+      />
+      <Tab.Screen
+        name="SpiritualReflection"
+        component={SpiritualReflectionScreen}
+        options={hiddenTabScreenOptions}
+      />
+      <Tab.Screen
+        name="BibleMemorization"
+        component={BibleMemorizationScreen}
+        options={hiddenTabScreenOptions}
+      />
+      <Tab.Screen
+        name="Badges"
+        component={BadgesScreen}
+        options={hiddenTabScreenOptions}
+      />
+      <Tab.Screen
+        name="DevotionGuide"
+        component={DevotionGuideScreen}
+        options={hiddenTabScreenOptions}
+      />
+      <Tab.Screen
+        name="DevotionDetail"
+        component={DevotionDetailScreen}
+        options={hiddenTabScreenOptions}
+      />
+      <Tab.Screen
+        name="DevotionCalendar"
+        component={DevotionCalendarScreen}
+        options={hiddenTabScreenOptions}
+      />
     </Tab.Navigator>
   );
 };
