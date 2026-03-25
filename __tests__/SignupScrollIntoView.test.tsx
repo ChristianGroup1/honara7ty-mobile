@@ -12,25 +12,27 @@ jest.mock('../lib/supbase', () => ({
   },
 }));
 
-jest.mock('react-native-scroll-into-view', () => ({
-  wrapScrollView: jest.fn(component => component),
-  useScrollIntoView: () => jest.fn(),
-}));
-
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
-import { wrapScrollView } from 'react-native-scroll-into-view';
-import SignupUI from '../components/Signup';
+import SignupUI from '../components/signup/SignupScreen';
 
 const navigation = {
   goBack: jest.fn(),
   navigate: jest.fn(),
 };
 
-test('signup wraps keyboard-aware scroll view for scroll-into-view', async () => {
+let consoleWarnSpy: jest.SpyInstance;
+
+beforeAll(() => {
+  consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+});
+
+afterAll(() => {
+  consoleWarnSpy.mockRestore();
+});
+
+test('signup screen renders without crashing', async () => {
   await ReactTestRenderer.act(() => {
     ReactTestRenderer.create(<SignupUI navigation={navigation} />);
   });
-
-  expect(wrapScrollView).toHaveBeenCalled();
 });

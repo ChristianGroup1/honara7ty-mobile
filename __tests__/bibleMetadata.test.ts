@@ -1,0 +1,37 @@
+import {
+  BIBLE_BOOKS,
+  NEW_TESTAMENT_BOOKS,
+  OLD_TESTAMENT_BOOKS,
+} from '../components/data/bibleMetadata';
+
+describe('bibleMetadata', () => {
+  it('builds the 66 canonical books from local json', () => {
+    expect(BIBLE_BOOKS).toHaveLength(66);
+    expect(OLD_TESTAMENT_BOOKS).toHaveLength(39);
+    expect(NEW_TESTAMENT_BOOKS).toHaveLength(27);
+  });
+
+  it('preserves expected ordering and ids', () => {
+    expect(BIBLE_BOOKS[0]).toMatchObject({
+      bookID: '1',
+      bookName: 'سفر التكوين',
+      testament: 'old',
+      localBookIndex: 0,
+    });
+    expect(BIBLE_BOOKS[39]).toMatchObject({
+      bookID: '50',
+      bookName: 'إنجيل متى',
+      testament: 'new',
+    });
+    expect(BIBLE_BOOKS[65]).toMatchObject({
+      bookID: '76',
+      bookName: 'سفر رؤيا يوحنا اللاهوتي',
+      testament: 'new',
+    });
+  });
+
+  it('exposes chapter data for local readers and memorization', () => {
+    expect(BIBLE_BOOKS[0].chapters).toBeGreaterThan(0);
+    expect(BIBLE_BOOKS[0].chaptersData[0].verses[0].text.length).toBeGreaterThan(0);
+  });
+});
