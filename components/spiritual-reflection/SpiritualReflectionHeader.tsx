@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { spiritualReflectionStyles as styles } from './styles';
+import { getStrings } from '../../localization';
 
 interface SpiritualReflectionHeaderProps {
   topInsetHeight: number;
@@ -14,6 +15,7 @@ const SpiritualReflectionHeader = ({
   onBack,
   onAdd,
 }: SpiritualReflectionHeaderProps) => {
+  const strings = getStrings().spiritualReflection;
   return (
     <>
       <View style={[styles.topInset, { height: topInsetHeight }]} />
@@ -23,7 +25,7 @@ const SpiritualReflectionHeader = ({
         </TouchableOpacity>
 
         <Text style={styles.headerTitle} numberOfLines={1}>
-          التأمل الروحي
+          {strings.title}
         </Text>
 
         <TouchableOpacity onPress={onAdd} style={styles.addHeaderBtn} activeOpacity={0.8}>

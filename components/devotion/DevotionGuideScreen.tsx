@@ -14,6 +14,7 @@ import {
 } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ARTICLES, CARD_ACCENTS } from './devotionData';
+import { getStrings } from '../../localization';
 
 const NAVY = '#0A1124';
 const BG = '#F2F4F8';
@@ -21,6 +22,7 @@ const BG = '#F2F4F8';
 type Props = { navigation: any };
 
 const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
+  const strings = getStrings().devotion;
   const insets = useSafeAreaInsets();
 
   return (
@@ -38,7 +40,7 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>شرح الخلوة</Text>
+        <Text style={styles.headerTitle}>{strings.guide.title}</Text>
         {/* <TouchableOpacity
                 onPress={handleShareAll}
                 style={styles.shareHeaderBtn}

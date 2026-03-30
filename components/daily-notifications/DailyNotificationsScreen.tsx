@@ -20,6 +20,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import supabase from '../../lib/supbase';
 import { scheduleDailyDevotionReminder } from '../../lib/notifications';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
+import { getStrings } from '../../localization';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -28,31 +29,16 @@ const SKY = '#EEF3F8';
 const SLATE = '#5C6676';
 const INK = '#1F2A3A';
 
-const TIPS = [
-  {
-    icon: 'weather-sunset-up',
-    text: 'اختر وقتاً هادئاً في الصباح الباكر قبل بداية اليوم.',
-  },
-  {
-    icon: 'map-marker-outline',
-    text: 'اختر مكاناً هادئاً بعيداً عن الضوضاء والمشتتات.',
-  },
-  {
-    icon: 'book-open-outline',
-    text: 'ابدأ بقراءة الكتاب المقدس ثم الصلاة والتأمل.',
-  },
-  {
-    icon: 'cellphone-off',
-    text: 'أبعد هاتفك أثناء وقت التعبد وركّز على الحضور الإلهي.',
-  },
-  {
-    icon: 'timer-outline',
-    text: 'حتى 15 دقيقة يومياً كافية للبدء — الاستمرارية هي المفتاح.',
-  },
-];
-
 const DailyNotificationsScreen = ({ navigation, route }: any) => {
+  const strings = getStrings().dailyNotifications;
   const insets = useSafeAreaInsets();
+  const tips = [
+    { icon: 'weather-sunset-up', text: strings.tips[0] },
+    { icon: 'map-marker-outline', text: strings.tips[1] },
+    { icon: 'book-open-outline', text: strings.tips[2] },
+    { icon: 'cellphone-off', text: strings.tips[3] },
+    { icon: 'timer-outline', text: strings.tips[4] },
+  ];
   /** When opened as a bottom tab there is no stack to go back to. */
   const isTab = route?.name === 'DailyNotifications';
   const [devotionTime, setDevotionTime] = useState<Date>(() => {
@@ -140,7 +126,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
       .upsert({ id: userId, devotion_time: timeString }, { onConflict: 'id' });
 
     if (error) {
-      showAlert('خطأ في الحفظ', error.message);
+      showAlert(strings.saveErrorTitle, error.message);
     } else {
       // Schedule the daily reminder notification
       try {
@@ -151,8 +137,8 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
 
       setSaved(true);
       showAlert(
-        'تم الحفظ ✅',
-        `تم حفظ وقت تعبّدك: ${timeString}\nهنبعتلك تذكير كل يوم عشان ماتفوتش وقتك مع الله 🙏`,
+        strings.saveSuccessTitle,
+        strings.saveSuccessMessage(timeString),
         undefined,
         'success',
       );
@@ -167,9 +153,9 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
   });
   const topInsetStyle = { height: insets.top };
   const saveButtonStyle = saving ? styles.saveBtnDisabled : null;
-  const statusLabel = saved ? 'تم الحفظ' : 'جاهز للحفظ';
+  const statusLabel = saved ? strings.saved : strings.readyToSave;
   const timePeriodLabel =
-    devotionTime.getHours() < 12 ? 'بداية اليوم' : 'موعد مسائي';
+    devotionTime.getHours() < 12 ? strings.morning : strings.evening;
 
   if (loading) {
     return (
@@ -194,7 +180,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           </TouchableOpacity>
         )}
         {isTab && <View style={styles.headerSpacer} />}
-        <Text style={styles.headerTitle}>وقت التعبد اليومي</Text>
+        <Text style={styles.headerTitle}>{strings.title}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -211,7 +197,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
                 size={16}
                 color={NAVY}
               />
-              <Text style={styles.heroBadgeText}>تذكير يومي</Text>
+              <Text style={styles.heroBadgeText}>{strings.badge}</Text>
             </View>
             <View style={styles.heroIconWrap}>
               <MaterialCommunityIcons
@@ -222,13 +208,8 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
             </View>
           </View>
 
-          <Text style={styles.heroTitle}>
-            خصص لحظة ثابتة كل يوم لوقت هادئ مع الله
-          </Text>
-          <Text style={styles.heroSubtitle}>
-            اختر التوقيت الأنسب لك، وسنذكّرك يوميًا حتى يبقى وقت التعبد جزءًا
-            ثابتًا من يومك.
-          </Text>
+          <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
+          <Text style={styles.heroSubtitle}>{strings.heroSubtitle}</Text>
 
           <TouchableOpacity
             style={styles.timePanel}
@@ -242,7 +223,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
               />
             </View>
             <View style={styles.timePanelBody}>
-              <Text style={styles.timeLabel}>الوقت المختار</Text>
+              <Text style={styles.timeLabel}>{strings.selectedTime}</Text>
               <Text style={styles.timeText}>{timeDisplay}</Text>
             </View>
           </TouchableOpacity>
@@ -251,9 +232,9 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
         {Platform.OS === 'ios' && (
           <View style={styles.pickerCard}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>تعديل الموعد</Text>
+              <Text style={styles.sectionTitle}>{strings.editTime}</Text>
               <Text style={styles.sectionSubtitle}>
-                حرّك المؤشر لاختيار الوقت المناسب
+                {strings.editTimeSubtitle}
               </Text>
             </View>
             <DateTimePicker
@@ -290,18 +271,18 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
                 size={20}
                 color="#FFF"
               />
-              <Text style={styles.saveBtnText}>حفظ الوقت</Text>
+              <Text style={styles.saveBtnText}>{strings.saveTime}</Text>
             </>
           )}
         </TouchableOpacity>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>نصائح للتعبد الفعّال</Text>
+          <Text style={styles.sectionTitle}>{strings.tipsTitle}</Text>
           <Text style={styles.sectionSubtitle}>
-            خطوات صغيرة تساعدك على الاستمرار كل يوم
+            {strings.tipsSubtitle}
           </Text>
         </View>
-        {TIPS.map((tip, i) => (
+        {tips.map((tip, i) => (
           <View key={i} style={styles.tipCard}>
             <View style={styles.tipBody}>
               <Text style={styles.tipIndex}>0{i + 1}</Text>

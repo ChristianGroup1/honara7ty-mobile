@@ -1,0 +1,19 @@
+export const devotionCalendarStrings = {
+  weekDays: ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'],
+  errorTitle: 'خطأ',
+  title: 'تقويم الخلوة',
+  badge: 'ثبات يومي',
+  heroLabel: 'متابعة الخلوة',
+  heroTitle: 'كل يوم "نعم" يترك أثرًا هنا',
+  heroText:
+    'التقويم يوضح أيام التزامك بالخلوة، ويساعدك ترى الاستمرارية بشكل بصري وواضح.',
+  heroHint: 'الأيام الذهبية تعني أنك أكملت الخلوة في هذا اليوم',
+  currentStreak: 'الثبات الحالي',
+  thisMonth: 'هذا الشهر',
+  total: 'الإجمالي',
+  sectionTitle: 'تقويم الالتزام',
+  sectionCaption: 'تنقّل بين الشهور وشاهد الأيام المكتملة',
+  completed: 'مكتمل',
+  today: 'اليوم',
+  remainingDays: 'باقي الأيام',
+} as const;

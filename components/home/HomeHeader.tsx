@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { homeStyles as styles } from './styles';
+import { getStrings } from '../../localization';
 
 interface HomeHeaderProps {
   topInsetHeight: number;
@@ -14,6 +15,8 @@ const HomeHeader = ({
   initials,
   onLogout,
 }: HomeHeaderProps) => {
+  const strings = getStrings().home;
+
   return (
     <>
       <View style={[styles.topInset, { height: topInsetHeight }]} />
@@ -27,8 +30,8 @@ const HomeHeader = ({
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
-          <Text style={styles.greeting}>مرحباً يا بطل 👋</Text>
-          <Text style={styles.subGreeting}>جاهز لوقتك مع الله النهاردة؟</Text>
+          <Text style={styles.greeting}>{strings.headerGreeting}</Text>
+          <Text style={styles.subGreeting}>{strings.headerSubGreeting}</Text>
         </View>
 
         <View style={styles.avatar}>

@@ -14,6 +14,7 @@ import BadgesScreen from '../components/badges/BadgesScreen';
 import DevotionGuideScreen from '../components/devotion/DevotionGuideScreen';
 import DevotionDetailScreen from '../components/devotion/DevotionDetailScreen';
 import DevotionCalendarScreen from '../components/devotion-calendar/DevotionCalendarScreen';
+import { getStrings } from '../localization';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -43,13 +44,6 @@ function renderTabBarIcon(
   );
 }
 
-const TAB_LABELS: Record<string, string> = {
-  Home: 'الرئيسية',
-  Profile: 'الملف الشخصي',
-  DailyNotifications: 'الإعدادات',
-  More: 'المزيد',
-};
-
 const hiddenTabScreenOptions = {
   tabBarButton: () => null,
   tabBarItemStyle: { display: 'none' as const },
@@ -57,6 +51,13 @@ const hiddenTabScreenOptions = {
 
 const MainTabNavigator = () => {
   const insets = useSafeAreaInsets();
+  const strings = getStrings().navigation;
+  const tabLabels: Record<string, string> = {
+    Home: strings.tabs.home,
+    Profile: strings.tabs.profile,
+    DailyNotifications: strings.tabs.settings,
+    More: strings.tabs.more,
+  };
 
   return (
     <Tab.Navigator
@@ -86,7 +87,7 @@ const MainTabNavigator = () => {
           shadowOpacity: 0.15,
           shadowRadius: 8,
         },
-        tabBarLabel: TAB_LABELS[route.name] ?? route.name,
+        tabBarLabel: tabLabels[route.name] ?? route.name,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginBottom: 2 },
         tabBarIcon: ({ color, focused }) =>
           renderTabBarIcon(route.name, color, focused),

@@ -22,8 +22,10 @@ import HomeHeader from './HomeHeader';
 import QuickActionsGrid from './QuickActionsGrid';
 import { homeStyles as styles } from './styles';
 import { getDisplayName, getInitials, getTodayDate } from './utils';
+import { getStrings } from '../../localization';
 
 const HomeScreen = ({ route, navigation }: any) => {
+  const strings = getStrings().home;
   const insets = useSafeAreaInsets();
   const userFromParams = route?.params?.user;
   const [user, setUser] = useState<any>(userFromParams || null);
@@ -100,18 +102,18 @@ const HomeScreen = ({ route, navigation }: any) => {
     if (!error) {
       setDevotionAnswer(completed);
       if (completed) {
-        showAlert('أحسنت! استمر مع الله 🙏', YES_MESSAGE, undefined, 'success');
+        showAlert(strings.correctStreakTitle, YES_MESSAGE, undefined, 'success');
       } else {
         showAlert(
-          'لا بأس، الله ينتظرك 💙',
+          strings.startNowTitle,
           NO_MESSAGE,
           [
             {
-              text: 'ابدأ خلوتي الآن',
+              text: strings.startNowAction,
               style: 'default',
               onPress: () => navigation.navigate('SpiritualReflection'),
             },
-            { text: 'لاحقاً', style: 'cancel' },
+            { text: strings.later, style: 'cancel' },
           ],
           'info',
         );
@@ -122,12 +124,12 @@ const HomeScreen = ({ route, navigation }: any) => {
   /* ── Logout ── */
   const handleLogout = () => {
     showAlert(
-      'تسجيل الخروج',
-      'هل أنت متأكد أنك تريد تسجيل الخروج؟',
+      strings.logoutTitle,
+      strings.logoutMessage,
       [
-        { text: 'إلغاء', style: 'cancel' },
+        { text: strings.cancel, style: 'cancel' },
         {
-          text: 'خروج',
+          text: strings.logout,
           style: 'destructive',
           onPress: async () => {
             try {
@@ -156,15 +158,15 @@ const HomeScreen = ({ route, navigation }: any) => {
   const handleAnswerNow = () => {
     showAlert(
       DAILY_QUESTION,
-      'قضيت وقتاً مع الله اليوم؟',
+      strings.answerPrompt,
       [
         {
-          text: 'نعم ✓',
+          text: strings.yes,
           style: 'default',
           onPress: () => handleDevotionAnswer(true),
         },
         {
-          text: 'لا ✗',
+          text: strings.no,
           style: 'destructive',
           onPress: () => handleDevotionAnswer(false),
         },
@@ -210,14 +212,14 @@ const HomeScreen = ({ route, navigation }: any) => {
           onAnswerNow={handleAnswerNow}
         />
         <FeatureCard
-          title="طلبات الصلاة"
-          subtitle="شارك صلواتك وطلباتك"
+          title={strings.featurePrayerNotesTitle}
+          subtitle={strings.featurePrayerNotesSubtitle}
           icon="hands-pray"
           onPress={() => navigation.navigate('PrayerNotes')}
         />
         <FeatureCard
-          title="اليوميات"
-          subtitle="سجل خواطرك اليومية"
+          title={strings.featureReflectionTitle}
+          subtitle={strings.featureReflectionSubtitle}
           icon="notebook-outline"
           onPress={() => navigation.navigate('SpiritualReflection')}
         />

@@ -32,10 +32,12 @@ import {
 import { badgesStyles as styles } from './styles';
 import StreakCard from './StreakCard';
 import { computeStreak } from './utils';
+import { getStrings } from '../../localization';
 
 declare const navigator: any;
 
 const BadgesScreen = ({ navigation }: any) => {
+  const strings = getStrings().badges;
   const insets = useSafeAreaInsets();
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -71,27 +73,33 @@ const BadgesScreen = ({ navigation }: any) => {
     try {
       const webLink = `${WEB_URL}/badges/${badge.key}`;
 
-      const message = `${badge.shareText}\n\n📲 حمّل التطبيق: ${webLink}`;
+      const message = `${badge.shareText}\n\n${strings.shareLinkPrefix}${webLink}`;
 
       if (Platform.OS === 'web') {
         if (navigator.share) {
           await navigator.share({
-            title: 'هنا راحتي - الإنجازات',
+            title: strings.screen.shareTitle,
             text: message,
             url: webLink,
           });
         } else {
-          Alert.alert('مشاركة', 'انسخ النص التالي:\n\n' + message);
+          Alert.alert(
+            strings.screen.sharePromptTitle,
+            strings.screen.copyMessagePrefix + message,
+          );
         }
       } else {
         await Share.share({
           message,
-          title: 'هنا راحتي - الإنجازات',
+          title: strings.screen.shareTitle,
           url: webLink,
         });
       }
     } catch (error: any) {
-      Alert.alert('خطأ', 'فشلت المشاركة: ' + error.message);
+      Alert.alert(
+        strings.screen.shareErrorTitle,
+        strings.screen.shareErrorMessage(error.message),
+      );
     }
   };
 
@@ -131,9 +139,11 @@ const BadgesScreen = ({ navigation }: any) => {
         <View style={styles.motivationalCard}>
           <MaterialCommunityIcons name="lightbulb" size={28} color={GOLD} />
           <View style={styles.motivationalBody}>
-            <Text style={styles.motivationalTitle}>استمر في السير</Text>
+            <Text style={styles.motivationalTitle}>
+              {strings.screen.motivationalTitle}
+            </Text>
             <Text style={styles.motivationalText}>
-              كل يوم خطوة نحو الثبات والقرب من الله. شارك إنجازاتك مع أصدقائك!
+              {strings.screen.motivationalText}
             </Text>
           </View>
         </View>

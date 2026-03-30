@@ -15,10 +15,12 @@ import MemorizationHeader from './MemorizationHeader';
 import { memorizationStyles as styles } from './styles';
 import { MemorizationStackParamList, WordSlot } from './types';
 import { buildSlots, normalizeArabicAnswer } from './utils';
+import { getStrings } from '../../localization';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Recite'>;
 
 const ReciteScreen = ({ navigation, route }: Props) => {
+  const strings = getStrings().bibleMemorization.recite;
   const selection = route.params;
   const scrollRef = useRef<ScrollView | null>(null);
   const inputRefs = useRef<Array<TextInput | null>>([]);
@@ -70,7 +72,7 @@ const ReciteScreen = ({ navigation, route }: Props) => {
   return (
     <View style={styles.container}>
       <MemorizationHeader
-        title="التسميع"
+        title={strings.title}
         onBack={() => navigation.goBack()}
       />
 
@@ -89,9 +91,7 @@ const ReciteScreen = ({ navigation, route }: Props) => {
             <Text style={styles.refText}>
               {selection.bookLabel} - {selection.chapterLabel}
             </Text>
-            <Text style={styles.instructionText}>
-              أكمل الكلمات المحجوبة في النص التالي:
-            </Text>
+            <Text style={styles.instructionText}>{strings.instruction}</Text>
           </View>
 
           <View style={styles.statusPillsRow}>
@@ -99,23 +99,23 @@ const ReciteScreen = ({ navigation, route }: Props) => {
               <MaterialCommunityIcons name="circle-slice-3" size={16} color="#0A1124" />
               <Text style={styles.statusPillText}>
                 {selection.difficulty === 'easy'
-                  ? 'سهل'
+                  ? getStrings().bibleMemorization.difficultyLevels.easy
                   : selection.difficulty === 'medium'
-                    ? 'متوسط'
-                    : 'صعب'}
+                    ? getStrings().bibleMemorization.difficultyLevels.medium
+                    : getStrings().bibleMemorization.difficultyLevels.hard}
               </Text>
             </View>
             <View style={styles.statusPill}>
               <MaterialCommunityIcons name="form-textbox" size={16} color="#0A1124" />
               <Text style={styles.statusPillText}>
-                {slots.filter(slot => slot.hidden).length} فراغ
+                {strings.blanks(slots.filter(slot => slot.hidden).length)}
               </Text>
             </View>
           </View>
 
           <View style={styles.verseBox}>
             <View style={styles.verseBoxHeader}>
-              <Text style={styles.verseBoxTitle}>نص التسميع</Text>
+              <Text style={styles.verseBoxTitle}>{strings.verseTextTitle}</Text>
               <MaterialCommunityIcons name="feather" size={18} color="#C9A84C" />
             </View>
             <View style={styles.wordsWrap}>
@@ -136,7 +136,7 @@ const ReciteScreen = ({ navigation, route }: Props) => {
                         ),
                       )
                     }
-                    placeholder="___"
+                    placeholder={strings.blankPlaceholder}
                     placeholderTextColor="#AAA"
                     textAlign="center"
                     textAlignVertical="center"
@@ -153,14 +153,16 @@ const ReciteScreen = ({ navigation, route }: Props) => {
 
           <TouchableOpacity style={styles.primaryBtn} onPress={checkAnswers}>
             <MaterialCommunityIcons name="check-bold" size={20} color="#FFF" />
-            <Text style={styles.primaryBtnText}>عرض النتيجة</Text>
+            <Text style={styles.primaryBtnText}>{strings.showResult}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.ghostBtn}
             onPress={() => navigation.navigate('Pick')}
           >
-            <Text style={styles.ghostBtnText}>اختر مرجعًا آخر</Text>
+            <Text style={styles.ghostBtnText}>
+              {strings.chooseAnotherReference}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  SafeAreaView,
-  StatusBar,
-  Platform,
-  TouchableOpacity,
-  useWindowDimensions,
-} from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import {
   Provider as PaperProvider,
   ActivityIndicator,
@@ -20,11 +10,14 @@ import { localizeAuthError, EMAIL_REGEX } from '../../lib/authErrors';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
 import { authPaperTheme, AUTH_GOLD, AUTH_NAVY } from '../auth/theme';
+import AuthScreenShell from '../auth/AuthScreenShell';
+import { authStrings } from '../auth/strings';
+import { NAVY } from '../bible-memorization/utils';
 
 type Props = { navigation: any };
 
 const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
-  const { height: windowHeight } = useWindowDimensions();
+  const strings = authStrings;
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -49,11 +42,11 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
   const handleSend = async () => {
     const trimmed = email.trim();
     if (!trimmed) {
-      setEmailError('يرجى إدخال البريد الإلكتروني');
+      setEmailError(strings.forgotPassword.emailRequired);
       return;
     }
     if (!EMAIL_REGEX.test(trimmed)) {
-      setEmailError('يرجى إدخال بريد إلكتروني صحيح');
+      setEmailError(strings.forgotPassword.emailInvalid);
       return;
     }
     setEmailError('');
@@ -64,12 +57,12 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
         redirectTo: 'honara7ty://reset-password',
       });
       if (error) {
-        showAlert('خطأ', localizeAuthError(error.message));
+        showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
       } else {
         setSent(true);
       }
     } catch (err: any) {
-      showAlert('خطأ', localizeAuthError(err.message));
+      showAlert(strings.common.genericErrorTitle, localizeAuthError(err.message));
     } finally {
       setLoading(false);
     }
@@ -77,250 +70,178 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
 
   return (
     <PaperProvider theme={authPaperTheme}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          translucent={false}
-          backgroundColor={AUTH_NAVY}
-        />
-        <View style={[styles.darkHeaderLayer, { height: windowHeight * 0.42 }]} />
-
-        {/* ── Header ── */}
-        <View style={styles.headerContent}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => navigation.goBack()}
-          >
-            <View style={styles.backBtnCircle}>
+      <AuthScreenShell
+        title={strings.forgotPassword.title}
+        onBack={() => navigation.goBack()}
+        formPointerEvents="box-none"
+      >
+        {sent ? (
+          /* ── Success State ── */
+          <View style={styles.successBox}>
+            <View style={styles.successIconCircle}>
               <MaterialCommunityIcons
-                name="chevron-left"
-                size={28}
-                color="white"
+                name="email-check-outline"
+                size={52}
+                color={'#fff'}
               />
             </View>
-          </TouchableOpacity>
 
-          <View style={styles.iconCircleHeader}>
-            <MaterialCommunityIcons
-              name="lock-reset"
-              size={38}
-              color={AUTH_GOLD}
-            />
+            <Text style={styles.successTitle}>{strings.forgotPassword.resetSentTitle}</Text>
+            <Text style={styles.successMessage}>
+              {strings.forgotPassword.resetSentMessage}
+            </Text>
+            <View style={styles.emailBadge}>
+              <MaterialCommunityIcons
+                name="email-outline"
+                size={16}
+                color={AUTH_NAVY}
+                style={styles.emailBadgeIcon}
+              />
+              <Text style={styles.emailBadgeText}>{email.trim()}</Text>
+            </View>
+
+            <Text style={styles.successHint}>{strings.forgotPassword.resetHint}</Text>
+
+            {/* <TouchableOpacity
+              style={styles.resendBtn}
+              activeOpacity={0.7}
+              onPress={() => {
+                setSent(false);
+                setEmail('');
+              }}
+            >
+              <Text style={styles.resendText}>إرسال مرة أخرى</Text>
+            </TouchableOpacity> */}
+
+            <TouchableOpacity
+              testID="login-submit"
+              style={styles.submitBtn}
+              onPress={() => navigation.navigate('Login')}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.submitText}>{strings.forgotPassword.footerAction}</Text>
+            </TouchableOpacity>
           </View>
-
-          <Text style={styles.title}>نسيت كلمة المرور؟</Text>
-          <View style={styles.titleAccent} />
-          <Text style={styles.headerSubtitle}>
-            {sent
-              ? 'تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني.'
-              : 'أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.'}
-          </Text>
-        </View>
-
-        <KeyboardAwareScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-          bounces={false}
-          showsVerticalScrollIndicator={false}
-          overScrollMode="never"
-          decelerationRate="normal"
-          enableOnAndroid={true}
-          extraScrollHeight={80}
-          extraHeight={80}
-          keyboardOpeningTime={0}
-        >
-          <View style={styles.formContainer} pointerEvents="box-none">
-            {sent ? (
-              /* ── Success State ── */
-              <View style={styles.successBox}>
-                <View style={styles.successIconCircle}>
-                  <MaterialCommunityIcons
-                    name="email-check-outline"
-                    size={52}
-                    color={AUTH_GOLD}
-                  />
-                </View>
-
-                <Text style={styles.successTitle}>تحقق من بريدك!</Text>
-                <Text style={styles.successMessage}>
-                  لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى:
-                </Text>
-                <View style={styles.emailBadge}>
-                  <MaterialCommunityIcons
-                    name="email-outline"
-                    size={16}
-                    color={AUTH_NAVY}
-                    style={styles.emailBadgeIcon}
-                  />
-                  <Text style={styles.emailBadgeText}>{email.trim()}</Text>
-                </View>
-
-                <Text style={styles.successHint}>
-                  إذا لم تجد الرسالة، تحقق من مجلد الرسائل غير المرغوب فيها.
-                </Text>
-
-                <TouchableOpacity
-                  style={styles.resendBtn}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    setSent(false);
-                    setEmail('');
-                  }}
-                >
-                  <Text style={styles.resendText}>إرسال مرة أخرى</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.submitBtn}
-                  activeOpacity={0.8}
-                  onPress={() => navigation.navigate('Login')}
-                >
-                  <View style={styles.submitRow}>
-                    <MaterialCommunityIcons
-                      name="chevron-left"
-                      size={22}
-                      color="#FFF"
-                      style={styles.submitIcon}
-                    />
-                    <Text style={styles.submitText}>العودة لتسجيل الدخول</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              /* ── Email Input State ── */
-              <>
-                <CustomInput
-                  fieldLabel="البريد الإلكتروني"
-                  icon="email-outline"
-                  placeholder="أدخل بريدك الإلكتروني"
-                  value={email}
-                  onChangeText={t => {
-                    setEmail(t);
-                    if (emailError) setEmailError('');
-                  }}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  error={emailError}
+        ) : (
+          /* ── Email Input State ── */
+          <View style={{ height: '100%' }}>
+            <View style={styles.infoCard}>
+              <View style={styles.infoIconWrap}>
+                <MaterialCommunityIcons
+                  name="email-fast-outline"
+                  size={20}
+                  color="#FFFFFF"
                 />
+              </View>
+              <Text style={styles.infoTitle}>{strings.forgotPassword.infoTitle}</Text>
+              <Text style={styles.infoDescription}>
+                {strings.forgotPassword.infoDescription}
+              </Text>
+            </View>
+            <CustomInput
+              fieldLabel={strings.common.email}
+              icon="email-outline"
+              placeholder={strings.common.emailPlaceholder}
+              value={email}
+              onChangeText={t => {
+                setEmail(t);
+                if (emailError) setEmailError('');
+              }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              error={emailError}
+            />
 
-                <TouchableOpacity
-                  style={styles.submitBtn}
-                  activeOpacity={0.8}
-                  onPress={handleSend}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#FFF" />
-                  ) : (
-                    <View style={styles.submitRow}>
-                      <MaterialCommunityIcons
-                        name="send"
-                        size={20}
-                        color="#FFF"
-                        style={styles.submitIcon}
-                      />
-                      <Text style={styles.submitText}>
-                        إرسال رابط الاستعادة
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-
-                <View style={styles.footerContainer}>
-                  <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Text style={styles.footerLink}>تسجيل الدخول</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.footerText}>تذكرت كلمة المرور؟ </Text>
+            <TouchableOpacity
+              style={styles.submitBtn}
+              activeOpacity={0.8}
+              onPress={handleSend}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <View style={styles.submitRow}>
+                  <MaterialCommunityIcons
+                    name="send"
+                    size={20}
+                    color="#FFF"
+                    style={styles.submitIcon}
+                  />
+                  <Text style={styles.submitText}>
+                    {strings.forgotPassword.sendRecoveryLink}
+                  </Text>
                 </View>
-              </>
-            )}
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.footerContainer}>
+              <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Text style={styles.footerLink}>{strings.forgotPassword.footerAction}</Text>
+              </TouchableOpacity>
+              <Text style={styles.footerText}>{strings.forgotPassword.footerPrefix}</Text>
+            </View>
           </View>
-        </KeyboardAwareScrollView>
-      </SafeAreaView>
+        )}
+      </AuthScreenShell>
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F6FA' },
-  darkHeaderLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: AUTH_NAVY,
+  infoCard: {
+    backgroundColor: NAVY,
+    borderRadius: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: NAVY,
   },
-  headerContent: {
-    alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? 44 : 14,
-    paddingBottom: 24,
-  },
-  backBtn: { alignSelf: 'flex-start', marginLeft: 16, marginBottom: 12 },
-  backBtnCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconCircleHeader: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(201,168,76,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  title: {
-    color: '#FFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  titleAccent: {
+  infoIconWrap: {
     width: 40,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: AUTH_GOLD,
-    marginTop: 6,
+    height: 40,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: 2,
   },
-  headerSubtitle: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: 13,
-    marginTop: 10,
+  infoTitle: {
+    color: '#fff',
+    fontSize: 19,
+    fontWeight: '800',
     textAlign: 'center',
-    paddingHorizontal: 36,
-    lineHeight: 20,
+    marginBottom: 8,
   },
-  scrollContainer: { flexGrow: 1 },
-  formContainer: {
-    backgroundColor: '#F5F6FA',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 40,
+  infoDescription: {
+    color: '#fff',
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: 'center',
   },
   submitBtn: {
-    backgroundColor: AUTH_NAVY,
-    height: 56,
-    borderRadius: 14,
+    backgroundColor: '#0A1124',
+    height: 58,
+    width: '100%',
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: AUTH_NAVY,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    marginTop: 6,
+    shadowColor: '#0A1124',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 5,
   },
   submitRow: { flexDirection: 'row', alignItems: 'center' },
   submitIcon: { marginLeft: 8 },
   submitText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
   footerContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'center',
     marginTop: 24,
   },
@@ -331,17 +252,16 @@ const styles = StyleSheet.create({
   successBox: {
     alignItems: 'center',
     paddingTop: 10,
+    height: '100%',
   },
   successIconCircle: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(201,168,76,0.12)',
+    backgroundColor: AUTH_NAVY,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    borderWidth: 1.5,
-    borderColor: 'rgba(201,168,76,0.3)',
   },
   successTitle: {
     fontSize: 22,
@@ -357,10 +277,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emailBadge: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     backgroundColor: 'rgba(10,17,36,0.06)',
-    borderRadius: 20,
+    borderRadius: 24,
     paddingVertical: 8,
     paddingHorizontal: 16,
     marginBottom: 16,
@@ -369,6 +289,7 @@ const styles = StyleSheet.create({
   emailBadgeText: {
     fontSize: 14,
     fontWeight: '600',
+    paddingHorizontal: 4,
     color: AUTH_NAVY,
   },
   successHint: {

@@ -22,8 +22,10 @@ import PrayerNoteCard from './PrayerNoteCard';
 import { prayerNotesStyles as styles } from './styles';
 import { PrayerNote } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getStrings } from '../../localization';
 
 const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
+  const strings = getStrings().prayerNotes;
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [notes, setNotes] = useState<PrayerNote[]>([]);
@@ -130,7 +132,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         .from('prayer_notes')
         .update({ content: trimmed })
         .eq('id', editItem.id);
-      if (error) showAlert('خطأ', error.message);
+      if (error) showAlert(strings.errors.genericTitle, error.message);
       else
         setNotes(prev =>
           prev.map(n =>
@@ -141,7 +143,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
       const { error } = await supabase
         .from('prayer_notes')
         .insert({ user_id: userId, content: trimmed, is_answered: false });
-      if (error) showAlert('خطأ', error.message);
+      if (error) showAlert(strings.errors.genericTitle, error.message);
       else await fetchNotes();
     }
 
@@ -164,12 +166,12 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
 
   const deleteNote = (note: PrayerNote) => {
     showAlert(
-      'حذف طلبه الصلاة',
-      'هل تريد حذف هذه طلبه الصلاة؟',
+      strings.deleteTitle,
+      strings.deleteMessage,
       [
-        { text: 'إلغاء', style: 'cancel' },
+        { text: strings.cancel, style: 'cancel' },
         {
-          text: 'حذف',
+          text: strings.delete,
           style: 'destructive',
           onPress: async () => {
             const { error } = await supabase
@@ -177,7 +179,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
               .delete()
               .eq('id', note.id);
             if (!error) setNotes(prev => prev.filter(n => n.id !== note.id));
-            else showAlert('خطأ', error.message);
+            else showAlert(strings.errors.genericTitle, error.message);
           },
         },
       ],
@@ -211,7 +213,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
       <View style={styles.searchRow}>
         <MaterialCommunityIcons name="magnify" size={18} color={MUTED} />
         <TextInput
-          placeholder="ابحث في طلبات الصلاة..."
+          placeholder={strings.searchPlaceholder}
           placeholderTextColor={MUTED}
           style={styles.searchInput}
           value={query}
@@ -228,7 +230,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
             size={56}
             color="#E6E6E6"
           />
-          <Text style={styles.emptyTitle}>لا توجد طلبات صلاة</Text>
+          <Text style={styles.emptyTitle}>{strings.emptyTitle}</Text>
         </View>
       ) : (
         <FlatList

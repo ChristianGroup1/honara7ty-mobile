@@ -12,50 +12,52 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getStrings } from '../../localization';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
 
-const ITEMS = [
-  {
-    key: 'BibleMemorization',
-    icon: 'brain',
-    title: 'حفظ الكتاب المقدس',
-    subtitle: 'اختبر حفظك للآيات',
-    color: '#1A7A7A',
-  },
-  {
-    key: 'Badges',
-    icon: 'medal-outline',
-    title: 'شارات الثبات',
-    subtitle: 'انظر إنجازاتك',
-    color: GOLD,
-  },
-  {
-    key: 'DevotionCalendar',
-    icon: 'calendar-check-outline',
-    title: 'تقويم الخلوة',
-    subtitle: 'راجع الأيام التي التزمت فيها',
-    color: '#2E8B57',
-  },
-];
-
 const MoreScreen = ({ navigation }: any) => {
+  const strings = getStrings().more;
   const insets = useSafeAreaInsets();
+  const items = [
+    {
+      key: 'BibleMemorization',
+      icon: 'brain',
+      title: strings.items.bibleMemorization.title,
+      subtitle: strings.items.bibleMemorization.subtitle,
+      color: '#1A7A7A',
+    },
+    {
+      key: 'Badges',
+      icon: 'medal-outline',
+      title: strings.items.badges.title,
+      subtitle: strings.items.badges.subtitle,
+      color: GOLD,
+    },
+    {
+      key: 'DevotionCalendar',
+      icon: 'calendar-check-outline',
+      title: strings.items.devotionCalendar.title,
+      subtitle: strings.items.devotionCalendar.subtitle,
+      color: '#2E8B57',
+    },
+  ];
+
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
       <View style={{ height: insets.top, backgroundColor: NAVY }} />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>المزيد</Text>
+        <Text style={styles.headerTitle}>{strings.title}</Text>
       </View>
 
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {ITEMS.map(item => (
+        {items.map(item => (
           <TouchableOpacity
             key={item.key}
             style={styles.row}

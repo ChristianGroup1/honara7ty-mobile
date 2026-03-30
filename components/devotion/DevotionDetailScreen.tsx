@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ARTICLES, CARD_ACCENTS } from './devotionData';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getStrings } from '../../localization';
 
 const GOLD = '#C9A84C';
 const BG = '#F2F4F8';
@@ -18,6 +19,7 @@ const BG = '#F2F4F8';
 type Props = { navigation: any; route: any };
 
 const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
+  const strings = getStrings().devotion;
   const insets = useSafeAreaInsets();
   const { articleId } = route.params;
   const article = ARTICLES.find(a => a.id === articleId);
@@ -33,7 +35,7 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>مقالة غير موجودة</Text>
+          <Text style={styles.errorText}>{strings.detail.articleMissing}</Text>
         </View>
       </SafeAreaView>
     );

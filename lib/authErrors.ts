@@ -1,3 +1,5 @@
+import { getStrings } from '../localization';
+
 /**
  * Minimum password length enforced across all auth screens.
  */
@@ -12,6 +14,8 @@ export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * Translates common Supabase auth error messages to Arabic.
  */
 export const localizeAuthError = (message: string): string => {
+  const strings = getStrings().auth;
+
   if (/invalid login credentials/i.test(message))
     return 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
   if (/email not confirmed/i.test(message))
@@ -25,12 +29,12 @@ export const localizeAuthError = (message: string): string => {
   if (/too many requests/i.test(message))
     return 'محاولات كثيرة، يرجى الانتظار قليلاً والمحاولة مجدداً';
   if (/password should be at least/i.test(message))
-    return `كلمة المرور يجب أن تكون ${MIN_PASSWORD_LENGTH} أحرف على الأقل`;
+    return strings.signup.passwordTooShort(MIN_PASSWORD_LENGTH);
   if (/same password/i.test(message))
     return 'كلمة المرور الجديدة يجب أن تختلف عن القديمة';
   if (/token has expired|jwt expired|invalid token|invalid refresh token/i.test(message))
     return 'الرمز غير صالح أو منتهي الصلاحية';
   if (/invalid email/i.test(message))
-    return 'يرجى إدخال بريد إلكتروني صحيح';
+    return strings.login.emailInvalid;
   return message;
 };

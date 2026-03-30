@@ -3,6 +3,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { DAILY_QUESTION } from './constants';
 import { homeStyles as styles } from './styles';
+import { getStrings } from '../../localization';
 
 interface DailyQuestionCardProps {
   devotionAnswer: boolean | null;
@@ -13,10 +14,12 @@ const DailyQuestionCard = ({
   devotionAnswer,
   onAnswerNow,
 }: DailyQuestionCardProps) => {
+  const strings = getStrings().home;
+
   return (
     <View style={styles.questionCard}>
       <View style={styles.questionDecor} />
-      <Text style={styles.questionCardLabel}>سؤال اليوم المتغير</Text>
+      <Text style={styles.questionCardLabel}>{strings.dailyCardLabel}</Text>
       <Text style={styles.questionText}>{DAILY_QUESTION}</Text>
 
       {devotionAnswer === null ? (
@@ -25,14 +28,12 @@ const DailyQuestionCard = ({
           activeOpacity={0.85}
           onPress={onAnswerNow}
         >
-          <Text style={styles.answerBtnText}>جاوب الآن</Text>
+          <Text style={styles.answerBtnText}>{strings.answerNow}</Text>
         </TouchableOpacity>
       ) : devotionAnswer ? (
         <View style={styles.answeredYesCard}>
           <MaterialCommunityIcons name="check-circle" size={22} color="#fff" />
-          <Text style={styles.answeredYesText}>
-            أجبت بنعم اليوم 🎉 بارك الله خلوتك!
-          </Text>
+          <Text style={styles.answeredYesText}>{strings.answeredYes}</Text>
         </View>
       ) : (
         <View style={styles.answeredNoCard}>
@@ -41,9 +42,7 @@ const DailyQuestionCard = ({
             size={22}
             color="#fff"
           />
-          <Text style={styles.answeredNoText}>
-            لم تأخذ خلوتك بعد — لا يزال الوقت أمامك 💙
-          </Text>
+          <Text style={styles.answeredNoText}>{strings.answeredNo}</Text>
         </View>
       )}
     </View>

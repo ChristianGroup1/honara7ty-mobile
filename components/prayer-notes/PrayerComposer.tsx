@@ -3,6 +3,7 @@ import { ActivityIndicator, Text, TextInput, TouchableOpacity, View } from 'reac
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { MUTED, NAVY } from './constants';
 import { prayerNotesStyles as styles } from './styles';
+import { getStrings } from '../../localization';
 
 interface PrayerComposerProps {
   bottomOffset: number;
@@ -29,6 +30,7 @@ const PrayerComposer = ({
   onReset,
   onSubmit,
 }: PrayerComposerProps) => {
+  const strings = getStrings().prayerNotes;
   const quickAddWrapStyle = { bottom: bottomOffset };
   const secondaryFabStyle = saving ? styles.secondaryFabDisabled : null;
   const fabStyle = saving ? styles.fabDisabled : null;
@@ -46,7 +48,7 @@ const PrayerComposer = ({
     >
       {editMode ? (
         <View style={styles.editBanner}>
-          <Text style={styles.editBannerText}>تعديل طلبة الصلاة</Text>
+          <Text style={styles.editBannerText}>{strings.editBanner}</Text>
           <TouchableOpacity onPress={onReset} hitSlop={8}>
             <MaterialCommunityIcons name="close" size={18} color={MUTED} />
           </TouchableOpacity>
@@ -56,7 +58,9 @@ const PrayerComposer = ({
       <View style={styles.quickInputWrap}>
         <TextInput
           ref={inputRef}
-          placeholder={editMode ? 'عدّل طلبة الصلاة...' : 'أضف طلب سريعاً...'}
+          placeholder={
+            editMode ? strings.editPlaceholder : strings.addPlaceholder
+          }
           placeholderTextColor={MUTED}
           style={styles.quickInput}
           value={newNote}

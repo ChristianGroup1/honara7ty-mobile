@@ -6,16 +6,18 @@ import MemorizationHeader from './MemorizationHeader';
 import { memorizationStyles as styles } from './styles';
 import { MemorizationStackParamList } from './types';
 import { GOLD, NAVY } from './utils';
+import { getStrings } from '../../localization';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Result'>;
 
 const ResultScreen = ({ navigation, route }: Props) => {
+  const strings = getStrings().bibleMemorization.result;
   const result = route.params;
 
   return (
     <View style={styles.container}>
       <MemorizationHeader
-        title="النتيجة"
+        title={strings.title}
         onBack={() => navigation.goBack()}
       />
 
@@ -33,18 +35,18 @@ const ResultScreen = ({ navigation, route }: Props) => {
           </Text>
           <Text style={styles.scoreLabel}>
             {result.score === result.total
-              ? 'ممتاز! حفظت النص بشكل كامل!'
+              ? strings.perfect
               : result.score >= result.total * 0.7
-                ? 'جيد جداً، حاول مرة أخرى لتثبيت الحفظ.'
-              : 'راجع النص وحاول مرة أخرى.'}
+                ? strings.good
+              : strings.retry}
           </Text>
           <View style={styles.resultToneBadge}>
             <Text style={styles.resultToneBadgeText}>
               {result.score === result.total
-                ? 'إتقان كامل'
+                ? strings.perfectBadge
                 : result.score >= result.total * 0.7
-                  ? 'مستوى جيد جدًا'
-                  : 'يحتاج مراجعة'}
+                  ? strings.goodBadge
+                  : strings.retryBadge}
             </Text>
           </View>
         </View>
@@ -53,14 +55,12 @@ const ResultScreen = ({ navigation, route }: Props) => {
           <Text style={styles.refText}>
             {result.bookLabel} - {result.chapterLabel}
           </Text>
-          <Text style={styles.instructionText}>
-            الكلمات الصحيحة تظهر بوضوح، والخطأ يظهر مع الإجابة الأصلية.
-          </Text>
+          <Text style={styles.instructionText}>{strings.instruction}</Text>
         </View>
 
         <View style={styles.verseBox}>
           <View style={styles.verseBoxHeader}>
-            <Text style={styles.verseBoxTitle}>مراجعة الإجابات</Text>
+            <Text style={styles.verseBoxTitle}>{strings.reviewAnswers}</Text>
             <MaterialCommunityIcons name="check-decagram-outline" size={18} color="#C9A84C" />
           </View>
           <View style={styles.wordsWrap}>
@@ -83,7 +83,7 @@ const ResultScreen = ({ navigation, route }: Props) => {
                   >
                     {slot.correct
                       ? slot.word
-                      : `${slot.userInput || '؟'} ← ${slot.word}`}
+                      : `${slot.userInput || strings.wrongAnswerFallback} ← ${slot.word}`}
                   </Text>
                 </View>
               ) : (
@@ -112,14 +112,16 @@ const ResultScreen = ({ navigation, route }: Props) => {
           }
         >
           <MaterialCommunityIcons name="refresh" size={20} color="#FFF" />
-          <Text style={styles.primaryBtnText}>حاول مرة أخرى</Text>
+          <Text style={styles.primaryBtnText}>{strings.retryAction}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.ghostBtn}
           onPress={() => navigation.navigate('Pick')}
         >
-          <Text style={styles.ghostBtnText}>اختر مرجعًا آخر</Text>
+          <Text style={styles.ghostBtnText}>
+            {strings.chooseAnotherReference}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

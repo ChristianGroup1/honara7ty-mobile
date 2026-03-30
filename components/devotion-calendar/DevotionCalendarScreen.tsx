@@ -14,12 +14,11 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import supabase from '../../lib/supbase';
 import CustomAlert, { AlertConfig } from '../shared/CustomAlert';
 import { computeStreak } from '../badges/utils';
+import { getStrings } from '../../localization';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
 const BG = '#F2F4F8';
-
-const WEEK_DAYS = ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'];
 
 const getMonthKey = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -87,6 +86,7 @@ const buildMonthCells = (monthDate: Date, completedDates: Set<string>) => {
 };
 
 const DevotionCalendarScreen = ({ navigation }: any) => {
+  const strings = getStrings().devotionCalendar;
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [completedDates, setCompletedDates] = useState<string[]>([]);
@@ -118,7 +118,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
       if (error) {
         setAlertConfig({
           visible: true,
-          title: 'خطأ',
+          title: strings.errorTitle,
           message: error.message,
           type: 'error',
         });
@@ -160,7 +160,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <MaterialCommunityIcons name="arrow-right" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>تقويم الخلوة</Text>
+        <Text style={styles.headerTitle}>{strings.title}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -176,17 +176,15 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
                 <MaterialCommunityIcons name="calendar-heart" size={24} color={NAVY} />
               </View>
               <View style={styles.heroBadge}>
-                <Text style={styles.heroBadgeText}>ثبات يومي</Text>
+                <Text style={styles.heroBadgeText}>{strings.badge}</Text>
               </View>
             </View>
-            <Text style={styles.heroLabel}>متابعة الخلوة</Text>
-            <Text style={styles.heroTitle}>كل يوم "نعم" يترك أثرًا هنا</Text>
-            <Text style={styles.heroText}>
-              التقويم يوضح أيام التزامك بالخلوة، ويساعدك ترى الاستمرارية بشكل بصري وواضح.
-            </Text>
+            <Text style={styles.heroLabel}>{strings.heroLabel}</Text>
+            <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
+            <Text style={styles.heroText}>{strings.heroText}</Text>
             <View style={styles.heroHintRow}>
               <MaterialCommunityIcons name="star-four-points" size={16} color={GOLD} />
-              <Text style={styles.heroHintText}>الأيام الذهبية تعني أنك أكملت الخلوة في هذا اليوم</Text>
+              <Text style={styles.heroHintText}>{strings.heroHint}</Text>
             </View>
           </View>
 
@@ -196,29 +194,29 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
                 <MaterialCommunityIcons name="fire" size={18} color="#FFF" />
               </View>
               <Text style={styles.statNumber}>{currentStreak}</Text>
-              <Text style={styles.statLabel}>الثبات الحالي</Text>
+              <Text style={styles.statLabel}>{strings.currentStreak}</Text>
             </View>
             <View style={styles.statCard}>
               <View style={[styles.statIconWrap, styles.statIconWrapGold]}>
                 <MaterialCommunityIcons name="calendar-month" size={18} color={NAVY} />
               </View>
               <Text style={styles.statNumber}>{monthCompletedCount}</Text>
-              <Text style={styles.statLabel}>هذا الشهر</Text>
+              <Text style={styles.statLabel}>{strings.thisMonth}</Text>
             </View>
             <View style={styles.statCard}>
               <View style={[styles.statIconWrap, styles.statIconWrapSoft]}>
                 <MaterialCommunityIcons name="check-decagram" size={18} color={NAVY} />
               </View>
               <Text style={styles.statNumber}>{totalCompleted}</Text>
-              <Text style={styles.statLabel}>الإجمالي</Text>
+              <Text style={styles.statLabel}>{strings.total}</Text>
             </View>
           </View>
 
           <View style={styles.calendarCard}>
             <View style={styles.sectionHeader}>
               <View>
-                <Text style={styles.sectionTitle}>تقويم الالتزام</Text>
-                <Text style={styles.sectionCaption}>تنقّل بين الشهور وشاهد الأيام المكتملة</Text>
+                <Text style={styles.sectionTitle}>{strings.sectionTitle}</Text>
+                <Text style={styles.sectionCaption}>{strings.sectionCaption}</Text>
               </View>
               <View style={styles.sectionIconWrap}>
                 <MaterialCommunityIcons name="calendar-blank-outline" size={20} color={NAVY} />
@@ -254,20 +252,20 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
             <View style={styles.legendRow}>
               <View style={styles.legendItem}>
                 <View style={[styles.legendSwatch, styles.legendSwatchCompleted]} />
-                <Text style={styles.legendText}>مكتمل</Text>
+                <Text style={styles.legendText}>{strings.completed}</Text>
               </View>
               <View style={styles.legendItem}>
                 <View style={[styles.legendSwatch, styles.legendSwatchToday]} />
-                <Text style={styles.legendText}>اليوم</Text>
+                <Text style={styles.legendText}>{strings.today}</Text>
               </View>
               <View style={styles.legendItem}>
                 <View style={[styles.legendSwatch, styles.legendSwatchDefault]} />
-                <Text style={styles.legendText}>باقي الأيام</Text>
+                <Text style={styles.legendText}>{strings.remainingDays}</Text>
               </View>
             </View>
 
             <View style={styles.weekRow}>
-              {WEEK_DAYS.map(day => (
+              {strings.weekDays.map(day => (
                 <Text key={day} style={styles.weekDay}>
                   {day}
                 </Text>

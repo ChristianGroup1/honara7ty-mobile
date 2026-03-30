@@ -9,8 +9,10 @@ import {
   ScrollView,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { NAVY } from '../bible-memorization/utils';
+import { getStrings } from '../../localization';
 
 type RootStackParamList = {
   Welcome: undefined;
@@ -24,9 +26,25 @@ type WelcomeScreenProps = {
 };
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
+  const strings = getStrings().welcome;
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isCompactHeight = height < 720;
   const isCompactWidth = width < 360;
+  const isShortScreen = height < 640;
+  const horizontalPadding = Math.max(20, Math.min(width * 0.06, 32));
+  const contentTopPadding = Math.max(20, Math.min(height * 0.05, 40));
+  const contentBottomPadding = Math.max(
+    insets.bottom + 38,
+    isShortScreen ? 20 : 32,
+  );
+  const heroSpacerHeight = Math.max(48, Math.min(height * 0.22, 180));
+  const panelPadding = isShortScreen ? 20 : 24;
+  const titleFontSize = isCompactWidth ? 24 : width < 420 ? 28 : 32;
+  const bodyFontSize = isCompactWidth ? 15 : 16;
+  const bodyLineHeight = isCompactWidth ? 22 : 24;
+  const buttonTextSize = isCompactWidth ? 18 : 20;
+  const maxContentWidth = Math.min(width - horizontalPadding * 2, 440);
 
   const handleLogin = () => {
     navigation.navigate('Login');
@@ -35,15 +53,12 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
   const handleCreateAccount = () => {
     navigation.navigate('SignupStep1');
   };
+  const topInsetStyle = { height: insets.top, backgroundColor: NAVY };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
-      />
-
+    <>
+      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+      <View style={topInsetStyle} />
       <ImageBackground
         source={require('../../assets/images/bibleBackground.png')}
         style={[styles.backgroundImage, { width, minHeight: height }]}
@@ -56,76 +71,77 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            isCompactHeight ? styles.contentCompactHeight : null,
+            {
+              paddingHorizontal: horizontalPadding,
+              paddingTop: contentTopPadding,
+              paddingBottom: contentBottomPadding,
+            },
           ]}
           showsVerticalScrollIndicator={false}
           bounces={false}
         >
-          {/* Welcome text */}
+          <View style={{ height: heroSpacerHeight }} />
+
           <View
             style={[
-              styles.textContainer,
-              isCompactHeight ? styles.textContainerCompactHeight : null,
+              styles.contentPanel,
+              {
+                maxWidth: maxContentWidth,
+                padding: panelPadding,
+              },
+              isCompactHeight ? styles.contentPanelCompactHeight : null,
             ]}
           >
-            <Text
-              style={[
-                styles.welcomeTitle,
-                isCompactWidth ? styles.welcomeTitleCompactWidth : null,
-              ]}
-            >
-              أهلاً بيك في هنا راحتي
-            </Text>
-
-            <Text
-              style={[
-                styles.description,
-                isCompactWidth ? styles.descriptionCompactWidth : null,
-              ]}
-            >
-              إحنا فرحانين إنك معانا. التطبيق ده معمول عشان
-            </Text>
-            <Text
-              style={[
-                styles.description,
-                isCompactWidth ? styles.descriptionCompactWidth : null,
-              ]}
-            >
-              يكون مكانك الخاص تتواصل فيه مع يسوع
-            </Text>
-            <Text
-              style={[
-                styles.description,
-                isCompactWidth ? styles.descriptionCompactWidth : null,
-              ]}
-            >
-              وتلاقي السلام والراحة اللي نفسك فيها.
-            </Text>
-          </View>
-
-          {/* Buttons */}
-          <View
-            style={[
-              styles.buttonContainer,
-              isCompactWidth ? styles.buttonContainerCompactWidth : null,
-            ]}
-          >
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-              <Text style={styles.loginButtonText}>تسجيل الدخول</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.createAccountButton}
-              onPress={handleCreateAccount}
-            >
-              <Text style={styles.createAccountButtonText}>
-                إنشاء حساب جديد
+            {/* Welcome text */}
+            <View style={styles.textContainer}>
+              <Text style={[styles.welcomeTitle, { fontSize: titleFontSize }]}>
+                {strings.title}
               </Text>
-            </TouchableOpacity>
+
+              {strings.description.map(line => (
+                <Text
+                  key={line}
+                  style={[
+                    styles.description,
+                    { fontSize: bodyFontSize, lineHeight: bodyLineHeight },
+                  ]}
+                >
+                  {line}
+                </Text>
+              ))}
+            </View>
+
+            {/* Buttons */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={handleLogin}
+              >
+                <Text
+                  style={[styles.loginButtonText, { fontSize: buttonTextSize }]}
+                >
+                  {strings.login}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.createAccountButton}
+                onPress={handleCreateAccount}
+              >
+                <Text
+                  style={[
+                    styles.createAccountButtonText,
+                    { fontSize: buttonTextSize },
+                  ]}
+                >
+                  {strings.createAccount}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </ImageBackground>
-    </SafeAreaView>
+    </>
   );
 };
 
@@ -141,52 +157,39 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(12, 17, 33, 0.7)',
   },
   content: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 56,
+    flexGrow: 1,
+    justifyContent: 'flex-end',
     minHeight: '100%',
   },
-  contentCompactHeight: {
-    paddingTop: 36,
-    paddingBottom: 32,
+  contentPanel: {
+    width: '100%',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(12, 17, 33, 0.58)',
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+  },
+  contentPanelCompactHeight: {
+    borderRadius: 22,
   },
   textContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'flex-start',
-  },
-  textContainerCompactHeight: {
-    justifyContent: 'center',
+    width: '100%',
+    marginBottom: 24,
   },
   welcomeTitle: {
-    fontSize: 28,
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'left',
-  },
-  welcomeTitleCompactWidth: {
-    fontSize: 24,
+    marginBottom: 12,
   },
   description: {
-    fontSize: 16,
     color: '#FFFFFF',
     textAlign: 'left',
-    lineHeight: 24,
     marginBottom: 4,
     fontFamily: 'System',
   },
-  descriptionCompactWidth: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
   buttonContainer: {
     width: '100%',
-    paddingHorizontal: 20,
-  },
-  buttonContainerCompactWidth: {
-    paddingHorizontal: 8,
   },
   loginButton: {
     backgroundColor: '#0C1121',
@@ -205,7 +208,6 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     color: '#FFFFFF',
-    fontSize: 20,
     fontWeight: 'bold',
     fontFamily: 'System',
   },
@@ -219,7 +221,6 @@ const styles = StyleSheet.create({
   },
   createAccountButtonText: {
     color: '#FFFFFF',
-    fontSize: 20,
     fontWeight: '600',
     fontFamily: 'System',
   },

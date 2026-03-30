@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  SafeAreaView,
-  StatusBar,
-  Platform,
-  TouchableOpacity,
-  useWindowDimensions,
-} from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import {
   Provider as PaperProvider,
   ActivityIndicator,
@@ -24,11 +14,13 @@ import {
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
 import { authPaperTheme, AUTH_GOLD, AUTH_NAVY } from '../auth/theme';
+import AuthScreenShell from '../auth/AuthScreenShell';
+import { authStrings } from '../auth/strings';
 
 type Props = { navigation: any; route: any };
 
 const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
-  const { height: windowHeight } = useWindowDimensions();
+  const strings = authStrings;
   // Default to true so navigating here normally (without a deep link) shows the form.
   const linkValid = route?.params?.linkValid !== false;
   const [password, setPassword] = useState('');
@@ -66,37 +58,37 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
     const errors = { password: '', confirm: '' };
     let hasError = false;
     if (!password) {
-      errors.password = 'يرجى إدخال كلمة المرور الجديدة';
+      errors.password = strings.resetPassword.newPasswordRequired;
       hasError = true;
     } else if (password.length < MIN_PASSWORD_LENGTH) {
-      errors.password = `كلمة المرور يجب أن تكون ${MIN_PASSWORD_LENGTH} أحرف على الأقل`;
+      errors.password = strings.resetPassword.passwordTooShort(MIN_PASSWORD_LENGTH);
       hasError = true;
     }
     if (!confirm) {
-      errors.confirm = 'يرجى تأكيد كلمة المرور';
+      errors.confirm = strings.resetPassword.confirmPasswordRequired;
       hasError = true;
     } else if (password !== confirm) {
-      errors.confirm = 'كلمتا المرور غير متطابقتين';
+      errors.confirm = strings.resetPassword.confirmPasswordMismatch;
       hasError = true;
     }
     setFieldErrors(errors);
     if (hasError) {
       const firstError = errors.password || errors.confirm;
-      showAlert('تحقق من البيانات', firstError, undefined, 'error');
+      showAlert(strings.resetPassword.invalidDataTitle, firstError, undefined, 'error');
       return;
     }
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) {
-        showAlert('خطأ', localizeAuthError(error.message));
+        showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
       } else {
         showAlert(
-          'تم بنجاح! 🎉',
-          'تم تغيير كلمة مرورك بنجاح. يمكنك الآن تسجيل الدخول باستخدامها.',
+          strings.resetPassword.successTitle,
+          strings.resetPassword.successMessage,
           [
             {
-              text: 'تسجيل الدخول',
+              text: strings.resetPassword.footerAction,
               onPress: () => navigation.navigate('Login'),
             },
           ],
@@ -104,7 +96,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
         );
       }
     } catch (err: any) {
-      showAlert('خطأ', localizeAuthError(err.message));
+      showAlert(strings.common.genericErrorTitle, localizeAuthError(err.message));
     } finally {
       setLoading(false);
     }
@@ -113,11 +105,11 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
   const handleRequestNewLink = async () => {
     const trimmed = requestEmail.trim();
     if (!trimmed) {
-      setRequestEmailError('يرجى إدخال البريد الإلكتروني');
+      setRequestEmailError(strings.resetPassword.requestEmailRequired);
       return;
     }
     if (!EMAIL_REGEX.test(trimmed)) {
-      setRequestEmailError('يرجى إدخال بريد إلكتروني صحيح');
+      setRequestEmailError(strings.resetPassword.requestEmailInvalid);
       return;
     }
     setRequestEmailError('');
@@ -127,338 +119,251 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
         redirectTo: 'honara7ty://reset-password',
       });
       if (error) {
-        showAlert('خطأ', localizeAuthError(error.message));
+        showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
       } else {
         setRequestSent(true);
       }
     } catch (err: any) {
-      showAlert('خطأ', localizeAuthError(err.message));
+      showAlert(strings.common.genericErrorTitle, localizeAuthError(err.message));
     } finally {
       setRequestLoading(false);
     }
   };
 
-  const getHeaderIconName = (): string => {
-    if (!linkValid) return requestSent ? 'email-check-outline' : 'link-off';
-    return 'lock-reset';
-  };
-
   const getHeaderTitle = (): string => {
-    if (!linkValid) return requestSent ? 'تم الإرسال!' : 'رابط غير صالح';
-    return 'تعيين كلمة مرور جديدة';
-  };
-
-  const getHeaderSubtitle = (): string => {
     if (!linkValid) {
       return requestSent
-        ? 'تم إرسال رابط جديد إلى بريدك الإلكتروني.'
-        : 'أدخل بريدك الإلكتروني لإرسال رابط استعادة جديد.';
+        ? strings.resetPassword.requestSentTitle
+        : strings.resetPassword.invalidLinkTitle;
     }
-    return 'أدخل كلمة المرور الجديدة وأكدها.';
+    return strings.resetPassword.newPasswordTitle;
   };
 
   return (
     <PaperProvider theme={authPaperTheme}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          translucent={false}
-          backgroundColor={AUTH_NAVY}
-        />
-        <View style={[styles.darkHeaderLayer, { height: windowHeight * 0.38 }]} />
-
-        {/* ── Header ── */}
-        <View style={styles.headerContent}>
-          {shouldShowBackButton && (
-            <TouchableOpacity
-              style={styles.backBtn}
-              onPress={() => navigation.goBack()}
-            >
-              <View style={styles.backBtnCircle}>
+      <AuthScreenShell
+        title={getHeaderTitle()}
+        onBack={() => navigation.goBack()}
+        showBackButton={shouldShowBackButton}
+      >
+        {!linkValid ? (
+          /* ── Invalid Link State ── */
+          requestSent ? (
+            /* ── Sent Confirmation ── */
+            <View style={styles.successBox}>
+              <View style={styles.successIconCircle}>
                 <MaterialCommunityIcons
-                  name="chevron-left"
-                  size={28}
-                  color="white"
+                  name="email-check-outline"
+                  size={52}
+                  color={AUTH_GOLD}
                 />
               </View>
-            </TouchableOpacity>
-          )}
-          <View style={styles.iconCircleHeader}>
-            <MaterialCommunityIcons
-              name={getHeaderIconName()}
-              size={38}
-              color={AUTH_GOLD}
-            />
-          </View>
-          <Text style={styles.title}>{getHeaderTitle()}</Text>
-          <View style={styles.titleAccent} />
-          <Text style={styles.headerSubtitle}>{getHeaderSubtitle()}</Text>
-        </View>
-
-        <KeyboardAwareScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-          bounces={false}
-          showsVerticalScrollIndicator={false}
-          overScrollMode="never"
-          decelerationRate="normal"
-          enableOnAndroid={true}
-          extraScrollHeight={80}
-          extraHeight={80}
-          keyboardOpeningTime={0}
-        >
-          <View style={styles.formContainer} pointerEvents="box-none">
-            {!linkValid ? (
-              /* ── Invalid Link State ── */
-              requestSent ? (
-                /* ── Sent Confirmation ── */
-                <View style={styles.successBox}>
-                  <View style={styles.successIconCircle}>
-                    <MaterialCommunityIcons
-                      name="email-check-outline"
-                      size={52}
-                      color={AUTH_GOLD}
-                    />
-                  </View>
-                  <Text style={styles.successTitle}>تحقق من بريدك!</Text>
-                  <Text style={styles.successMessage}>
-                    لقد أرسلنا رابط إعادة تعيين كلمة المرور إلى:
-                  </Text>
-                  <View style={styles.emailBadge}>
-                    <MaterialCommunityIcons
-                      name="email-outline"
-                      size={16}
-                      color={AUTH_NAVY}
-                      style={styles.emailBadgeIcon}
-                    />
-                    <Text style={styles.emailBadgeText}>
-                      {requestEmail.trim()}
-                    </Text>
-                  </View>
-                  <Text style={styles.successHint}>
-                    إذا لم تجد الرسالة، تحقق من مجلد الرسائل غير المرغوب فيها.
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.resendBtn}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      setRequestSent(false);
-                      setRequestEmail('');
-                    }}
-                  >
-                    <Text style={styles.resendText}>إرسال مرة أخرى</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.submitBtn}
-                    activeOpacity={0.8}
-                    onPress={() => navigation.navigate('Login')}
-                  >
-                    <View style={styles.submitRow}>
-                      <MaterialCommunityIcons
-                        name="chevron-left"
-                        size={22}
-                        color="#FFF"
-                        style={styles.submitIcon}
-                      />
-                      <Text style={styles.submitText}>
-                        العودة لتسجيل الدخول
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                /* ── Email Input Form ── */
-                <View>
-                  <View style={styles.invalidIconCircle}>
-                    <MaterialCommunityIcons
-                      name="link-off"
-                      size={48}
-                      color="#E53935"
-                      style={styles.invalidIconCentered}
-                    />
-                  </View>
-                  <Text style={styles.invalidMessage}>
-                    رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية.
-                    {'\n'}أدخل بريدك الإلكتروني لإرسال رابط جديد.
-                  </Text>
-                  <CustomInput
-                    fieldLabel="البريد الإلكتروني"
-                    icon="email-outline"
-                    placeholder="أدخل بريدك الإلكتروني"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    value={requestEmail}
-                    onChangeText={(t: string) => {
-                      setRequestEmail(t);
-                      if (requestEmailError) setRequestEmailError('');
-                    }}
-                    error={requestEmailError}
-                  />
-                  <TouchableOpacity
-                    style={styles.submitBtn}
-                    activeOpacity={0.8}
-                    onPress={handleRequestNewLink}
-                    disabled={requestLoading}
-                  >
-                    {requestLoading ? (
-                      <ActivityIndicator color="#FFF" />
-                    ) : (
-                      <View style={styles.submitRow}>
-                        <MaterialCommunityIcons
-                          name="send"
-                          size={20}
-                          color="#FFF"
-                          style={styles.submitIcon}
-                        />
-                        <Text style={styles.submitText}>إرسال رابط جديد</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                  <View style={styles.footerContainer}>
-                    <TouchableOpacity
-                      onPress={() => navigation.navigate('Login')}
-                    >
-                      <Text style={styles.footerLink}>تسجيل الدخول</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.footerText}>تذكرت كلمة المرور؟ </Text>
-                  </View>
-                </View>
-              )
-            ) : (
-              /* ── Form ── */
-              <>
-                <CustomInput
-                  fieldLabel="كلمة المرور الجديدة "
-                  icon="lock-outline"
-                  isPassword={true}
-                  secureText={securePassword}
-                  setSecureText={setSecurePassword}
-                  value={password}
-                  onChangeText={t => {
-                    setPassword(t);
-                    if (fieldErrors.password)
-                      setFieldErrors(prev => ({ ...prev, password: '' }));
-                  }}
-                  error={fieldErrors.password}
+              <Text style={styles.successTitle}>
+                {strings.resetPassword.requestSentCheckTitle}
+              </Text>
+              <Text style={styles.successMessage}>
+                {strings.resetPassword.requestSentCheckMessage}
+              </Text>
+              <View style={styles.emailBadge}>
+                <MaterialCommunityIcons
+                  name="email-outline"
+                  size={16}
+                  color={AUTH_NAVY}
+                  style={styles.emailBadgeIcon}
                 />
-
-                <CustomInput
-                  fieldLabel="تأكيد كلمة المرور "
-                  icon="lock-check-outline"
-                  isPassword={true}
-                  secureText={secureConfirm}
-                  setSecureText={setSecureConfirm}
-                  value={confirm}
-                  onChangeText={t => {
-                    setConfirm(t);
-                    if (fieldErrors.confirm)
-                      setFieldErrors(prev => ({ ...prev, confirm: '' }));
-                  }}
-                  error={fieldErrors.confirm}
+                <Text style={styles.emailBadgeText}>{requestEmail.trim()}</Text>
+              </View>
+              <Text style={styles.successHint}>{strings.resetPassword.requestSentHint}</Text>
+              <TouchableOpacity
+                style={styles.resendBtn}
+                activeOpacity={0.7}
+                onPress={() => {
+                  setRequestSent(false);
+                  setRequestEmail('');
+                }}
+              >
+                <Text style={styles.resendText}>{strings.resetPassword.resend}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                testID="login-submit"
+                style={styles.submitBtn}
+                onPress={() => navigation.navigate('Login')}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.submitText}>{strings.resetPassword.footerAction}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            /* ── Email Input Form ── */
+            <View>
+              <View style={styles.invalidIconCircle}>
+                <MaterialCommunityIcons
+                  name="link-off"
+                  size={48}
+                  color="#E53935"
+                  style={styles.invalidIconCentered}
                 />
-
-                <View style={styles.hintRow}>
-                  <MaterialCommunityIcons
-                    name="information-outline"
-                    size={14}
-                    color="#AAA"
-                  />
-                  <Text style={styles.hintText}>
-                    كلمة المرور يجب أن تكون {MIN_PASSWORD_LENGTH} أحرف على الأقل
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.submitBtn}
-                  activeOpacity={0.8}
-                  onPress={handleUpdate}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#FFF" />
-                  ) : (
-                    <View style={styles.submitRow}>
-                      <MaterialCommunityIcons
-                        name="check-bold"
-                        size={20}
-                        color="#FFF"
-                        style={styles.submitIcon}
-                      />
-                      <Text style={styles.submitText}>تعيين كلمة المرور</Text>
-                    </View>
-                  )}
+              </View>
+              <Text style={styles.invalidMessage}>{strings.resetPassword.linkOffMessage}</Text>
+              <CustomInput
+                fieldLabel={strings.common.email}
+                icon="email-outline"
+                placeholder={strings.common.emailPlaceholder}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={requestEmail}
+                onChangeText={(t: string) => {
+                  setRequestEmail(t);
+                  if (requestEmailError) setRequestEmailError('');
+                }}
+                error={requestEmailError}
+              />
+              <TouchableOpacity
+                style={styles.submitBtn}
+                activeOpacity={0.8}
+                onPress={handleRequestNewLink}
+                disabled={requestLoading}
+              >
+                {requestLoading ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <View style={styles.submitRow}>
+                    <MaterialCommunityIcons
+                      name="send"
+                      size={20}
+                      color="#FFF"
+                      style={styles.submitIcon}
+                    />
+                    <Text style={styles.submitText}>{strings.resetPassword.sendNewLink}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <View style={styles.footerContainer}>
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                  <Text style={styles.footerLink}>{strings.resetPassword.footerAction}</Text>
                 </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </KeyboardAwareScrollView>
-      </SafeAreaView>
+                <Text style={styles.footerText}>{strings.resetPassword.footerPrefix}</Text>
+              </View>
+            </View>
+          )
+        ) : (
+          /* ── Form ── */
+          <>
+            <View style={styles.infoCard}>
+              <View style={styles.infoIconWrap}>
+                <MaterialCommunityIcons
+                  name="lock-check-outline"
+                  size={20}
+                  color="#FFFFFF"
+                />
+              </View>
+              <Text style={styles.infoTitle}>{strings.resetPassword.infoTitle}</Text>
+              <Text style={styles.infoDescription}>
+                {strings.resetPassword.infoDescription}
+              </Text>
+            </View>
+            <CustomInput
+              fieldLabel={`${strings.resetPassword.newPassword} `}
+              icon="lock-outline"
+              isPassword={true}
+              secureText={securePassword}
+              setSecureText={setSecurePassword}
+              value={password}
+              onChangeText={t => {
+                setPassword(t);
+                if (fieldErrors.password)
+                  setFieldErrors(prev => ({ ...prev, password: '' }));
+              }}
+              error={fieldErrors.password}
+            />
+
+            <CustomInput
+              fieldLabel={`${strings.resetPassword.confirmPassword} `}
+              icon="lock-check-outline"
+              isPassword={true}
+              secureText={secureConfirm}
+              setSecureText={setSecureConfirm}
+              value={confirm}
+              onChangeText={t => {
+                setConfirm(t);
+                if (fieldErrors.confirm)
+                  setFieldErrors(prev => ({ ...prev, confirm: '' }));
+              }}
+              error={fieldErrors.confirm}
+            />
+
+            <View style={styles.hintRow}>
+              <MaterialCommunityIcons
+                name="information-outline"
+                size={14}
+                color="#AAA"
+              />
+              <Text style={styles.hintText}>
+                {strings.resetPassword.minPasswordHint(MIN_PASSWORD_LENGTH)}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.submitBtn}
+              activeOpacity={0.8}
+              onPress={handleUpdate}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <View style={styles.submitRow}>
+                  <MaterialCommunityIcons
+                    name="check-bold"
+                    size={20}
+                    color="#FFF"
+                    style={styles.submitIcon}
+                  />
+                  <Text style={styles.submitText}>{strings.resetPassword.submit}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </>
+        )}
+      </AuthScreenShell>
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F6FA' },
-  darkHeaderLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: AUTH_NAVY,
+  infoCard: {
+    backgroundColor: '#F6F0E6',
+    borderRadius: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: '#E8DCCD',
   },
-  headerContent: {
-    alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? 44 : 14,
-    paddingBottom: 24,
-  },
-  backBtn: { alignSelf: 'flex-start', marginLeft: 16, marginBottom: 12 },
-  backBtnCircle: {
+  infoIconWrap: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
+    backgroundColor: '#A98252',
     alignItems: 'center',
-  },
-  iconCircleHeader: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(201,168,76,0.15)',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignSelf: 'flex-end',
     marginBottom: 12,
   },
-  title: {
-    color: '#FFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
+  infoTitle: {
+    color: AUTH_NAVY,
+    fontSize: 19,
+    fontWeight: '800',
+    textAlign: 'right',
+    marginBottom: 8,
   },
-  titleAccent: {
-    width: 40,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: AUTH_GOLD,
-    marginTop: 6,
-  },
-  headerSubtitle: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: 13,
-    marginTop: 10,
-    textAlign: 'center',
-    paddingHorizontal: 36,
-    lineHeight: 20,
-  },
-  scrollContainer: { flexGrow: 1 },
-  formContainer: {
-    backgroundColor: '#F5F6FA',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 40,
+  infoDescription: {
+    color: '#6F6558',
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: 'right',
   },
   hintRow: {
     flexDirection: 'row',
@@ -472,16 +377,18 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   submitBtn: {
-    backgroundColor: AUTH_NAVY,
-    height: 56,
-    borderRadius: 14,
+    backgroundColor: '#0A1124',
+    height: 58,
+    width: '100%',
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: AUTH_NAVY,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    marginTop: 6,
+    shadowColor: '#0A1124',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 5,
   },
   submitRow: { flexDirection: 'row', alignItems: 'center' },
   submitIcon: { marginLeft: 8 },
@@ -491,17 +398,16 @@ const styles = StyleSheet.create({
   successBox: {
     alignItems: 'center',
     paddingTop: 10,
+    height: '100%',
   },
   successIconCircle: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(201,168,76,0.12)',
+    backgroundColor: AUTH_NAVY,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    borderWidth: 1.5,
-    borderColor: 'rgba(201,168,76,0.3)',
   },
   successTitle: {
     fontSize: 22,
@@ -542,10 +448,10 @@ const styles = StyleSheet.create({
 
   /* ── Email badge (reused in sent confirmation) ── */
   emailBadge: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     backgroundColor: 'rgba(10,17,36,0.06)',
-    borderRadius: 20,
+    borderRadius: 24,
     paddingVertical: 8,
     paddingHorizontal: 16,
     marginBottom: 16,
@@ -580,7 +486,7 @@ const styles = StyleSheet.create({
 
   /* ── Footer ── */
   footerContainer: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'center',
     marginTop: 20,
   },

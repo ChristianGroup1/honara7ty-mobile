@@ -8,13 +8,10 @@ import {
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import TextInputInteractive from 'react-native-text-input-interactive';
+import { getStrings } from '../../localization';
 
 const ChevronDownIcon = () => (
-  <MaterialCommunityIcons
-    name="chevron-down"
-    size={22}
-    color="#999"
-  />
+  <MaterialCommunityIcons name="chevron-down" size={22} color="#999" />
 );
 
 interface Props {
@@ -50,6 +47,8 @@ const CustomInput: React.FC<Props> = ({
   keyboardType,
   autoCapitalize,
 }) => {
+  const strings = getStrings().shared;
+
   const handleChangeText = (text: string) => {
     if (!onChangeText) return;
     onChangeText(text.replace(/\n/g, ''));
@@ -68,8 +67,8 @@ const CustomInput: React.FC<Props> = ({
         accessibilityLabel={
           isPassword
             ? secureText
-              ? 'إظهار كلمة المرور'
-              : 'إخفاء كلمة المرور'
+              ? strings.input.showPassword
+              : strings.input.hidePassword
             : fieldLabel
         }
       >
@@ -144,7 +143,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#0A1124',
-    textAlign: 'left',
+    textAlign: 'right',
   },
   optionalBadge: {
     fontSize: 11,
@@ -169,7 +168,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   interactiveInput: {
-    textAlign: 'left',
+    textAlign: 'right',
     paddingRight: 48,
     paddingLeft: 16,
     color: '#0A1124',

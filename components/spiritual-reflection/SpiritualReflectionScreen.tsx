@@ -19,8 +19,10 @@ import SpiritualReflectionHeader from './SpiritualReflectionHeader';
 import { spiritualReflectionStyles as styles, NAVY } from './styles';
 import { Reflection } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getStrings } from '../../localization';
 
 const SpiritualReflectionScreen = ({ navigation }: any) => {
+  const strings = getStrings().spiritualReflection;
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [reflections, setReflections] = useState<Reflection[]>([]);
@@ -129,7 +131,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
         .update({ content: trimmed })
         .eq('id', editItem.id);
       if (error) {
-        showAlert('خطأ', error.message);
+        showAlert(strings.errors.genericTitle, error.message);
       }
     } else {
       const { error } = await supabase.from('reflections').insert({
@@ -138,7 +140,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
         date: new Date().toISOString().split('T')[0],
       });
       if (error) {
-        showAlert('خطأ', error.message);
+        showAlert(strings.errors.genericTitle, error.message);
       }
     }
 
@@ -149,12 +151,12 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
 
   const deleteReflection = (item: Reflection) => {
     showAlert(
-      'حذف التأمل',
-      'هل تريد حذف هذا التأمل؟',
+      strings.deleteTitle,
+      strings.deleteMessage,
       [
-        { text: 'إلغاء', style: 'cancel' },
+        { text: strings.cancel, style: 'cancel' },
         {
-          text: 'حذف',
+          text: strings.delete,
           style: 'destructive',
           onPress: async () => {
             const { error } = await supabase
@@ -164,7 +166,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
             if (!error) {
               setReflections(prev => prev.filter(r => r.id !== item.id));
             } else {
-              showAlert('خطأ', error.message);
+              showAlert(strings.errors.genericTitle, error.message);
             }
           },
         },
@@ -207,9 +209,9 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
                   color="#EEE"
                 />
               </View>
-              <Text style={styles.emptyTitle}>لا يوجد تأملات بعد</Text>
+              <Text style={styles.emptyTitle}>{strings.emptyTitle}</Text>
               <Text style={styles.emptyTextSmall}>
-                اضغط + لإنشاء أول تأملك وتوثيق ما كلمك الله به اليوم.
+                {strings.emptyMessage}
               </Text>
             </View>
           }

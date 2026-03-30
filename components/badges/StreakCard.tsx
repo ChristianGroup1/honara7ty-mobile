@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { badgesStyles as styles } from './styles';
 import { GOLD } from './constants';
+import { getStrings } from '../../localization';
 
 interface StreakCardProps {
   loading: boolean;
@@ -16,6 +17,7 @@ const StreakCard = ({
   earnedCount,
   totalCount,
 }: StreakCardProps) => {
+  const strings = getStrings().badges;
   const completionRatio = totalCount > 0 ? earnedCount / totalCount : 0;
   const completionWidth = `${completionRatio * 100}%` as `${number}%`;
   const nextMilestone = totalCount > earnedCount ? earnedCount + 1 : totalCount;
@@ -30,16 +32,16 @@ const StreakCard = ({
 
           <View style={styles.streakTopRow}>
             <View style={styles.streakBadge}>
-              <Text style={styles.streakBadgeText}>رحلة الثبات</Text>
+              <Text style={styles.streakBadgeText}>{strings.streak.badge}</Text>
             </View>
             <View style={styles.streakIconOrb}>
               <Text style={styles.streakFire}>🔥</Text>
             </View>
           </View>
 
-          <Text style={styles.streakTitle}>الثبات يصنع الأثر</Text>
+          <Text style={styles.streakTitle}>{strings.streak.title}</Text>
           <Text style={styles.streakSubtitle}>
-            كل يوم تلتزم فيه يقرّبك من وسام جديد ويقوّي عادتك الروحية.
+            {strings.streak.subtitle}
           </Text>
 
           <View style={styles.streakRow}>
@@ -47,11 +49,11 @@ const StreakCard = ({
               <Text style={styles.streakNumber}>{streak}</Text>
             </View>
             <View style={styles.streakMetaColumn}>
-              <Text style={styles.streakDays}>يوم متواصل</Text>
+              <Text style={styles.streakDays}>{strings.streak.daysContinuous}</Text>
               <Text style={styles.streakHint}>
                 {earnedCount >= totalCount
-                  ? 'فتحت كل الأوسمة المتاحة'
-                  : `أنت قريب من الوسام رقم ${nextMilestone}`}
+                  ? strings.streak.allUnlocked
+                  : strings.streak.nextMilestone(nextMilestone)}
               </Text>
             </View>
           </View>
@@ -59,7 +61,7 @@ const StreakCard = ({
           <View style={styles.streakProgressWrap}>
             <View style={styles.streakProgressHeader}>
               <Text style={styles.streakProgressLabel}>
-                نسبة الأوسام المفتوحة
+                {strings.streak.progressLabel}
               </Text>
               <Text style={styles.streakProgressValue}>
                 {Math.round(completionRatio * 100)}%
@@ -75,15 +77,15 @@ const StreakCard = ({
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>{earnedCount}</Text>
-              <Text style={styles.statLabel}>تم فتحه</Text>
+              <Text style={styles.statLabel}>{strings.streak.opened}</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>{totalCount}</Text>
-              <Text style={styles.statLabel}>إجمالي الأوسام</Text>
+              <Text style={styles.statLabel}>{strings.streak.total}</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNum}>{streak > 0 ? streak : 0}</Text>
-              <Text style={styles.statLabel}>أيام الثبات</Text>
+              <Text style={styles.statLabel}>{strings.streak.streakDays}</Text>
             </View>
           </View>
         </>

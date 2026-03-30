@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getStrings } from '../../localization';
 
 export interface AlertButton {
   text: string;
@@ -43,8 +44,9 @@ const CustomAlert: React.FC<Props> = ({
   onDismiss,
 }) => {
   const { icon, color, bgColor } = TYPE_CONFIG[type];
+  const strings = getStrings().shared;
   const resolvedButtons: AlertButton[] =
-    buttons && buttons.length > 0 ? buttons : [{ text: 'حسناً' }];
+    buttons && buttons.length > 0 ? buttons : [{ text: strings.alert.ok }];
 
   return (
     <Modal

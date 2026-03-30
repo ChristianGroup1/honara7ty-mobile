@@ -23,15 +23,18 @@ import notifee, {
   TimestampTrigger,
   TriggerType,
 } from '@notifee/react-native';
+import { getStrings } from '../localization';
 
 const CHANNEL_ID = 'devotion_reminder';
 const NOTIFICATION_ID = 'daily_devotion';
 
 /** Ensure the Android notification channel exists (no-op on iOS). */
 async function ensureChannel(): Promise<void> {
+  const strings = getStrings().notifications;
+
   await notifee.createChannel({
     id: CHANNEL_ID,
-    name: 'تذكير الخلوة اليومية',
+    name: strings.channelName,
     importance: AndroidImportance.HIGH,
     sound: 'default',
   });
@@ -63,6 +66,8 @@ export async function scheduleDailyDevotionReminder(
   hours: number,
   minutes: number,
 ): Promise<void> {
+  const strings = getStrings().notifications;
+
   await requestNotificationPermission();
   await ensureChannel();
 
@@ -92,8 +97,8 @@ export async function scheduleDailyDevotionReminder(
   await notifee.createTriggerNotification(
     {
       id: NOTIFICATION_ID,
-      title: '📖 وقت كلمة الله',
-      body: '"فَتْحُ كَلاَمِكَ يُنِيرُ، يُعَقِّلُ الْجُهَّالَ." (مز ١١٩: ١٣٠)',
+      title: strings.title,
+      body: strings.body,
       android: {
         channelId: CHANNEL_ID,
         // ic_notification is a white monochrome drawable (required for Android 5+)
@@ -110,9 +115,9 @@ export async function scheduleDailyDevotionReminder(
         // Expanded (BigText) style shows the full verse when swiped down
         style: {
           type: AndroidStyle.BIGTEXT,
-          text: '📖 "فَتْحُ كَلاَمِكَ يُنِيرُ، يُعَقِّلُ الْجُهَّالَ."\n(مز ١١٩: ١٣٠)\n\nاضغط لتبدأ خلوتك مع الله 🙏',
-          title: 'وقت كلمة الله',
-          summary: 'مز ١١٩: ١٣٠',
+          text: strings.expandedText,
+          title: strings.title,
+          summary: strings.summary,
         },
       },
     },

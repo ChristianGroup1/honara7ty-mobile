@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { spiritualReflectionStyles as styles } from './styles';
+import { getStrings } from '../../localization';
 
 interface ReflectionEditorModalProps {
   visible: boolean;
@@ -37,6 +38,7 @@ const ReflectionEditorModal = ({
   onChangeText,
   onSave,
 }: ReflectionEditorModalProps) => {
+  const strings = getStrings().spiritualReflection;
   const keyboardAvoidingViewStyle = styles.flexOne;
   const modalOverlayStyle = keyboardVisible ? styles.modalOverlayTransparent : null;
   const saveButtonStyle = saving ? styles.saveBtnDisabled : null;
@@ -65,9 +67,11 @@ const ReflectionEditorModal = ({
           >
             <View style={styles.modalBox}>
               <Text style={styles.modalTitle}>
-                {editMode ? 'تعديل التأمل' : 'تأمل جديد'}
+                {editMode
+                  ? strings.editor.editTitle
+                  : strings.editor.newTitle}
               </Text>
-              <Text style={styles.modalHint}>ماذا كلّمك الله اليوم؟</Text>
+              <Text style={styles.modalHint}>{strings.editor.hint}</Text>
 
               <ScrollView
                 contentContainerStyle={styles.modalScroll}
@@ -77,7 +81,7 @@ const ReflectionEditorModal = ({
                 <TextInput
                   style={styles.modalInput}
                   multiline
-                  placeholder="اكتب هنا..."
+                  placeholder={strings.editor.placeholder}
                   placeholderTextColor="#AAA"
                   value={text}
                   onChangeText={onChangeText}
@@ -88,7 +92,7 @@ const ReflectionEditorModal = ({
 
               <View style={styles.modalActions}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                  <Text style={styles.cancelBtnText}>إلغاء</Text>
+                  <Text style={styles.cancelBtnText}>{strings.cancel}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.saveBtn, saveButtonStyle]}
@@ -100,9 +104,13 @@ const ReflectionEditorModal = ({
                   ) : (
                     <Text
                       style={styles.saveBtnText}
-                      accessibilityLabel={editMode ? 'حفظ التعديل' : 'إضافة التأمل'}
+                      accessibilityLabel={
+                        editMode
+                          ? strings.editor.saveEdit
+                          : strings.editor.addReflection
+                      }
                     >
-                      {editMode ? 'حفظ التعديل' : 'إضافة'}
+                      {editMode ? strings.editor.saveEdit : strings.editor.add}
                     </Text>
                   )}
                 </TouchableOpacity>

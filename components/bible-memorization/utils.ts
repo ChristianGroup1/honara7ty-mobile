@@ -1,12 +1,18 @@
 import { Difficulty, WordSlot } from './types';
+import { getStrings } from '../../localization';
 
 export const NAVY = '#0A1124';
 export const GOLD = '#C9A84C';
 
+const memorizationStrings = getStrings().bibleMemorization;
+
 export const DIFFICULTY_LEVELS = {
-  easy: { label: 'سهل', hideRatio: 0.2 },
-  medium: { label: 'متوسط', hideRatio: 0.35 },
-  hard: { label: 'صعب', hideRatio: 0.5 },
+  easy: { label: memorizationStrings.difficultyLevels.easy, hideRatio: 0.2 },
+  medium: {
+    label: memorizationStrings.difficultyLevels.medium,
+    hideRatio: 0.35,
+  },
+  hard: { label: memorizationStrings.difficultyLevels.hard, hideRatio: 0.5 },
 } as const;
 
 const MIN_WORD_LENGTH = 3;
