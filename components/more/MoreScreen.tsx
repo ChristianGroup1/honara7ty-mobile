@@ -22,6 +22,13 @@ const MoreScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const items = [
     {
+      key: 'AboutIdea',
+      icon: 'lightbulb-on-outline',
+      title: strings.items.aboutIdea.title,
+      subtitle: strings.items.aboutIdea.subtitle,
+      color: '#D97B29',
+    },
+    {
       key: 'BibleMemorization',
       icon: 'brain',
       title: strings.items.bibleMemorization.title,
