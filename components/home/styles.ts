@@ -191,6 +191,12 @@ export const homeStyles = StyleSheet.create({
     marginTop: 10,
     textAlign: 'left',
   },
+  answerGroupLabel: {
+    color: '#667085',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
   answerChoiceRow: {
     gap: 8,
     paddingBottom: 8,

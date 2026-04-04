@@ -25,7 +25,11 @@ import QuickActionsGrid from './QuickActionsGrid';
 import { homeStyles as styles } from './styles';
 import { getDisplayName, getInitials, getTodayDate } from './utils';
 import { getStrings } from '../../localization';
-import { BIBLE_BOOKS } from '../data/bibleMetadata';
+import {
+  BIBLE_BOOKS,
+  NEW_TESTAMENT_BOOKS,
+  OLD_TESTAMENT_BOOKS,
+} from '../data/bibleMetadata';
 
 const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
@@ -303,12 +307,40 @@ const HomeScreen = ({ route, navigation }: any) => {
             </View>
 
             <Text style={styles.answerFieldTitle}>{strings.answerBook}</Text>
+            <Text style={styles.answerGroupLabel}>العهد القديم</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.answerChoiceRow}
             >
-              {BIBLE_BOOKS.map(book => (
+              {OLD_TESTAMENT_BOOKS.map(book => (
+                <TouchableOpacity
+                  key={book.bookID}
+                  style={[
+                    styles.answerChoiceChip,
+                    readingBook === book.bookName && styles.answerChoiceChipSelected,
+                  ]}
+                  onPress={() => setReadingBook(book.bookName)}
+                >
+                  <Text
+                    style={[
+                      styles.answerChoiceText,
+                      readingBook === book.bookName &&
+                        styles.answerChoiceTextSelected,
+                    ]}
+                  >
+                    {book.bookName}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <Text style={styles.answerGroupLabel}>العهد الجديد</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.answerChoiceRow}
+            >
+              {NEW_TESTAMENT_BOOKS.map(book => (
                 <TouchableOpacity
                   key={book.bookID}
                   style={[

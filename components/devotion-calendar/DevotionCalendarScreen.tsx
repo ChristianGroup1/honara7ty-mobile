@@ -16,7 +16,11 @@ import supabase from '../../lib/supbase';
 import CustomAlert, { AlertConfig } from '../shared/CustomAlert';
 import { computeStreak } from '../badges/utils';
 import { getStrings } from '../../localization';
-import { BIBLE_BOOKS } from '../data/bibleMetadata';
+import {
+  BIBLE_BOOKS,
+  NEW_TESTAMENT_BOOKS,
+  OLD_TESTAMENT_BOOKS,
+} from '../data/bibleMetadata';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -502,12 +506,39 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
             {selectedCompleted && (
               <>
                 <Text style={styles.fieldTitle}>{strings.selectBook}</Text>
+                <Text style={styles.groupLabel}>العهد القديم</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.choiceRow}
                 >
-                  {BIBLE_BOOKS.map(book => (
+                  {OLD_TESTAMENT_BOOKS.map(book => (
+                    <TouchableOpacity
+                      key={`book-${book.bookID}`}
+                      style={[
+                        styles.choiceChip,
+                        selectedBook === book.bookName && styles.choiceChipSelected,
+                      ]}
+                      onPress={() => setSelectedBook(book.bookName)}
+                    >
+                      <Text
+                        style={[
+                          styles.choiceChipText,
+                          selectedBook === book.bookName && styles.choiceChipTextSelected,
+                        ]}
+                      >
+                        {book.bookName}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <Text style={styles.groupLabel}>العهد الجديد</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.choiceRow}
+                >
+                  {NEW_TESTAMENT_BOOKS.map(book => (
                     <TouchableOpacity
                       key={`book-${book.bookID}`}
                       style={[
@@ -934,6 +965,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 8,
     marginTop: 8,
+  },
+  groupLabel: {
+    color: '#667085',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
   },
   binaryRow: {
     flexDirection: 'row',

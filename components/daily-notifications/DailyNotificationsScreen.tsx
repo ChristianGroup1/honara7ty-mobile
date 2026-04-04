@@ -21,7 +21,11 @@ import supabase from '../../lib/supbase';
 import { scheduleDailyDevotionReminder } from '../../lib/notifications';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import { getStrings } from '../../localization';
-import { BIBLE_BOOKS } from '../data/bibleMetadata';
+import {
+  BIBLE_BOOKS,
+  NEW_TESTAMENT_BOOKS,
+  OLD_TESTAMENT_BOOKS,
+} from '../data/bibleMetadata';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -150,6 +154,28 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
         {label}
       </Text>
     </TouchableOpacity>
+  );
+
+  const renderBookSection = (
+    title: string,
+    books: Array<(typeof BIBLE_BOOKS)[number]>,
+  ) => (
+    <View>
+      <Text style={styles.groupLabel}>{title}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.choiceRow}
+      >
+        {books.map(book =>
+          renderChoiceChip(
+            book.bookName,
+            readingBook === book.bookName,
+            () => setReadingBook(book.bookName),
+          ),
+        )}
+      </ScrollView>
+    </View>
   );
 
   const handleSave = async () => {
@@ -338,19 +364,8 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           </View>
 
           <Text style={styles.fieldLabel}>{strings.selectBook}</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.choiceRow}
-          >
-            {BIBLE_BOOKS.map(book =>
-              renderChoiceChip(
-                book.bookName,
-                readingBook === book.bookName,
-                () => setReadingBook(book.bookName),
-              ),
-            )}
-          </ScrollView>
+          {renderBookSection('العهد القديم', OLD_TESTAMENT_BOOKS)}
+          {renderBookSection('العهد الجديد', NEW_TESTAMENT_BOOKS)}
 
           <Text style={styles.fieldLabel}>{strings.selectChapter}</Text>
           <ScrollView
@@ -657,6 +672,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 8,
     marginTop: 8,
+    textAlign: 'left',
+  },
+  groupLabel: {
+    color: '#667085',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
     textAlign: 'left',
   },
   choiceRow: {
