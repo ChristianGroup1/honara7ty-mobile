@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   ScrollView,
   StatusBar,
+  Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +14,6 @@ import supabase from '../../lib/supbase';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import {
-  DAILY_QUESTION,
   NAVY,
   NO_MESSAGE,
   YES_MESSAGE,
@@ -23,6 +25,7 @@ import QuickActionsGrid from './QuickActionsGrid';
 import { homeStyles as styles } from './styles';
 import { getDisplayName, getInitials, getTodayDate } from './utils';
 import { getStrings } from '../../localization';
+import { BIBLE_BOOKS } from '../data/bibleMetadata';
 
 const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
@@ -32,6 +35,11 @@ const HomeScreen = ({ route, navigation }: any) => {
   const [loading, setLoading] = useState(!userFromParams);
   /** null = not yet answered today, true = answered yes, false = answered no */
   const [devotionAnswer, setDevotionAnswer] = useState<boolean | null>(null);
+  const [answerSheetVisible, setAnswerSheetVisible] = useState(false);
+  const [pendingCompleted, setPendingCompleted] = useState(true);
+  const [readingBook, setReadingBook] = useState(BIBLE_BOOKS[0].bookName);
+  const [readingChapter, setReadingChapter] = useState(1);
+  const [chaptersRead, setChaptersRead] = useState(1);
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -73,12 +81,21 @@ const HomeScreen = ({ route, navigation }: any) => {
 
         const { data } = await supabase
           .from('devotion_log')
-          .select('completed')
+          .select('completed, reading_book, reading_chapter, chapters_read')
           .eq('user_id', userId)
           .eq('date', getTodayDate())
           .maybeSingle();
 
         setDevotionAnswer(data ? (data.completed as boolean) : null);
+        if (data?.reading_book) {
+          setReadingBook(data.reading_book);
+        }
+        if (data?.reading_chapter) {
+          setReadingChapter(Math.max(1, Number(data.reading_chapter)));
+        }
+        if (data?.chapters_read) {
+          setChaptersRead(Math.max(1, Number(data.chapters_read)));
+        }
       };
       checkDevotion();
     }, []),
@@ -95,7 +112,14 @@ const HomeScreen = ({ route, navigation }: any) => {
     const { error } = await supabase
       .from('devotion_log')
       .upsert(
-        { user_id: userId, date: getTodayDate(), completed },
+        {
+          user_id: userId,
+          date: getTodayDate(),
+          completed,
+          reading_book: readingBook,
+          reading_chapter: readingChapter,
+          chapters_read: chaptersRead,
+        },
         { onConflict: 'user_id,date' },
       );
 
@@ -156,23 +180,26 @@ const HomeScreen = ({ route, navigation }: any) => {
 
   /* ── Show question dialog ── */
   const handleAnswerNow = () => {
-    showAlert(
-      DAILY_QUESTION,
-      strings.answerPrompt,
-      [
-        {
-          text: strings.yes,
-          style: 'default',
-          onPress: () => handleDevotionAnswer(true),
-        },
-        {
-          text: strings.no,
-          style: 'destructive',
-          onPress: () => handleDevotionAnswer(false),
-        },
-      ],
-      'info',
-    );
+    setPendingCompleted(devotionAnswer ?? true);
+    setAnswerSheetVisible(true);
+  };
+
+  const selectedBook =
+    BIBLE_BOOKS.find(book => book.bookName === readingBook) ?? BIBLE_BOOKS[0];
+  const chapterOptions = Array.from(
+    { length: selectedBook.chapters },
+    (_, idx) => idx + 1,
+  );
+
+  useEffect(() => {
+    if (readingChapter > selectedBook.chapters) {
+      setReadingChapter(selectedBook.chapters);
+    }
+  }, [readingChapter, selectedBook.chapters]);
+
+  const saveDevotionSheet = async () => {
+    setAnswerSheetVisible(false);
+    await handleDevotionAnswer(pendingCompleted);
   };
 
   if (loading) {
@@ -210,6 +237,7 @@ const HomeScreen = ({ route, navigation }: any) => {
         <DailyQuestionCard
           devotionAnswer={devotionAnswer}
           onAnswerNow={handleAnswerNow}
+          onEditAnswer={handleAnswerNow}
         />
         <FeatureCard
           title={strings.featurePrayerNotesTitle}
@@ -226,6 +254,142 @@ const HomeScreen = ({ route, navigation }: any) => {
       </ScrollView>
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
+      <Modal
+        visible={answerSheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAnswerSheetVisible(false)}
+      >
+        <View style={styles.sheetOverlay}>
+          <View style={styles.answerSheet}>
+            <Text style={styles.answerSheetTitle}>{strings.answerSheetTitle}</Text>
+            <Text style={styles.answerSheetSubtitle}>
+              {strings.answerSheetSubtitle}
+            </Text>
+
+            <View style={styles.answerBinaryRow}>
+              <TouchableOpacity
+                style={[
+                  styles.answerBinaryBtn,
+                  pendingCompleted && styles.answerBinaryBtnSelected,
+                ]}
+                onPress={() => setPendingCompleted(true)}
+              >
+                <Text
+                  style={[
+                    styles.answerBinaryText,
+                    pendingCompleted && styles.answerBinaryTextSelected,
+                  ]}
+                >
+                  {strings.yes}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.answerBinaryBtn,
+                  !pendingCompleted && styles.answerBinaryBtnSelected,
+                ]}
+                onPress={() => setPendingCompleted(false)}
+              >
+                <Text
+                  style={[
+                    styles.answerBinaryText,
+                    !pendingCompleted && styles.answerBinaryTextSelected,
+                  ]}
+                >
+                  {strings.no}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.answerFieldTitle}>{strings.answerBook}</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.answerChoiceRow}
+            >
+              {BIBLE_BOOKS.map(book => (
+                <TouchableOpacity
+                  key={book.bookID}
+                  style={[
+                    styles.answerChoiceChip,
+                    readingBook === book.bookName && styles.answerChoiceChipSelected,
+                  ]}
+                  onPress={() => setReadingBook(book.bookName)}
+                >
+                  <Text
+                    style={[
+                      styles.answerChoiceText,
+                      readingBook === book.bookName &&
+                        styles.answerChoiceTextSelected,
+                    ]}
+                  >
+                    {book.bookName}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <Text style={styles.answerFieldTitle}>{strings.answerChapter}</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.answerChoiceRow}
+            >
+              {chapterOptions.map(chapter => (
+                <TouchableOpacity
+                  key={`chapter-${chapter}`}
+                  style={[
+                    styles.answerChoiceChip,
+                    readingChapter === chapter && styles.answerChoiceChipSelected,
+                  ]}
+                  onPress={() => setReadingChapter(chapter)}
+                >
+                  <Text
+                    style={[
+                      styles.answerChoiceText,
+                      readingChapter === chapter && styles.answerChoiceTextSelected,
+                    ]}
+                  >
+                    {chapter}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <Text style={styles.answerFieldTitle}>{strings.answerVerses}</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.answerChoiceRow}
+            >
+              {chapterOptions.map(value => (
+                <TouchableOpacity
+                  key={`read-${value}`}
+                  style={[
+                    styles.answerChoiceChip,
+                    chaptersRead === value && styles.answerChoiceChipSelected,
+                  ]}
+                  onPress={() => setChaptersRead(value)}
+                >
+                  <Text
+                    style={[
+                      styles.answerChoiceText,
+                      chaptersRead === value && styles.answerChoiceTextSelected,
+                    ]}
+                  >
+                    {value}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity style={styles.saveAnswerBtn} onPress={saveDevotionSheet}>
+              <Text style={styles.saveAnswerBtnText}>{strings.saveAnswer}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
