@@ -358,8 +358,12 @@ const HomeScreen = ({ route, navigation }: any) => {
             </ScrollView>
 
             <Text style={styles.answerFieldTitle}>{strings.answerVerses}</Text>
-            <View style={styles.answerBinaryRow}>
-              {[1, 2, 3, 4, 5].map(value => (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.answerChoiceRow}
+            >
+              {chapterOptions.map(value => (
                 <TouchableOpacity
                   key={`read-${value}`}
                   style={[
@@ -378,7 +382,7 @@ const HomeScreen = ({ route, navigation }: any) => {
                   </Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
 
             <TouchableOpacity style={styles.saveAnswerBtn} onPress={saveDevotionSheet}>
               <Text style={styles.saveAnswerBtnText}>{strings.saveAnswer}</Text>

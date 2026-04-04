@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -111,6 +112,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [selectedChaptersRead, setSelectedChaptersRead] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [editorVisible, setEditorVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState<AlertConfig>({
     visible: false,
     title: '',
@@ -232,6 +234,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
     }
     setSelectedDate(isoDate);
     hydrateDayForm(isoDate);
+    setEditorVisible(true);
   };
 
   const handleSaveDay = async () => {
@@ -273,6 +276,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         type: 'success',
       });
       await loadDevotionDays();
+      setEditorVisible(false);
     } finally {
       setSaving(false);
     }
@@ -441,6 +445,17 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
             </View>
           </View>
 
+        </ScrollView>
+      )}
+
+      <CustomAlert {...alertConfig} onDismiss={hideAlert} />
+      <Modal
+        visible={editorVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditorVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
           <View style={styles.editorCard}>
             <Text style={styles.editorTitle}>{strings.trackDayTitle}</Text>
             <Text style={styles.editorSubtitle}>{strings.trackDaySubtitle}</Text>
@@ -541,8 +556,12 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
                 </ScrollView>
 
                 <Text style={styles.fieldTitle}>{strings.chaptersRead}</Text>
-                <View style={styles.binaryRow}>
-                  {[1, 2, 3, 4, 5].map(count => (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.choiceRow}
+                >
+                  {chapterOptions.map(count => (
                     <TouchableOpacity
                       key={`count-${count}`}
                       style={[
@@ -562,26 +581,32 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
                       </Text>
                     </TouchableOpacity>
                   ))}
-                </View>
+                </ScrollView>
               </>
             )}
 
-            <TouchableOpacity
-              style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
-              disabled={saving}
-              onPress={handleSaveDay}
-            >
-              {saving ? (
-                <ActivityIndicator color="#FFF" />
-              ) : (
-                <Text style={styles.saveBtnText}>{strings.saveDay}</Text>
-              )}
-            </TouchableOpacity>
+            <View style={styles.modalActionsRow}>
+              <TouchableOpacity
+                style={styles.closeBtn}
+                onPress={() => setEditorVisible(false)}
+              >
+                <Text style={styles.closeBtnText}>{strings.closeEditor}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+                disabled={saving}
+                onPress={handleSaveDay}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.saveBtnText}>{strings.saveDay}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </ScrollView>
-      )}
-
-      <CustomAlert {...alertConfig} onDismiss={hideAlert} />
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -876,11 +901,16 @@ const styles = StyleSheet.create({
   },
   editorCard: {
     backgroundColor: '#FFF',
-    borderRadius: 24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(10,17,36,0.06)',
-    marginTop: 14,
+    paddingBottom: 20,
+    maxHeight: '80%',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
   },
   editorTitle: {
     color: NAVY,
@@ -960,6 +990,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     paddingVertical: 14,
+    flex: 1,
   },
   saveBtnDisabled: {
     opacity: 0.6,
@@ -968,6 +999,24 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 15,
     fontWeight: '800',
+  },
+  modalActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  closeBtn: {
+    marginTop: 16,
+    flex: 1,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: NAVY,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeBtnText: {
+    color: NAVY,
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 

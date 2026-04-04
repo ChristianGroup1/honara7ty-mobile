@@ -23,6 +23,7 @@ export const devotionCalendarStrings = {
   selectChapter: 'إصحاح كام؟',
   chaptersRead: 'قريت كام إصحاح؟',
   saveDay: 'حفظ اليوم',
+  closeEditor: 'إغلاق',
   futureDateTitle: 'تاريخ مستقبلي',
   futureDateMessage: 'اختار يوم اليوم أو قبله عشان تسجل الخلوة.',
   saveSuccessTitle: 'تم الحفظ ✅',

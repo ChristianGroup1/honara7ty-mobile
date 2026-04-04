@@ -133,7 +133,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
     [selectedBookMeta.chapters],
   );
 
-  const dailyTargetOptions = [1, 2, 3, 4, 5];
+  const dailyTargetOptions = chapterOptions;
 
   const renderChoiceChip = (
     label: string,
@@ -368,7 +368,11 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           </ScrollView>
 
           <Text style={styles.fieldLabel}>{strings.chaptersPerDay}</Text>
-          <View style={styles.choiceWrap}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.choiceRow}
+          >
             {dailyTargetOptions.map(value =>
               renderChoiceChip(
                 `${value}`,
@@ -376,7 +380,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
                 () => setDailyChaptersTarget(value),
               ),
             )}
-          </View>
+          </ScrollView>
         </View>
 
         <View style={styles.sectionHeader}>
