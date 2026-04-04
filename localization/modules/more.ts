@@ -1,6 +1,10 @@
 export const moreStrings = {
   title: 'المزيد',
   items: {
+    aboutIdea: {
+      title: 'عن الفكره',
+      subtitle: 'تعرف على فكرة التطبيق',
+    },
     bibleMemorization: {
       title: 'حفظ الكتاب المقدس',
       subtitle: 'اختبر حفظك للآيات',

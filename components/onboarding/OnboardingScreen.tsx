@@ -4,6 +4,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  I18nManager,
   StatusBar,
   StyleSheet,
   Text,
@@ -27,68 +28,70 @@ const TEXT = '#4F5562';
 const TITLE = '#3F4653';
 const SHADOW = '#9197A3';
 const MIST = '#D5DCE6';
-const SHEET_HEIGHT = Math.max(SCREEN_HEIGHT * 0.31, 260);
+const NAVY = '#0A1124';
+const SHEET_HEIGHT = Math.max(SCREEN_HEIGHT * 0.34, 290);
 
 const THEMES = [
   {
-    background: '#F3A354',
-    accent: '#F3A354',
-    secondary: '#69A8E8',
+    background: '#0C1121',
+    accent: '#C9A84C',
+    secondary: 'rgba(255,255,255,0.16)',
     icon: 'book-open-page-variant',
+    label: 'بداية هادئة',
     intro: true,
   },
   {
-    background: '#F3CF57',
-    accent: '#F3CF57',
-    secondary: '#FFFFFF',
+    background: '#0C1121',
+    accent: '#76A9FA',
+    secondary: 'rgba(255,255,255,0.16)',
     icon: 'headphones',
+    label: 'رسالة يومية',
     intro: false,
   },
   {
-    background: '#5AA0E2',
-    accent: '#5AA0E2',
-    secondary: '#FFFFFF',
-    icon: 'account-group-outline',
+    background: '#0C1121',
+    accent: '#7FD6B3',
+    secondary: 'rgba(255,255,255,0.16)',
+    icon: 'calendar',
+    label: 'ثبات عملي',
     intro: false,
   },
 ] as const;
 
-const IntroArtwork = () => (
-  <View style={styles.introArtwork}>
-    <Image
-      source={require('../../assets/images/logo.png')}
-      style={styles.introLogo}
-      resizeMode="contain"
-    />
-  </View>
-);
-
 const HeroArtwork = ({
   icon,
   accent,
+  secondary,
+  label,
   index,
 }: {
   icon: string;
   accent: string;
+  secondary: string;
+  label: string;
   index: number;
 }) => {
   const cardRotation = index % 2 === 0 ? '-8deg' : '8deg';
   const badgeRotation = index % 2 === 0 ? '10deg' : '-10deg';
+  const topBadgeRotation = index % 2 === 0 ? '-10deg' : '10deg';
 
   return (
     <View style={styles.heroArtwork}>
+      <View style={styles.heroGlowLarge} />
+      <View
+        style={[styles.heroGlowSmall, { backgroundColor: accent + '33' }]}
+      />
+      <View style={styles.dotClusterTop} />
       <View style={styles.ringTopRight} />
       <View style={styles.ringBottomLeft} />
+      <View style={styles.heroPill}>
+        <MaterialCommunityIcons name={icon} size={16} color={accent} />
+        <Text style={styles.heroPillText}>{label}</Text>
+      </View>
+
       <View style={styles.photoShadow} />
 
-      <View
-        style={[
-          styles.photoCard,
-          {
-            transform: [{ rotate: cardRotation }],
-          },
-        ]}
-      >
+      <View style={[styles.photoCard]}>
         <Image
           source={require('../../assets/images/logo.png')}
           style={styles.heroLogo}
@@ -111,15 +114,23 @@ const HeroArtwork = ({
   );
 };
 
-type Props = { navigation: any };
+type Props = {
+  navigation: any;
+  route?: {
+    params?: {
+      inApp?: boolean;
+    };
+  };
+};
 
-const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
+const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   const strings = getStrings().onboarding;
   const slides = strings.slides;
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<Slide>>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [finishing, setFinishing] = useState(false);
+  const inApp = route?.params?.inApp === true;
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -135,6 +146,11 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleFinish = async () => {
+    if (inApp) {
+      navigation.goBack();
+      return;
+    }
+
     setFinishing(true);
     try {
       await supabase.auth.updateUser({ data: { onboarding_completed: true } });
@@ -179,15 +195,13 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
             },
           ]}
         >
-          {isIntro ? (
-            <IntroArtwork />
-          ) : (
-            <HeroArtwork
-              icon={theme.icon}
-              accent={theme.accent}
-              index={index}
-            />
-          )}
+          <HeroArtwork
+            icon={theme.icon}
+            accent={theme.accent}
+            secondary={theme.secondary}
+            label={theme.label}
+            index={index}
+          />
         </View>
 
         <View
@@ -198,34 +212,36 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
             },
           ]}
         >
-          <View style={styles.dotsRow}>
-            {slides.map((_, dotIndex) => (
-              <View
-                key={dotIndex}
-                style={[
-                  styles.dot,
-                  dotIndex === currentIndex
-                    ? [styles.dotActive, { backgroundColor: theme.accent }]
-                    : null,
-                ]}
-              />
-            ))}
-          </View>
-
-          {item.title ? <Text style={styles.title}>{item.title}</Text> : null}
-
-          {item.body ? (
-            <Text style={[styles.body, !item.title ? styles.bodyLead : null]}>
-              {item.body}
-            </Text>
-          ) : null}
-
-          {item.verse ? (
-            <View style={styles.verseWrap}>
-              <Text style={styles.verseText}>{item.verse}</Text>
-              <Text style={styles.verseRef}>{item.verseRef}</Text>
+          <View style={styles.contentBlock}>
+            <View style={styles.dotsRow}>
+              {slides.map((_, dotIndex) => (
+                <View
+                  key={dotIndex}
+                  style={[
+                    styles.dot,
+                    dotIndex === currentIndex
+                      ? [styles.dotActive, { backgroundColor: theme.accent }]
+                      : null,
+                  ]}
+                />
+              ))}
             </View>
-          ) : null}
+
+            {item.title ? <Text style={styles.title}>{item.title}</Text> : null}
+
+            {item.body ? (
+              <Text style={[styles.body, !item.title ? styles.bodyLead : null]}>
+                {item.body}
+              </Text>
+            ) : null}
+
+            {item.verse ? (
+              <View style={styles.verseWrap}>
+                <Text style={styles.verseText}>{item.verse}</Text>
+                <Text style={styles.verseRef}>{item.verseRef}</Text>
+              </View>
+            ) : null}
+          </View>
 
           <View style={styles.actionRow}>
             <TouchableOpacity
@@ -263,10 +279,31 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.root}>
       <StatusBar
-        barStyle="dark-content"
+        barStyle={inApp ? 'light-content' : 'dark-content'}
         translucent
         backgroundColor="transparent"
       />
+
+      {inApp ? (
+        <View
+          style={[
+            styles.backButtonWrap,
+            { top: Math.max(insets.top, 16), right: 16 },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons
+              name={I18nManager.isRTL ? 'arrow-right' : 'arrow-left'}
+              size={22}
+              color={NAVY}
+            />
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       <FlatList
         ref={listRef}
@@ -289,6 +326,24 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: PAPER,
+  },
+  backButtonWrap: {
+    position: 'absolute',
+    zIndex: 20,
+    left: 26,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   slide: {
     width: SCREEN_WIDTH,
@@ -328,6 +383,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  heroGlowLarge: {
+    position: 'absolute',
+    top: SCREEN_HEIGHT * 0.08,
+    alignSelf: 'center',
+    width: SCREEN_WIDTH * 0.62,
+    height: SCREEN_WIDTH * 0.62,
+    borderRadius: SCREEN_WIDTH * 0.31,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  heroGlowSmall: {
+    position: 'absolute',
+    top: SCREEN_HEIGHT * 0.2,
+    right: SCREEN_WIDTH * 0.16,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+  },
+  dotClusterTop: {
+    position: 'absolute',
+    top: SCREEN_HEIGHT * 0.12,
+    left: SCREEN_WIDTH * 0.14,
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
   ringTopRight: {
     position: 'absolute',
     top: SCREEN_HEIGHT * 0.06,
@@ -362,21 +445,72 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH * 0.44,
     height: SCREEN_WIDTH * 0.44,
     borderRadius: 30,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.24,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  photoCardInner: {
+    position: 'absolute',
+    inset: 14,
+    borderRadius: 22,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   heroLogo: {
     width: SCREEN_WIDTH * 0.3,
     height: SCREEN_WIDTH * 0.3,
   },
+  heroPill: {
+    position: 'absolute',
+    top: SCREEN_HEIGHT * 0.12,
+    left: SCREEN_WIDTH * 0.05,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.94)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  heroPillText: {
+    color: NAVY,
+    fontSize: 13,
+    fontWeight: '800',
+  },
   heroBadge: {
     position: 'absolute',
-    right: SCREEN_WIDTH * 0.21,
-    top: SCREEN_HEIGHT * 0.16,
+    right: SCREEN_WIDTH * 0.11,
+    top: SCREEN_HEIGHT * 0.46,
     width: 58,
     height: 58,
     borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 7,
+  },
+  heroBadgeTop: {
+    position: 'absolute',
+    right: SCREEN_WIDTH * 0.65,
+    top: SCREEN_HEIGHT * 0.12,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -390,18 +524,22 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    minHeight: SHEET_HEIGHT,
+    height: SHEET_HEIGHT,
     backgroundColor: WHITE,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 26,
     paddingTop: 18,
     paddingBottom: 22,
+    justifyContent: 'space-between',
     shadowColor: SHADOW,
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 8,
+  },
+  contentBlock: {
+    flexShrink: 1,
   },
   dotsRow: {
     flexDirection: 'row',
@@ -421,7 +559,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: TITLE,
-    textAlign: 'left',
+    textAlign: 'center',
     fontSize: 22,
     lineHeight: 29,
     fontWeight: '900',
