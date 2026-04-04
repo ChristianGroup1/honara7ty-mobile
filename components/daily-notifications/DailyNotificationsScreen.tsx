@@ -364,8 +364,8 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           </View>
 
           <Text style={styles.fieldLabel}>{strings.selectBook}</Text>
-          {renderBookSection('العهد القديم', OLD_TESTAMENT_BOOKS)}
-          {renderBookSection('العهد الجديد', NEW_TESTAMENT_BOOKS)}
+          {renderBookSection(strings.oldTestament, OLD_TESTAMENT_BOOKS)}
+          {renderBookSection(strings.newTestament, NEW_TESTAMENT_BOOKS)}
 
           <Text style={styles.fieldLabel}>{strings.selectChapter}</Text>
           <ScrollView

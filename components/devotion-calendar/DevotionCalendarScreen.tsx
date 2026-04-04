@@ -506,7 +506,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
             {selectedCompleted && (
               <>
                 <Text style={styles.fieldTitle}>{strings.selectBook}</Text>
-                <Text style={styles.groupLabel}>العهد القديم</Text>
+                <Text style={styles.groupLabel}>{strings.oldTestament}</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -532,7 +532,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
-                <Text style={styles.groupLabel}>العهد الجديد</Text>
+                <Text style={styles.groupLabel}>{strings.newTestament}</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}

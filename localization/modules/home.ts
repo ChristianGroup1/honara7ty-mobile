@@ -29,6 +29,8 @@ export const homeStrings = {
   answerSheetTitle: 'سجل خلوتك اليوم',
   answerSheetSubtitle: 'اختار الإجابة وسجّل الجزء اللي قريته.',
   answerBook: 'السفر',
+  oldTestament: 'العهد القديم',
+  newTestament: 'العهد الجديد',
   answerChapter: 'الإصحاح',
   answerVerses: 'عدد الإصحاحات',
   saveAnswer: 'حفظ الإجابة',

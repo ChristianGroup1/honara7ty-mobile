@@ -20,6 +20,8 @@ export const devotionCalendarStrings = {
   yes: 'نعم ✓',
   no: 'لا ✗',
   selectBook: 'قريت في سفر إيه؟',
+  oldTestament: 'العهد القديم',
+  newTestament: 'العهد الجديد',
   selectChapter: 'إصحاح كام؟',
   chaptersRead: 'قريت كام إصحاح؟',
   saveDay: 'حفظ اليوم',

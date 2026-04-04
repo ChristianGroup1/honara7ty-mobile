@@ -25,6 +25,8 @@ export const dailyNotificationsStrings = {
   readingPlanTitle: 'خطة القراءة اليومية',
   readingPlanSubtitle: 'حدد المكان اللي هتبدأ منه وكمية القراءة كل يوم',
   selectBook: 'اختار السفر',
+  oldTestament: 'العهد القديم',
+  newTestament: 'العهد الجديد',
   selectChapter: 'اختار الإصحاح',
   chaptersPerDay: 'عدد الإصحاحات يومياً',
   saveTime: 'حفظ الوقت',

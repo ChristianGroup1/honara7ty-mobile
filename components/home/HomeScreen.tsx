@@ -307,7 +307,7 @@ const HomeScreen = ({ route, navigation }: any) => {
             </View>
 
             <Text style={styles.answerFieldTitle}>{strings.answerBook}</Text>
-            <Text style={styles.answerGroupLabel}>العهد القديم</Text>
+            <Text style={styles.answerGroupLabel}>{strings.oldTestament}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -334,7 +334,7 @@ const HomeScreen = ({ route, navigation }: any) => {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-            <Text style={styles.answerGroupLabel}>العهد الجديد</Text>
+            <Text style={styles.answerGroupLabel}>{strings.newTestament}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
