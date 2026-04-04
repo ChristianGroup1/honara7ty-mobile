@@ -6,7 +6,7 @@
  * Awards weekly (7 days), monthly (30 days), and yearly (365 days) badges.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -17,6 +17,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
@@ -65,9 +66,11 @@ const BadgesScreen = ({ navigation }: any) => {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    fetchStreak();
-  }, [fetchStreak]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchStreak();
+    }, [fetchStreak]),
+  );
 
   const handleShare = async (badge: BadgeConfig) => {
     try {

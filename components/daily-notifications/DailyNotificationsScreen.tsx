@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -21,6 +21,11 @@ import supabase from '../../lib/supbase';
 import { scheduleDailyDevotionReminder } from '../../lib/notifications';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import { getStrings } from '../../localization';
+import {
+  BIBLE_BOOKS,
+  NEW_TESTAMENT_BOOKS,
+  OLD_TESTAMENT_BOOKS,
+} from '../data/bibleMetadata';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -47,6 +52,9 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
     return d;
   });
   const [showPicker, setShowPicker] = useState(false);
+  const [readingBook, setReadingBook] = useState(BIBLE_BOOKS[0].bookName);
+  const [readingChapter, setReadingChapter] = useState(1);
+  const [dailyChaptersTarget, setDailyChaptersTarget] = useState(1);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -78,7 +86,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
       }
       const { data } = await supabase
         .from('profiles')
-        .select('devotion_time')
+        .select('devotion_time, reading_book, reading_chapter, daily_chapters_target')
         .eq('id', userId)
         .single();
       if (data?.devotion_time) {
@@ -86,6 +94,15 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
         const d = new Date();
         d.setHours(h, m, 0, 0);
         setDevotionTime(d);
+      }
+      if (data?.reading_book) {
+        setReadingBook(data.reading_book);
+      }
+      if (data?.reading_chapter) {
+        setReadingChapter(Math.max(1, Number(data.reading_chapter)));
+      }
+      if (data?.daily_chapters_target) {
+        setDailyChaptersTarget(Math.max(1, Number(data.daily_chapters_target)));
       }
       setLoading(false);
     };
@@ -103,6 +120,63 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
       setDevotionTime(selected);
     }
   };
+
+  const selectedBookMeta = useMemo(
+    () => BIBLE_BOOKS.find(book => book.bookName === readingBook) ?? BIBLE_BOOKS[0],
+    [readingBook],
+  );
+
+  useEffect(() => {
+    if (readingChapter > selectedBookMeta.chapters) {
+      setReadingChapter(selectedBookMeta.chapters);
+    }
+  }, [readingChapter, selectedBookMeta.chapters]);
+
+  const chapterOptions = useMemo(
+    () => Array.from({ length: selectedBookMeta.chapters }, (_, idx) => idx + 1),
+    [selectedBookMeta.chapters],
+  );
+
+  const dailyTargetOptions = chapterOptions;
+
+  const renderChoiceChip = (
+    label: string,
+    selected: boolean,
+    onPress: () => void,
+  ) => (
+    <TouchableOpacity
+      key={label}
+      style={[styles.choiceChip, selected && styles.choiceChipSelected]}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <Text style={[styles.choiceChipText, selected && styles.choiceChipTextSelected]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const renderBookSection = (
+    title: string,
+    books: Array<(typeof BIBLE_BOOKS)[number]>,
+  ) => (
+    <View>
+      <Text style={styles.groupLabel}>{title}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.choiceRow}
+      >
+        {books.map(book =>
+          renderChoiceChip(
+            book.bookName,
+            readingBook === book.bookName,
+            () => setReadingBook(book.bookName),
+          ),
+        )}
+      </ScrollView>
+    </View>
+  );
 
   const handleSave = async () => {
     setSaving(true);
@@ -123,7 +197,16 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
     // Upsert into profiles table
     const { error } = await supabase
       .from('profiles')
-      .upsert({ id: userId, devotion_time: timeString }, { onConflict: 'id' });
+      .upsert(
+        {
+          id: userId,
+          devotion_time: timeString,
+          reading_book: readingBook,
+          reading_chapter: readingChapter,
+          daily_chapters_target: dailyChaptersTarget,
+        },
+        { onConflict: 'id' },
+      );
 
     if (error) {
       showAlert(strings.saveErrorTitle, error.message);
@@ -153,10 +236,6 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
   });
   const topInsetStyle = { height: insets.top };
   const saveButtonStyle = saving ? styles.saveBtnDisabled : null;
-  const statusLabel = saved ? strings.saved : strings.readyToSave;
-  const timePeriodLabel =
-    devotionTime.getHours() < 12 ? strings.morning : strings.evening;
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -275,6 +354,49 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
             </>
           )}
         </TouchableOpacity>
+
+        <View style={styles.pickerCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{strings.readingPlanTitle}</Text>
+            <Text style={styles.sectionSubtitle}>
+              {strings.readingPlanSubtitle}
+            </Text>
+          </View>
+
+          <Text style={styles.fieldLabel}>{strings.selectBook}</Text>
+          {renderBookSection(strings.oldTestament, OLD_TESTAMENT_BOOKS)}
+          {renderBookSection(strings.newTestament, NEW_TESTAMENT_BOOKS)}
+
+          <Text style={styles.fieldLabel}>{strings.selectChapter}</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.choiceRow}
+          >
+            {chapterOptions.map(chapter =>
+              renderChoiceChip(
+                `اصحاح ${chapter}`,
+                readingChapter === chapter,
+                () => setReadingChapter(chapter),
+              ),
+            )}
+          </ScrollView>
+
+          <Text style={styles.fieldLabel}>{strings.chaptersPerDay}</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.choiceRow}
+          >
+            {dailyTargetOptions.map(value =>
+              renderChoiceChip(
+                `${value}`,
+                dailyChaptersTarget === value,
+                () => setDailyChaptersTarget(value),
+              ),
+            )}
+          </ScrollView>
+        </View>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{strings.tipsTitle}</Text>
@@ -543,6 +665,50 @@ const styles = StyleSheet.create({
     color: SLATE,
     fontSize: 13,
     textAlign: 'left',
+  },
+  fieldLabel: {
+    color: INK,
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
+    marginTop: 8,
+    textAlign: 'left',
+  },
+  groupLabel: {
+    color: '#667085',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+    textAlign: 'left',
+  },
+  choiceRow: {
+    gap: 8,
+    paddingBottom: 8,
+  },
+  choiceWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  choiceChip: {
+    borderWidth: 1,
+    borderColor: '#D6DEEA',
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#F8FAFD',
+  },
+  choiceChipSelected: {
+    borderColor: NAVY,
+    backgroundColor: NAVY,
+  },
+  choiceChipText: {
+    color: NAVY,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  choiceChipTextSelected: {
+    color: '#FFF',
   },
   tipCard: {
     backgroundColor: '#FFF',

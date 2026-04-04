@@ -1,6 +1,7 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -15,6 +16,11 @@ import supabase from '../../lib/supbase';
 import CustomAlert, { AlertConfig } from '../shared/CustomAlert';
 import { computeStreak } from '../badges/utils';
 import { getStrings } from '../../localization';
+import {
+  BIBLE_BOOKS,
+  NEW_TESTAMENT_BOOKS,
+  OLD_TESTAMENT_BOOKS,
+} from '../data/bibleMetadata';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -23,7 +29,18 @@ const BG = '#F2F4F8';
 const getMonthKey = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
-const toIsoDate = (date: Date) => date.toISOString().split('T')[0];
+const toIsoDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+type DevotionDayLog = {
+  completed: boolean;
+  reading_book?: string | null;
+  reading_chapter?: number | null;
+  chapters_read?: number | null;
+};
 
 const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1);
 
@@ -89,8 +106,17 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   const strings = getStrings().devotionCalendar;
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
-  const [completedDates, setCompletedDates] = useState<string[]>([]);
+  const [devotionLogsByDate, setDevotionLogsByDate] = useState<
+    Record<string, DevotionDayLog>
+  >({});
   const [visibleMonth, setVisibleMonth] = useState<Date>(startOfMonth(new Date()));
+  const [selectedDate, setSelectedDate] = useState<string>(toIsoDate(new Date()));
+  const [selectedCompleted, setSelectedCompleted] = useState(true);
+  const [selectedBook, setSelectedBook] = useState(BIBLE_BOOKS[0].bookName);
+  const [selectedChapter, setSelectedChapter] = useState(1);
+  const [selectedChaptersRead, setSelectedChaptersRead] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [editorVisible, setEditorVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState<AlertConfig>({
     visible: false,
     title: '',
@@ -104,15 +130,14 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id;
       if (!userId) {
-        setCompletedDates([]);
+        setDevotionLogsByDate({});
         return;
       }
 
       const { data, error } = await supabase
         .from('devotion_log')
-        .select('date')
+        .select('date, completed, reading_book, reading_chapter, chapters_read')
         .eq('user_id', userId)
-        .eq('completed', true)
         .order('date', { ascending: false });
 
       if (error) {
@@ -125,11 +150,21 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         return;
       }
 
-      setCompletedDates((data ?? []).map(item => item.date as string));
+      const logsMap: Record<string, DevotionDayLog> = {};
+      (data ?? []).forEach(item => {
+        const day = item.date as string;
+        logsMap[day] = {
+          completed: Boolean(item.completed),
+          reading_book: (item as any).reading_book,
+          reading_chapter: (item as any).reading_chapter,
+          chapters_read: (item as any).chapters_read,
+        };
+      });
+      setDevotionLogsByDate(logsMap);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [strings.errorTitle]);
 
   useFocusEffect(
     useCallback(() => {
@@ -137,6 +172,13 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
     }, [loadDevotionDays]),
   );
 
+  const completedDates = useMemo(
+    () =>
+      Object.entries(devotionLogsByDate)
+        .filter(([, value]) => value.completed)
+        .map(([date]) => date),
+    [devotionLogsByDate],
+  );
   const completedSet = useMemo(() => new Set(completedDates), [completedDates]);
   const monthCells = useMemo(
     () => buildMonthCells(visibleMonth, completedSet),
@@ -150,6 +192,99 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   }, [completedDates, visibleMonth]);
 
   const totalCompleted = completedDates.length;
+  const todayIso = toIsoDate(new Date());
+  const selectedBookMeta = useMemo(
+    () => BIBLE_BOOKS.find(book => book.bookName === selectedBook) ?? BIBLE_BOOKS[0],
+    [selectedBook],
+  );
+  const chapterOptions = useMemo(
+    () => Array.from({ length: selectedBookMeta.chapters }, (_, idx) => idx + 1),
+    [selectedBookMeta.chapters],
+  );
+
+  useEffect(() => {
+    if (selectedChapter > selectedBookMeta.chapters) {
+      setSelectedChapter(selectedBookMeta.chapters);
+    }
+  }, [selectedBookMeta.chapters, selectedChapter]);
+
+  const hydrateDayForm = useCallback(
+    (isoDate: string) => {
+      const log = devotionLogsByDate[isoDate];
+      if (log) {
+        setSelectedCompleted(log.completed);
+        setSelectedBook(log.reading_book || BIBLE_BOOKS[0].bookName);
+        setSelectedChapter(Math.max(1, Number(log.reading_chapter ?? 1)));
+        setSelectedChaptersRead(Math.max(1, Number(log.chapters_read ?? 1)));
+      } else {
+        setSelectedCompleted(true);
+        setSelectedBook(BIBLE_BOOKS[0].bookName);
+        setSelectedChapter(1);
+        setSelectedChaptersRead(1);
+      }
+    },
+    [devotionLogsByDate],
+  );
+
+  const handlePickDay = (isoDate: string) => {
+    if (isoDate > todayIso) {
+      setAlertConfig({
+        visible: true,
+        title: strings.futureDateTitle,
+        message: strings.futureDateMessage,
+        type: 'warning',
+      });
+      return;
+    }
+    setSelectedDate(isoDate);
+    hydrateDayForm(isoDate);
+    setEditorVisible(true);
+  };
+
+  const handleSaveDay = async () => {
+    setSaving(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      if (!userId) {
+        return;
+      }
+
+      const payload = {
+        user_id: userId,
+        date: selectedDate,
+        completed: selectedCompleted,
+        reading_book: selectedCompleted ? selectedBook : null,
+        reading_chapter: selectedCompleted ? selectedChapter : null,
+        chapters_read: selectedCompleted ? selectedChaptersRead : null,
+      };
+
+      const { error } = await supabase
+        .from('devotion_log')
+        .upsert(payload, { onConflict: 'user_id,date' });
+
+      if (error) {
+        setAlertConfig({
+          visible: true,
+          title: strings.errorTitle,
+          message: error.message,
+          type: 'error',
+        });
+        return;
+      }
+
+      setAlertConfig({
+        visible: true,
+        title: strings.saveSuccessTitle,
+        message: strings.saveSuccessMessage,
+        type: 'success',
+      });
+      await loadDevotionDays();
+      setEditorVisible(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
@@ -274,12 +409,16 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
 
             <View style={styles.grid}>
               {monthCells.map(cell => (
-                <View
+                <TouchableOpacity
                   key={cell.key}
+                  activeOpacity={0.8}
+                  disabled={cell.empty}
+                  onPress={() => cell.isoDate && handlePickDay(cell.isoDate)}
                   style={[
                     styles.dayCell,
                     cell.completed && styles.dayCellCompleted,
                     cell.today && styles.dayCellToday,
+                    cell.isoDate === selectedDate && styles.dayCellSelected,
                     cell.empty && styles.dayCellEmpty,
                   ]}
                 >
@@ -305,14 +444,200 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
                       ) : null}
                     </>
                   ) : null}
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           </View>
+
         </ScrollView>
       )}
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
+      <Modal
+        visible={editorVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditorVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.editorCard}>
+            <Text style={styles.editorTitle}>{strings.trackDayTitle}</Text>
+            <Text style={styles.editorSubtitle}>{strings.trackDaySubtitle}</Text>
+            <Text style={styles.selectedDateText}>
+              {strings.pickedDate}: {selectedDate}
+            </Text>
+
+            <Text style={styles.fieldTitle}>{strings.answerQuestion}</Text>
+            <View style={styles.binaryRow}>
+              <TouchableOpacity
+                style={[
+                  styles.binaryBtn,
+                  selectedCompleted && styles.binaryBtnSelected,
+                ]}
+                onPress={() => setSelectedCompleted(true)}
+              >
+                <Text
+                  style={[
+                    styles.binaryText,
+                    selectedCompleted && styles.binaryTextSelected,
+                  ]}
+                >
+                  {strings.yes}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.binaryBtn,
+                  !selectedCompleted && styles.binaryBtnSelected,
+                ]}
+                onPress={() => setSelectedCompleted(false)}
+              >
+                <Text
+                  style={[
+                    styles.binaryText,
+                    !selectedCompleted && styles.binaryTextSelected,
+                  ]}
+                >
+                  {strings.no}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {selectedCompleted && (
+              <>
+                <Text style={styles.fieldTitle}>{strings.selectBook}</Text>
+                <Text style={styles.groupLabel}>{strings.oldTestament}</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.choiceRow}
+                >
+                  {OLD_TESTAMENT_BOOKS.map(book => (
+                    <TouchableOpacity
+                      key={`book-${book.bookID}`}
+                      style={[
+                        styles.choiceChip,
+                        selectedBook === book.bookName && styles.choiceChipSelected,
+                      ]}
+                      onPress={() => setSelectedBook(book.bookName)}
+                    >
+                      <Text
+                        style={[
+                          styles.choiceChipText,
+                          selectedBook === book.bookName && styles.choiceChipTextSelected,
+                        ]}
+                      >
+                        {book.bookName}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <Text style={styles.groupLabel}>{strings.newTestament}</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.choiceRow}
+                >
+                  {NEW_TESTAMENT_BOOKS.map(book => (
+                    <TouchableOpacity
+                      key={`book-${book.bookID}`}
+                      style={[
+                        styles.choiceChip,
+                        selectedBook === book.bookName && styles.choiceChipSelected,
+                      ]}
+                      onPress={() => setSelectedBook(book.bookName)}
+                    >
+                      <Text
+                        style={[
+                          styles.choiceChipText,
+                          selectedBook === book.bookName && styles.choiceChipTextSelected,
+                        ]}
+                      >
+                        {book.bookName}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+
+                <Text style={styles.fieldTitle}>{strings.selectChapter}</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.choiceRow}
+                >
+                  {chapterOptions.map(chapter => (
+                    <TouchableOpacity
+                      key={`chapter-${chapter}`}
+                      style={[
+                        styles.choiceChip,
+                        selectedChapter === chapter && styles.choiceChipSelected,
+                      ]}
+                      onPress={() => setSelectedChapter(chapter)}
+                    >
+                      <Text
+                        style={[
+                          styles.choiceChipText,
+                          selectedChapter === chapter && styles.choiceChipTextSelected,
+                        ]}
+                      >
+                        {chapter}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+
+                <Text style={styles.fieldTitle}>{strings.chaptersRead}</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.choiceRow}
+                >
+                  {chapterOptions.map(count => (
+                    <TouchableOpacity
+                      key={`count-${count}`}
+                      style={[
+                        styles.choiceChip,
+                        selectedChaptersRead === count && styles.choiceChipSelected,
+                      ]}
+                      onPress={() => setSelectedChaptersRead(count)}
+                    >
+                      <Text
+                        style={[
+                          styles.choiceChipText,
+                          selectedChaptersRead === count &&
+                            styles.choiceChipTextSelected,
+                        ]}
+                      >
+                        {count}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </>
+            )}
+
+            <View style={styles.modalActionsRow}>
+              <TouchableOpacity
+                style={styles.closeBtn}
+                onPress={() => setEditorVisible(false)}
+              >
+                <Text style={styles.closeBtnText}>{strings.closeEditor}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+                disabled={saving}
+                onPress={handleSaveDay}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.saveBtnText}>{strings.saveDay}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -575,6 +900,10 @@ const styles = StyleSheet.create({
     borderColor: NAVY,
     borderWidth: 1.5,
   },
+  dayCellSelected: {
+    borderColor: GOLD,
+    borderWidth: 2,
+  },
   dayCellEmpty: {
     backgroundColor: 'transparent',
   },
@@ -600,6 +929,131 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: GOLD,
+  },
+  editorCard: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 16,
+    paddingBottom: 20,
+    maxHeight: '80%',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  editorTitle: {
+    color: NAVY,
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  editorSubtitle: {
+    color: '#79808A',
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  selectedDateText: {
+    color: NAVY,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  fieldTitle: {
+    color: NAVY,
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  groupLabel: {
+    color: '#667085',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  binaryRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  binaryBtn: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#CDD7E5',
+    backgroundColor: '#F5F8FC',
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  binaryBtnSelected: {
+    backgroundColor: NAVY,
+    borderColor: NAVY,
+  },
+  binaryText: {
+    color: NAVY,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  binaryTextSelected: {
+    color: '#FFF',
+  },
+  choiceRow: {
+    gap: 8,
+    paddingBottom: 8,
+  },
+  choiceChip: {
+    borderWidth: 1,
+    borderColor: '#D6DEEA',
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#F8FAFD',
+  },
+  choiceChipSelected: {
+    borderColor: NAVY,
+    backgroundColor: NAVY,
+  },
+  choiceChipText: {
+    color: NAVY,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  choiceChipTextSelected: {
+    color: '#FFF',
+  },
+  saveBtn: {
+    marginTop: 16,
+    backgroundColor: GOLD,
+    borderRadius: 16,
+    alignItems: 'center',
+    paddingVertical: 14,
+    flex: 1,
+  },
+  saveBtnDisabled: {
+    opacity: 0.6,
+  },
+  saveBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  modalActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  closeBtn: {
+    marginTop: 16,
+    flex: 1,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: NAVY,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeBtnText: {
+    color: NAVY,
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
 
