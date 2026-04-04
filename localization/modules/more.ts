@@ -14,7 +14,7 @@ export const moreStrings = {
       subtitle: 'انظر إنجازاتك',
     },
     devotionCalendar: {
-      title: 'تقويم الخلوة',
+      title: 'متابعة وقتك مع الله',
       subtitle: 'راجع الأيام التي التزمت فيها',
     },
   },

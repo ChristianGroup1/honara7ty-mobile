@@ -1,44 +1,38 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { Text, View } from 'react-native';
 import { homeStyles as styles } from './styles';
 import { getStrings } from '../../localization';
+import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 
 interface HomeHeaderProps {
   topInsetHeight: number;
+  displayName: string;
   initials: string;
   onLogout: () => void;
 }
 
 const HomeHeader = ({
   topInsetHeight,
+  displayName,
   initials,
   onLogout,
 }: HomeHeaderProps) => {
   const strings = getStrings().home;
 
   return (
-    <>
-      <View style={[styles.topInset, { height: topInsetHeight }]} />
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.logoutBtn} onPress={onLogout}>
-          <MaterialCommunityIcons
-            name="logout"
-            size={20}
-            color="rgba(255,255,255,0.7)"
-          />
-        </TouchableOpacity>
-
-        <View style={styles.headerCenter}>
-          <Text style={styles.greeting}>{strings.headerGreeting}</Text>
-          <Text style={styles.subGreeting}>{strings.headerSubGreeting}</Text>
+    <AppHeader
+      topInsetHeight={topInsetHeight}
+      eyebrow={strings.headerEyebrow}
+      title={`مرحبا ${displayName}`}
+      leading={
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initials}</Text>
+          </View>
         </View>
-
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials}</Text>
-        </View>
-      </View>
-    </>
+      }
+      trailing={<AppHeaderAction icon="logout" onPress={onLogout} />}
+    />
   );
 };
 

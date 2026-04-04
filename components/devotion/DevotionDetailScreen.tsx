@@ -12,6 +12,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { ARTICLES, CARD_ACCENTS } from './devotionData';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getStrings } from '../../localization';
+import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 
 const GOLD = '#C9A84C';
 const BG = '#F2F4F8';
@@ -25,8 +26,6 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const article = ARTICLES.find(a => a.id === articleId);
   const articleIdx = ARTICLES.findIndex(a => a.id === articleId);
   const accent = CARD_ACCENTS[articleIdx % CARD_ACCENTS.length];
-  const topInsetStyle = { height: insets.top, backgroundColor: accent };
-  const headerAccentStyle = { backgroundColor: accent };
   const quoteOpenStyle = { alignSelf: 'flex-start' as const, marginBottom: 4 };
   const quoteCloseStyle = { alignSelf: 'flex-end' as const, marginTop: 4 };
 
@@ -44,23 +43,19 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={accent} />
-
-      {/* Add spacing for status bar */}
-      <View style={topInsetStyle} />
-
-      <View style={[styles.header, headerAccentStyle]}>
-        <View style={styles.headerSpacer} />
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          {article.title}
-        </Text>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={22} color="#FFF" />
-        </TouchableOpacity>
-      </View>
+      <AppHeader
+        topInsetHeight={insets.top}
+        title={article.title}
+        titleNumberOfLines={1}
+        backgroundColor={accent}
+        leading={
+          <AppHeaderAction
+            icon="arrow-left"
+            onPress={() => navigation.goBack()}
+            size={22}
+          />
+        }
+      />
 
       <ScrollView
         contentContainerStyle={styles.articleContent}

@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Modal,
   ScrollView,
   StatusBar,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -21,6 +19,7 @@ import {
 import DailyQuestionCard from './DailyQuestionCard';
 import FeatureCard from './FeatureCard';
 import HomeHeader from './HomeHeader';
+import HomeAnswerSheet from './HomeAnswerSheet';
 import QuickActionsGrid from './QuickActionsGrid';
 import { homeStyles as styles } from './styles';
 import { getDisplayName, getInitials, getTodayDate } from './utils';
@@ -201,6 +200,12 @@ const HomeScreen = ({ route, navigation }: any) => {
     }
   }, [readingChapter, selectedBook.chapters]);
 
+  useEffect(() => {
+    if (chaptersRead > selectedBook.chapters) {
+      setChaptersRead(selectedBook.chapters);
+    }
+  }, [chaptersRead, selectedBook.chapters]);
+
   const saveDevotionSheet = async () => {
     setAnswerSheetVisible(false);
     await handleDevotionAnswer(pendingCompleted);
@@ -218,7 +223,7 @@ const HomeScreen = ({ route, navigation }: any) => {
   const initials = getInitials(displayName);
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={NAVY}
@@ -226,6 +231,7 @@ const HomeScreen = ({ route, navigation }: any) => {
       />
       <HomeHeader
         topInsetHeight={insets.top}
+        displayName={displayName}
         initials={initials}
         onLogout={handleLogout}
       />
@@ -233,7 +239,7 @@ const HomeScreen = ({ route, navigation }: any) => {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: 36 + insets.bottom },
+          { paddingBottom: 28 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -242,6 +248,12 @@ const HomeScreen = ({ route, navigation }: any) => {
           devotionAnswer={devotionAnswer}
           onAnswerNow={handleAnswerNow}
           onEditAnswer={handleAnswerNow}
+        />
+        <FeatureCard
+          title={strings.featureCalendarTitle}
+          subtitle={strings.featureCalendarSubtitle}
+          icon="calendar-check-outline"
+          onPress={() => navigation.navigate('DevotionCalendar')}
         />
         <FeatureCard
           title={strings.featurePrayerNotesTitle}
@@ -258,170 +270,23 @@ const HomeScreen = ({ route, navigation }: any) => {
       </ScrollView>
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
-      <Modal
+      <HomeAnswerSheet
         visible={answerSheetVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setAnswerSheetVisible(false)}
-      >
-        <View style={styles.sheetOverlay}>
-          <View style={styles.answerSheet}>
-            <Text style={styles.answerSheetTitle}>{strings.answerSheetTitle}</Text>
-            <Text style={styles.answerSheetSubtitle}>
-              {strings.answerSheetSubtitle}
-            </Text>
-
-            <View style={styles.answerBinaryRow}>
-              <TouchableOpacity
-                style={[
-                  styles.answerBinaryBtn,
-                  pendingCompleted && styles.answerBinaryBtnSelected,
-                ]}
-                onPress={() => setPendingCompleted(true)}
-              >
-                <Text
-                  style={[
-                    styles.answerBinaryText,
-                    pendingCompleted && styles.answerBinaryTextSelected,
-                  ]}
-                >
-                  {strings.yes}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.answerBinaryBtn,
-                  !pendingCompleted && styles.answerBinaryBtnSelected,
-                ]}
-                onPress={() => setPendingCompleted(false)}
-              >
-                <Text
-                  style={[
-                    styles.answerBinaryText,
-                    !pendingCompleted && styles.answerBinaryTextSelected,
-                  ]}
-                >
-                  {strings.no}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.answerFieldTitle}>{strings.answerBook}</Text>
-            <Text style={styles.answerGroupLabel}>{strings.oldTestament}</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.answerChoiceRow}
-            >
-              {OLD_TESTAMENT_BOOKS.map(book => (
-                <TouchableOpacity
-                  key={book.bookID}
-                  style={[
-                    styles.answerChoiceChip,
-                    readingBook === book.bookName && styles.answerChoiceChipSelected,
-                  ]}
-                  onPress={() => setReadingBook(book.bookName)}
-                >
-                  <Text
-                    style={[
-                      styles.answerChoiceText,
-                      readingBook === book.bookName &&
-                        styles.answerChoiceTextSelected,
-                    ]}
-                  >
-                    {book.bookName}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <Text style={styles.answerGroupLabel}>{strings.newTestament}</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.answerChoiceRow}
-            >
-              {NEW_TESTAMENT_BOOKS.map(book => (
-                <TouchableOpacity
-                  key={book.bookID}
-                  style={[
-                    styles.answerChoiceChip,
-                    readingBook === book.bookName && styles.answerChoiceChipSelected,
-                  ]}
-                  onPress={() => setReadingBook(book.bookName)}
-                >
-                  <Text
-                    style={[
-                      styles.answerChoiceText,
-                      readingBook === book.bookName &&
-                        styles.answerChoiceTextSelected,
-                    ]}
-                  >
-                    {book.bookName}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            <Text style={styles.answerFieldTitle}>{strings.answerChapter}</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.answerChoiceRow}
-            >
-              {chapterOptions.map(chapter => (
-                <TouchableOpacity
-                  key={`chapter-${chapter}`}
-                  style={[
-                    styles.answerChoiceChip,
-                    readingChapter === chapter && styles.answerChoiceChipSelected,
-                  ]}
-                  onPress={() => setReadingChapter(chapter)}
-                >
-                  <Text
-                    style={[
-                      styles.answerChoiceText,
-                      readingChapter === chapter && styles.answerChoiceTextSelected,
-                    ]}
-                  >
-                    {chapter}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            <Text style={styles.answerFieldTitle}>{strings.answerVerses}</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.answerChoiceRow}
-            >
-              {chapterOptions.map(value => (
-                <TouchableOpacity
-                  key={`read-${value}`}
-                  style={[
-                    styles.answerChoiceChip,
-                    chaptersRead === value && styles.answerChoiceChipSelected,
-                  ]}
-                  onPress={() => setChaptersRead(value)}
-                >
-                  <Text
-                    style={[
-                      styles.answerChoiceText,
-                      chaptersRead === value && styles.answerChoiceTextSelected,
-                    ]}
-                  >
-                    {value}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            <TouchableOpacity style={styles.saveAnswerBtn} onPress={saveDevotionSheet}>
-              <Text style={styles.saveAnswerBtnText}>{strings.saveAnswer}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        strings={strings}
+        pendingCompleted={pendingCompleted}
+        oldTestamentBooks={OLD_TESTAMENT_BOOKS}
+        newTestamentBooks={NEW_TESTAMENT_BOOKS}
+        readingBook={readingBook}
+        chapterOptions={chapterOptions}
+        readingChapter={readingChapter}
+        chaptersRead={chaptersRead}
+        onClose={() => setAnswerSheetVisible(false)}
+        onSetPendingCompleted={setPendingCompleted}
+        onSetReadingBook={setReadingBook}
+        onSetReadingChapter={setReadingChapter}
+        onSetChaptersRead={setChaptersRead}
+        onSave={saveDevotionSheet}
+      />
     </SafeAreaView>
   );
 };

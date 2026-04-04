@@ -107,6 +107,12 @@ const BadgesScreen = ({ navigation }: any) => {
   };
 
   const earnedCount = BADGE_CONFIGS.filter(b => streak >= b.days).length;
+  const earnedBadges = BADGE_CONFIGS.filter(badge => streak >= badge.days);
+  const lockedBadges = BADGE_CONFIGS.filter(badge => streak < badge.days);
+  const spotlightBadge =
+    lockedBadges[0] ?? earnedBadges[earnedBadges.length - 1] ?? BADGE_CONFIGS[0];
+  const spotlightEarned = streak >= spotlightBadge.days;
+  const spotlightDaysLeft = Math.max(spotlightBadge.days - streak, 0);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -128,16 +134,108 @@ const BadgesScreen = ({ navigation }: any) => {
           totalCount={BADGE_CONFIGS.length}
         />
 
-        <View style={styles.badgesContainer}>
-          {BADGE_CONFIGS.map(badge => (
-            <BadgeCard
-              key={badge.key}
-              badge={badge}
-              streak={streak}
-              onShare={handleShare}
+        <View style={styles.spotlightCard}>
+          <View
+            style={[
+              styles.spotlightGlow,
+              { backgroundColor: `${spotlightBadge.color}22` },
+            ]}
+          />
+          <View style={styles.spotlightTopRow}>
+            <View
+              style={[
+                styles.spotlightPill,
+                {
+                  backgroundColor: spotlightEarned
+                    ? `${spotlightBadge.color}18`
+                    : '#EEF2F6',
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.spotlightPillText,
+                  spotlightEarned
+                    ? { color: spotlightBadge.color }
+                    : styles.spotlightPillTextMuted,
+                ]}
+              >
+                {spotlightEarned
+                  ? strings.screen.spotlightReady
+                  : strings.screen.spotlightNext}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.spotlightIconWrap,
+                { backgroundColor: `${spotlightBadge.color}18` },
+              ]}
+            >
+              <Text style={styles.spotlightEmoji}>{spotlightBadge.emoji}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.spotlightTitle}>{spotlightBadge.title}</Text>
+          <Text style={styles.spotlightDays}>
+            {strings.card.days(spotlightBadge.days)}
+          </Text>
+          <Text style={styles.spotlightText}>
+            {spotlightEarned
+              ? strings.screen.spotlightEarnedText
+              : strings.screen.spotlightNextText(spotlightDaysLeft)}
+          </Text>
+
+          <View style={styles.spotlightProgressTrack}>
+            <View
+              style={[
+                styles.spotlightProgressFill,
+                {
+                  width: `${Math.min(streak / spotlightBadge.days, 1) * 100}%`,
+                  backgroundColor: spotlightBadge.color,
+                },
+              ]}
             />
-          ))}
+          </View>
         </View>
+
+        {earnedBadges.length ? (
+          <>
+            <Text style={styles.gallerySectionTitle}>
+              {strings.screen.earnedSection}
+            </Text>
+            <View style={styles.badgesContainer}>
+              {earnedBadges
+                .slice()
+                .reverse()
+                .map(badge => (
+                  <BadgeCard
+                    key={badge.key}
+                    badge={badge}
+                    streak={streak}
+                    onShare={handleShare}
+                  />
+                ))}
+            </View>
+          </>
+        ) : null}
+
+        {lockedBadges.length ? (
+          <>
+            <Text style={styles.gallerySectionTitle}>
+              {strings.screen.lockedSection}
+            </Text>
+            <View style={styles.badgesContainer}>
+              {lockedBadges.map(badge => (
+                <BadgeCard
+                  key={badge.key}
+                  badge={badge}
+                  streak={streak}
+                  onShare={handleShare}
+                />
+              ))}
+            </View>
+          </>
+        ) : null}
 
         <View style={styles.motivationalCard}>
           <MaterialCommunityIcons name="lightbulb" size={28} color={GOLD} />

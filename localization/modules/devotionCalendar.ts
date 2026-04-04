@@ -1,9 +1,9 @@
 export const devotionCalendarStrings = {
   weekDays: ['س', 'ح', 'ن', 'ث', 'ر', 'خ', 'ج'],
   errorTitle: 'خطأ',
-  title: 'تقويم الخلوة',
+  title: 'متابعة وقتك مع الله',
   badge: 'ثبات يومي',
-  heroLabel: 'متابعة الخلوة',
+  heroLabel: 'متابعة وقتك مع الله',
   heroTitle: 'كل يوم "نعم" يترك أثرًا هنا',
   heroText:
     'التقويم يوضح أيام التزامك بالخلوة، ويساعدك ترى الاستمرارية بشكل بصري وواضح.',

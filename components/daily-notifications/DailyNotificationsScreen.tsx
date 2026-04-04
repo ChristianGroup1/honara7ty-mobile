@@ -30,6 +30,7 @@ import DailyNotificationsHero from './DailyNotificationsHero';
 import DailyReadingPlanCard from './DailyReadingPlanCard';
 import DailyTipsList from './DailyTipsList';
 import { dailyNotificationStyles as styles, NAVY } from './styles';
+import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 
 const DailyNotificationsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().dailyNotifications;
@@ -228,21 +229,19 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <View style={[styles.topInset, { height: insets.top }]} />
-
-      <View style={styles.header}>
-        {!isTab && (
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backBtn}
-          >
-            <MaterialCommunityIcons name="arrow-right" size={24} color="#FFF" />
-          </TouchableOpacity>
-        )}
-        {isTab && <View style={styles.headerSpacer} />}
-        <Text style={styles.headerTitle}>{strings.title}</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <AppHeader
+        topInsetHeight={insets.top}
+        title={strings.title}
+        leading={
+          !isTab ? (
+            <AppHeaderAction
+              icon="arrow-right"
+              onPress={() => navigation.goBack()}
+              size={24}
+            />
+          ) : undefined
+        }
+      />
 
       <ScrollView
         contentContainerStyle={styles.content}

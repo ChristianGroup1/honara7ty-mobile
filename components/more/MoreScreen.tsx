@@ -13,6 +13,7 @@ import {
 } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
+import AppHeader from '../shared/AppHeader';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -54,11 +55,7 @@ const MoreScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <View style={{ height: insets.top, backgroundColor: NAVY }} />
-
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{strings.title}</Text>
-      </View>
+      <AppHeader topInsetHeight={insets.top} title={strings.title} />
 
       <ScrollView
         contentContainerStyle={styles.content}

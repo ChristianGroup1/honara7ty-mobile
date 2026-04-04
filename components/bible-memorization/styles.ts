@@ -1,5 +1,16 @@
 import { StyleSheet } from 'react-native';
 import { GOLD, NAVY } from './utils';
+import {
+  heroBadgeBase,
+  heroBadgeTextBase,
+  heroCardBase,
+  heroGlowBase,
+  heroIconWrapBase,
+  heroTextBase,
+  heroTitleBase,
+  heroTopRowBase,
+  heroEyebrowBase,
+} from '../shared/heroStyles';
 
 export const memorizationStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F4F8' },
@@ -18,57 +29,33 @@ export const memorizationStyles = StyleSheet.create({
   headerTitle: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
   content: { padding: 20, paddingBottom: 48 },
   heroCard: {
-    backgroundColor: NAVY,
-    borderRadius: 22,
-    paddingHorizontal: 18,
-    paddingVertical: 18,
+    ...heroCardBase,
     marginBottom: 14,
-    shadowColor: NAVY,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    elevation: 4,
+  },
+  heroGlow: {
+    ...heroGlowBase,
   },
   heroTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    ...heroTopRowBase,
     marginBottom: 12,
   },
   heroIconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    ...heroIconWrapBase,
   },
   heroBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    ...heroBadgeBase,
   },
   heroBadgeText: {
-    color: 'rgba(255,255,255,0.82)',
-    fontSize: 11,
-    fontWeight: '700',
+    ...heroBadgeTextBase,
   },
   heroEyebrow: {
-    color: 'rgba(255,255,255,0.62)',
-    fontSize: 12,
-    marginBottom: 6,
+    ...heroEyebrowBase,
   },
   heroTitle: {
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 8,
+    ...heroTitleBase,
   },
   heroText: {
-    color: 'rgba(255,255,255,0.82)',
-    fontSize: 14,
-    lineHeight: 22,
+    ...heroTextBase,
   },
   selectionSummary: {
     backgroundColor: '#FFF',

@@ -267,6 +267,7 @@ const PickScreen = ({ navigation }: Props) => {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.heroCard}>
+          <View style={styles.heroGlow} />
           <View style={styles.heroTopRow}>
             <View style={styles.heroIconWrap}>
               <MaterialCommunityIcons

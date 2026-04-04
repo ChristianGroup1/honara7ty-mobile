@@ -21,7 +21,6 @@ const DailyQuestionCard = ({
   return (
     <View style={styles.questionCard}>
       <View style={styles.questionDecor} />
-      <Text style={styles.questionCardLabel}>{strings.dailyCardLabel}</Text>
       <Text style={styles.questionText}>{DAILY_QUESTION}</Text>
 
       {devotionAnswer === null ? (

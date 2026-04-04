@@ -22,6 +22,7 @@ import supabase from '../../lib/supbase';
 import CustomAlert, { AlertButton, AlertConfig } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
 import { getStrings } from '../../localization';
+import AppHeader from '../shared/AppHeader';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -356,11 +357,7 @@ const ProfileScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <View style={[styles.topInset, { height: insets.top }]} />
-
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{strings.title}</Text>
-      </View>
+      <AppHeader topInsetHeight={insets.top} title={strings.title} />
 
       <ScrollView
         contentContainerStyle={styles.content}

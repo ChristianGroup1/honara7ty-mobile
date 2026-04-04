@@ -22,12 +22,12 @@ export const bibleMemorizationStrings = {
       `إصحاح ${chapter}، عدد ${start}`,
     chapterLabelRange: (chapter: number, start: number, end: number) =>
       `إصحاح ${chapter}، الأعداد ${start}-${end}`,
-    heroBadge: 'Memorization Flow',
+    heroBadge: 'يلا نحفظ',
     heroEyebrow: 'ابدأ من هنا',
-    heroTitle: 'اختر المرجع الذي تريد حفظه',
+    heroTitle: 'اختر الجزء الذي تريد حفظه',
     heroText: 'حدّد السفر والإصحاح والأعداد، ثم اختر مستوى التحدي المناسب لك.',
     chooseBook: 'اختر السفر',
-    chooseBookCaption: 'تنقّل بين أسفار العهدين واختر المرجع المناسب.',
+    chooseBookCaption: 'تنقّل بين أسفار العهدين واختر الجزء المناسب.',
     oldTestament: 'العهد القديم',
     newTestament: 'العهد الجديد',
     oldTestamentBooks: 'أسفار العهد القديم',
@@ -57,7 +57,7 @@ export const bibleMemorizationStrings = {
     blanks: (count: number) => `${count} فراغ`,
     verseTextTitle: 'نص التسميع',
     showResult: 'عرض النتيجة',
-    chooseAnotherReference: 'اختر مرجعًا آخر',
+    chooseAnotherReference: 'اختر جزءًا آخر للحفظ',
     blankPlaceholder: '___',
   },
   result: {
@@ -71,7 +71,7 @@ export const bibleMemorizationStrings = {
     instruction: 'الكلمات الصحيحة تظهر بوضوح، والخطأ يظهر مع الإجابة الأصلية.',
     reviewAnswers: 'مراجعة الإجابات',
     retryAction: 'حاول مرة أخرى',
-    chooseAnotherReference: 'اختر مرجعًا آخر',
+    chooseAnotherReference: 'اختر جزءًا آخر للحفظ',
     wrongAnswerFallback: '؟',
   },
 } as const;

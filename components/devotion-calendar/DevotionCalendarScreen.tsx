@@ -1,6 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
@@ -18,12 +28,8 @@ import DevotionCalendarGrid from './DevotionCalendarGrid';
 import DevotionDayEditor from './DevotionDayEditor';
 import { devotionCalendarStyles as styles, NAVY } from './styles';
 import { DevotionDayLog, TestamentOption } from './types';
-import {
-  buildMonthCells,
-  getMonthKey,
-  startOfMonth,
-  toIsoDate,
-} from './utils';
+import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
+import { buildMonthCells, getMonthKey, startOfMonth, toIsoDate } from './utils';
 
 const DevotionCalendarScreen = ({ navigation }: any) => {
   const strings = getStrings().devotionCalendar;
@@ -31,14 +37,20 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editorVisible, setEditorVisible] = useState(false);
-  const [visibleMonth, setVisibleMonth] = useState<Date>(startOfMonth(new Date()));
-  const [selectedDate, setSelectedDate] = useState<string>(toIsoDate(new Date()));
+  const [visibleMonth, setVisibleMonth] = useState<Date>(
+    startOfMonth(new Date()),
+  );
+  const [selectedDate, setSelectedDate] = useState<string>(
+    toIsoDate(new Date()),
+  );
   const [selectedCompleted, setSelectedCompleted] = useState(true);
   const [selectedTestament, setSelectedTestament] = useState<Testament>('old');
   const [selectedBook, setSelectedBook] = useState(BIBLE_BOOKS[0].bookName);
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [selectedChaptersRead, setSelectedChaptersRead] = useState(1);
-  const [devotionLogsByDate, setDevotionLogsByDate] = useState<Record<string, DevotionDayLog>>({});
+  const [devotionLogsByDate, setDevotionLogsByDate] = useState<
+    Record<string, DevotionDayLog>
+  >({});
   const [alertConfig, setAlertConfig] = useState<AlertConfig>({
     visible: false,
     title: '',
@@ -48,7 +60,11 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
 
   const testamentOptions: TestamentOption[] = useMemo(
     () => [
-      { key: 'old', label: strings.oldTestament, icon: 'book-open-page-variant-outline' },
+      {
+        key: 'old',
+        label: strings.oldTestament,
+        icon: 'book-open-page-variant-outline',
+      },
       { key: 'new', label: strings.newTestament, icon: 'cross' },
     ],
     [strings.newTestament, strings.oldTestament],
@@ -113,7 +129,10 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
     () => buildMonthCells(visibleMonth, completedSet),
     [completedSet, visibleMonth],
   );
-  const currentStreak = useMemo(() => computeStreak(completedDates), [completedDates]);
+  const currentStreak = useMemo(
+    () => computeStreak(completedDates),
+    [completedDates],
+  );
   const monthCompletedCount = useMemo(() => {
     const prefix = getMonthKey(visibleMonth);
     return completedDates.filter(date => date.startsWith(prefix)).length;
@@ -122,21 +141,27 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   const todayIso = toIsoDate(new Date());
 
   const selectedBookMeta = useMemo(
-    () => BIBLE_BOOKS.find(book => book.bookName === selectedBook) ?? BIBLE_BOOKS[0],
+    () =>
+      BIBLE_BOOKS.find(book => book.bookName === selectedBook) ??
+      BIBLE_BOOKS[0],
     [selectedBook],
   );
   const booksForTestament = useMemo(
-    () => (selectedTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS),
+    () =>
+      selectedTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS,
     [selectedTestament],
   );
   const chapterOptions = useMemo(
-    () => Array.from({ length: selectedBookMeta.chapters }, (_, idx) => idx + 1),
+    () =>
+      Array.from({ length: selectedBookMeta.chapters }, (_, idx) => idx + 1),
     [selectedBookMeta.chapters],
   );
 
   useEffect(() => {
     if (selectedBookMeta.testament !== selectedTestament) {
-      setSelectedBook(booksForTestament[0]?.bookName ?? BIBLE_BOOKS[0].bookName);
+      setSelectedBook(
+        booksForTestament[0]?.bookName ?? BIBLE_BOOKS[0].bookName,
+      );
     }
   }, [booksForTestament, selectedBookMeta.testament, selectedTestament]);
 
@@ -155,7 +180,8 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
       if (log) {
         const nextBook = log.reading_book || BIBLE_BOOKS[0].bookName;
         const nextMeta =
-          BIBLE_BOOKS.find(book => book.bookName === nextBook) ?? BIBLE_BOOKS[0];
+          BIBLE_BOOKS.find(book => book.bookName === nextBook) ??
+          BIBLE_BOOKS[0];
         setSelectedCompleted(log.completed);
         setSelectedTestament(nextMeta.testament);
         setSelectedBook(nextBook);
@@ -166,7 +192,9 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
 
       setSelectedCompleted(true);
       setSelectedTestament('old');
-      setSelectedBook(OLD_TESTAMENT_BOOKS[0]?.bookName ?? BIBLE_BOOKS[0].bookName);
+      setSelectedBook(
+        OLD_TESTAMENT_BOOKS[0]?.bookName ?? BIBLE_BOOKS[0].bookName,
+      );
       setSelectedChapter(1);
       setSelectedChaptersRead(1);
     },
@@ -192,7 +220,9 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   const handleChangeTestament = (value: Testament) => {
     setSelectedTestament(value);
     const firstBook =
-      value === 'old' ? OLD_TESTAMENT_BOOKS[0]?.bookName : NEW_TESTAMENT_BOOKS[0]?.bookName;
+      value === 'old'
+        ? OLD_TESTAMENT_BOOKS[0]?.bookName
+        : NEW_TESTAMENT_BOOKS[0]?.bookName;
     if (firstBook) {
       setSelectedBook(firstBook);
       setSelectedChapter(1);
@@ -248,22 +278,27 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <View style={[styles.topInset, { height: insets.top }]} />
-
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <MaterialCommunityIcons name="arrow-right" size={24} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{strings.title}</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <AppHeader
+        topInsetHeight={insets.top}
+        title={strings.title}
+        leading={
+          <AppHeaderAction
+            icon="arrow-right"
+            onPress={() => navigation.goBack()}
+            size={24}
+          />
+        }
+      />
 
       {loading ? (
         <View style={styles.loadingWrap}>
           <ActivityIndicator size="large" color={NAVY} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           <DevotionCalendarSummary
             strings={strings}
             currentStreak={currentStreak}
@@ -277,10 +312,16 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
             monthCells={monthCells}
             selectedDate={selectedDate}
             onNextMonth={() =>
-              setVisibleMonth(current => new Date(current.getFullYear(), current.getMonth() + 1, 1))
+              setVisibleMonth(
+                current =>
+                  new Date(current.getFullYear(), current.getMonth() + 1, 1),
+              )
             }
             onPrevMonth={() =>
-              setVisibleMonth(current => new Date(current.getFullYear(), current.getMonth() - 1, 1))
+              setVisibleMonth(
+                current =>
+                  new Date(current.getFullYear(), current.getMonth() - 1, 1),
+              )
             }
             onPickDay={handlePickDay}
           />

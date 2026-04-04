@@ -32,9 +32,12 @@ const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
   const earnedTextStyle = { color: badge.color };
   const topAccentStyle = { backgroundColor: badge.color };
   const progressMetaStyle = { color: badge.color };
+  const cardShellStyle = earned
+    ? styles.badgeCardEarned
+    : styles.badgeCardLocked;
 
   return (
-    <View style={[styles.badgeCard, earned && styles.badgeCardEarned]}>
+    <View style={[styles.badgeCard, cardShellStyle]}>
       <View style={[styles.badgeCardAccent, topAccentStyle]} />
 
       <View style={styles.badgeTopRow}>
@@ -95,19 +98,24 @@ const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
       </View>
 
       {earned ? (
-        <TouchableOpacity
-          style={[styles.earnedTag, earnedTagStyle]}
-          onPress={() => onShare(badge)}
-        >
-          <MaterialCommunityIcons
-            name="share-variant"
-            size={12}
-            color={badge.color}
-          />
+        // <TouchableOpacity
+        //   style={[styles.earnedTag, earnedTagStyle]}
+        //   onPress={() => onShare(badge)}
+        // >
+        //   <MaterialCommunityIcons
+        //     name="share-variant"
+        //     size={12}
+        //     color={badge.color}
+        //   />
+        //   <Text style={[styles.earnedText, earnedTextStyle]}>
+        //     {strings.card.share}
+        //   </Text>
+        // </TouchableOpacity>
+        <View style={[styles.earnedTag, earnedTagStyle]}>
           <Text style={[styles.earnedText, earnedTextStyle]}>
-            {strings.card.share}
+            {strings.card.earnedSubtitle}
           </Text>
-        </TouchableOpacity>
+        </View>
       ) : (
         <View style={styles.pendingRow}>
           <MaterialCommunityIcons name="timer-sand" size={14} color="#7E8896" />

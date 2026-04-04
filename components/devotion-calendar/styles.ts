@@ -1,4 +1,15 @@
 import { StyleSheet } from 'react-native';
+import {
+  heroBadgeBase,
+  heroBadgeTextBase,
+  heroCardBase,
+  heroGlowBase,
+  heroIconWrapBase,
+  heroTextBase,
+  heroTitleBase,
+  heroTopRowBase,
+  heroEyebrowBase,
+} from '../shared/heroStyles';
 
 export const NAVY = '#0A1124';
 export const GOLD = '#C9A84C';
@@ -22,55 +33,33 @@ export const devotionCalendarStyles = StyleSheet.create({
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: { padding: 16, paddingBottom: 36 },
   heroCard: {
-    backgroundColor: NAVY,
-    borderRadius: 24,
-    paddingHorizontal: 18,
-    paddingVertical: 18,
+    ...heroCardBase,
     marginBottom: 14,
-    overflow: 'hidden',
+  },
+  heroGlow: {
+    ...heroGlowBase,
   },
   heroTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    ...heroTopRowBase,
     marginBottom: 14,
   },
   heroIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: '#FFF4D6',
-    alignItems: 'center',
-    justifyContent: 'center',
+    ...heroIconWrapBase,
   },
   heroBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    ...heroBadgeBase,
   },
   heroBadgeText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '700',
+    ...heroBadgeTextBase,
   },
   heroLabel: {
-    color: 'rgba(255,255,255,0.62)',
-    fontSize: 12,
-    marginBottom: 6,
+    ...heroEyebrowBase,
   },
   heroTitle: {
-    color: '#FFF',
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 8,
+    ...heroTitleBase,
   },
   heroText: {
-    color: 'rgba(255,255,255,0.82)',
-    fontSize: 14,
-    lineHeight: 22,
+    ...heroTextBase,
   },
   heroHintRow: {
     flexDirection: 'row',

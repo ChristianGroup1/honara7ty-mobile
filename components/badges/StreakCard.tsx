@@ -40,37 +40,21 @@ const StreakCard = ({
           </View>
 
           <Text style={styles.streakTitle}>{strings.streak.title}</Text>
-          <Text style={styles.streakSubtitle}>
-            {strings.streak.subtitle}
-          </Text>
+          <Text style={styles.streakSubtitle}>{strings.streak.subtitle}</Text>
 
           <View style={styles.streakRow}>
             <View style={styles.streakNumberShell}>
               <Text style={styles.streakNumber}>{streak}</Text>
             </View>
             <View style={styles.streakMetaColumn}>
-              <Text style={styles.streakDays}>{strings.streak.daysContinuous}</Text>
+              <Text style={styles.streakDays}>
+                {strings.streak.daysContinuous}
+              </Text>
               <Text style={styles.streakHint}>
                 {earnedCount >= totalCount
                   ? strings.streak.allUnlocked
                   : strings.streak.nextMilestone(nextMilestone)}
               </Text>
-            </View>
-          </View>
-
-          <View style={styles.streakProgressWrap}>
-            <View style={styles.streakProgressHeader}>
-              <Text style={styles.streakProgressLabel}>
-                {strings.streak.progressLabel}
-              </Text>
-              <Text style={styles.streakProgressValue}>
-                {Math.round(completionRatio * 100)}%
-              </Text>
-            </View>
-            <View style={styles.streakProgressTrack}>
-              <View
-                style={[styles.streakProgressFill, { width: completionWidth }]}
-              />
             </View>
           </View>
 

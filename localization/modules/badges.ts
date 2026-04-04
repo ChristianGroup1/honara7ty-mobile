@@ -91,6 +91,13 @@ export const badgesStrings = {
     motivationalTitle: 'استمر في السير',
     motivationalText:
       'كل يوم خطوة نحو الثبات والقرب من الله. شارك إنجازاتك مع أصدقائك!',
+    spotlightReady: 'وسامك الأحدث',
+    spotlightNext: 'الوسام القادم',
+    spotlightEarnedText: 'فتحته بالفعل بثباتك الجميل',
+    spotlightNextText: (daysLeft: number) =>
+      `فاضل ${daysLeft} يوم وتفتحه`,
+    earnedSection: 'أوسمة تم فتحها',
+    lockedSection: 'أوسمة في الطريق',
   },
   header: {
     title: 'الإنجازات',

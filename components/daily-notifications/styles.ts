@@ -1,8 +1,17 @@
 import { StyleSheet } from 'react-native';
+import {
+  heroBadgeBase,
+  heroBadgeTextBase,
+  heroCardBase,
+  heroGlowBase,
+  heroIconWrapBase,
+  heroTextBase,
+  heroTitleBase,
+  heroTopRowBase,
+} from '../shared/heroStyles';
 
 export const NAVY = '#0A1124';
 export const GOLD = '#C9A84C';
-export const IVORY = '#F7F2E8';
 export const SKY = '#EEF3F8';
 export const SLATE = '#5C6676';
 export const INK = '#1F2A3A';
@@ -32,69 +41,38 @@ export const dailyNotificationStyles = StyleSheet.create({
   headerTitle: { color: '#FFF', fontSize: 19, fontWeight: '800' },
   content: { padding: 18, paddingBottom: 40 },
   heroCard: {
-    backgroundColor: NAVY,
-    borderRadius: 30,
+    ...heroCardBase,
     padding: 22,
-    marginBottom: 18,
-    overflow: 'hidden',
-    shadowColor: NAVY,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    elevation: 8,
   },
   heroGlow: {
-    position: 'absolute',
-    top: -30,
-    left: -20,
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(201,168,76,0.14)',
+    ...heroGlowBase,
   },
   heroTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    ...heroTopRowBase,
     marginBottom: 18,
   },
   heroBadge: {
+    ...heroBadgeBase,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: IVORY,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   heroBadgeText: {
-    color: NAVY,
-    fontSize: 12,
-    fontWeight: '800',
+    ...heroBadgeTextBase,
   },
   heroIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    ...heroIconWrapBase,
   },
   heroTitle: {
-    color: '#FFF',
-    fontSize: 26,
-    fontWeight: '800',
+    ...heroTitleBase,
+    fontSize: 25,
     lineHeight: 34,
-    textAlign: 'left',
     marginBottom: 10,
   },
   heroSubtitle: {
-    color: 'rgba(255,255,255,0.72)',
-    fontSize: 14,
+    ...heroTextBase,
     lineHeight: 23,
-    textAlign: 'left',
     marginBottom: 18,
   },
   timePanel: {

@@ -20,9 +20,14 @@ const DevotionCalendarSummary = ({
 }: Props) => (
   <>
     <View style={styles.heroCard}>
+      <View style={styles.heroGlow} />
       <View style={styles.heroTopRow}>
         <View style={styles.heroIconWrap}>
-          <MaterialCommunityIcons name="calendar-heart" size={24} color={NAVY} />
+          <MaterialCommunityIcons
+            name="calendar-heart"
+            size={24}
+            color={'#fff'}
+          />
         </View>
         <View style={styles.heroBadge}>
           <Text style={styles.heroBadgeText}>{strings.badge}</Text>
@@ -32,7 +37,11 @@ const DevotionCalendarSummary = ({
       <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
       <Text style={styles.heroText}>{strings.heroText}</Text>
       <View style={styles.heroHintRow}>
-        <MaterialCommunityIcons name="star-four-points" size={16} color={GOLD} />
+        <MaterialCommunityIcons
+          name="star-four-points"
+          size={16}
+          color={GOLD}
+        />
         <Text style={styles.heroHintText}>{strings.heroHint}</Text>
       </View>
     </View>
@@ -47,14 +56,22 @@ const DevotionCalendarSummary = ({
       </View>
       <View style={styles.statCard}>
         <View style={[styles.statIconWrap, styles.statIconWrapGold]}>
-          <MaterialCommunityIcons name="calendar-month" size={18} color={NAVY} />
+          <MaterialCommunityIcons
+            name="calendar-month"
+            size={18}
+            color={NAVY}
+          />
         </View>
         <Text style={styles.statNumber}>{monthCompletedCount}</Text>
         <Text style={styles.statLabel}>{strings.thisMonth}</Text>
       </View>
       <View style={styles.statCard}>
         <View style={[styles.statIconWrap, styles.statIconWrapSoft]}>
-          <MaterialCommunityIcons name="check-decagram" size={18} color={NAVY} />
+          <MaterialCommunityIcons
+            name="check-decagram"
+            size={18}
+            color={NAVY}
+          />
         </View>
         <Text style={styles.statNumber}>{totalCompleted}</Text>
         <Text style={styles.statLabel}>{strings.total}</Text>
