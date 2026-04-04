@@ -295,7 +295,9 @@ const PickScreen = ({ navigation }: Props) => {
             </View>
             <View style={styles.sectionHeadingText}>
               <Text style={styles.sectionLabel}>{strings.chooseBook}</Text>
-              <Text style={styles.sectionCaption}>{strings.chooseBookCaption}</Text>
+              <Text style={styles.sectionCaption}>
+                {strings.chooseBookCaption}
+              </Text>
             </View>
           </View>
           <View style={styles.testamentTabs}>
@@ -314,14 +316,6 @@ const PickScreen = ({ navigation }: Props) => {
               >
                 {strings.oldTestament}
               </Text>
-              <Text
-                style={[
-                  styles.testamentTabCount,
-                  activeTestament === 'old' && styles.testamentTabCountActive,
-                ]}
-              >
-                {OLD_TESTAMENT_BOOKS.length}
-              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -337,14 +331,6 @@ const PickScreen = ({ navigation }: Props) => {
                 ]}
               >
                 {strings.newTestament}
-              </Text>
-              <Text
-                style={[
-                  styles.testamentTabCount,
-                  activeTestament === 'new' && styles.testamentTabCountActive,
-                ]}
-              >
-                {NEW_TESTAMENT_BOOKS.length}
               </Text>
             </TouchableOpacity>
           </View>
@@ -395,9 +381,7 @@ const PickScreen = ({ navigation }: Props) => {
               </TouchableOpacity>
             )}
           />
-          <Text style={styles.sliderHint}>
-            {strings.sliderHint}
-          </Text>
+          <Text style={styles.sliderHint}>{strings.sliderHint}</Text>
         </View>
 
         <View style={styles.sectionCard}>
@@ -411,7 +395,9 @@ const PickScreen = ({ navigation }: Props) => {
             </View>
             <View style={styles.sectionHeadingText}>
               <Text style={styles.sectionLabel}>{strings.choosePlace}</Text>
-              <Text style={styles.sectionCaption}>{strings.choosePlaceCaption}</Text>
+              <Text style={styles.sectionCaption}>
+                {strings.choosePlaceCaption}
+              </Text>
             </View>
           </View>
 

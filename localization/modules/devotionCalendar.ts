@@ -1,5 +1,5 @@
 export const devotionCalendarStrings = {
-  weekDays: ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'],
+  weekDays: ['س', 'ح', 'ن', 'ث', 'ر', 'خ', 'ج'],
   errorTitle: 'خطأ',
   title: 'تقويم الخلوة',
   badge: 'ثبات يومي',

@@ -195,7 +195,8 @@ export const memorizationStyles = StyleSheet.create({
     color: '#4F5662',
     fontSize: 14,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 1,
+    textAlign: 'center',
   },
   testamentTabTextActive: {
     color: '#FFF',
