@@ -7,6 +7,7 @@ import HomeScreen from '../components/home/HomeScreen';
 import ProfileScreen from '../components/profile/ProfileScreen';
 import DailyNotificationsScreen from '../components/daily-notifications/DailyNotificationsScreen';
 import MoreScreen from '../components/more/MoreScreen';
+import AboutIdeaScreen from '../components/about-idea/AboutIdeaScreen';
 import PrayerNotesScreen from '../components/prayer-notes/PrayerNotesScreen';
 import SpiritualReflectionScreen from '../components/spiritual-reflection/SpiritualReflectionScreen';
 import BibleMemorizationScreen from '../components/bible-memorization/BibleMemorizationScreen';
@@ -100,6 +101,14 @@ const MainTabNavigator = () => {
         component={DailyNotificationsScreen}
       />
       <Tab.Screen name="More" component={MoreScreen} />
+      <Tab.Screen
+        name="AboutIdea"
+        component={AboutIdeaScreen}
+        options={{
+          ...hiddenTabScreenOptions,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
       <Tab.Screen
         name="PrayerNotes"
         component={PrayerNotesScreen}
