@@ -5,7 +5,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import MemorizationHeader from './MemorizationHeader';
 import { memorizationStyles as styles } from './styles';
 import { MemorizationStackParamList } from './types';
-import { GOLD, NAVY } from './utils';
+import { GOLD } from './utils';
 import { getStrings } from '../../localization';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Result'>;
@@ -13,6 +13,23 @@ type Props = StackScreenProps<MemorizationStackParamList, 'Result'>;
 const ResultScreen = ({ navigation, route }: Props) => {
   const strings = getStrings().bibleMemorization.result;
   const result = route.params;
+  const isPerfect = result.score === result.total;
+  const isGood = !isPerfect && result.score >= result.total * 0.7;
+  const statusIcon = isPerfect
+    ? 'medal-outline'
+    : isGood
+    ? 'star-outline'
+    : 'refresh';
+  const statusText = isPerfect
+    ? strings.perfect
+    : isGood
+    ? strings.good
+    : strings.retry;
+  const statusBadge = isPerfect
+    ? strings.perfectBadge
+    : isGood
+    ? strings.goodBadge
+    : strings.retryBadge;
 
   return (
     <View style={styles.container}>
@@ -23,35 +40,49 @@ const ResultScreen = ({ navigation, route }: Props) => {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.scoreBox, styles.resultHeroCard]}>
-          <MaterialCommunityIcons
-            name={
-              result.score === result.total ? 'trophy-outline' : 'lightbulb-outline'
-            }
-            size={56}
-            color={result.score === result.total ? GOLD : NAVY}
-          />
+          <View style={styles.resultHeroGlow} />
+          <View style={styles.resultHeroTopRow}>
+            <View style={styles.resultHeroBadge}>
+              <Text style={styles.resultHeroBadgeText}>{strings.badge}</Text>
+            </View>
+            <View style={styles.resultHeroIconWrap}>
+              <MaterialCommunityIcons
+                name={statusIcon}
+                size={28}
+                color={isPerfect ? GOLD : '#FFF'}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.scoreLabel}>{strings.scoreLabel}</Text>
           <Text style={styles.scoreText}>
             {result.score} / {result.total}
           </Text>
-          <Text style={styles.scoreLabel}>
-            {result.score === result.total
-              ? strings.perfect
-              : result.score >= result.total * 0.7
-                ? strings.good
-              : strings.retry}
-          </Text>
+          <Text style={styles.resultHeroMessage}>{statusText}</Text>
           <View style={styles.resultToneBadge}>
-            <Text style={styles.resultToneBadgeText}>
-              {result.score === result.total
-                ? strings.perfectBadge
-                : result.score >= result.total * 0.7
-                  ? strings.goodBadge
-                  : strings.retryBadge}
-            </Text>
+            <Text style={styles.resultToneBadgeText}>{statusBadge}</Text>
+          </View>
+
+          <View style={styles.resultStatsRow}>
+            <View style={styles.resultStatCard}>
+              <Text style={styles.resultStatNumber}>{result.total}</Text>
+              <Text style={styles.resultStatLabel}>
+                {strings.hiddenWordsLabel}
+              </Text>
+            </View>
+            <View style={styles.resultStatCard}>
+              <Text style={styles.resultStatNumber}>{result.score}</Text>
+              <Text style={styles.resultStatLabel}>
+                {strings.correctWordsLabel}
+              </Text>
+            </View>
           </View>
         </View>
 
         <View style={styles.infoCard}>
+          <Text style={styles.resultMetaLabel}>
+            {strings.verseReferenceLabel}
+          </Text>
           <Text style={styles.refText}>
             {result.bookLabel} - {result.chapterLabel}
           </Text>
@@ -61,7 +92,11 @@ const ResultScreen = ({ navigation, route }: Props) => {
         <View style={styles.verseBox}>
           <View style={styles.verseBoxHeader}>
             <Text style={styles.verseBoxTitle}>{strings.reviewAnswers}</Text>
-            <MaterialCommunityIcons name="check-decagram-outline" size={18} color="#C9A84C" />
+            <MaterialCommunityIcons
+              name="check-circle-outline"
+              size={18}
+              color="#C9A84C"
+            />
           </View>
           <View style={styles.wordsWrap}>
             {result.slots.map((slot, i) =>
@@ -83,7 +118,9 @@ const ResultScreen = ({ navigation, route }: Props) => {
                   >
                     {slot.correct
                       ? slot.word
-                      : `${slot.userInput || strings.wrongAnswerFallback} ← ${slot.word}`}
+                      : `${slot.userInput || strings.wrongAnswerFallback} ← ${
+                          slot.word
+                        }`}
                   </Text>
                 </View>
               ) : (

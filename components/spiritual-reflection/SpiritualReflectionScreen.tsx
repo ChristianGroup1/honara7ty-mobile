@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   StatusBar,
   Text,
+  TextInput,
   View,
   Keyboard,
   useWindowDimensions,
@@ -16,7 +17,7 @@ import ReflectionCard from './ReflectionCard';
 import ReflectionDetailModal from './ReflectionDetailModal';
 import ReflectionEditorModal from './ReflectionEditorModal';
 import SpiritualReflectionHeader from './SpiritualReflectionHeader';
-import { spiritualReflectionStyles as styles, NAVY } from './styles';
+import { spiritualReflectionStyles as styles, GOLD, NAVY } from './styles';
 import { Reflection } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
@@ -41,8 +42,14 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
   }>({ visible: false, title: '' });
   const [detailItem, setDetailItem] = useState<Reflection | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [query, setQuery] = useState('');
   const isCompactWidth = windowWidth < 380;
   const isNarrowWidth = windowWidth < 360;
+  const latestReflection = reflections[0] ?? null;
+  const filteredReflections = reflections.filter(reflection =>
+    reflection.content.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+  const shouldShowHero = query.trim().length === 0 && !keyboardVisible;
 
   const showAlert = (
     title: string,
@@ -184,11 +191,22 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
         onAdd={openNew}
       />
 
+      <View style={styles.searchRow}>
+        <MaterialCommunityIcons name="magnify" size={18} color="#8A94A6" />
+        <TextInput
+          placeholder={strings.searchPlaceholder}
+          placeholderTextColor="#8A94A6"
+          style={styles.searchInput}
+          value={query}
+          onChangeText={setQuery}
+        />
+      </View>
+
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" color={NAVY} />
       ) : (
         <FlatList
-          data={reflections}
+          data={filteredReflections}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <ReflectionCard
@@ -200,19 +218,42 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
             />
           )}
           contentContainerStyle={styles.list}
+          ListHeaderComponent={
+            shouldShowHero ? (
+              <View style={styles.heroCard}>
+                <View style={styles.heroGlow} />
+                <View style={styles.heroTopRow}>
+                  <View style={styles.heroIconWrap}>
+                    <MaterialCommunityIcons
+                      name="book-open-variant"
+                      size={24}
+                      color="#FFF"
+                    />
+                  </View>
+                  <View style={styles.heroBadge}>
+                    <Text style={styles.heroBadgeText}>
+                      {strings.heroBadge}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.heroEyebrow}>{strings.headerEyebrow}</Text>
+                <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
+                <Text style={styles.heroText}>{strings.heroText}</Text>
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconWrap}>
                 <MaterialCommunityIcons
-                  name="notebook-heart-outline"
-                  size={48}
-                  color="#EEE"
+                  name="book-open-variant"
+                  size={42}
+                  color={GOLD}
                 />
               </View>
               <Text style={styles.emptyTitle}>{strings.emptyTitle}</Text>
-              <Text style={styles.emptyTextSmall}>
-                {strings.emptyMessage}
-              </Text>
+              <Text style={styles.emptyTextSmall}>{strings.emptyMessage}</Text>
             </View>
           }
         />

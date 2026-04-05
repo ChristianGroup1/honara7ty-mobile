@@ -163,6 +163,14 @@ export const dailyNotificationStyles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'left',
   },
+  rangeHint: {
+    color: '#667085',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: -2,
+    marginBottom: 8,
+    textAlign: 'left',
+  },
   choiceRow: {
     flexDirection: 'row',
     gap: 8,

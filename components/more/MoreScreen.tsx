@@ -68,15 +68,6 @@ const MoreScreen = ({ navigation }: any) => {
             activeOpacity={0.8}
             onPress={() => navigation.navigate(item.key)}
           >
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={22}
-              color="#CCC"
-            />
-            <View style={styles.rowBody}>
-              <Text style={styles.rowTitle}>{item.title}</Text>
-              <Text style={styles.rowSub}>{item.subtitle}</Text>
-            </View>
             <View
               style={[
                 styles.iconCircle,
@@ -89,6 +80,16 @@ const MoreScreen = ({ navigation }: any) => {
                 color={item.color}
               />
             </View>
+
+            <View style={styles.rowBody}>
+              <Text style={styles.rowTitle}>{item.title}</Text>
+              <Text style={styles.rowSub}>{item.subtitle}</Text>
+            </View>
+            <MaterialCommunityIcons
+              name="chevron-left"
+              size={22}
+              color="#CCC"
+            />
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.07,
     shadowRadius: 6,
   },
-  rowBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-end' },
+  rowBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-start' },
   rowTitle: {
     fontSize: 16,
     fontWeight: 'bold',

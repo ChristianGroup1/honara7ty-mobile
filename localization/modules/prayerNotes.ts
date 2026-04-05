@@ -1,5 +1,14 @@
 export const prayerNotesStrings = {
   title: 'طلبات الصلاة',
+  headerEyebrow: 'مساحة صلاة',
+  heroBadge: 'طلباتك قدام ربنا',
+  heroTitle: 'اكتب طلبات الصلاة اللي شاغلة قلبك',
+  heroText:
+    'سجّل صلواتك وارجع لها بعدين، سواء طلب جديد أو حاجة ربنا استجاب لها.',
+  totalNotes: 'إجمالي الطلبات',
+  answeredNotes: 'طلبات مستجابة',
+  emptyMessage: 'اضغط + لإنشاء طلبة صلاة.',
+
   errors: {
     genericTitle: 'خطأ',
   },
@@ -15,4 +24,12 @@ export const prayerNotesStrings = {
   detailTitle: 'تفاصيل طلبه الصلاة',
   close: 'إغلاق',
   edit: 'تعديل',
+  editor: {
+    editTitle: 'تعديل طلبة الصلاة',
+    newTitle: 'طلبة صلاة جديدة',
+    hint: 'اكتب الطلبة اللي عايز تفضل تصلي بيها',
+    placeholder: 'اكتب هنا...',
+    saveEdit: 'حفظ التعديل',
+    add: 'إضافة',
+  },
 } as const;

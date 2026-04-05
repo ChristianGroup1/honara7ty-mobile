@@ -31,6 +31,12 @@ import DailyReadingPlanCard from './DailyReadingPlanCard';
 import DailyTipsList from './DailyTipsList';
 import { dailyNotificationStyles as styles, NAVY } from './styles';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
+import {
+  chaptersFromLegacy,
+  firstSelectedChapter,
+  normalizeSelectedChapters,
+  toggleChapterSelection,
+} from '../shared/chapterSelection';
 
 const DailyNotificationsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().dailyNotifications;
@@ -50,8 +56,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
   });
   const [showPicker, setShowPicker] = useState(false);
   const [readingBook, setReadingBook] = useState(BIBLE_BOOKS[0].bookName);
-  const [readingChapter, setReadingChapter] = useState(1);
-  const [dailyChaptersTarget, setDailyChaptersTarget] = useState(1);
+  const [selectedChapters, setSelectedChapters] = useState<number[]>([1]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -73,36 +78,47 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   useEffect(() => {
-    const load = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-      if (!userId) {
+      const load = async () => {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) {
+          setLoading(false);
+          return;
+        }
+        const { data } = await supabase
+          .from('profiles')
+          .select(
+            'devotion_time, reading_book, reading_chapter, daily_chapters_target, selected_chapters',
+          )
+          .eq('id', userId)
+          .single();
+        if (data?.devotion_time) {
+          const [h, m] = (data.devotion_time as string).split(':').map(Number);
+          const d = new Date();
+          d.setHours(h, m, 0, 0);
+          setDevotionTime(d);
+        }
+        if (data?.reading_book) {
+          setReadingBook(data.reading_book);
+          const matchedBook =
+            BIBLE_BOOKS.find(book => book.bookName === data.reading_book) ??
+            BIBLE_BOOKS[0];
+          setSelectedChapters(
+            Array.isArray((data as any).selected_chapters)
+              ? normalizeSelectedChapters(
+                  (data as any).selected_chapters.map(Number),
+                  matchedBook.chapters,
+                )
+              : chaptersFromLegacy(
+                  (data as any).reading_chapter,
+                  (data as any).daily_chapters_target,
+                  matchedBook.chapters,
+                ),
+          );
+        }
         setLoading(false);
-        return;
-      }
-      const { data } = await supabase
-        .from('profiles')
-        .select('devotion_time, reading_book, reading_chapter, daily_chapters_target')
-        .eq('id', userId)
-        .single();
-      if (data?.devotion_time) {
-        const [h, m] = (data.devotion_time as string).split(':').map(Number);
-        const d = new Date();
-        d.setHours(h, m, 0, 0);
-        setDevotionTime(d);
-      }
-      if (data?.reading_book) {
-        setReadingBook(data.reading_book);
-      }
-      if (data?.reading_chapter) {
-        setReadingChapter(Math.max(1, Number(data.reading_chapter)));
-      }
-      if (data?.daily_chapters_target) {
-        setDailyChaptersTarget(Math.max(1, Number(data.daily_chapters_target)));
-      }
-      setLoading(false);
-    };
-    load();
+      };
+      load();
   }, []);
 
   const handleTimeChange = (event: DateTimePickerEvent, selected?: Date) => {
@@ -138,19 +154,22 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
   useEffect(() => {
     if (selectedBookMeta.testament !== selectedTestament) {
       setReadingBook(booksForTestament[0]?.bookName ?? BIBLE_BOOKS[0].bookName);
-      setReadingChapter(1);
-      setDailyChaptersTarget(1);
+      setSelectedChapters([1]);
     }
   }, [booksForTestament, selectedBookMeta.testament, selectedTestament]);
 
   useEffect(() => {
-    if (readingChapter > selectedBookMeta.chapters) {
-      setReadingChapter(selectedBookMeta.chapters);
+    const normalized = normalizeSelectedChapters(
+      selectedChapters,
+      selectedBookMeta.chapters,
+    );
+    if (
+      normalized.length !== selectedChapters.length ||
+      normalized.some((chapter, index) => chapter !== selectedChapters[index])
+    ) {
+      setSelectedChapters(normalized);
     }
-    if (dailyChaptersTarget > selectedBookMeta.chapters) {
-      setDailyChaptersTarget(selectedBookMeta.chapters);
-    }
-  }, [dailyChaptersTarget, readingChapter, selectedBookMeta.chapters]);
+  }, [selectedBookMeta.chapters, selectedChapters]);
 
   const chapterOptions = useMemo(
     () => Array.from({ length: selectedBookMeta.chapters }, (_, idx) => idx + 1),
@@ -181,6 +200,11 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
       minutes,
     ).padStart(2, '0')}`;
 
+    const normalizedChapters = normalizeSelectedChapters(
+      selectedChapters,
+      selectedBookMeta.chapters,
+    );
+
     const { error } = await supabase
       .from('profiles')
       .upsert(
@@ -188,8 +212,9 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           id: userId,
           devotion_time: timeString,
           reading_book: readingBook,
-          reading_chapter: readingChapter,
-          daily_chapters_target: dailyChaptersTarget,
+          reading_chapter: firstSelectedChapter(normalizedChapters),
+          daily_chapters_target: normalizedChapters.length,
+          selected_chapters: normalizedChapters,
         },
         { onConflict: 'id' },
       );
@@ -307,12 +332,14 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           booksForTestament={booksForTestament}
           readingBook={readingBook}
           chapterOptions={chapterOptions}
-          readingChapter={readingChapter}
-          dailyChaptersTarget={dailyChaptersTarget}
+          selectedChapters={selectedChapters}
           onSetTestament={setSelectedTestament}
           onSetReadingBook={setReadingBook}
-          onSetReadingChapter={setReadingChapter}
-          onSetDailyTarget={setDailyChaptersTarget}
+          onToggleChapter={chapter =>
+            setSelectedChapters(current =>
+              toggleChapterSelection(current, chapter, selectedBookMeta.chapters),
+            )
+          }
         />
 
         <DailyTipsList strings={strings} tips={tips} />

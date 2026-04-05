@@ -1,8 +1,7 @@
 import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Testament } from '../data/bibleMetadata';
-import { dailyNotificationStyles as styles, NAVY } from './styles';
+import { dailyNotificationStyles as styles } from './styles';
 
 type TestamentOption = {
   key: Testament;
@@ -17,12 +16,10 @@ type Props = {
   booksForTestament: Array<{ bookID: string | number; bookName: string }>;
   readingBook: string;
   chapterOptions: number[];
-  readingChapter: number;
-  dailyChaptersTarget: number;
+  selectedChapters: number[];
   onSetTestament: (value: Testament) => void;
   onSetReadingBook: (value: string) => void;
-  onSetReadingChapter: (value: number) => void;
-  onSetDailyTarget: (value: number) => void;
+  onToggleChapter: (value: number) => void;
 };
 
 const renderChoiceChip = (
@@ -63,12 +60,10 @@ const DailyReadingPlanCard = ({
   booksForTestament,
   readingBook,
   chapterOptions,
-  readingChapter,
-  dailyChaptersTarget,
+  selectedChapters,
   onSetTestament,
   onSetReadingBook,
-  onSetReadingChapter,
-  onSetDailyTarget,
+  onToggleChapter,
 }: Props) => (
   <View style={styles.pickerCard}>
     <View style={styles.sectionHeader}>
@@ -90,7 +85,6 @@ const DailyReadingPlanCard = ({
             <Text
               style={[
                 styles.testamentTabText,
-
                 active && styles.testamentTabTextActive,
               ]}
             >
@@ -108,9 +102,7 @@ const DailyReadingPlanCard = ({
             ? strings.oldTestament
             : strings.newTestament}
         </Text>
-        <Text style={styles.bookPanelCount}>
-          {booksForTestament.length} سفر
-        </Text>
+        <Text style={styles.bookPanelCount}>{booksForTestament.length} سفر</Text>
       </View>
 
       <ScrollView
@@ -132,27 +124,17 @@ const DailyReadingPlanCard = ({
     </View>
 
     <Text style={styles.fieldLabel}>{strings.selectChapter}</Text>
+    <Text style={styles.rangeHint}>{strings.chapterRangeHint}</Text>
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.choiceRow}
     >
       {chapterOptions.map(chapter =>
-        renderChoiceChip(`اصحاح ${chapter}`, readingChapter === chapter, () =>
-          onSetReadingChapter(chapter),
-        ),
-      )}
-    </ScrollView>
-
-    <Text style={styles.fieldLabel}>{strings.chaptersPerDay}</Text>
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.choiceRow}
-    >
-      {chapterOptions.map(value =>
-        renderChoiceChip(`${value}`, dailyChaptersTarget === value, () =>
-          onSetDailyTarget(value),
+        renderChoiceChip(
+          `اصحاح ${chapter}`,
+          selectedChapters.includes(chapter),
+          () => onToggleChapter(chapter),
         ),
       )}
     </ScrollView>

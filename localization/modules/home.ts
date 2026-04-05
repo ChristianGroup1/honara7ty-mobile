@@ -34,8 +34,8 @@ export const homeStrings = {
   answerBook: 'السفر',
   oldTestament: 'العهد القديم',
   newTestament: 'العهد الجديد',
-  answerChapter: 'الإصحاح',
-  answerVerses: 'عدد الإصحاحات',
+  answerChapter: 'الإصحاحات',
+  answerRangeHint: 'اختار أي إصحاحات حابب تقراها، ومش لازم يكونوا ورا بعض.',
   saveAnswer: 'حفظ الإجابة',
   quickActions: {
     devotionGuide: 'شرح الخلوة',

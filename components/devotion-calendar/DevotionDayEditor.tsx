@@ -7,9 +7,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BibleBook, Testament } from '../data/bibleMetadata';
-import { devotionCalendarStyles as styles, NAVY } from './styles';
+import { devotionCalendarStyles as styles } from './styles';
 import { TestamentOption } from './types';
 
 type Strings = any;
@@ -20,8 +19,7 @@ type Props = {
   selectedDate: string;
   selectedCompleted: boolean;
   selectedBook: string;
-  selectedChapter: number;
-  selectedChaptersRead: number;
+  selectedChapters: number[];
   selectedTestament: Testament;
   saving: boolean;
   books: BibleBook[];
@@ -31,8 +29,7 @@ type Props = {
   onSetCompleted: (value: boolean) => void;
   onSetTestament: (value: Testament) => void;
   onSetBook: (value: string) => void;
-  onSetChapter: (value: number) => void;
-  onSetChaptersRead: (value: number) => void;
+  onToggleChapter: (value: number) => void;
   onSave: () => void;
 };
 
@@ -42,8 +39,7 @@ const DevotionDayEditor = ({
   selectedDate,
   selectedCompleted,
   selectedBook,
-  selectedChapter,
-  selectedChaptersRead,
+  selectedChapters,
   selectedTestament,
   saving,
   books,
@@ -53,8 +49,7 @@ const DevotionDayEditor = ({
   onSetCompleted,
   onSetTestament,
   onSetBook,
-  onSetChapter,
-  onSetChaptersRead,
+  onToggleChapter,
   onSave,
 }: Props) => (
   <Modal
@@ -187,6 +182,7 @@ const DevotionDayEditor = ({
               </View>
 
               <Text style={styles.fieldTitle}>{strings.selectChapter}</Text>
+              <Text style={styles.rangeHint}>{strings.chapterRangeHint}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -197,47 +193,19 @@ const DevotionDayEditor = ({
                     key={`chapter-${chapter}`}
                     style={[
                       styles.choiceChip,
-                      selectedChapter === chapter && styles.choiceChipSelected,
+                      selectedChapters.includes(chapter) &&
+                        styles.choiceChipSelected,
                     ]}
-                    onPress={() => onSetChapter(chapter)}
+                    onPress={() => onToggleChapter(chapter)}
                   >
                     <Text
                       style={[
                         styles.choiceChipText,
-                        selectedChapter === chapter &&
+                        selectedChapters.includes(chapter) &&
                           styles.choiceChipTextSelected,
                       ]}
                     >
                       {chapter}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-
-              <Text style={styles.fieldTitle}>{strings.chaptersRead}</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalChipWrap}
-              >
-                {chapterOptions.map(count => (
-                  <TouchableOpacity
-                    key={`count-${count}`}
-                    style={[
-                      styles.choiceChip,
-                      selectedChaptersRead === count &&
-                        styles.choiceChipSelected,
-                    ]}
-                    onPress={() => onSetChaptersRead(count)}
-                  >
-                    <Text
-                      style={[
-                        styles.choiceChipText,
-                        selectedChaptersRead === count &&
-                          styles.choiceChipTextSelected,
-                      ]}
-                    >
-                      {count}
                     </Text>
                   </TouchableOpacity>
                 ))}

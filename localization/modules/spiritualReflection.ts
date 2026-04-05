@@ -1,5 +1,14 @@
 export const spiritualReflectionStrings = {
   title: 'التأمل الروحي',
+  headerEyebrow: 'مساحة هادية',
+  heroBadge: 'يومياتك مع ربنا',
+  heroTitle: 'اكتب اللي لمسه ربنا في قلبك',
+  heroText:
+    'سجّل لمسات ربنا، آية أثرت فيك، أو فكرة صغيرة عايز ترجع لها بعدين.',
+  totalReflections: 'إجمالي التأملات',
+  latestReflection: 'آخر تأمل',
+  noReflectionsYet: 'لسه ماكتبتش تأملات',
+  searchPlaceholder: 'ابحث في التأملات...',
   errors: {
     genericTitle: 'خطأ',
   },
@@ -8,7 +17,7 @@ export const spiritualReflectionStrings = {
   cancel: 'إلغاء',
   delete: 'حذف',
   emptyTitle: 'لا يوجد تأملات بعد',
-  emptyMessage: 'اضغط + لإنشاء أول تأملك وتوثيق ما كلمك الله به اليوم.',
+  emptyMessage: 'اضغط + لإنشاء تامل.',
   detailTitle: 'تفاصيل التأمل',
   close: 'إغلاق',
   edit: 'تعديل',

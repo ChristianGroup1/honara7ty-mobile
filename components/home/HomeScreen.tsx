@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   ScrollView,
   StatusBar,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,7 +27,14 @@ import {
   BIBLE_BOOKS,
   NEW_TESTAMENT_BOOKS,
   OLD_TESTAMENT_BOOKS,
+  Testament,
 } from '../data/bibleMetadata';
+import {
+  chaptersFromLegacy,
+  firstSelectedChapter,
+  normalizeSelectedChapters,
+  toggleChapterSelection,
+} from '../shared/chapterSelection';
 
 const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
@@ -40,9 +46,9 @@ const HomeScreen = ({ route, navigation }: any) => {
   const [devotionAnswer, setDevotionAnswer] = useState<boolean | null>(null);
   const [answerSheetVisible, setAnswerSheetVisible] = useState(false);
   const [pendingCompleted, setPendingCompleted] = useState(true);
+  const [selectedTestament, setSelectedTestament] = useState<Testament>('old');
   const [readingBook, setReadingBook] = useState(BIBLE_BOOKS[0].bookName);
-  const [readingChapter, setReadingChapter] = useState(1);
-  const [chaptersRead, setChaptersRead] = useState(1);
+  const [selectedChapters, setSelectedChapters] = useState<number[]>([1]);
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -84,7 +90,9 @@ const HomeScreen = ({ route, navigation }: any) => {
 
         const { data } = await supabase
           .from('devotion_log')
-          .select('completed, reading_book, reading_chapter, chapters_read')
+          .select(
+            'completed, reading_book, reading_chapter, chapters_read, selected_chapters',
+          )
           .eq('user_id', userId)
           .eq('date', getTodayDate())
           .maybeSingle();
@@ -92,12 +100,23 @@ const HomeScreen = ({ route, navigation }: any) => {
         setDevotionAnswer(data ? (data.completed as boolean) : null);
         if (data?.reading_book) {
           setReadingBook(data.reading_book);
-        }
-        if (data?.reading_chapter) {
-          setReadingChapter(Math.max(1, Number(data.reading_chapter)));
-        }
-        if (data?.chapters_read) {
-          setChaptersRead(Math.max(1, Number(data.chapters_read)));
+          const matchedBook = BIBLE_BOOKS.find(
+            book => book.bookName === data.reading_book,
+          );
+          if (matchedBook) {
+            setSelectedTestament(matchedBook.testament);
+            const nextSelectedChapters = Array.isArray((data as any).selected_chapters)
+              ? normalizeSelectedChapters(
+                  (data as any).selected_chapters.map(Number),
+                  matchedBook.chapters,
+                )
+              : chaptersFromLegacy(
+                  (data as any).reading_chapter,
+                  (data as any).chapters_read,
+                  matchedBook.chapters,
+                );
+            setSelectedChapters(nextSelectedChapters);
+          }
         }
       };
       checkDevotion();
@@ -112,6 +131,11 @@ const HomeScreen = ({ route, navigation }: any) => {
       return;
     }
 
+    const normalizedChapters = normalizeSelectedChapters(
+      selectedChapters,
+      selectedBook.chapters,
+    );
+
     const { error } = await supabase
       .from('devotion_log')
       .upsert(
@@ -119,9 +143,12 @@ const HomeScreen = ({ route, navigation }: any) => {
           user_id: userId,
           date: getTodayDate(),
           completed,
-          reading_book: readingBook,
-          reading_chapter: readingChapter,
-          chapters_read: chaptersRead,
+          reading_book: completed ? readingBook : null,
+          reading_chapter: completed
+            ? firstSelectedChapter(normalizedChapters)
+            : null,
+          chapters_read: completed ? normalizedChapters.length : null,
+          selected_chapters: completed ? normalizedChapters : null,
         },
         { onConflict: 'user_id,date' },
       );
@@ -184,27 +211,34 @@ const HomeScreen = ({ route, navigation }: any) => {
   /* ── Show question dialog ── */
   const handleAnswerNow = () => {
     setPendingCompleted(devotionAnswer ?? true);
+    const matchedBook = BIBLE_BOOKS.find(book => book.bookName === readingBook);
+    if (matchedBook) {
+      setSelectedTestament(matchedBook.testament);
+    }
     setAnswerSheetVisible(true);
   };
 
   const selectedBook =
     BIBLE_BOOKS.find(book => book.bookName === readingBook) ?? BIBLE_BOOKS[0];
+  const selectedTestamentBooks =
+    selectedTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS;
   const chapterOptions = Array.from(
     { length: selectedBook.chapters },
     (_, idx) => idx + 1,
   );
 
   useEffect(() => {
-    if (readingChapter > selectedBook.chapters) {
-      setReadingChapter(selectedBook.chapters);
+    const normalized = normalizeSelectedChapters(
+      selectedChapters,
+      selectedBook.chapters,
+    );
+    if (
+      normalized.length !== selectedChapters.length ||
+      normalized.some((chapter, index) => chapter !== selectedChapters[index])
+    ) {
+      setSelectedChapters(normalized);
     }
-  }, [readingChapter, selectedBook.chapters]);
-
-  useEffect(() => {
-    if (chaptersRead > selectedBook.chapters) {
-      setChaptersRead(selectedBook.chapters);
-    }
-  }, [chaptersRead, selectedBook.chapters]);
+  }, [selectedBook.chapters, selectedChapters]);
 
   const saveDevotionSheet = async () => {
     setAnswerSheetVisible(false);
@@ -274,17 +308,30 @@ const HomeScreen = ({ route, navigation }: any) => {
         visible={answerSheetVisible}
         strings={strings}
         pendingCompleted={pendingCompleted}
-        oldTestamentBooks={OLD_TESTAMENT_BOOKS}
-        newTestamentBooks={NEW_TESTAMENT_BOOKS}
+        selectedTestament={selectedTestament}
+        books={selectedTestamentBooks}
         readingBook={readingBook}
         chapterOptions={chapterOptions}
-        readingChapter={readingChapter}
-        chaptersRead={chaptersRead}
+        selectedChapters={selectedChapters}
         onClose={() => setAnswerSheetVisible(false)}
         onSetPendingCompleted={setPendingCompleted}
+        onSetSelectedTestament={value => {
+          setSelectedTestament(value);
+          const nextBooks =
+            value === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS;
+          const nextBook = nextBooks[0];
+          if (!nextBook) {
+            return;
+          }
+          setReadingBook(nextBook.bookName);
+          setSelectedChapters([1]);
+        }}
         onSetReadingBook={setReadingBook}
-        onSetReadingChapter={setReadingChapter}
-        onSetChaptersRead={setChaptersRead}
+        onToggleChapter={chapter =>
+          setSelectedChapters(current =>
+            toggleChapterSelection(current, chapter, selectedBook.chapters),
+          )
+        }
         onSave={saveDevotionSheet}
       />
     </SafeAreaView>

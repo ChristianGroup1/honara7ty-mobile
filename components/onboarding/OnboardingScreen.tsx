@@ -284,27 +284,6 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
         backgroundColor="transparent"
       />
 
-      {inApp ? (
-        <View
-          style={[
-            styles.backButtonWrap,
-            { top: Math.max(insets.top, 16), right: 16 },
-          ]}
-        >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.85}
-          >
-            <MaterialCommunityIcons
-              name={I18nManager.isRTL ? 'arrow-right' : 'arrow-left'}
-              size={22}
-              color={NAVY}
-            />
-          </TouchableOpacity>
-        </View>
-      ) : null}
-
       <FlatList
         ref={listRef}
         data={slides}
@@ -318,6 +297,27 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
         viewabilityConfig={{ viewAreaCoveragePercentThreshold: 60 }}
         scrollEnabled={!finishing}
       />
+
+      {inApp ? (
+        <View
+          style={[
+            styles.backButtonWrap,
+            { top: insets.top + 18, left: 16 },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.85}
+          >
+            <MaterialCommunityIcons
+              name={I18nManager.isRTL ? 'arrow-right' : 'arrow-left'}
+              size={22}
+              color={'#fff'}
+            />
+          </TouchableOpacity>
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -329,21 +329,18 @@ const styles = StyleSheet.create({
   },
   backButtonWrap: {
     position: 'absolute',
-    zIndex: 20,
-    left: 26,
+    zIndex: 120,
+    elevation: 30,
+    left: 16,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
   },
   slide: {
     width: SCREEN_WIDTH,

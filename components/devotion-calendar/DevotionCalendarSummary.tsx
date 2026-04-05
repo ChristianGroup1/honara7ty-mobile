@@ -38,7 +38,7 @@ const DevotionCalendarSummary = ({
       <Text style={styles.heroText}>{strings.heroText}</Text>
       <View style={styles.heroHintRow}>
         <MaterialCommunityIcons
-          name="star-four-points"
+          name="star-outline"
           size={16}
           color={GOLD}
         />

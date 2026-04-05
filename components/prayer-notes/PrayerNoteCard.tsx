@@ -26,9 +26,15 @@ const PrayerNoteCard = ({
     item.content.length > PREVIEW_CHARS
       ? `${item.content.slice(0, PREVIEW_CHARS).trimEnd()}…`
       : item.content;
-  const actionBorderStyle = item.is_answered ? styles.answeredIconBtn : styles.neutralIconBtn;
-  const editActionStyle = item.is_answered ? styles.answeredIconBtn : styles.editIconBtn;
-  const deleteActionStyle = item.is_answered ? styles.answeredIconBtn : styles.deleteIconBtn;
+  const actionBorderStyle = item.is_answered
+    ? styles.answeredIconBtn
+    : styles.neutralIconBtn;
+  const editActionStyle = item.is_answered
+    ? styles.answeredIconBtn
+    : styles.editIconBtn;
+  const deleteActionStyle = item.is_answered
+    ? styles.answeredIconBtn
+    : styles.deleteIconBtn;
 
   return (
     <View
@@ -38,10 +44,20 @@ const PrayerNoteCard = ({
         item.is_answered && styles.answeredCard,
       ]}
     >
+      <View
+        style={[
+          styles.cardAccent,
+          item.is_answered ? styles.cardAccentAnswered : null,
+        ]}
+      />
+
       <View style={styles.cardLeft}>
         <TouchableOpacity
           onPress={() => onToggleAnswered(item)}
-          style={styles.checkWrap}
+          style={[
+            styles.checkWrap,
+            item.is_answered ? styles.checkWrapAnswered : null,
+          ]}
         >
           <MaterialCommunityIcons
             name={
@@ -50,7 +66,7 @@ const PrayerNoteCard = ({
                 : 'checkbox-blank-circle-outline'
             }
             size={22}
-            color={item.is_answered ? GOLD : MUTED}
+            color={item.is_answered ? '#2D9C5A' : MUTED}
           />
         </TouchableOpacity>
       </View>
@@ -65,13 +81,11 @@ const PrayerNoteCard = ({
         </Text>
       </TouchableOpacity>
 
-      <View style={[styles.cardActions, isNarrowWidth && styles.cardActionsCompact]}>
+      <View
+        style={[styles.cardActions, isNarrowWidth && styles.cardActionsCompact]}
+      >
         <TouchableOpacity
-          style={[
-            styles.iconBtn,
-            actionBorderStyle,
-            editActionStyle,
-          ]}
+          style={[styles.iconBtn, actionBorderStyle, editActionStyle]}
           onPress={() => onOpenEdit(item)}
         >
           <MaterialCommunityIcons
@@ -81,11 +95,7 @@ const PrayerNoteCard = ({
           />
         </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.iconBtn,
-            actionBorderStyle,
-            deleteActionStyle,
-          ]}
+          style={[styles.iconBtn, actionBorderStyle, deleteActionStyle]}
           onPress={() => onDelete(item)}
         >
           <MaterialCommunityIcons

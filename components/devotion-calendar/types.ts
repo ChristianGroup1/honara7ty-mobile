@@ -5,6 +5,7 @@ export type DevotionDayLog = {
   reading_book?: string | null;
   reading_chapter?: number | null;
   chapters_read?: number | null;
+  selected_chapters?: number[] | null;
 };
 
 export type CalendarCell = {

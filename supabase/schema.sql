@@ -18,8 +18,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   reading_book  TEXT,
   reading_chapter INT,
   daily_chapters_target INT DEFAULT 1,
+  selected_chapters INT[],
   updated_at    TIMESTAMPTZ DEFAULT now()
 );
+
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS selected_chapters INT[];
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
@@ -142,10 +146,14 @@ CREATE TABLE IF NOT EXISTS public.devotion_log (
   reading_book TEXT,
   reading_chapter INT,
   chapters_read INT,
+  selected_chapters INT[],
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
   PRIMARY KEY (user_id, date)
 );
+
+ALTER TABLE public.devotion_log
+  ADD COLUMN IF NOT EXISTS selected_chapters INT[];
 
 ALTER TABLE public.devotion_log ENABLE ROW LEVEL SECURITY;
 

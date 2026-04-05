@@ -209,6 +209,9 @@ export const homeStyles = StyleSheet.create({
     padding: 18,
     maxHeight: '80%',
   },
+  answerSheetScrollContent: {
+    paddingBottom: 4,
+  },
   answerSheetTitle: {
     color: NAVY,
     fontSize: 19,
@@ -230,11 +233,76 @@ export const homeStyles = StyleSheet.create({
     marginTop: 10,
     textAlign: 'left',
   },
+  answerRangeHint: {
+    color: '#667085',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: -2,
+    marginBottom: 8,
+    textAlign: 'left',
+  },
   answerGroupLabel: {
     color: '#667085',
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 6,
+  },
+  answerTestamentTabs: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+    backgroundColor: '#EFF3F8',
+    borderRadius: 18,
+    padding: 6,
+  },
+  answerTestamentTab: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  answerTestamentTabActive: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: 'rgba(10,17,36,0.06)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  answerTestamentTabText: {
+    color: '#667085',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  answerTestamentTabTextActive: {
+    color: NAVY,
+  },
+  answerBookPanel: {
+    backgroundColor: '#F8FAFD',
+    borderRadius: 18,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E3E8F1',
+  },
+  answerBookPanelHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  answerBookPanelTitle: {
+    color: NAVY,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  answerBookPanelCount: {
+    color: '#667085',
+    fontSize: 12,
+    fontWeight: '700',
   },
   answerChoiceRow: {
     gap: 8,
@@ -248,6 +316,11 @@ export const homeStyles = StyleSheet.create({
     paddingVertical: 8,
     backgroundColor: '#F6F9FC',
   },
+  answerBookChoiceChip: {
+    minHeight: 44,
+    justifyContent: 'center',
+    borderRadius: 14,
+  },
   answerChoiceChipSelected: {
     borderColor: NAVY,
     backgroundColor: NAVY,
@@ -256,6 +329,29 @@ export const homeStyles = StyleSheet.create({
     color: NAVY,
     fontSize: 13,
     fontWeight: '600',
+  },
+  answerBookChoiceText: {
+    textAlign: 'center',
+  },
+  answerRangeSummaryCard: {
+    backgroundColor: '#F8FAFD',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E3E8F1',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  answerRangeSummaryLabel: {
+    color: '#667085',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  answerRangeSummaryValue: {
+    color: NAVY,
+    fontSize: 15,
+    fontWeight: '800',
   },
   answerChoiceTextSelected: {
     color: '#FFF',

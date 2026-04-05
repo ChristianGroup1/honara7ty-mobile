@@ -30,6 +30,12 @@ import { devotionCalendarStyles as styles, NAVY } from './styles';
 import { DevotionDayLog, TestamentOption } from './types';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import { buildMonthCells, getMonthKey, startOfMonth, toIsoDate } from './utils';
+import {
+  chaptersFromLegacy,
+  firstSelectedChapter,
+  normalizeSelectedChapters,
+  toggleChapterSelection,
+} from '../shared/chapterSelection';
 
 const DevotionCalendarScreen = ({ navigation }: any) => {
   const strings = getStrings().devotionCalendar;
@@ -46,8 +52,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   const [selectedCompleted, setSelectedCompleted] = useState(true);
   const [selectedTestament, setSelectedTestament] = useState<Testament>('old');
   const [selectedBook, setSelectedBook] = useState(BIBLE_BOOKS[0].bookName);
-  const [selectedChapter, setSelectedChapter] = useState(1);
-  const [selectedChaptersRead, setSelectedChaptersRead] = useState(1);
+  const [selectedChapters, setSelectedChapters] = useState<number[]>([1]);
   const [devotionLogsByDate, setDevotionLogsByDate] = useState<
     Record<string, DevotionDayLog>
   >({});
@@ -82,7 +87,9 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
 
       const { data, error } = await supabase
         .from('devotion_log')
-        .select('date, completed, reading_book, reading_chapter, chapters_read')
+        .select(
+          'date, completed, reading_book, reading_chapter, chapters_read, selected_chapters',
+        )
         .eq('user_id', userId)
         .order('date', { ascending: false });
 
@@ -103,6 +110,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
           reading_book: (item as any).reading_book,
           reading_chapter: (item as any).reading_chapter,
           chapters_read: (item as any).chapters_read,
+          selected_chapters: (item as any).selected_chapters,
         };
       });
       setDevotionLogsByDate(logsMap);
@@ -166,13 +174,17 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   }, [booksForTestament, selectedBookMeta.testament, selectedTestament]);
 
   useEffect(() => {
-    if (selectedChapter > selectedBookMeta.chapters) {
-      setSelectedChapter(selectedBookMeta.chapters);
+    const normalized = normalizeSelectedChapters(
+      selectedChapters,
+      selectedBookMeta.chapters,
+    );
+    if (
+      normalized.length !== selectedChapters.length ||
+      normalized.some((chapter, index) => chapter !== selectedChapters[index])
+    ) {
+      setSelectedChapters(normalized);
     }
-    if (selectedChaptersRead > selectedBookMeta.chapters) {
-      setSelectedChaptersRead(selectedBookMeta.chapters);
-    }
-  }, [selectedChapter, selectedChaptersRead, selectedBookMeta.chapters]);
+  }, [selectedBookMeta.chapters, selectedChapters]);
 
   const hydrateDayForm = useCallback(
     (isoDate: string) => {
@@ -185,8 +197,18 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         setSelectedCompleted(log.completed);
         setSelectedTestament(nextMeta.testament);
         setSelectedBook(nextBook);
-        setSelectedChapter(Math.max(1, Number(log.reading_chapter ?? 1)));
-        setSelectedChaptersRead(Math.max(1, Number(log.chapters_read ?? 1)));
+        setSelectedChapters(
+          Array.isArray(log.selected_chapters)
+            ? normalizeSelectedChapters(
+                log.selected_chapters.map(Number),
+                nextMeta.chapters,
+              )
+            : chaptersFromLegacy(
+                log.reading_chapter,
+                log.chapters_read,
+                nextMeta.chapters,
+              ),
+        );
         return;
       }
 
@@ -195,8 +217,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
       setSelectedBook(
         OLD_TESTAMENT_BOOKS[0]?.bookName ?? BIBLE_BOOKS[0].bookName,
       );
-      setSelectedChapter(1);
-      setSelectedChaptersRead(1);
+      setSelectedChapters([1]);
     },
     [devotionLogsByDate],
   );
@@ -225,8 +246,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         : NEW_TESTAMENT_BOOKS[0]?.bookName;
     if (firstBook) {
       setSelectedBook(firstBook);
-      setSelectedChapter(1);
-      setSelectedChaptersRead(1);
+      setSelectedChapters([1]);
     }
   };
 
@@ -239,13 +259,21 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         return;
       }
 
+      const normalizedChapters = normalizeSelectedChapters(
+        selectedChapters,
+        selectedBookMeta.chapters,
+      );
+
       const payload = {
         user_id: userId,
         date: selectedDate,
         completed: selectedCompleted,
         reading_book: selectedCompleted ? selectedBook : null,
-        reading_chapter: selectedCompleted ? selectedChapter : null,
-        chapters_read: selectedCompleted ? selectedChaptersRead : null,
+        reading_chapter: selectedCompleted
+          ? firstSelectedChapter(normalizedChapters)
+          : null,
+        chapters_read: selectedCompleted ? normalizedChapters.length : null,
+        selected_chapters: selectedCompleted ? normalizedChapters : null,
       };
 
       const { error } = await supabase
@@ -334,8 +362,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         selectedDate={selectedDate}
         selectedCompleted={selectedCompleted}
         selectedBook={selectedBook}
-        selectedChapter={selectedChapter}
-        selectedChaptersRead={selectedChaptersRead}
+        selectedChapters={selectedChapters}
         selectedTestament={selectedTestament}
         saving={saving}
         books={booksForTestament}
@@ -345,8 +372,11 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         onSetCompleted={setSelectedCompleted}
         onSetTestament={handleChangeTestament}
         onSetBook={setSelectedBook}
-        onSetChapter={setSelectedChapter}
-        onSetChaptersRead={setSelectedChaptersRead}
+        onToggleChapter={chapter =>
+          setSelectedChapters(current =>
+            toggleChapterSelection(current, chapter, selectedBookMeta.chapters),
+          )
+        }
         onSave={handleSaveDay}
       />
 

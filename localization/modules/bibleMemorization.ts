@@ -62,6 +62,11 @@ export const bibleMemorizationStrings = {
   },
   result: {
     title: 'النتيجة',
+    badge: 'نتيجتك النهارده',
+    scoreLabel: 'النتيجة',
+    hiddenWordsLabel: 'الكلمات المخفية',
+    correctWordsLabel: 'الإجابات الصح',
+    verseReferenceLabel: 'الجزء اللي حفظته',
     perfect: 'ممتاز! حفظت النص بشكل كامل!',
     good: 'جيد جداً، حاول مرة أخرى لتثبيت الحفظ.',
     retry: 'راجع النص وحاول مرة أخرى.',

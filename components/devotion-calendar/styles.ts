@@ -344,6 +344,14 @@ export const devotionCalendarStyles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 8,
   },
+  rangeHint: {
+    color: '#667085',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: -2,
+    marginBottom: 8,
+    textAlign: 'left',
+  },
   binaryRow: {
     flexDirection: 'row',
     gap: 8,
