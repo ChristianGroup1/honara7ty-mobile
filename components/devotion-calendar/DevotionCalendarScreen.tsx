@@ -51,8 +51,8 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   );
   const [selectedCompleted, setSelectedCompleted] = useState(true);
   const [selectedTestament, setSelectedTestament] = useState<Testament>('old');
-  const [selectedBook, setSelectedBook] = useState(BIBLE_BOOKS[0].bookName);
-  const [selectedChapters, setSelectedChapters] = useState<number[]>([1]);
+  const [selectedBook, setSelectedBook] = useState('');
+  const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
   const [devotionLogsByDate, setDevotionLogsByDate] = useState<
     Record<string, DevotionDayLog>
   >({});
@@ -149,9 +149,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   const todayIso = toIsoDate(new Date());
 
   const selectedBookMeta = useMemo(
-    () =>
-      BIBLE_BOOKS.find(book => book.bookName === selectedBook) ??
-      BIBLE_BOOKS[0],
+    () => BIBLE_BOOKS.find(book => book.bookName === selectedBook),
     [selectedBook],
   );
   const booksForTestament = useMemo(
@@ -161,22 +159,23 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   );
   const chapterOptions = useMemo(
     () =>
-      Array.from({ length: selectedBookMeta.chapters }, (_, idx) => idx + 1),
-    [selectedBookMeta.chapters],
+      Array.from(
+        { length: selectedBookMeta?.chapters ?? 0 },
+        (_, idx) => idx + 1,
+      ),
+    [selectedBookMeta],
   );
 
   useEffect(() => {
-    if (selectedBookMeta.testament !== selectedTestament) {
-      setSelectedBook(
-        booksForTestament[0]?.bookName ?? BIBLE_BOOKS[0].bookName,
-      );
+    if (selectedBook && selectedBookMeta?.testament !== selectedTestament) {
+      setSelectedBook('');
     }
-  }, [booksForTestament, selectedBookMeta.testament, selectedTestament]);
+  }, [selectedBook, selectedBookMeta, selectedTestament]);
 
   useEffect(() => {
     const normalized = normalizeSelectedChapters(
       selectedChapters,
-      selectedBookMeta.chapters,
+      selectedBookMeta?.chapters ?? 0,
     );
     if (
       normalized.length !== selectedChapters.length ||
@@ -184,40 +183,38 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
     ) {
       setSelectedChapters(normalized);
     }
-  }, [selectedBookMeta.chapters, selectedChapters]);
+  }, [selectedBookMeta, selectedChapters]);
 
   const hydrateDayForm = useCallback(
     (isoDate: string) => {
       const log = devotionLogsByDate[isoDate];
       if (log) {
-        const nextBook = log.reading_book || BIBLE_BOOKS[0].bookName;
-        const nextMeta =
-          BIBLE_BOOKS.find(book => book.bookName === nextBook) ??
-          BIBLE_BOOKS[0];
+        const nextBook = log.reading_book || '';
+        const nextMeta = BIBLE_BOOKS.find(book => book.bookName === nextBook);
         setSelectedCompleted(log.completed);
-        setSelectedTestament(nextMeta.testament);
+        setSelectedTestament(nextMeta?.testament ?? 'old');
         setSelectedBook(nextBook);
         setSelectedChapters(
-          Array.isArray(log.selected_chapters)
+          nextMeta && Array.isArray(log.selected_chapters)
             ? normalizeSelectedChapters(
                 log.selected_chapters.map(Number),
                 nextMeta.chapters,
               )
-            : chaptersFromLegacy(
+            : nextMeta
+            ? chaptersFromLegacy(
                 log.reading_chapter,
                 log.chapters_read,
                 nextMeta.chapters,
-              ),
+              )
+            : [],
         );
         return;
       }
 
       setSelectedCompleted(true);
       setSelectedTestament('old');
-      setSelectedBook(
-        OLD_TESTAMENT_BOOKS[0]?.bookName ?? BIBLE_BOOKS[0].bookName,
-      );
-      setSelectedChapters([1]);
+      setSelectedBook('');
+      setSelectedChapters([]);
     },
     [devotionLogsByDate],
   );
@@ -240,14 +237,8 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
 
   const handleChangeTestament = (value: Testament) => {
     setSelectedTestament(value);
-    const firstBook =
-      value === 'old'
-        ? OLD_TESTAMENT_BOOKS[0]?.bookName
-        : NEW_TESTAMENT_BOOKS[0]?.bookName;
-    if (firstBook) {
-      setSelectedBook(firstBook);
-      setSelectedChapters([1]);
-    }
+    setSelectedBook('');
+    setSelectedChapters([]);
   };
 
   const handleSaveDay = async () => {
@@ -261,8 +252,21 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
 
       const normalizedChapters = normalizeSelectedChapters(
         selectedChapters,
-        selectedBookMeta.chapters,
+        selectedBookMeta?.chapters ?? 0,
       );
+
+      if (
+        selectedCompleted &&
+        (!selectedBook || normalizedChapters.length === 0)
+      ) {
+        setAlertConfig({
+          visible: true,
+          title: strings.readingSelectionRequiredTitle,
+          message: strings.readingSelectionRequiredMessage,
+          type: 'warning',
+        });
+        return;
+      }
 
       const payload = {
         user_id: userId,
@@ -272,7 +276,9 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         reading_chapter: selectedCompleted
           ? firstSelectedChapter(normalizedChapters)
           : null,
-        chapters_read: selectedCompleted ? normalizedChapters.length : null,
+        chapters_read: selectedCompleted
+          ? normalizedChapters.length || null
+          : null,
         selected_chapters: selectedCompleted ? normalizedChapters : null,
       };
 
@@ -368,13 +374,18 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         books={booksForTestament}
         chapterOptions={chapterOptions}
         testamentOptions={testamentOptions}
+        canSaveReading={!!selectedBook && selectedChapters.length > 0}
         onClose={() => setEditorVisible(false)}
         onSetCompleted={setSelectedCompleted}
         onSetTestament={handleChangeTestament}
         onSetBook={setSelectedBook}
         onToggleChapter={chapter =>
           setSelectedChapters(current =>
-            toggleChapterSelection(current, chapter, selectedBookMeta.chapters),
+            toggleChapterSelection(
+              current,
+              chapter,
+              selectedBookMeta?.chapters ?? 0,
+            ),
           )
         }
         onSave={handleSaveDay}

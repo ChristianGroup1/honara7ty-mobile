@@ -32,10 +32,18 @@ export const homeStrings = {
   answerSheetTitle: 'سجل خلوتك اليوم',
   answerSheetSubtitle: 'اختار الإجابة وسجّل الجزء اللي قريته.',
   answerBook: 'السفر',
+  selectBookFirst: 'اختار السفر الأول',
   oldTestament: 'العهد القديم',
   newTestament: 'العهد الجديد',
   answerChapter: 'الإصحاحات',
   answerRangeHint: 'اختار أي إصحاحات حابب تقراها، ومش لازم يكونوا ورا بعض.',
+  readingSelectionRequiredTitle: 'اختيار القراءة مطلوب',
+  readingSelectionRequiredMessage: 'لازم تختار سفر وإصحاح واحد على الأقل قبل الحفظ.',
+  permissionNoticeTitle: 'فعّل التذكير اليومي',
+  permissionNoticeBody:
+    'لو الإشعارات مقفولة، مش هيوصلك تذكير بوقتك مع ربنا في المعاد المناسب.',
+  permissionEnable: 'تفعيل الإشعارات',
+  permissionOpenSettings: 'فتح الإعدادات',
   saveAnswer: 'حفظ الإجابة',
   quickActions: {
     devotionGuide: 'شرح الخلوة',

@@ -127,6 +127,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
         sect: profileData.sect || null,
         birth_date: profileData.birthDate || null,
         gender: profileData.gender || null,
+        devotion_time: '07:00',
         updated_at: new Date().toISOString(),
       });
 

@@ -12,6 +12,8 @@ import {
   ActivityIndicator,
 } from 'react-native-paper';
 import supabase from '../../lib/supbase';
+import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
+import { configureGoogleSignIn } from '../../lib/googleSignInConfig';
 import {
   localizeAuthError,
   MIN_PASSWORD_LENGTH,
@@ -150,12 +152,13 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
 
   const handleGoogleSignUp = async () => {
     try {
+      configureGoogleSignIn();
       await GoogleSignin.hasPlayServices();
       const userInfo: any = await GoogleSignin.signIn();
       const idToken = userInfo?.data?.idToken ?? userInfo?.idToken;
 
       if (idToken) {
-        const { error } = await supabase.auth.signInWithIdToken({
+        const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
           token: idToken,
         });
@@ -163,6 +166,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         if (error) {
           showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
         } else {
+          await ensureDefaultDevotionTime(data?.user?.id);
           navigation.replace('Onboarding');
         }
       } else {

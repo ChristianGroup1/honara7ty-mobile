@@ -23,13 +23,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import supabase from '../../lib/supbase';
 import BadgeCard from './BadgeCard';
 import BadgesHeader from './BadgesHeader';
-import {
-  BADGE_CONFIGS,
-  BadgeConfig,
-  GOLD,
-  NAVY,
-  WEB_URL,
-} from './constants';
+import { BADGE_CONFIGS, BadgeConfig, GOLD, NAVY, WEB_URL } from './constants';
 import { badgesStyles as styles } from './styles';
 import StreakCard from './StreakCard';
 import { computeStreak } from './utils';
@@ -110,7 +104,9 @@ const BadgesScreen = ({ navigation }: any) => {
   const earnedBadges = BADGE_CONFIGS.filter(badge => streak >= badge.days);
   const lockedBadges = BADGE_CONFIGS.filter(badge => streak < badge.days);
   const spotlightBadge =
-    lockedBadges[0] ?? earnedBadges[earnedBadges.length - 1] ?? BADGE_CONFIGS[0];
+    lockedBadges[0] ??
+    earnedBadges[earnedBadges.length - 1] ??
+    BADGE_CONFIGS[0];
   const spotlightEarned = streak >= spotlightBadge.days;
   const spotlightDaysLeft = Math.max(spotlightBadge.days - streak, 0);
 

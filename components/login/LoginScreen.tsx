@@ -15,6 +15,9 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
+import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
+import { configureGoogleSignIn } from '../../lib/googleSignInConfig';
+import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermissionFlow';
 import { localizeAuthError, EMAIL_REGEX } from '../../lib/authErrors';
 import {
   GoogleSignin,
@@ -59,21 +62,28 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   /** Navigate to Onboarding for first-time users, otherwise to HomeScreen. */
-  const navigateAfterLogin = (user: any) => {
+  const navigateAfterLogin = async (user: any) => {
+    await ensureDefaultDevotionTime(user?.id);
     const onboardingDone = user?.user_metadata?.onboarding_completed === true;
+    const seenPermissionPrompt = await hasSeenNotificationPermissionPrompt(
+      user?.id,
+    );
     if (onboardingDone) {
-      navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+      if (seenPermissionPrompt) {
+        navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+      } else {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'NotificationPermission' }],
+        });
+      }
     } else {
       navigation.replace('Onboarding');
     }
   };
 
   useEffect(() => {
-    GoogleSignin.configure({
-      scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-      webClientId:
-        '496533823141-ngb38njinb595ndm6qlu1ollommpg2sl.apps.googleusercontent.com',
-    });
+    configureGoogleSignIn();
 
     // Check if user is already signed in
     checkUserSignedIn();
@@ -119,7 +129,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
       if (error) {
         showAlert(strings.login.signInErrorTitle, localizeAuthError(error.message));
       } else {
-        navigateAfterLogin(data.user);
+        await navigateAfterLogin(data.user);
       }
     } catch (err: any) {
       showAlert(strings.common.genericErrorTitle, localizeAuthError(err.message));
@@ -144,7 +154,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         if (error) {
           showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
         } else {
-          navigateAfterLogin(data?.user ?? googleUser);
+          await navigateAfterLogin(data?.user ?? googleUser);
         }
       } else {
         return;

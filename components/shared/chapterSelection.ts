@@ -10,7 +10,7 @@ export const normalizeSelectedChapters = (
     ),
   ).sort((a, b) => a - b);
 
-  return uniqueSorted.length ? uniqueSorted : [1];
+  return uniqueSorted;
 };
 
 export const chaptersFromLegacy = (
@@ -25,7 +25,8 @@ export const chaptersFromLegacy = (
 };
 
 export const firstSelectedChapter = (selectedChapters: number[]) =>
-  normalizeSelectedChapters(selectedChapters, Math.max(...selectedChapters, 1))[0];
+  normalizeSelectedChapters(selectedChapters, Math.max(...selectedChapters, 1))[0] ??
+  null;
 
 export const toggleChapterSelection = (
   selectedChapters: number[],
@@ -35,8 +36,7 @@ export const toggleChapterSelection = (
   const normalized = normalizeSelectedChapters(selectedChapters, maxChapter);
 
   if (normalized.includes(chapter)) {
-    const next = normalized.filter(value => value !== chapter);
-    return next.length ? next : normalized;
+    return normalized.filter(value => value !== chapter);
   }
 
   return normalizeSelectedChapters([...normalized, chapter], maxChapter);

@@ -31,11 +31,11 @@ const StreakCard = ({
           <View style={styles.streakHeroGlow} />
 
           <View style={styles.streakTopRow}>
-            <View style={styles.streakBadge}>
-              <Text style={styles.streakBadgeText}>{strings.streak.badge}</Text>
-            </View>
             <View style={styles.streakIconOrb}>
               <Text style={styles.streakFire}>🔥</Text>
+            </View>
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakBadgeText}>{strings.streak.badge}</Text>
             </View>
           </View>
 

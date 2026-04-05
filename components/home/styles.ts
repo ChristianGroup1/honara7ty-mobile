@@ -389,6 +389,9 @@ export const homeStyles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 8,
   },
+  saveAnswerBtnDisabled: {
+    opacity: 0.55,
+  },
   saveAnswerBtnText: {
     color: '#FFF',
     fontSize: 15,

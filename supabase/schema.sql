@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   sect          TEXT,
   birth_date    TEXT,                   -- stored as "YYYY-MM-DD" string
   gender        TEXT,
-  devotion_time TEXT,                   -- stored as "HH:MM" string (e.g. "07:30")
+  devotion_time TEXT DEFAULT '07:00',   -- stored as "HH:MM" string (e.g. "07:30")
   reading_book  TEXT,
   reading_chapter INT,
   daily_chapters_target INT DEFAULT 1,
@@ -24,6 +24,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS selected_chapters INT[];
+
+ALTER TABLE public.profiles
+  ALTER COLUMN devotion_time SET DEFAULT '07:00';
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 

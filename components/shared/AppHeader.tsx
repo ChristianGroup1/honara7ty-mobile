@@ -53,7 +53,7 @@ const AppHeader = ({
       <View style={styles.topRow}>
         <View style={styles.identity}>
           {leading ? <View style={styles.leadingWrap}>{leading}</View> : null}
-          <View style={styles.textBlock}>
+          <View style={[styles.textBlock, { marginRight: leading ? 24 : 0 }]}>
             {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
             <Text
               style={[styles.title, { textAlign: eyebrow ? 'left' : 'center' }]}
@@ -94,12 +94,11 @@ const styles = StyleSheet.create({
     marginRight: 1,
   },
   leadingWrap: {
-    marginRight: 1,
+    marginRight: 8,
   },
   textBlock: {
     flex: 1,
     minWidth: 0,
-    marginLeft: 12,
   },
   eyebrow: {
     color: '#E6D5A2',

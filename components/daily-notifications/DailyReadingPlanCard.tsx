@@ -1,7 +1,8 @@
 import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Testament } from '../data/bibleMetadata';
-import { dailyNotificationStyles as styles } from './styles';
+import { dailyNotificationStyles as styles, GOLD } from './styles';
 
 type TestamentOption = {
   key: Testament;
@@ -17,9 +18,15 @@ type Props = {
   readingBook: string;
   chapterOptions: number[];
   selectedChapters: number[];
+  timeDisplay: string;
+  saving: boolean;
+  saved: boolean;
+  canSaveReading: boolean;
   onSetTestament: (value: Testament) => void;
   onSetReadingBook: (value: string) => void;
   onToggleChapter: (value: number) => void;
+  onEditTime: () => void;
+  onSave: () => void;
 };
 
 const renderChoiceChip = (
@@ -61,15 +68,36 @@ const DailyReadingPlanCard = ({
   readingBook,
   chapterOptions,
   selectedChapters,
+  timeDisplay,
+  saving,
+  saved,
+  canSaveReading,
   onSetTestament,
   onSetReadingBook,
   onToggleChapter,
+  onEditTime,
+  onSave,
 }: Props) => (
   <View style={styles.pickerCard}>
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{strings.readingPlanTitle}</Text>
       <Text style={styles.sectionSubtitle}>{strings.readingPlanSubtitle}</Text>
     </View>
+
+    <TouchableOpacity style={styles.inlineTimeCard} onPress={onEditTime}>
+      <View style={styles.inlineTimeIconWrap}>
+        <MaterialCommunityIcons
+          name="clock-time-four-outline"
+          size={18}
+          color="#FFF"
+        />
+      </View>
+      <View style={styles.inlineTimeBody}>
+        <Text style={styles.inlineTimeLabel}>{strings.selectedTime}</Text>
+        <Text style={styles.inlineTimeValue}>{timeDisplay}</Text>
+      </View>
+      <MaterialCommunityIcons name="pencil-outline" size={18} color={GOLD} />
+    </TouchableOpacity>
 
     <Text style={styles.fieldLabel}>{strings.selectBook}</Text>
 
@@ -124,20 +152,50 @@ const DailyReadingPlanCard = ({
     </View>
 
     <Text style={styles.fieldLabel}>{strings.selectChapter}</Text>
-    <Text style={styles.rangeHint}>{strings.chapterRangeHint}</Text>
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.choiceRow}
+    <Text style={styles.rangeHint}>
+      {readingBook ? strings.chapterRangeHint : strings.selectBookFirst}
+    </Text>
+    {readingBook ? (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.choiceRow}
+      >
+        {chapterOptions.map(chapter =>
+          renderChoiceChip(
+            `اصحاح ${chapter}`,
+            selectedChapters.includes(chapter),
+            () => onToggleChapter(chapter),
+          ),
+        )}
+      </ScrollView>
+    ) : null}
+
+    <TouchableOpacity
+      style={[
+        styles.saveBtn,
+        (saving || !canSaveReading) && styles.saveBtnDisabled,
+      ]}
+      onPress={onSave}
+      disabled={saving || !canSaveReading}
     >
-      {chapterOptions.map(chapter =>
-        renderChoiceChip(
-          `اصحاح ${chapter}`,
-          selectedChapters.includes(chapter),
-          () => onToggleChapter(chapter),
-        ),
+      {saving ? (
+        <MaterialCommunityIcons
+          name="loading"
+          size={20}
+          color="#FFF"
+        />
+      ) : (
+        <>
+          <MaterialCommunityIcons
+            name={saved ? 'check-bold' : 'content-save-outline'}
+            size={20}
+            color="#FFF"
+          />
+          <Text style={styles.saveBtnText}>{strings.saveTime}</Text>
+        </>
       )}
-    </ScrollView>
+    </TouchableOpacity>
   </View>
 );
 

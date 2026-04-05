@@ -9,6 +9,7 @@ import {
   ForgotPasswordUi,
   ResetPasswordUi,
   OnboardingScreen,
+  NotificationPermissionScreen,
 } from '../screens';
 import SignupStep1 from '../components/signup/SignupScreen';
 import MainTabNavigator from './MainTabNavigator';
@@ -85,6 +86,11 @@ const RootNavigator = ({
         <Stack.Screen
           name="Onboarding"
           component={OnboardingScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="NotificationPermission"
+          component={NotificationPermissionScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

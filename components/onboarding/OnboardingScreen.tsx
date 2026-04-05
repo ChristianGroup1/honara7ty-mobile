@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
+import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermissionFlow';
 import { getStrings } from '../../localization';
 import type { OnboardingSlide } from '../../localization/modules/onboarding';
 
@@ -160,7 +161,19 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
       }
     } finally {
       setFinishing(false);
-      navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+      const { data } = await supabase.auth.getSession();
+      const userId = data?.session?.user?.id;
+      const seenPermissionPrompt = await hasSeenNotificationPermissionPrompt(
+        userId,
+      );
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: seenPermissionPrompt ? 'MainTabs' : 'NotificationPermission',
+          },
+        ],
+      });
     }
   };
 
@@ -279,7 +292,7 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   return (
     <View style={styles.root}>
       <StatusBar
-        barStyle={inApp ? 'light-content' : 'dark-content'}
+        barStyle={'light-content'}
         translucent
         backgroundColor="transparent"
       />
@@ -300,10 +313,7 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
 
       {inApp ? (
         <View
-          style={[
-            styles.backButtonWrap,
-            { top: insets.top + 18, left: 16 },
-          ]}
+          style={[styles.backButtonWrap, { top: insets.top + 18, left: 16 }]}
         >
           <TouchableOpacity
             style={styles.backButton}

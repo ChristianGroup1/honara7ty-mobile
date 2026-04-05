@@ -1,23 +1,28 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  AppState,
   Platform,
   ScrollView,
   StatusBar,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
-import { scheduleDailyDevotionReminder } from '../../lib/notifications';
+import {
+  getNotificationPermissionState,
+  openAppNotificationSettings,
+  requestNotificationPermission,
+  scheduleDailyDevotionReminder,
+} from '../../lib/notifications';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import { getStrings } from '../../localization';
 import {
@@ -31,14 +36,16 @@ import DailyReadingPlanCard from './DailyReadingPlanCard';
 import DailyTipsList from './DailyTipsList';
 import { dailyNotificationStyles as styles, NAVY } from './styles';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
+import NotificationPermissionCard from '../shared/NotificationPermissionCard';
 import {
   chaptersFromLegacy,
   firstSelectedChapter,
   normalizeSelectedChapters,
   toggleChapterSelection,
 } from '../shared/chapterSelection';
+import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
 
-const DailyNotificationsScreen = ({ navigation, route }: any) => {
+const DailyNotificationsScreen = ({ navigation }: any) => {
   const strings = getStrings().dailyNotifications;
   const insets = useSafeAreaInsets();
   const tips = [
@@ -48,18 +55,20 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
     { icon: 'cellphone-off', text: strings.tips[3] },
     { icon: 'timer-outline', text: strings.tips[4] },
   ];
-  const isTab = route?.name === 'DailyNotifications';
   const [devotionTime, setDevotionTime] = useState<Date>(() => {
     const d = new Date();
     d.setHours(7, 0, 0, 0);
     return d;
   });
   const [showPicker, setShowPicker] = useState(false);
-  const [readingBook, setReadingBook] = useState(BIBLE_BOOKS[0].bookName);
-  const [selectedChapters, setSelectedChapters] = useState<number[]>([1]);
+  const [readingBook, setReadingBook] = useState('');
+  const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [permissionLoading, setPermissionLoading] = useState(false);
+  const [notificationPermissionState, setNotificationPermissionState] =
+    useState<'allowed' | 'denied' | 'not_determined'>('not_determined');
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -77,49 +86,87 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
-  useEffect(() => {
-      const load = async () => {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData?.session?.user?.id;
-        if (!userId) {
-          setLoading(false);
-          return;
-        }
-        const { data } = await supabase
-          .from('profiles')
-          .select(
-            'devotion_time, reading_book, reading_chapter, daily_chapters_target, selected_chapters',
-          )
-          .eq('id', userId)
-          .single();
-        if (data?.devotion_time) {
-          const [h, m] = (data.devotion_time as string).split(':').map(Number);
-          const d = new Date();
-          d.setHours(h, m, 0, 0);
-          setDevotionTime(d);
-        }
-        if (data?.reading_book) {
-          setReadingBook(data.reading_book);
-          const matchedBook =
-            BIBLE_BOOKS.find(book => book.bookName === data.reading_book) ??
-            BIBLE_BOOKS[0];
-          setSelectedChapters(
-            Array.isArray((data as any).selected_chapters)
-              ? normalizeSelectedChapters(
-                  (data as any).selected_chapters.map(Number),
-                  matchedBook.chapters,
-                )
-              : chaptersFromLegacy(
-                  (data as any).reading_chapter,
-                  (data as any).daily_chapters_target,
-                  matchedBook.chapters,
-                ),
-          );
-        }
-        setLoading(false);
-      };
-      load();
+  const refreshNotificationPermission = useCallback(async () => {
+    try {
+      const nextState = await getNotificationPermissionState();
+      setNotificationPermissionState(nextState);
+    } catch {
+      setNotificationPermissionState('not_determined');
+    }
   }, []);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+      const { data } = await supabase
+        .from('profiles')
+        .select(
+          'devotion_time, reading_book, reading_chapter, daily_chapters_target, selected_chapters',
+        )
+        .eq('id', userId)
+        .single();
+      if (data?.devotion_time) {
+        const [h, m] = (data.devotion_time as string).split(':').map(Number);
+        const d = new Date();
+        d.setHours(h, m, 0, 0);
+        setDevotionTime(d);
+      } else {
+        const d = new Date();
+        d.setHours(7, 0, 0, 0);
+        setDevotionTime(d);
+
+        await supabase.from('profiles').upsert(
+          {
+            id: userId,
+            devotion_time: '07:00',
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'id' },
+        );
+      }
+      if (data?.reading_book) {
+        setReadingBook(data.reading_book);
+        const matchedBook =
+          BIBLE_BOOKS.find(book => book.bookName === data.reading_book) ??
+          BIBLE_BOOKS[0];
+        setSelectedChapters(
+          Array.isArray((data as any).selected_chapters)
+            ? normalizeSelectedChapters(
+                (data as any).selected_chapters.map(Number),
+                matchedBook.chapters,
+              )
+            : chaptersFromLegacy(
+                (data as any).reading_chapter,
+                (data as any).daily_chapters_target,
+                matchedBook.chapters,
+              ),
+        );
+      }
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshNotificationPermission();
+    }, [refreshNotificationPermission]),
+  );
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') {
+        refreshNotificationPermission();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [refreshNotificationPermission]);
 
   const handleTimeChange = (event: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS === 'android') {
@@ -134,34 +181,35 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
   };
 
   const selectedBookMeta = useMemo(
-    () => BIBLE_BOOKS.find(book => book.bookName === readingBook) ?? BIBLE_BOOKS[0],
+    () => BIBLE_BOOKS.find(book => book.bookName === readingBook),
     [readingBook],
   );
 
-  const [selectedTestament, setSelectedTestament] = useState<Testament>(
-    selectedBookMeta.testament,
-  );
+  const [selectedTestament, setSelectedTestament] = useState<Testament>('old');
 
   useEffect(() => {
-    setSelectedTestament(selectedBookMeta.testament);
-  }, [selectedBookMeta.testament]);
+    if (selectedBookMeta) {
+      setSelectedTestament(selectedBookMeta.testament);
+    }
+  }, [selectedBookMeta]);
 
   const booksForTestament = useMemo(
-    () => (selectedTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS),
+    () =>
+      selectedTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS,
     [selectedTestament],
   );
 
   useEffect(() => {
-    if (selectedBookMeta.testament !== selectedTestament) {
-      setReadingBook(booksForTestament[0]?.bookName ?? BIBLE_BOOKS[0].bookName);
-      setSelectedChapters([1]);
+    if (readingBook && selectedBookMeta?.testament !== selectedTestament) {
+      setReadingBook('');
+      setSelectedChapters([]);
     }
-  }, [booksForTestament, selectedBookMeta.testament, selectedTestament]);
+  }, [selectedBookMeta, selectedTestament, readingBook]);
 
   useEffect(() => {
     const normalized = normalizeSelectedChapters(
       selectedChapters,
-      selectedBookMeta.chapters,
+      selectedBookMeta?.chapters ?? 0,
     );
     if (
       normalized.length !== selectedChapters.length ||
@@ -169,16 +217,24 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
     ) {
       setSelectedChapters(normalized);
     }
-  }, [selectedBookMeta.chapters, selectedChapters]);
+  }, [selectedBookMeta, selectedChapters]);
 
   const chapterOptions = useMemo(
-    () => Array.from({ length: selectedBookMeta.chapters }, (_, idx) => idx + 1),
-    [selectedBookMeta.chapters],
+    () =>
+      Array.from(
+        { length: selectedBookMeta?.chapters ?? 0 },
+        (_, idx) => idx + 1,
+      ),
+    [selectedBookMeta],
   );
 
   const testamentOptions = useMemo(
     () => [
-      { key: 'old' as const, label: strings.oldTestament, icon: 'book-open-page-variant-outline' },
+      {
+        key: 'old' as const,
+        label: strings.oldTestament,
+        icon: 'book-open-page-variant-outline',
+      },
       { key: 'new' as const, label: strings.newTestament, icon: 'cross' },
     ],
     [strings.newTestament, strings.oldTestament],
@@ -202,22 +258,31 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
 
     const normalizedChapters = normalizeSelectedChapters(
       selectedChapters,
-      selectedBookMeta.chapters,
+      selectedBookMeta?.chapters ?? 0,
     );
 
-    const { error } = await supabase
-      .from('profiles')
-      .upsert(
-        {
-          id: userId,
-          devotion_time: timeString,
-          reading_book: readingBook,
-          reading_chapter: firstSelectedChapter(normalizedChapters),
-          daily_chapters_target: normalizedChapters.length,
-          selected_chapters: normalizedChapters,
-        },
-        { onConflict: 'id' },
+    if (!readingBook || normalizedChapters.length === 0) {
+      showAlert(
+        strings.readingSelectionRequiredTitle,
+        strings.readingSelectionRequiredMessage,
+        undefined,
+        'warning',
       );
+      setSaving(false);
+      return;
+    }
+
+    const { error } = await supabase.from('profiles').upsert(
+      {
+        id: userId,
+        devotion_time: timeString,
+        reading_book: readingBook,
+        reading_chapter: firstSelectedChapter(normalizedChapters),
+        daily_chapters_target: normalizedChapters.length || null,
+        selected_chapters: normalizedChapters,
+      },
+      { onConflict: 'id' },
+    );
 
     if (error) {
       showAlert(strings.saveErrorTitle, error.message);
@@ -235,6 +300,29 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
       );
     }
     setSaving(false);
+  };
+
+  const handlePermissionAction = async () => {
+    setPermissionLoading(true);
+    try {
+      if (notificationPermissionState === 'denied') {
+        await openAppNotificationSettings();
+        return;
+      }
+
+      const allowed = await requestNotificationPermission();
+      if (!allowed) {
+        return;
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      await ensureDefaultDevotionTime(sessionData?.session?.user?.id, {
+        scheduleReminder: true,
+      });
+    } finally {
+      setPermissionLoading(false);
+      await refreshNotificationPermission();
+    }
   };
 
   const timeDisplay = devotionTime.toLocaleTimeString('ar-EG', {
@@ -258,13 +346,10 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
         topInsetHeight={insets.top}
         title={strings.title}
         leading={
-          !isTab ? (
-            <AppHeaderAction
-              icon="arrow-right"
-              onPress={() => navigation.goBack()}
-              size={24}
-            />
-          ) : undefined
+          <AppHeaderAction
+            icon="arrow-right"
+            onPress={() => navigation.goBack()}
+          />
         }
       />
 
@@ -277,6 +362,20 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           timeDisplay={timeDisplay}
           onEditTime={() => setShowPicker(true)}
         />
+
+        {notificationPermissionState !== 'allowed' && (
+          <NotificationPermissionCard
+            title={strings.permissionNoticeTitle}
+            body={strings.permissionNoticeBody}
+            actionLabel={
+              notificationPermissionState === 'denied'
+                ? strings.permissionOpenSettings
+                : strings.permissionEnable
+            }
+            onPress={handlePermissionAction}
+            loading={permissionLoading}
+          />
+        )}
 
         {Platform.OS === 'ios' && (
           <View style={styles.pickerCard}>
@@ -306,25 +405,6 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           />
         )}
 
-        <TouchableOpacity
-          style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <>
-              <MaterialCommunityIcons
-                name={saved ? 'check-bold' : 'content-save-outline'}
-                size={20}
-                color="#FFF"
-              />
-              <Text style={styles.saveBtnText}>{strings.saveTime}</Text>
-            </>
-          )}
-        </TouchableOpacity>
-
         <DailyReadingPlanCard
           strings={strings}
           selectedTestament={selectedTestament}
@@ -333,13 +413,23 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           readingBook={readingBook}
           chapterOptions={chapterOptions}
           selectedChapters={selectedChapters}
+          timeDisplay={timeDisplay}
+          saving={saving}
+          saved={saved}
+          canSaveReading={!!readingBook && selectedChapters.length > 0}
           onSetTestament={setSelectedTestament}
           onSetReadingBook={setReadingBook}
           onToggleChapter={chapter =>
             setSelectedChapters(current =>
-              toggleChapterSelection(current, chapter, selectedBookMeta.chapters),
+              toggleChapterSelection(
+                current,
+                chapter,
+                selectedBookMeta?.chapters ?? 0,
+              ),
             )
           }
+          onEditTime={() => setShowPicker(true)}
+          onSave={handleSave}
         />
 
         <DailyTipsList strings={strings} tips={tips} />

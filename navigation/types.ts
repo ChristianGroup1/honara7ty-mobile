@@ -7,6 +7,7 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { linkValid?: boolean };
   Onboarding: undefined;
+  NotificationPermission: undefined;
   AboutIdea: undefined;
   PrayerNotes: undefined;
   SpiritualReflection: undefined;

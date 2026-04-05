@@ -23,11 +23,17 @@ import notifee, {
   TimestampTrigger,
   TriggerType,
 } from '@notifee/react-native';
+import { Linking } from 'react-native';
 import { getStrings } from '../localization';
 
 const CHANNEL_ID = 'devotion_reminder';
 const NOTIFICATION_ID = 'daily_devotion';
 const FOLLOW_UP_NOTIFICATION_ID = 'daily_devotion_follow_up';
+
+export type NotificationPermissionState =
+  | 'allowed'
+  | 'denied'
+  | 'not_determined';
 
 /** Ensure the Android notification channel exists (no-op on iOS). */
 async function ensureChannel(): Promise<void> {
@@ -51,6 +57,31 @@ export async function requestNotificationPermission(): Promise<boolean> {
     settings.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
     settings.authorizationStatus === AuthorizationStatus.PROVISIONAL
   );
+}
+
+export async function getNotificationPermissionState(): Promise<NotificationPermissionState> {
+  const settings = await notifee.getNotificationSettings();
+
+  if (
+    settings.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
+    settings.authorizationStatus === AuthorizationStatus.PROVISIONAL
+  ) {
+    return 'allowed';
+  }
+
+  if (settings.authorizationStatus === AuthorizationStatus.DENIED) {
+    return 'denied';
+  }
+
+  return 'not_determined';
+}
+
+export async function openAppNotificationSettings(): Promise<void> {
+  try {
+    await notifee.openNotificationSettings();
+  } catch {
+    await Linking.openSettings();
+  }
 }
 
 /**

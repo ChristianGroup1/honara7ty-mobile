@@ -19,6 +19,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import supabase from '../../lib/supbase';
+import { configureGoogleSignIn } from '../../lib/googleSignInConfig';
 import CustomAlert, { AlertButton, AlertConfig } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
 import { getStrings } from '../../localization';
@@ -82,6 +83,7 @@ const ProfileScreen = ({ navigation }: any) => {
   const [initialForm, setInitialForm] = useState<EditableProfileForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [currentDevotionTime, setCurrentDevotionTime] = useState<string>('07:00');
   const [activePicker, setActivePicker] = useState<PickerType>(null);
   const [pickerDate, setPickerDate] = useState<Date>(() => {
     const fallback = new Date();
@@ -139,6 +141,7 @@ const ProfileScreen = ({ navigation }: any) => {
         gender: profile?.gender || '',
       };
 
+      setCurrentDevotionTime(profile?.devotion_time || '07:00');
       setForm(nextForm);
       setInitialForm(nextForm);
       setPickerDate(parseDateString(nextForm.birthDate));
@@ -253,6 +256,7 @@ const ProfileScreen = ({ navigation }: any) => {
           sect: form.sect.trim() || null,
           birth_date: form.birthDate || null,
           gender: form.gender || null,
+          devotion_time: currentDevotionTime || '07:00',
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'id' },
@@ -313,6 +317,7 @@ const ProfileScreen = ({ navigation }: any) => {
           style: 'destructive',
           onPress: async () => {
             try {
+              configureGoogleSignIn();
               await supabase.auth.signOut();
               await GoogleSignin.signOut();
               const parentNavigation = navigation.getParent?.();

@@ -25,6 +25,7 @@ type Props = {
   books: BibleBook[];
   chapterOptions: number[];
   testamentOptions: TestamentOption[];
+  canSaveReading: boolean;
   onClose: () => void;
   onSetCompleted: (value: boolean) => void;
   onSetTestament: (value: Testament) => void;
@@ -45,6 +46,7 @@ const DevotionDayEditor = ({
   books,
   chapterOptions,
   testamentOptions,
+  canSaveReading,
   onClose,
   onSetCompleted,
   onSetTestament,
@@ -182,34 +184,38 @@ const DevotionDayEditor = ({
               </View>
 
               <Text style={styles.fieldTitle}>{strings.selectChapter}</Text>
-              <Text style={styles.rangeHint}>{strings.chapterRangeHint}</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalChipWrap}
-              >
-                {chapterOptions.map(chapter => (
-                  <TouchableOpacity
-                    key={`chapter-${chapter}`}
-                    style={[
-                      styles.choiceChip,
-                      selectedChapters.includes(chapter) &&
-                        styles.choiceChipSelected,
-                    ]}
-                    onPress={() => onToggleChapter(chapter)}
-                  >
-                    <Text
+              <Text style={styles.rangeHint}>
+                {selectedBook ? strings.chapterRangeHint : strings.selectBookFirst}
+              </Text>
+              {selectedBook ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.horizontalChipWrap}
+                >
+                  {chapterOptions.map(chapter => (
+                    <TouchableOpacity
+                      key={`chapter-${chapter}`}
                       style={[
-                        styles.choiceChipText,
+                        styles.choiceChip,
                         selectedChapters.includes(chapter) &&
-                          styles.choiceChipTextSelected,
+                          styles.choiceChipSelected,
                       ]}
+                      onPress={() => onToggleChapter(chapter)}
                     >
-                      {chapter}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                      <Text
+                        style={[
+                          styles.choiceChipText,
+                          selectedChapters.includes(chapter) &&
+                            styles.choiceChipTextSelected,
+                        ]}
+                      >
+                        {chapter}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              ) : null}
             </>
           ) : null}
         </ScrollView>
@@ -219,8 +225,12 @@ const DevotionDayEditor = ({
             <Text style={styles.closeBtnText}>{strings.closeEditor}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
-            disabled={saving}
+            style={[
+              styles.saveBtn,
+              (saving || (selectedCompleted && !canSaveReading)) &&
+                styles.saveBtnDisabled,
+            ]}
+            disabled={saving || (selectedCompleted && !canSaveReading)}
             onPress={onSave}
           >
             {saving ? (

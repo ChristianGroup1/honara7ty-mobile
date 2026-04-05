@@ -14,6 +14,7 @@ import { badgesStrings } from './modules/badges';
 import { bibleMemorizationStrings } from './modules/bibleMemorization';
 import { devotionStrings } from './modules/devotion';
 import { onboardingStrings } from './modules/onboarding';
+import { notificationPermissionStrings } from './modules/notificationPermission';
 
 const locales = {
   ar: {
@@ -33,6 +34,7 @@ const locales = {
     bibleMemorization: bibleMemorizationStrings,
     devotion: devotionStrings,
     onboarding: onboardingStrings,
+    notificationPermission: notificationPermissionStrings,
   },
 } as const;
 

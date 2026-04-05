@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  AppState,
   ScrollView,
   StatusBar,
   View,
@@ -9,6 +10,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native';
 import supabase from '../../lib/supbase';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { configureGoogleSignIn } from '../../lib/googleSignInConfig';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import {
   NAVY,
@@ -24,6 +26,11 @@ import { homeStyles as styles } from './styles';
 import { getDisplayName, getInitials, getTodayDate } from './utils';
 import { getStrings } from '../../localization';
 import {
+  getNotificationPermissionState,
+  openAppNotificationSettings,
+  requestNotificationPermission,
+} from '../../lib/notifications';
+import {
   BIBLE_BOOKS,
   NEW_TESTAMENT_BOOKS,
   OLD_TESTAMENT_BOOKS,
@@ -35,6 +42,8 @@ import {
   normalizeSelectedChapters,
   toggleChapterSelection,
 } from '../shared/chapterSelection';
+import NotificationPermissionCard from '../shared/NotificationPermissionCard';
+import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
 
 const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
@@ -47,8 +56,11 @@ const HomeScreen = ({ route, navigation }: any) => {
   const [answerSheetVisible, setAnswerSheetVisible] = useState(false);
   const [pendingCompleted, setPendingCompleted] = useState(true);
   const [selectedTestament, setSelectedTestament] = useState<Testament>('old');
-  const [readingBook, setReadingBook] = useState(BIBLE_BOOKS[0].bookName);
-  const [selectedChapters, setSelectedChapters] = useState<number[]>([1]);
+  const [readingBook, setReadingBook] = useState('');
+  const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
+  const [permissionLoading, setPermissionLoading] = useState(false);
+  const [notificationPermissionState, setNotificationPermissionState] =
+    useState<'allowed' | 'denied' | 'not_determined'>('not_determined');
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -65,6 +77,15 @@ const HomeScreen = ({ route, navigation }: any) => {
   ) => setAlertConfig({ visible: true, title, message, buttons, type });
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
+
+  const refreshNotificationPermission = useCallback(async () => {
+    try {
+      const nextState = await getNotificationPermissionState();
+      setNotificationPermissionState(nextState);
+    } catch {
+      setNotificationPermissionState('not_determined');
+    }
+  }, []);
 
   /* ── Load user once ── */
   useEffect(() => {
@@ -120,8 +141,42 @@ const HomeScreen = ({ route, navigation }: any) => {
         }
       };
       checkDevotion();
-    }, []),
+      refreshNotificationPermission();
+    }, [refreshNotificationPermission]),
   );
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') {
+        refreshNotificationPermission();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [refreshNotificationPermission]);
+
+  const handleNotificationPermissionAction = async () => {
+    setPermissionLoading(true);
+    try {
+      if (notificationPermissionState === 'denied') {
+        await openAppNotificationSettings();
+        return;
+      }
+
+      const allowed = await requestNotificationPermission();
+      if (!allowed) {
+        return;
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      await ensureDefaultDevotionTime(sessionData?.session?.user?.id, {
+        scheduleReminder: true,
+      });
+    } finally {
+      setPermissionLoading(false);
+      await refreshNotificationPermission();
+    }
+  };
 
   /* ── Save devotion answer + show smart response ── */
   const handleDevotionAnswer = async (completed: boolean) => {
@@ -133,8 +188,18 @@ const HomeScreen = ({ route, navigation }: any) => {
 
     const normalizedChapters = normalizeSelectedChapters(
       selectedChapters,
-      selectedBook.chapters,
+      selectedBook?.chapters ?? 0,
     );
+
+    if (completed && (!readingBook || normalizedChapters.length === 0)) {
+      showAlert(
+        strings.readingSelectionRequiredTitle,
+        strings.readingSelectionRequiredMessage,
+        undefined,
+        'warning',
+      );
+      return;
+    }
 
     const { error } = await supabase
       .from('devotion_log')
@@ -147,7 +212,7 @@ const HomeScreen = ({ route, navigation }: any) => {
           reading_chapter: completed
             ? firstSelectedChapter(normalizedChapters)
             : null,
-          chapters_read: completed ? normalizedChapters.length : null,
+          chapters_read: completed ? normalizedChapters.length || null : null,
           selected_chapters: completed ? normalizedChapters : null,
         },
         { onConflict: 'user_id,date' },
@@ -187,6 +252,7 @@ const HomeScreen = ({ route, navigation }: any) => {
           style: 'destructive',
           onPress: async () => {
             try {
+              configureGoogleSignIn();
               await supabase.auth.signOut();
               await GoogleSignin.signOut();
               const parentNavigation = navigation.getParent?.();
@@ -218,19 +284,18 @@ const HomeScreen = ({ route, navigation }: any) => {
     setAnswerSheetVisible(true);
   };
 
-  const selectedBook =
-    BIBLE_BOOKS.find(book => book.bookName === readingBook) ?? BIBLE_BOOKS[0];
+  const selectedBook = BIBLE_BOOKS.find(book => book.bookName === readingBook);
   const selectedTestamentBooks =
     selectedTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS;
   const chapterOptions = Array.from(
-    { length: selectedBook.chapters },
+    { length: selectedBook?.chapters ?? 0 },
     (_, idx) => idx + 1,
   );
 
   useEffect(() => {
     const normalized = normalizeSelectedChapters(
       selectedChapters,
-      selectedBook.chapters,
+      selectedBook?.chapters ?? 0,
     );
     if (
       normalized.length !== selectedChapters.length ||
@@ -238,7 +303,9 @@ const HomeScreen = ({ route, navigation }: any) => {
     ) {
       setSelectedChapters(normalized);
     }
-  }, [selectedBook.chapters, selectedChapters]);
+  }, [selectedBook, selectedChapters]);
+  
+  const canSaveReading = !pendingCompleted || (!!readingBook && selectedChapters.length > 0);
 
   const saveDevotionSheet = async () => {
     setAnswerSheetVisible(false);
@@ -283,6 +350,20 @@ const HomeScreen = ({ route, navigation }: any) => {
           onAnswerNow={handleAnswerNow}
           onEditAnswer={handleAnswerNow}
         />
+        {notificationPermissionState !== 'allowed' && (
+          <NotificationPermissionCard
+            title={strings.permissionNoticeTitle}
+            body={strings.permissionNoticeBody}
+            actionLabel={
+              notificationPermissionState === 'denied'
+                ? strings.permissionOpenSettings
+                : strings.permissionEnable
+            }
+            onPress={handleNotificationPermissionAction}
+            compact
+            loading={permissionLoading}
+          />
+        )}
         <FeatureCard
           title={strings.featureCalendarTitle}
           subtitle={strings.featureCalendarSubtitle}
@@ -313,6 +394,7 @@ const HomeScreen = ({ route, navigation }: any) => {
         readingBook={readingBook}
         chapterOptions={chapterOptions}
         selectedChapters={selectedChapters}
+        canSaveReading={canSaveReading}
         onClose={() => setAnswerSheetVisible(false)}
         onSetPendingCompleted={setPendingCompleted}
         onSetSelectedTestament={value => {
@@ -323,13 +405,13 @@ const HomeScreen = ({ route, navigation }: any) => {
           if (!nextBook) {
             return;
           }
-          setReadingBook(nextBook.bookName);
-          setSelectedChapters([1]);
+          setReadingBook('');
+          setSelectedChapters([]);
         }}
         onSetReadingBook={setReadingBook}
         onToggleChapter={chapter =>
           setSelectedChapters(current =>
-            toggleChapterSelection(current, chapter, selectedBook.chapters),
+            toggleChapterSelection(current, chapter, selectedBook?.chapters ?? 0),
           )
         }
         onSave={saveDevotionSheet}

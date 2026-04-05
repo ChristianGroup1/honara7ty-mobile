@@ -12,6 +12,7 @@ type Props = {
   readingBook: string;
   chapterOptions: number[];
   selectedChapters: number[];
+  canSaveReading: boolean;
   onClose: () => void;
   onSetPendingCompleted: (value: boolean) => void;
   onSetSelectedTestament: (value: Testament) => void;
@@ -29,6 +30,7 @@ const HomeAnswerSheet = ({
   readingBook,
   chapterOptions,
   selectedChapters,
+  canSaveReading,
   onClose,
   onSetPendingCompleted,
   onSetSelectedTestament,
@@ -182,42 +184,51 @@ const HomeAnswerSheet = ({
                   {strings.answerChapter}
                 </Text>
                 <Text style={styles.answerRangeHint}>
-                  {strings.answerRangeHint}
+                  {readingBook ? strings.answerRangeHint : strings.selectBookFirst}
                 </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.answerChoiceRow}
-                >
-                  {chapterOptions.map(chapter => {
-                    return (
-                      <TouchableOpacity
-                        key={`chapter-${chapter}`}
-                        style={[
-                          styles.answerChoiceChip,
-                          selectedChapters.includes(chapter) &&
-                            styles.answerChoiceChipSelected,
-                        ]}
-                        onPress={() => onToggleChapter(chapter)}
-                      >
-                        <Text
+                {readingBook ? (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.answerChoiceRow}
+                  >
+                    {chapterOptions.map(chapter => {
+                      return (
+                        <TouchableOpacity
+                          key={`chapter-${chapter}`}
                           style={[
-                            styles.answerChoiceText,
+                            styles.answerChoiceChip,
                             selectedChapters.includes(chapter) &&
-                              styles.answerChoiceTextSelected,
+                              styles.answerChoiceChipSelected,
                           ]}
+                          onPress={() => onToggleChapter(chapter)}
                         >
-                          {chapter}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
+                          <Text
+                            style={[
+                              styles.answerChoiceText,
+                              selectedChapters.includes(chapter) &&
+                                styles.answerChoiceTextSelected,
+                            ]}
+                          >
+                            {chapter}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                ) : null}
               </>
             ) : null}
           </ScrollView>
 
-          <TouchableOpacity style={styles.saveAnswerBtn} onPress={onSave}>
+          <TouchableOpacity
+            style={[
+              styles.saveAnswerBtn,
+              pendingCompleted && !canSaveReading && styles.saveAnswerBtnDisabled,
+            ]}
+            onPress={onSave}
+            disabled={pendingCompleted && !canSaveReading}
+          >
             <Text style={styles.saveAnswerBtnText}>{strings.saveAnswer}</Text>
           </TouchableOpacity>
         </View>
