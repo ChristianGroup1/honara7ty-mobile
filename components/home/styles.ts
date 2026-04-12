@@ -202,6 +202,9 @@ export const homeStyles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
+  sheetBackdrop: {
+    flex: 1,
+  },
   answerSheet: {
     backgroundColor: '#FFF',
     borderTopLeftRadius: 24,

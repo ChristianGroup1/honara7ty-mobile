@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  I18nManager,
   View,
   Text,
   StyleSheet,
@@ -48,14 +49,17 @@ const CustomInput: React.FC<Props> = ({
   autoCapitalize,
 }) => {
   const strings = getStrings().shared;
+  const isRTL = I18nManager.isRTL;
 
   const handleChangeText = (text: string) => {
     if (!onChangeText) return;
     onChangeText(text.replace(/\n/g, ''));
   };
 
+  const isPressableField = Boolean(onPress);
+
   const inputArea = (
-    <View style={styles.textInputContainer}>
+    <View style={styles.inputSurface}>
       <TouchableOpacity
         activeOpacity={1}
         onPress={
@@ -63,7 +67,7 @@ const CustomInput: React.FC<Props> = ({
             ? () => setSecureText(!secureText)
             : undefined
         }
-        style={styles.inputIconLeft}
+        style={styles.inputIcon}
         accessibilityLabel={
           isPassword
             ? secureText
@@ -81,31 +85,47 @@ const CustomInput: React.FC<Props> = ({
         />
       </TouchableOpacity>
 
-      <TextInputInteractive
-        style={styles.fullWidth}
-        textInputStyle={[
-          styles.interactiveInput,
-          onPress ? styles.interactiveInputWithDropdown : null,
-        ]}
-        placeholder={placeholder}
-        value={value}
-        onChangeText={handleChangeText}
-        multiline={!isPassword}
-        secureTextEntry={isPassword ? secureText : false}
-        mainColor="#0A1124"
-        originalColor="#E0E0E0"
-        animatedPlaceholderTextColor="#999"
-        enableIcon={!!onPress}
-        ImageComponent={onPress ? ChevronDownIcon : undefined}
-        returnKeyType="done"
-        textAlignVertical="center"
-        editable={editable && !onPress}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        autoCorrect={false}
-        autoComplete="off"
-        textContentType="none"
-      />
+      {isPressableField ? (
+        <View
+          style={[
+            styles.staticInputContent,
+            isRTL ? styles.staticInputRtl : styles.staticInputLtr,
+          ]}
+        >
+          <Text
+            style={[
+              styles.staticInputText,
+              !value ? styles.staticInputPlaceholder : null,
+              { textAlign: 'right' },
+            ]}
+            numberOfLines={1}
+          >
+            {value || placeholder}
+          </Text>
+          <ChevronDownIcon />
+        </View>
+      ) : (
+        <TextInputInteractive
+          style={styles.inputField}
+          textInputStyle={[styles.interactiveInput]}
+          placeholder={placeholder}
+          value={value}
+          onChangeText={handleChangeText}
+          multiline={!isPassword}
+          secureTextEntry={isPassword ? secureText : false}
+          mainColor="#0A1124"
+          originalColor="#E0E0E0"
+          animatedPlaceholderTextColor="#999"
+          returnKeyType="done"
+          textAlignVertical="center"
+          editable={editable}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={false}
+          autoComplete="off"
+          textContentType="none"
+        />
+      )}
     </View>
   );
 
@@ -154,32 +174,76 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     overflow: 'hidden',
   },
-  textInputContainer: {
+  inputSurface: {
     width: '100%',
-    position: 'relative',
-    justifyContent: 'center',
+    height: 54,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 14,
+    backgroundColor: '#FFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    gap: 10,
   },
-  fullWidth: { width: '100%' },
-  inputIconLeft: {
-    position: 'absolute',
-    right: 12,
+  inputField: {
+    flex: 1,
+  },
+  inputIcon: {
+    width: 24,
     height: 54,
     justifyContent: 'center',
-    zIndex: 2,
+    alignItems: 'center',
   },
   interactiveInput: {
-    textAlign: 'right',
-    paddingRight: 48,
-    paddingLeft: 16,
     color: '#0A1124',
     fontSize: 14,
-    backgroundColor: '#FFF',
+    backgroundColor: 'transparent',
     height: 54,
     borderRadius: 14,
     width: '100%',
+    borderWidth: 0,
+    textAlign: 'right',
   },
-  interactiveInputWithDropdown: {
-    paddingLeft: 48,
+  interactiveInputRtl: {
+    textAlign: 'right',
+    paddingRight: 16,
+    paddingLeft: 0,
+  },
+  interactiveInputLtr: {
+    textAlign: 'left',
+    paddingRight: 0,
+    paddingLeft: 16,
+  },
+  staticInputContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  staticInputRtl: {
+    flexDirection: 'row',
+    paddingRight: 16,
+    paddingLeft: 0,
+    justifyContent: 'space-between',
+  },
+  staticInputLtr: {
+    paddingLeft: 16,
+    paddingRight: 0,
+    justifyContent: 'space-between',
+  },
+  staticInputText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#0A1124',
+  },
+  staticInputPlaceholder: {
+    color: '#999',
+  },
+  staticInputTextRtl: {
+    textAlign: 'right',
+  },
+  staticInputTextLtr: {
+    textAlign: 'left',
   },
   fieldError: {
     color: '#E53935',

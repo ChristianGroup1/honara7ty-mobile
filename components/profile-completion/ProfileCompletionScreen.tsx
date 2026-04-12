@@ -180,7 +180,9 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
             color={authPaperTheme.colors.primary}
             style={styles.sectionIcon}
           />
-          <Text style={styles.sectionTitle}>{strings.profileCompletion.churchSection}</Text>
+          <Text style={styles.sectionTitle}>
+            {strings.profileCompletion.churchSection}
+          </Text>
         </View>
 
         <CustomInput
@@ -213,7 +215,9 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
             color={authPaperTheme.colors.primary}
             style={styles.sectionIcon}
           />
-          <Text style={styles.sectionTitle}>{strings.profileCompletion.personalSection}</Text>
+          <Text style={styles.sectionTitle}>
+            {strings.profileCompletion.personalSection}
+          </Text>
         </View>
 
         {/* تاريخ الميلاد */}
@@ -238,11 +242,17 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
                 <View style={styles.pickerHandle} />
                 <View style={styles.pickerHeader}>
                   <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                    <Text style={styles.pickerCancelText}>{strings.profileCompletion.cancel}</Text>
+                    <Text style={styles.pickerCancelText}>
+                      {strings.profileCompletion.cancel}
+                    </Text>
                   </TouchableOpacity>
-                  <Text style={styles.pickerTitle}>{strings.profileCompletion.datePickerTitle}</Text>
+                  <Text style={styles.pickerTitle}>
+                    {strings.profileCompletion.datePickerTitle}
+                  </Text>
                   <TouchableOpacity onPress={confirmDate}>
-                    <Text style={styles.pickerConfirmText}>{strings.profileCompletion.confirm}</Text>
+                    <Text style={styles.pickerConfirmText}>
+                      {strings.profileCompletion.confirm}
+                    </Text>
                   </TouchableOpacity>
                 </View>
                 <DateTimePicker
@@ -263,6 +273,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
             <DateTimePicker
               value={pickerDate}
               mode="date"
+              style={{ textAlign: 'right' }}
               display="default"
               onChange={handleDateChange}
               maximumDate={new Date()}
@@ -273,7 +284,9 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
 
         {/* الجنس – inline chips */}
         <View style={styles.inputWrapper}>
-          <Text style={styles.fieldLabel}>{strings.profileCompletion.gender}</Text>
+          <Text style={styles.fieldLabel}>
+            {strings.profileCompletion.gender}
+          </Text>
           <View
             style={[
               styles.genderRow,
@@ -282,7 +295,10 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
           >
             {[
               { label: strings.profileCompletion.male, icon: 'gender-male' },
-              { label: strings.profileCompletion.female, icon: 'gender-female' },
+              {
+                label: strings.profileCompletion.female,
+                icon: 'gender-female',
+              },
             ].map(({ label, icon }) => {
               const active = profileData.gender === label;
               return (
@@ -330,7 +346,9 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
                 color="#FFF"
                 style={styles.submitIcon}
               />
-              <Text style={styles.submitText}>{strings.profileCompletion.submit}</Text>
+              <Text style={styles.submitText}>
+                {strings.profileCompletion.submit}
+              </Text>
             </View>
           )}
         </TouchableOpacity>

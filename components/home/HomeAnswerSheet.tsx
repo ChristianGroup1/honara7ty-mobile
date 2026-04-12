@@ -1,5 +1,12 @@
 import React from 'react';
-import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Testament } from '../data/bibleMetadata';
 import { homeStyles as styles } from './styles';
 
@@ -46,6 +53,7 @@ const HomeAnswerSheet = ({
       onRequestClose={onClose}
     >
       <View style={styles.sheetOverlay}>
+        <Pressable style={styles.sheetBackdrop} onPress={onClose} />
         <View style={styles.answerSheet}>
           <Text style={styles.answerSheetTitle}>
             {strings.answerSheetTitle}

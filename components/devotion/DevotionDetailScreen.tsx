@@ -4,11 +4,12 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import YoutubePlayer from 'react-native-youtube-iframe';
 import { ARTICLES, CARD_ACCENTS } from './devotionData';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getStrings } from '../../localization';
@@ -19,15 +20,32 @@ const BG = '#F2F4F8';
 
 type Props = { navigation: any; route: any };
 
+const getYoutubeVideoId = (url?: string) => {
+  if (!url) {
+    return null;
+  }
+
+  const match = url.match(/[?&]v=([^&#]+)/);
+  if (match?.[1]) {
+    return match[1];
+  }
+
+  const shortMatch = url.match(/youtu\.be\/([^?&#/]+)/);
+  return shortMatch?.[1] ?? null;
+};
+
 const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const strings = getStrings().devotion;
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
   const { articleId } = route.params;
   const article = ARTICLES.find(a => a.id === articleId);
   const articleIdx = ARTICLES.findIndex(a => a.id === articleId);
   const accent = CARD_ACCENTS[articleIdx % CARD_ACCENTS.length];
   const quoteOpenStyle = { alignSelf: 'flex-start' as const, marginBottom: 4 };
   const quoteCloseStyle = { alignSelf: 'flex-end' as const, marginTop: 4 };
+  const playerWidth = Math.max(windowWidth - 60, 200);
+  const playerHeight = Math.round((playerWidth * 9) / 16);
 
   // ✅ تحقق من وجود المقالة قبل الاستخدام
   if (!article) {
@@ -40,6 +58,8 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   }
 
+  const youtubeVideoId = getYoutubeVideoId(article.youtubeUrl);
+
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={accent} />
@@ -50,7 +70,7 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         backgroundColor={accent}
         leading={
           <AppHeaderAction
-            icon="arrow-left"
+            icon="arrow-right"
             onPress={() => navigation.goBack()}
             size={22}
           />
@@ -72,6 +92,35 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           <Text style={styles.detailHeroTitle}>{article.title}</Text>
           <Text style={styles.detailHeroSub}>{article.summary}</Text>
         </View>
+
+        {!!youtubeVideoId && (
+          <View style={styles.videoCard}>
+            <View style={styles.videoHeaderRow}>
+              <Text style={styles.videoEyebrow}>ملخص مرئي</Text>
+              <MaterialCommunityIcons
+                name="youtube"
+                size={24}
+                color="#D32F2F"
+              />
+            </View>
+            <View style={styles.videoPlayerWrap}>
+              <YoutubePlayer
+                height={playerHeight}
+                width={playerWidth}
+                videoId={youtubeVideoId}
+                initialPlayerParams={{
+                  rel: false,
+                  controls: true,
+                }}
+                viewContainerStyle={styles.videoPlayerContainer}
+                webViewProps={{
+                  allowsFullscreenVideo: true,
+                }}
+                webViewStyle={styles.videoPlayer}
+              />
+            </View>
+          </View>
+        )}
 
         {article.sections.map((section, idx) => {
           const isFirstAndNoHeading = Boolean(
@@ -221,6 +270,53 @@ const styles = StyleSheet.create({
   articleContent: {
     paddingHorizontal: 16,
     paddingBottom: 52,
+  },
+
+  videoCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  videoHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  videoEyebrow: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#D32F2F',
+  },
+  videoPlayerWrap: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#FFF',
+  },
+  videoPlayerContainer: {
+    alignSelf: 'stretch',
+  },
+  videoPlayer: {
+    backgroundColor: '#FFF',
+  },
+  videoTitle: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#222',
+    textAlign: 'left',
+  },
+  videoHint: {
+    marginTop: 4,
+    fontSize: 13,
+    color: '#666',
+    textAlign: 'left',
   },
 
   quoteBlock: {

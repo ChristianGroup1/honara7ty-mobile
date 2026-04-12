@@ -31,7 +31,9 @@
     "react-native-scroll-into-view": "^2.0.2",
     "react-native-text-input-interactive": "^0.1.5",
     "react-native-url-polyfill": "^3.0.0",
-    "react-native-vector-icons": "^10.3.0"
+    "react-native-vector-icons": "^10.3.0",
+    "react-native-webview": "^13.16.1",
+    "react-native-youtube-iframe": "^2.4.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

@@ -44,6 +44,8 @@ import {
 } from '../shared/chapterSelection';
 import NotificationPermissionCard from '../shared/NotificationPermissionCard';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
+import { syncReadingLogForDate } from '../../lib/readingLog';
+import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
 
 const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
@@ -67,6 +69,7 @@ const HomeScreen = ({ route, navigation }: any) => {
     message?: string;
     type?: 'error' | 'warning' | 'success' | 'info';
     buttons?: AlertButton[];
+    dismissOnBackdrop?: boolean;
   }>({ visible: false, title: '' });
 
   const showAlert = (
@@ -74,7 +77,16 @@ const HomeScreen = ({ route, navigation }: any) => {
     message?: string,
     buttons?: AlertButton[],
     type: 'error' | 'warning' | 'success' | 'info' = 'info',
-  ) => setAlertConfig({ visible: true, title, message, buttons, type });
+    dismissOnBackdrop = false,
+  ) =>
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      buttons,
+      type,
+      dismissOnBackdrop,
+    });
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
@@ -139,6 +151,10 @@ const HomeScreen = ({ route, navigation }: any) => {
             setSelectedChapters(nextSelectedChapters);
           }
         }
+
+        await syncDevotionReminderSchedule(userId, {
+          startTomorrow: Boolean(data),
+        });
       };
       checkDevotion();
       refreshNotificationPermission();
@@ -218,25 +234,43 @@ const HomeScreen = ({ route, navigation }: any) => {
         { onConflict: 'user_id,date' },
       );
 
-    if (!error) {
+    if (error) {
+      showAlert('خطأ', error.message, undefined, 'error');
+      return;
+    }
+
+    const { error: readingLogError } = await syncReadingLogForDate({
+      userId,
+      date: getTodayDate(),
+      completed,
+      readingBook: completed ? readingBook : null,
+      selectedChapters: completed ? normalizedChapters : [],
+    });
+
+    if (readingLogError) {
       setDevotionAnswer(completed);
-      if (completed) {
-        showAlert(strings.correctStreakTitle, YES_MESSAGE, undefined, 'success');
-      } else {
-        showAlert(
-          strings.startNowTitle,
-          NO_MESSAGE,
-          [
-            {
-              text: strings.startNowAction,
-              style: 'default',
-              onPress: () => navigation.navigate('SpiritualReflection'),
-            },
-            { text: strings.later, style: 'cancel' },
-          ],
-          'info',
-        );
-      }
+      showAlert(
+        'تعذر حفظ سجل القراءات',
+        readingLogError.message,
+        undefined,
+        'warning',
+      );
+      return;
+    }
+
+    await syncDevotionReminderSchedule(userId, { startTomorrow: true });
+
+    setDevotionAnswer(completed);
+    if (completed) {
+      showAlert(strings.correctStreakTitle, YES_MESSAGE, undefined, 'success');
+    } else {
+      showAlert(
+        strings.startNowTitle,
+        NO_MESSAGE,
+        [{ text: strings.later, style: 'cancel' }],
+        'info',
+        true,
+      );
     }
   };
 

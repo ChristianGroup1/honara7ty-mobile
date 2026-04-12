@@ -2,6 +2,7 @@ import React from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -61,6 +62,7 @@ const DevotionDayEditor = ({
     onRequestClose={onClose}
   >
     <View style={styles.modalOverlay}>
+      <Pressable style={styles.modalBackdrop} onPress={onClose} />
       <View style={styles.editorCard}>
         <View style={styles.editorHandle} />
         <Text style={styles.editorTitle}>{strings.trackDayTitle}</Text>

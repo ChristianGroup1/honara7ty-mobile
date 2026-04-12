@@ -305,6 +305,9 @@ export const devotionCalendarStyles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
+  modalBackdrop: {
+    flex: 1,
+  },
   editorCard: {
     backgroundColor: '#FFF',
     borderTopLeftRadius: 24,

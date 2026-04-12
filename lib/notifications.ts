@@ -76,6 +76,47 @@ export async function getNotificationPermissionState(): Promise<NotificationPerm
   return 'not_determined';
 }
 
+function buildPrimaryTriggerDate(
+  hours: number,
+  minutes: number,
+  options?: { startTomorrow?: boolean },
+): Date {
+  const now = new Date();
+  const trigger = new Date(now);
+
+  if (options?.startTomorrow) {
+    trigger.setDate(trigger.getDate() + 1);
+  }
+
+  trigger.setHours(hours, minutes, 0, 0);
+
+  if (!options?.startTomorrow && trigger <= now) {
+    trigger.setDate(trigger.getDate() + 1);
+  }
+
+  return trigger;
+}
+
+function buildFollowUpTriggerDate(
+  primaryTrigger: Date,
+  hours: number,
+  minutes: number,
+): Date {
+  const followUpTriggerDate = new Date(primaryTrigger);
+
+  if (hours < 12) {
+    followUpTriggerDate.setHours(hours + 12, minutes, 0, 0);
+    return followUpTriggerDate;
+  }
+
+  const dayEnd = new Date(primaryTrigger);
+  dayEnd.setHours(23, 59, 59, 999);
+  const remainingMs = dayEnd.getTime() - primaryTrigger.getTime();
+  const halfRemainingMs = Math.max(30 * 60 * 1000, Math.floor(remainingMs / 2));
+  followUpTriggerDate.setTime(primaryTrigger.getTime() + halfRemainingMs);
+  return followUpTriggerDate;
+}
+
 export async function openAppNotificationSettings(): Promise<void> {
   try {
     await notifee.openNotificationSettings();
@@ -97,10 +138,14 @@ export async function openAppNotificationSettings(): Promise<void> {
 export async function scheduleDailyDevotionReminder(
   hours: number,
   minutes: number,
+  options?: { startTomorrow?: boolean; includeFollowUp?: boolean },
 ): Promise<void> {
   const strings = getStrings().notifications;
+  const permissionState = await getNotificationPermissionState();
+  if (permissionState !== 'allowed') {
+    return;
+  }
 
-  await requestNotificationPermission();
   await ensureChannel();
 
   // Cancel the existing reminder so we don't stack duplicates.
@@ -108,13 +153,7 @@ export async function scheduleDailyDevotionReminder(
   await notifee.cancelNotification(FOLLOW_UP_NOTIFICATION_ID);
 
   // Build the next fire date at the requested local time.
-  const now = new Date();
-  const trigger = new Date();
-  trigger.setHours(hours, minutes, 0, 0);
-  // If that time has already passed today, fire tomorrow.
-  if (trigger <= now) {
-    trigger.setDate(trigger.getDate() + 1);
-  }
+  const trigger = buildPrimaryTriggerDate(hours, minutes, options);
 
   const timestampTrigger: TimestampTrigger = {
     type: TriggerType.TIMESTAMP,
@@ -157,20 +196,14 @@ export async function scheduleDailyDevotionReminder(
     timestampTrigger,
   );
 
-  const followUpTriggerDate = new Date(trigger);
-  if (hours < 12) {
-    followUpTriggerDate.setHours(hours + 12, minutes, 0, 0);
-  } else {
-    const dayEnd = new Date(trigger);
-    dayEnd.setHours(23, 59, 59, 999);
-    const remainingMs = dayEnd.getTime() - trigger.getTime();
-    const halfRemainingMs = Math.max(30 * 60 * 1000, Math.floor(remainingMs / 2));
-    followUpTriggerDate.setTime(trigger.getTime() + halfRemainingMs);
+  if (options?.includeFollowUp === false) {
+    return;
   }
 
+  const followUpTrigger = buildFollowUpTriggerDate(trigger, hours, minutes);
   const followUpTimestampTrigger: TimestampTrigger = {
     type: TriggerType.TIMESTAMP,
-    timestamp: followUpTriggerDate.getTime(),
+    timestamp: followUpTrigger.getTime(),
     repeatFrequency: RepeatFrequency.DAILY,
     alarmManager: {
       type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,

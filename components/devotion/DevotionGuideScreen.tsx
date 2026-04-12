@@ -34,7 +34,7 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
         title={strings.guide.title}
         leading={
           <AppHeaderAction
-            icon="arrow-left"
+            icon="arrow-right"
             onPress={() => navigation.goBack()}
             size={24}
           />

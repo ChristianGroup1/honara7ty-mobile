@@ -3,8 +3,6 @@ import {
   ActivityIndicator,
   ScrollView,
   StatusBar,
-  Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import {
@@ -12,7 +10,6 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
 import CustomAlert, { AlertConfig } from '../shared/CustomAlert';
 import { computeStreak } from '../badges/utils';
@@ -36,6 +33,8 @@ import {
   normalizeSelectedChapters,
   toggleChapterSelection,
 } from '../shared/chapterSelection';
+import { syncReadingLogForDate } from '../../lib/readingLog';
+import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
 
 const DevotionCalendarScreen = ({ navigation }: any) => {
   const strings = getStrings().devotionCalendar;
@@ -294,6 +293,28 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
           type: 'error',
         });
         return;
+      }
+
+      const { error: readingLogError } = await syncReadingLogForDate({
+        userId,
+        date: selectedDate,
+        completed: selectedCompleted,
+        readingBook: selectedCompleted ? selectedBook : null,
+        selectedChapters: selectedCompleted ? normalizedChapters : [],
+      });
+
+      if (readingLogError) {
+        setAlertConfig({
+          visible: true,
+          title: 'تعذر حفظ سجل القراءات',
+          message: readingLogError.message,
+          type: 'warning',
+        });
+        return;
+      }
+
+      if (selectedDate === todayIso) {
+        await syncDevotionReminderSchedule(userId, { startTomorrow: true });
       }
 
       setAlertConfig({

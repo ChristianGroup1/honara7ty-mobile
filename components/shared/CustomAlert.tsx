@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Modal,
+  Pressable,
   View,
   Text,
   TouchableOpacity,
@@ -21,6 +22,7 @@ export interface AlertConfig {
   message?: string;
   type?: 'error' | 'warning' | 'success' | 'info';
   buttons?: AlertButton[];
+  dismissOnBackdrop?: boolean;
 }
 
 interface Props extends AlertConfig {
@@ -41,6 +43,7 @@ const CustomAlert: React.FC<Props> = ({
   message,
   type = 'info',
   buttons,
+  dismissOnBackdrop = false,
   onDismiss,
 }) => {
   const { icon, color, bgColor } = TYPE_CONFIG[type];
@@ -57,6 +60,10 @@ const CustomAlert: React.FC<Props> = ({
       onRequestClose={onDismiss}
     >
       <View style={styles.overlay}>
+        <Pressable
+          style={styles.backdrop}
+          onPress={dismissOnBackdrop ? onDismiss : undefined}
+        />
         <View style={styles.card}>
           <View style={[styles.iconCircle, { backgroundColor: bgColor }]}>
             <MaterialCommunityIcons name={icon} size={44} color={color} />
@@ -113,6 +120,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 30,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
   },
   card: {
     width: '100%',
