@@ -61,7 +61,8 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
       errors.password = strings.resetPassword.newPasswordRequired;
       hasError = true;
     } else if (password.length < MIN_PASSWORD_LENGTH) {
-      errors.password = strings.resetPassword.passwordTooShort(MIN_PASSWORD_LENGTH);
+      errors.password =
+        strings.resetPassword.passwordTooShort(MIN_PASSWORD_LENGTH);
       hasError = true;
     }
     if (!confirm) {
@@ -74,14 +75,22 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
     setFieldErrors(errors);
     if (hasError) {
       const firstError = errors.password || errors.confirm;
-      showAlert(strings.resetPassword.invalidDataTitle, firstError, undefined, 'error');
+      showAlert(
+        strings.resetPassword.invalidDataTitle,
+        firstError,
+        undefined,
+        'error',
+      );
       return;
     }
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) {
-        showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
+        showAlert(
+          strings.common.genericErrorTitle,
+          localizeAuthError(error.message),
+        );
       } else {
         showAlert(
           strings.resetPassword.successTitle,
@@ -96,7 +105,10 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
         );
       }
     } catch (err: any) {
-      showAlert(strings.common.genericErrorTitle, localizeAuthError(err.message));
+      showAlert(
+        strings.common.genericErrorTitle,
+        localizeAuthError(err.message),
+      );
     } finally {
       setLoading(false);
     }
@@ -116,15 +128,21 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
     setRequestLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
-        redirectTo: 'honara7ty://reset-password',
+        redirectTo: 'honara7tyapp://reset-password',
       });
       if (error) {
-        showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
+        showAlert(
+          strings.common.genericErrorTitle,
+          localizeAuthError(error.message),
+        );
       } else {
         setRequestSent(true);
       }
     } catch (err: any) {
-      showAlert(strings.common.genericErrorTitle, localizeAuthError(err.message));
+      showAlert(
+        strings.common.genericErrorTitle,
+        localizeAuthError(err.message),
+      );
     } finally {
       setRequestLoading(false);
     }
@@ -173,7 +191,9 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                 />
                 <Text style={styles.emailBadgeText}>{requestEmail.trim()}</Text>
               </View>
-              <Text style={styles.successHint}>{strings.resetPassword.requestSentHint}</Text>
+              <Text style={styles.successHint}>
+                {strings.resetPassword.requestSentHint}
+              </Text>
               <TouchableOpacity
                 style={styles.resendBtn}
                 activeOpacity={0.7}
@@ -182,7 +202,9 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                   setRequestEmail('');
                 }}
               >
-                <Text style={styles.resendText}>{strings.resetPassword.resend}</Text>
+                <Text style={styles.resendText}>
+                  {strings.resetPassword.resend}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 testID="login-submit"
@@ -191,7 +213,9 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                 disabled={loading}
                 activeOpacity={0.8}
               >
-                <Text style={styles.submitText}>{strings.resetPassword.footerAction}</Text>
+                <Text style={styles.submitText}>
+                  {strings.resetPassword.footerAction}
+                </Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -205,7 +229,9 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                   style={styles.invalidIconCentered}
                 />
               </View>
-              <Text style={styles.invalidMessage}>{strings.resetPassword.linkOffMessage}</Text>
+              <Text style={styles.invalidMessage}>
+                {strings.resetPassword.linkOffMessage}
+              </Text>
               <CustomInput
                 fieldLabel={strings.common.email}
                 icon="email-outline"
@@ -235,15 +261,21 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                       color="#FFF"
                       style={styles.submitIcon}
                     />
-                    <Text style={styles.submitText}>{strings.resetPassword.sendNewLink}</Text>
+                    <Text style={styles.submitText}>
+                      {strings.resetPassword.sendNewLink}
+                    </Text>
                   </View>
                 )}
               </TouchableOpacity>
               <View style={styles.footerContainer}>
                 <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                  <Text style={styles.footerLink}>{strings.resetPassword.footerAction}</Text>
+                  <Text style={styles.footerLink}>
+                    {strings.resetPassword.footerAction}
+                  </Text>
                 </TouchableOpacity>
-                <Text style={styles.footerText}>{strings.resetPassword.footerPrefix}</Text>
+                <Text style={styles.footerText}>
+                  {strings.resetPassword.footerPrefix}
+                </Text>
               </View>
             </View>
           )
@@ -258,7 +290,9 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                   color="#FFFFFF"
                 />
               </View>
-              <Text style={styles.infoTitle}>{strings.resetPassword.infoTitle}</Text>
+              <Text style={styles.infoTitle}>
+                {strings.resetPassword.infoTitle}
+              </Text>
               <Text style={styles.infoDescription}>
                 {strings.resetPassword.infoDescription}
               </Text>
@@ -320,7 +354,9 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                     color="#FFF"
                     style={styles.submitIcon}
                   />
-                  <Text style={styles.submitText}>{strings.resetPassword.submit}</Text>
+                  <Text style={styles.submitText}>
+                    {strings.resetPassword.submit}
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>

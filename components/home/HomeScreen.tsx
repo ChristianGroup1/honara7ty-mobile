@@ -9,8 +9,6 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import supabase from '../../lib/supbase';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { configureGoogleSignIn } from '../../lib/googleSignInConfig';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import {
   NAVY,
@@ -46,6 +44,9 @@ import NotificationPermissionCard from '../shared/NotificationPermissionCard';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
 import { syncReadingLogForDate } from '../../lib/readingLog';
 import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
+import { trackEvent } from '../../lib/analytics';
+import { logoutCurrentUser } from '../../lib/logout';
+import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermissionFlow';
 
 const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
@@ -90,6 +91,13 @@ const HomeScreen = ({ route, navigation }: any) => {
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
+  const clearDevotionState = useCallback(() => {
+    setDevotionAnswer(null);
+    setReadingBook('');
+    setSelectedChapters([]);
+    setSelectedTestament('old');
+  }, []);
+
   const refreshNotificationPermission = useCallback(async () => {
     try {
       const nextState = await getNotificationPermissionState();
@@ -105,21 +113,30 @@ const HomeScreen = ({ route, navigation }: any) => {
       supabase.auth.getSession().then(({ data }) => {
         if (data?.session?.user) {
           setUser(data.session.user);
+        } else {
+          setUser(null);
+          clearDevotionState();
         }
         setLoading(false);
       });
     }
-  }, [userFromParams]);
+  }, [clearDevotionState, userFromParams]);
 
   /* ── Check today's devotion answer whenever screen is focused ── */
   useFocusEffect(
     useCallback(() => {
       const checkDevotion = async () => {
         const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData?.session?.user?.id;
+        const sessionUser = sessionData?.session?.user;
+        const userId = sessionUser?.id;
+
         if (!userId) {
+          setUser(null);
+          clearDevotionState();
           return;
         }
+
+        setUser(sessionUser);
 
         const { data } = await supabase
           .from('devotion_log')
@@ -158,7 +175,7 @@ const HomeScreen = ({ route, navigation }: any) => {
       };
       checkDevotion();
       refreshNotificationPermission();
-    }, [refreshNotificationPermission]),
+    }, [clearDevotionState, refreshNotificationPermission]),
   );
 
   useEffect(() => {
@@ -172,9 +189,16 @@ const HomeScreen = ({ route, navigation }: any) => {
   }, [refreshNotificationPermission]);
 
   const handleNotificationPermissionAction = async () => {
+    trackEvent('notification_permission_requested', {
+      current_state: notificationPermissionState,
+    });
     setPermissionLoading(true);
     try {
-      if (notificationPermissionState === 'denied') {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      const seenPrompt = await hasSeenNotificationPermissionPrompt(userId);
+
+      if (notificationPermissionState === 'denied' && seenPrompt) {
         await openAppNotificationSettings();
         return;
       }
@@ -184,8 +208,7 @@ const HomeScreen = ({ route, navigation }: any) => {
         return;
       }
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      await ensureDefaultDevotionTime(sessionData?.session?.user?.id, {
+      await ensureDefaultDevotionTime(userId, {
         scheduleReminder: true,
       });
     } finally {
@@ -260,6 +283,12 @@ const HomeScreen = ({ route, navigation }: any) => {
 
     await syncDevotionReminderSchedule(userId, { startTomorrow: true });
 
+    trackEvent('devotion_logged', {
+      completed,
+      reading_book: completed ? readingBook : null,
+      chapters_count: completed ? normalizedChapters.length : null,
+    });
+
     setDevotionAnswer(completed);
     if (completed) {
       showAlert(strings.correctStreakTitle, YES_MESSAGE, undefined, 'success');
@@ -286,9 +315,9 @@ const HomeScreen = ({ route, navigation }: any) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              configureGoogleSignIn();
-              await supabase.auth.signOut();
-              await GoogleSignin.signOut();
+              clearDevotionState();
+              setUser(null);
+              await logoutCurrentUser();
               const parentNavigation = navigation.getParent?.();
               if (parentNavigation) {
                 parentNavigation.reset({

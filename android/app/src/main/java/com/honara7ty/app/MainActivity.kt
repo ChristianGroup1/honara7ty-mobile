@@ -1,4 +1,4 @@
-package com.honara7ty
+package com.honara7ty.app
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

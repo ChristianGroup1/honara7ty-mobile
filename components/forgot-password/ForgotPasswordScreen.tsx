@@ -54,15 +54,21 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
-        redirectTo: 'honara7ty://reset-password',
+        redirectTo: 'honara7tyapp://reset-password',
       });
       if (error) {
-        showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
+        showAlert(
+          strings.common.genericErrorTitle,
+          localizeAuthError(error.message),
+        );
       } else {
         setSent(true);
       }
     } catch (err: any) {
-      showAlert(strings.common.genericErrorTitle, localizeAuthError(err.message));
+      showAlert(
+        strings.common.genericErrorTitle,
+        localizeAuthError(err.message),
+      );
     } finally {
       setLoading(false);
     }
@@ -86,7 +92,9 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
               />
             </View>
 
-            <Text style={styles.successTitle}>{strings.forgotPassword.resetSentTitle}</Text>
+            <Text style={styles.successTitle}>
+              {strings.forgotPassword.resetSentTitle}
+            </Text>
             <Text style={styles.successMessage}>
               {strings.forgotPassword.resetSentMessage}
             </Text>
@@ -100,7 +108,9 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
               <Text style={styles.emailBadgeText}>{email.trim()}</Text>
             </View>
 
-            <Text style={styles.successHint}>{strings.forgotPassword.resetHint}</Text>
+            <Text style={styles.successHint}>
+              {strings.forgotPassword.resetHint}
+            </Text>
 
             {/* <TouchableOpacity
               style={styles.resendBtn}
@@ -120,7 +130,9 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
               disabled={loading}
               activeOpacity={0.8}
             >
-              <Text style={styles.submitText}>{strings.forgotPassword.footerAction}</Text>
+              <Text style={styles.submitText}>
+                {strings.forgotPassword.footerAction}
+              </Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -134,7 +146,9 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
                   color="#FFFFFF"
                 />
               </View>
-              <Text style={styles.infoTitle}>{strings.forgotPassword.infoTitle}</Text>
+              <Text style={styles.infoTitle}>
+                {strings.forgotPassword.infoTitle}
+              </Text>
               <Text style={styles.infoDescription}>
                 {strings.forgotPassword.infoDescription}
               </Text>
@@ -178,9 +192,13 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
 
             <View style={styles.footerContainer}>
               <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Text style={styles.footerLink}>{strings.forgotPassword.footerAction}</Text>
+                <Text style={styles.footerLink}>
+                  {strings.forgotPassword.footerAction}
+                </Text>
               </TouchableOpacity>
-              <Text style={styles.footerText}>{strings.forgotPassword.footerPrefix}</Text>
+              <Text style={styles.footerText}>
+                {strings.forgotPassword.footerPrefix}
+              </Text>
             </View>
           </View>
         )}

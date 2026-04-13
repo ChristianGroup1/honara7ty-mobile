@@ -23,6 +23,7 @@ import { prayerNotesStyles as styles } from './styles';
 import { PrayerNote } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
+import { trackEvent } from '../../lib/analytics';
 
 const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const strings = getStrings().prayerNotes;
@@ -147,7 +148,10 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         .from('prayer_notes')
         .insert({ user_id: userId, content: trimmed, is_answered: false });
       if (error) showAlert(strings.errors.genericTitle, error.message);
-      else await fetchNotes();
+      else {
+        trackEvent('prayer_note_created');
+        await fetchNotes();
+      }
     }
 
     setSaving(false);
@@ -159,12 +163,16 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
       .from('prayer_notes')
       .update({ is_answered: !note.is_answered })
       .eq('id', note.id);
-    if (!error)
+    if (!error) {
+      if (!note.is_answered) {
+        trackEvent('prayer_note_marked_answered');
+      }
       setNotes(prev =>
         prev.map(n =>
           n.id === note.id ? { ...n, is_answered: !n.is_answered } : n,
         ),
       );
+    }
   };
 
   const deleteNote = (note: PrayerNote) => {

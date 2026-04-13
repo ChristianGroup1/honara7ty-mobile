@@ -17,9 +17,9 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import supabase from '../../lib/supbase';
-import { configureGoogleSignIn } from '../../lib/googleSignInConfig';
+import { logoutCurrentUser } from '../../lib/logout';
+import { trackEvent } from '../../lib/analytics';
 import CustomAlert, { AlertButton, AlertConfig } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
 import { getStrings } from '../../localization';
@@ -216,6 +216,8 @@ const ProfileScreen = ({ navigation }: any) => {
   const handleSave = async () => {
     const trimmedFullName = form.fullName.trim();
     const trimmedPhone = form.phone.trim();
+    const trimmedChurch = form.church.trim();
+    const trimmedSect = form.sect.trim();
     const nextErrors = { fullName: '', phone: '' };
     let hasError = false;
 
@@ -235,35 +237,47 @@ const ProfileScreen = ({ navigation }: any) => {
       return;
     }
 
+    const nextProfilePayload = {
+      id: user.id,
+      church: trimmedChurch || null,
+      sect: trimmedSect || null,
+      birth_date: form.birthDate || null,
+      gender: form.gender || null,
+      devotion_time: currentDevotionTime || '07:00',
+      updated_at: new Date().toISOString(),
+    };
+
+    const authMetadataChanged =
+      (user.user_metadata?.full_name || '') !== trimmedFullName ||
+      (user.user_metadata?.phone || '') !== trimmedPhone;
+
     setSaving(true);
     try {
-      const { error: authError } = await supabase.auth.updateUser({
-        data: {
-          ...user.user_metadata,
-          full_name: trimmedFullName,
-          phone: trimmedPhone || null,
-        },
-      });
+      const profileSave = supabase
+        .from('profiles')
+        .upsert(nextProfilePayload, { onConflict: 'id' });
 
-      if (authError) {
-        throw authError;
+      const authSave = authMetadataChanged
+        ? supabase.auth.updateUser({
+            data: {
+              ...user.user_metadata,
+              full_name: trimmedFullName,
+              phone: trimmedPhone || null,
+            },
+          })
+        : Promise.resolve({ data: { user }, error: null });
+
+      const [profileResult, authResult] = await Promise.all([
+        profileSave,
+        authSave,
+      ]);
+
+      if (profileResult.error) {
+        throw profileResult.error;
       }
 
-      const { error: profileError } = await supabase.from('profiles').upsert(
-        {
-          id: user.id,
-          church: form.church.trim() || null,
-          sect: form.sect.trim() || null,
-          birth_date: form.birthDate || null,
-          gender: form.gender || null,
-          devotion_time: currentDevotionTime || '07:00',
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'id' },
-      );
-
-      if (profileError) {
-        throw profileError;
+      if (authResult.error) {
+        throw authResult.error;
       }
 
       const updatedUser = {
@@ -281,12 +295,18 @@ const ProfileScreen = ({ navigation }: any) => {
         ...form,
         fullName: trimmedFullName,
         phone: trimmedPhone,
-        church: form.church.trim(),
-        sect: form.sect.trim(),
+        church: trimmedChurch,
+        sect: trimmedSect,
       };
 
       setForm(normalizedForm);
       setInitialForm(normalizedForm);
+
+      trackEvent('profile_updated', {
+        has_church: Boolean(trimmedChurch),
+        has_gender: Boolean(form.gender),
+        has_birth_date: Boolean(form.birthDate),
+      });
 
       showAlert(
         strings.saveSuccessTitle,
@@ -317,9 +337,7 @@ const ProfileScreen = ({ navigation }: any) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              configureGoogleSignIn();
-              await supabase.auth.signOut();
-              await GoogleSignin.signOut();
+              await logoutCurrentUser();
               const parentNavigation = navigation.getParent?.();
               if (parentNavigation) {
                 parentNavigation.reset({

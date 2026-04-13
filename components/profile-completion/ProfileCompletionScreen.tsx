@@ -17,6 +17,7 @@ import {
 } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase'; // ← استورد supabase
+import { trackEvent, identifyUser } from '../../lib/analytics';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
 import { authPaperTheme, AUTH_GOLD } from '../auth/theme';
@@ -134,6 +135,15 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
       if (error) {
         showAlert(strings.common.genericErrorTitle, error.message);
       } else {
+        identifyUser(currentUserId, {
+          email: sessionData?.session?.user?.email ?? undefined,
+          name: sessionData?.session?.user?.user_metadata?.full_name ?? undefined,
+        });
+        trackEvent('user_signed_up', {
+          has_church: Boolean(profileData.church),
+          has_gender: Boolean(profileData.gender),
+          has_birth_date: Boolean(profileData.birthDate),
+        });
         // New users always go through onboarding after completing their profile
         navigation.reset({
           index: 0,

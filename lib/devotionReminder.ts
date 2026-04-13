@@ -1,12 +1,21 @@
 import supabase from './supbase';
-import { scheduleDailyDevotionReminder } from './notifications';
+import {
+  cancelDevotionReminder,
+  scheduleDailyDevotionReminder,
+} from './notifications';
 
 const DEFAULT_DEVOTION_TIME = '07:00';
 
 export async function syncDevotionReminderSchedule(
-  userId: string,
+  userId?: string | null,
   options?: { startTomorrow?: boolean },
 ) {
+  await cancelDevotionReminder();
+
+  if (!userId) {
+    return { error: null };
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .select('devotion_time')

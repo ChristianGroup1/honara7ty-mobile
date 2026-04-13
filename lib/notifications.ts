@@ -19,6 +19,7 @@ import notifee, {
   AndroidStyle,
   AndroidVisibility,
   AuthorizationStatus,
+  EventType,
   RepeatFrequency,
   TimestampTrigger,
   TriggerType,
@@ -29,6 +30,7 @@ import { getStrings } from '../localization';
 const CHANNEL_ID = 'devotion_reminder';
 const NOTIFICATION_ID = 'daily_devotion';
 const FOLLOW_UP_NOTIFICATION_ID = 'daily_devotion_follow_up';
+export const DEVOTION_PRESS_ACTION_ID = 'open_devotion';
 
 export type NotificationPermissionState =
   | 'allowed'
@@ -171,18 +173,17 @@ export async function scheduleDailyDevotionReminder(
       id: NOTIFICATION_ID,
       title: strings.title,
       body: strings.body,
+      data: {
+        kind: 'devotion_reminder',
+        target: 'DevotionModal',
+      },
       android: {
         channelId: CHANNEL_ID,
-        // ic_notification is a white monochrome drawable (required for Android 5+)
         smallIcon: 'ic_notification',
-        // Gold accent colour matching the app theme
         color: '#C9A84C',
-        pressAction: { id: 'default' },
-        // Show on lock screen
+        pressAction: { id: DEVOTION_PRESS_ACTION_ID },
         visibility: AndroidVisibility.PUBLIC,
-        // Classify as a reminder so the OS ranks it appropriately
         category: AndroidCategory.REMINDER,
-        // Gentle double-pulse vibration (all values must be > 0 for notifee validation)
         vibrationPattern: [100, 300, 200, 300],
         // Expanded (BigText) style shows the full verse when swiped down
         style: {
@@ -215,11 +216,15 @@ export async function scheduleDailyDevotionReminder(
       id: FOLLOW_UP_NOTIFICATION_ID,
       title: strings.title,
       body: strings.body,
+      data: {
+        kind: 'devotion_reminder',
+        target: 'DevotionModal',
+      },
       android: {
         channelId: CHANNEL_ID,
         smallIcon: 'ic_notification',
         color: '#C9A84C',
-        pressAction: { id: 'default' },
+        pressAction: { id: DEVOTION_PRESS_ACTION_ID },
         visibility: AndroidVisibility.PUBLIC,
         category: AndroidCategory.REMINDER,
         vibrationPattern: [100, 300, 200, 300],

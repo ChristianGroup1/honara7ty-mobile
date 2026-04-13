@@ -12,7 +12,15 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { getStrings } from '../../localization';
 import supabase from '../../lib/supbase';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
-import { markNotificationPermissionPromptSeen } from '../../lib/notificationPermissionFlow';
+import {
+  hasSeenNotificationPermissionPrompt,
+  markNotificationPermissionPromptSeen,
+} from '../../lib/notificationPermissionFlow';
+import {
+  getNotificationPermissionState,
+  openAppNotificationSettings,
+  requestNotificationPermission,
+} from '../../lib/notifications';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -35,6 +43,25 @@ const NotificationPermissionScreen = ({ navigation }: any) => {
     setLoading(true);
     try {
       const userId = await resolveUserId();
+      const permissionState = await getNotificationPermissionState();
+      const seenPrompt = await hasSeenNotificationPermissionPrompt(userId);
+
+      if (permissionState === 'allowed') {
+        await markNotificationPermissionPromptSeen(userId);
+        await ensureDefaultDevotionTime(userId, { scheduleReminder: true });
+        return;
+      }
+
+      if (!seenPrompt) {
+        await requestNotificationPermission();
+        await markNotificationPermissionPromptSeen(userId);
+        await ensureDefaultDevotionTime(userId, { scheduleReminder: true });
+        return;
+      }
+
+      if (permissionState === 'denied') {
+        await openAppNotificationSettings();
+      }
       await markNotificationPermissionPromptSeen(userId);
       await ensureDefaultDevotionTime(userId, { scheduleReminder: true });
     } finally {

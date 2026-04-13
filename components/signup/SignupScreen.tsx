@@ -3,7 +3,6 @@ import {
   StyleSheet,
   View,
   Text,
-  Image,
   Platform,
   TouchableOpacity,
 } from 'react-native';
@@ -28,6 +27,8 @@ import CustomInput from '../shared/CustomInput';
 import { authPaperTheme, AUTH_GOLD } from '../auth/theme';
 import AuthScreenShell from '../auth/AuthScreenShell';
 import { authStrings } from '../auth/strings';
+import GoogleIcon from '../../assets/images/google-icon.svg';
+import { trackEvent, identifyUser } from '../../lib/analytics';
 
 type Props = { navigation: any };
 
@@ -166,6 +167,13 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         if (error) {
           showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
         } else {
+          if (data?.user?.id) {
+            identifyUser(data.user.id, {
+              email: data.user.email ?? undefined,
+              name: data.user.user_metadata?.full_name ?? undefined,
+            });
+          }
+          trackEvent('user_signed_up_google', { method: 'google' });
           await ensureDefaultDevotionTime(data?.user?.id);
           navigation.replace('Onboarding');
         }
@@ -312,10 +320,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           style={styles.googleButton}
           onPress={handleGoogleSignUp}
         >
-          <Image
-            source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
-            style={styles.googleIcon}
-          />
+          <GoogleIcon width={20} height={20} style={styles.googleIcon} />
           <Text style={styles.googleText}>{strings.signup.googleButton}</Text>
         </TouchableOpacity>
 

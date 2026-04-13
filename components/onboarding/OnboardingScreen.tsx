@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
 import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermissionFlow';
+import { trackEvent } from '../../lib/analytics';
 import { getStrings } from '../../localization';
 import type { OnboardingSlide } from '../../localization/modules/onboarding';
 
@@ -143,41 +144,58 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   ).current;
 
   const goTo = (index: number) => {
+    setCurrentIndex(index);
     listRef.current?.scrollToIndex({ index, animated: true });
   };
 
+  const getItemLayout = (
+    _data: ArrayLike<Slide> | null | undefined,
+    index: number,
+  ) => ({
+    length: SCREEN_WIDTH,
+    offset: SCREEN_WIDTH * index,
+    index,
+  });
+
   const handleFinish = async () => {
+    console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
+
     if (inApp) {
       navigation.goBack();
+      console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
+
       return;
     }
+    console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
 
     setFinishing(true);
-    try {
-      await supabase.auth.updateUser({ data: { onboarding_completed: true } });
-    } catch (err) {
-      if (__DEV__) {
-        console.warn('[Onboarding] updateUser error:', err);
-      }
-    } finally {
-      setFinishing(false);
-      const { data } = await supabase.auth.getSession();
-      const userId = data?.session?.user?.id;
-      const seenPermissionPrompt = await hasSeenNotificationPermissionPrompt(
-        userId,
-      );
-      navigation.reset({
-        index: 0,
-        routes: [
-          {
-            name: seenPermissionPrompt ? 'MainTabs' : 'NotificationPermission',
-          },
-        ],
+
+    const { data } = await supabase.auth.getSession();
+    const userId = data?.session?.user?.id;
+    const seenPermissionPrompt = await hasSeenNotificationPermissionPrompt(
+      userId,
+    );
+    const nextRoute = seenPermissionPrompt
+      ? 'MainTabs'
+      : 'NotificationPermission';
+
+    if (__DEV__) {
+      console.warn('[Onboarding] finish routing', {
+        userId: userId ?? null,
+        seenPermissionPrompt,
+        nextRoute,
       });
     }
+
+    setFinishing(false);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: nextRoute }],
+    });
   };
 
   const goNext = () => {
+    console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
     if (currentIndex < slides.length - 1) {
       goTo(currentIndex + 1);
       return;
@@ -186,8 +204,12 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const skipToLast = () => {
+    console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
+
     if (currentIndex === slides.length - 1) {
       handleFinish();
+      console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
+
       return;
     }
     goTo(slides.length - 1);
@@ -302,12 +324,16 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
         data={slides}
         renderItem={renderSlide}
         keyExtractor={item => item.key}
+        getItemLayout={getItemLayout}
         horizontal
         pagingEnabled
         bounces={false}
         showsHorizontalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ viewAreaCoveragePercentThreshold: 60 }}
+        initialNumToRender={1}
+        maxToRenderPerBatch={2}
+        windowSize={3}
         scrollEnabled={!finishing}
       />
 

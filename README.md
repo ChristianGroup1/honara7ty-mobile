@@ -10,7 +10,7 @@ Before the **Reset Password** flow works end-to-end, you must configure the foll
 `Authentication` → `URL Configuration` → **Redirect URLs** → click **Add URL**
 
 ```
-honara7ty://reset-password
+honara7tyapp://reset-password
 ```
 
 Without this entry, Supabase ignores the `redirectTo` value sent by the app and falls back to
@@ -40,6 +40,28 @@ with the one-time reset link.
 Change `http://localhost:3000` to a real URL for your project (e.g. your production domain, or
 leave as-is for local development). This URL is only used as a fallback when no matching Redirect
 URL is found.
+
+---
+
+# Analytics Configuration
+
+The app now includes a single analytics integration point in
+`lib/analyticsConfig.ts`.
+
+To enable analytics for the full app:
+
+1. Open `lib/analyticsConfig.ts`
+2. Set `enabled` to `true`
+3. Paste your PostHog project API key into `apiKey`
+4. Keep `host` as `https://us.i.posthog.com` unless your project uses a different PostHog region
+
+Once enabled, the app will automatically:
+
+- identify signed-in users
+- reset analytics identity on logout
+- track screen changes from the root navigator
+
+Feature-level events can be added later with `trackEvent(...)` from `lib/analytics.ts`.
 
 ---
 

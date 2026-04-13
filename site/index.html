@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Honara7ty</title>
+    <meta
+      name="description"
+      content="Honara7ty helps users build a daily devotional habit with reading plans, reminders, prayer notes, and spiritual reflections."
+    />
+    <style>
+      :root {
+        --navy: #0a1124;
+        --gold: #c9a84c;
+        --mist: #eef2f7;
+        --ink: #1a2233;
+        --soft: #657084;
+        --card: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--mist);
+        color: var(--ink);
+        line-height: 1.6;
+      }
+
+      .hero {
+        background: linear-gradient(180deg, #0a1124 0%, #101a36 100%);
+        color: #fff;
+        padding: 56px 20px 40px;
+      }
+
+      .wrap {
+        width: min(960px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 28px;
+      }
+
+      .brand img {
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+        background: #fff;
+        object-fit: contain;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: clamp(30px, 5vw, 46px);
+        line-height: 1.15;
+      }
+
+      .lead {
+        max-width: 720px;
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.82);
+        margin: 0 0 22px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 12px 18px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .btn-primary {
+        background: var(--gold);
+        color: #fff;
+      }
+
+      .btn-secondary {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #fff;
+      }
+
+      main {
+        padding: 28px 0 48px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid rgba(10, 17, 36, 0.08);
+        border-radius: 8px;
+        padding: 18px;
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 22px;
+        color: var(--navy);
+      }
+
+      h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+        color: var(--navy);
+      }
+
+      p,
+      li {
+        color: var(--soft);
+        margin: 0;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .section {
+        margin-top: 18px;
+      }
+
+      footer {
+        padding: 0 0 32px;
+      }
+
+      .footer-card {
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid rgba(10, 17, 36, 0.08);
+        padding: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="wrap">
+        <div class="brand">
+          <img src="./logo.png" alt="Honara7ty logo" />
+          <strong>Honara7ty</strong>
+        </div>
+        <h1>Daily devotional support in one place.</h1>
+        <p class="lead">
+          Honara7ty helps users keep a steady spiritual routine with reading
+          plans, reminders, prayer notes, reflections, and daily devotion
+          tracking.
+        </p>
+        <div class="actions">
+          <a class="btn btn-primary" href="./privacy.html">Privacy Policy</a>
+          <a class="btn btn-secondary" href="mailto:fadykhayrat@gmail.com"
+            >Contact</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="wrap">
+        <section class="grid">
+          <article class="card">
+            <h3>Accounts</h3>
+            <p>Email sign-in and Google Sign-In for secure access.</p>
+          </article>
+          <article class="card">
+            <h3>Devotional Reminders</h3>
+            <p>Daily notifications based on the reminder time selected by the user.</p>
+          </article>
+          <article class="card">
+            <h3>Reading Tracking</h3>
+            <p>Reading plans, devotional logs, and scripture progress saved to the account.</p>
+          </article>
+          <article class="card">
+            <h3>Personal Notes</h3>
+            <p>Prayer notes and spiritual reflections stored privately for each user.</p>
+          </article>
+        </section>
+
+        <section class="section card">
+          <h2>About the Application</h2>
+          <p>
+            Honara7ty is a free mobile application designed to help users build
+            a consistent time with God through reminders, reading plans,
+            reflections, and prayer-focused features.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <div class="footer-card">
+          <h3>Contact</h3>
+          <p>Email: fadykhayrat@gmail.com</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+  </html>

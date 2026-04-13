@@ -3,7 +3,6 @@ import {
   StyleSheet,
   View,
   Text,
-  Image,
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
@@ -26,6 +25,8 @@ import {
 import { authPaperTheme, AUTH_NAVY } from '../auth/theme';
 import AuthScreenShell from '../auth/AuthScreenShell';
 import { authStrings } from '../auth/strings';
+import GoogleIcon from '../../assets/images/google-icon.svg';
+import { trackEvent, identifyUser } from '../../lib/analytics';
 
 const initializingContainerStyle = {
   flex: 1,
@@ -129,6 +130,8 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
       if (error) {
         showAlert(strings.login.signInErrorTitle, localizeAuthError(error.message));
       } else {
+        identifyUser(data.user.id, { email: data.user.email ?? undefined });
+        trackEvent('user_logged_in', { method: 'email' });
         await navigateAfterLogin(data.user);
       }
     } catch (err: any) {
@@ -154,7 +157,18 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         if (error) {
           showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
         } else {
-          await navigateAfterLogin(data?.user ?? googleUser);
+          const loggedInUser = data?.user ?? googleUser;
+          if (loggedInUser?.id) {
+            identifyUser(loggedInUser.id, {
+              email: loggedInUser.email ?? undefined,
+              name:
+                loggedInUser.user_metadata?.full_name ??
+                googleUser?.name ??
+                undefined,
+            });
+          }
+          trackEvent('user_logged_in_google', { method: 'google' });
+          await navigateAfterLogin(loggedInUser);
         }
       } else {
         return;
@@ -289,10 +303,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           style={styles.googleButton}
           onPress={handleGoogleSignIn}
         >
-          <Image
-            source={{ uri: 'https://i.imgur.com/w9vX99X.png' }}
-            style={styles.googleIcon}
-          />
+          <GoogleIcon width={20} height={20} style={styles.googleIcon} />
           <Text style={styles.googleText}>{strings.login.googleButton}</Text>
         </TouchableOpacity>
 

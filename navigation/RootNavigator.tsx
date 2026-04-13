@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { StatusBar } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  NavigationState,
+  PartialState,
+  Route,
+} from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import {
   WelcomeScreen,
@@ -15,6 +20,7 @@ import SignupStep1 from '../components/signup/SignupScreen';
 import MainTabNavigator from './MainTabNavigator';
 import { navigationRef } from './navigationRef';
 import { RootStackParamList } from './types';
+import { trackScreen } from '../lib/analytics';
 
 const NAVY = '#0A1124';
 
@@ -27,14 +33,82 @@ interface RootNavigatorProps {
   needsOnboarding: boolean;
 }
 
+function getActiveRoute(
+  state?: NavigationState | PartialState<NavigationState>,
+): Route<string> | undefined {
+  if (!state || !state.routes?.length) {
+    return undefined;
+  }
+
+  const index = state.index ?? 0;
+  const route = state.routes[index];
+
+  if (!route) {
+    return undefined;
+  }
+
+  const childState = route.state as
+    | NavigationState
+    | PartialState<NavigationState>
+    | undefined;
+
+  if (childState) {
+    const activeRoute = getActiveRoute(childState);
+    // Ensure the returned route has a defined key
+    if (activeRoute && activeRoute.key) {
+      return activeRoute;
+    }
+    if (route && typeof route.key === 'string') {
+      return route as Route<string>;
+    }
+    return undefined;
+  }
+
+  // Ensure the returned route has a defined key
+  if (route && typeof route.key === 'string') {
+    return route as Route<string>;
+  }
+  return undefined;
+}
+
 const RootNavigator = ({
   isLoggedIn,
   isRecoveryMode,
   recoveryLinkValid,
   needsOnboarding,
 }: RootNavigatorProps) => {
+  const routeNameRef = useRef<string | undefined>(undefined);
+
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        const currentRoute = getActiveRoute(navigationRef.getRootState());
+        const currentRouteName = currentRoute?.name;
+
+        if (!currentRouteName) {
+          return;
+        }
+
+        routeNameRef.current = currentRouteName;
+        trackScreen(currentRouteName, {
+          route_path: currentRouteName,
+        });
+      }}
+      onStateChange={() => {
+        const currentRoute = getActiveRoute(navigationRef.getRootState());
+        const currentRouteName = currentRoute?.name;
+
+        if (!currentRouteName || currentRouteName === routeNameRef.current) {
+          return;
+        }
+
+        routeNameRef.current = currentRouteName;
+        trackScreen(currentRouteName, {
+          route_path: currentRouteName,
+        });
+      }}
+    >
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
       <Stack.Navigator
         initialRouteName={

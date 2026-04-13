@@ -22,7 +22,7 @@ export async function handleRecoveryUrl(
     return { isRecovery: false, isValid: false };
   }
 
-  const isResetUrl = url.startsWith('honara7ty://reset-password');
+  const isResetUrl = url.startsWith('honara7tyapp://reset-password');
 
   if (isResetUrl) {
     const questionIndex = url.indexOf('?');
