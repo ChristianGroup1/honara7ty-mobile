@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -134,6 +134,20 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   const [finishing, setFinishing] = useState(false);
   const inApp = route?.params?.inApp === true;
 
+  useEffect(() => {
+    const currentSlide = slides[currentIndex];
+    if (!currentSlide) {
+      return;
+    }
+
+    trackEvent('onboarding_slide_viewed', {
+      slide_index: currentIndex,
+      slide_key: currentSlide.key,
+      has_title: Boolean(currentSlide.title),
+      has_verse: Boolean(currentSlide.verse),
+    });
+  }, [currentIndex, slides]);
+
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       const nextIndex = viewableItems[0]?.index;
@@ -158,17 +172,13 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   });
 
   const handleFinish = async () => {
-    console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
-
     if (inApp) {
       navigation.goBack();
-      console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
-
       return;
     }
-    console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
 
     setFinishing(true);
+    trackEvent('onboarding_completed', { slides_count: slides.length });
 
     const { data } = await supabase.auth.getSession();
     const userId = data?.session?.user?.id;
@@ -195,7 +205,11 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const goNext = () => {
-    console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
+    trackEvent('onboarding_next_tapped', {
+      slide_index: currentIndex,
+      is_last_slide: currentIndex === slides.length - 1,
+    });
+
     if (currentIndex < slides.length - 1) {
       goTo(currentIndex + 1);
       return;
@@ -204,12 +218,13 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const skipToLast = () => {
-    console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
+    trackEvent('onboarding_skip_tapped', {
+      slide_index: currentIndex,
+      target_slide_index: slides.length - 1,
+    });
 
     if (currentIndex === slides.length - 1) {
       handleFinish();
-      console.log('Go next', { currentIndex, lastIndex: slides.length - 1 });
-
       return;
     }
     goTo(slides.length - 1);
