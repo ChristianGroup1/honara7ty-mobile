@@ -137,6 +137,27 @@
         margin-top: 18px;
       }
 
+      .section p + p,
+      .section p + ul,
+      .section ul + p {
+        margin-top: 12px;
+      }
+
+      .split {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
+      .meta {
+        display: grid;
+        gap: 10px;
+      }
+
+      .meta strong {
+        color: var(--navy);
+      }
+
       footer {
         padding: 0 0 32px;
       }
@@ -156,11 +177,11 @@
           <img src="./logo.png" alt="Honara7ty logo" />
           <strong>Honara7ty</strong>
         </div>
-        <h1>Daily devotional support in one place.</h1>
+        <h1>Honara7ty is a mobile app for daily spiritual discipline.</h1>
         <p class="lead">
-          Honara7ty helps users keep a steady spiritual routine with reading
-          plans, reminders, prayer notes, reflections, and daily devotion
-          tracking.
+          Honara7ty helps users keep a consistent time with God through daily
+          reminder scheduling, Bible reading support, prayer notes, spiritual
+          reflections, and personal progress tracking.
         </p>
         <div class="actions">
           <a class="btn btn-primary" href="./privacy.html">Privacy Policy</a>
@@ -175,30 +196,83 @@
       <div class="wrap">
         <section class="grid">
           <article class="card">
-            <h3>Accounts</h3>
-            <p>Email sign-in and Google Sign-In for secure access.</p>
+            <h3>Account Access</h3>
+            <p>Users can create an account with email or sign in with Google.</p>
           </article>
           <article class="card">
-            <h3>Devotional Reminders</h3>
-            <p>Daily notifications based on the reminder time selected by the user.</p>
+            <h3>Daily Reminder Scheduling</h3>
+            <p>Users choose a preferred devotional time and receive reminders if notifications are enabled.</p>
           </article>
           <article class="card">
-            <h3>Reading Tracking</h3>
-            <p>Reading plans, devotional logs, and scripture progress saved to the account.</p>
+            <h3>Bible Reading and Tracking</h3>
+            <p>Reading plans, devotional activity, and scripture progress are saved to the user account.</p>
           </article>
           <article class="card">
-            <h3>Personal Notes</h3>
-            <p>Prayer notes and spiritual reflections stored privately for each user.</p>
+            <h3>Private Notes and Reflections</h3>
+            <p>Prayer notes and spiritual reflections are stored privately for the signed-in user.</p>
           </article>
         </section>
 
         <section class="section card">
           <h2>About the Application</h2>
           <p>
-            Honara7ty is a free mobile application designed to help users build
-            a consistent time with God through reminders, reading plans,
-            reflections, and prayer-focused features.
+            Honara7ty is a mobile application that supports a daily spiritual
+            routine. The app is designed to help users stay consistent in their
+            quiet time through scheduled reminders, Bible reading support,
+            personal prayer notes, spiritual reflections, and progress
+            tracking.
           </p>
+          <p>
+            This website is publicly accessible and does not require login. It
+            exists to explain what the application does, what user data it
+            processes, and where users can review the privacy policy.
+          </p>
+        </section>
+
+        <section class="section split">
+          <article class="card">
+            <h2>What the App Does</h2>
+            <ul>
+              <li>Lets users sign in with email or Google</li>
+              <li>Allows users to set a daily devotional reminder time</li>
+              <li>Tracks reading activity and devotional progress</li>
+              <li>Saves prayer notes and spiritual reflections</li>
+              <li>Supports profile setup and account-based personalization</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h2>Why User Data Is Requested</h2>
+            <ul>
+              <li>Email address and account identity are used to create and secure the account</li>
+              <li>Google account data is used only for Google Sign-In authentication</li>
+              <li>Profile details help personalize the in-app experience</li>
+              <li>Reminder time is used to schedule devotional notifications chosen by the user</li>
+              <li>Prayer notes, reflections, and reading progress are stored so users can access their own spiritual history</li>
+            </ul>
+          </article>
+        </section>
+
+        <section class="section card">
+          <h2>Privacy and Transparency</h2>
+          <p>
+            Honara7ty requests only the data needed to provide account access,
+            reminder scheduling, saved devotional content, and app
+            functionality. More detail is available in the privacy policy.
+          </p>
+          <p>
+            Privacy Policy:
+            <a href="./privacy.html">Open the Honara7ty Privacy Policy</a>
+          </p>
+        </section>
+
+        <section class="section card">
+          <h2>Application Identity</h2>
+          <div class="meta">
+            <p><strong>App name:</strong> Honara7ty</p>
+            <p><strong>Platform:</strong> Mobile application</p>
+            <p><strong>Developer contact:</strong> fadykhayrat@gmail.com</p>
+          </div>
         </section>
       </div>
     </main>

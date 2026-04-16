@@ -10,7 +10,7 @@ Before the **Reset Password** flow works end-to-end, you must configure the foll
 `Authentication` → `URL Configuration` → **Redirect URLs** → click **Add URL**
 
 ```
-honara7tyapp://reset-password
+honara7ty://reset-password
 ```
 
 Without this entry, Supabase ignores the `redirectTo` value sent by the app and falls back to

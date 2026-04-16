@@ -4,6 +4,7 @@ import {
   Provider as PaperProvider,
   ActivityIndicator,
 } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
 import {
@@ -21,6 +22,7 @@ type Props = { navigation: any; route: any };
 
 const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
   const strings = authStrings;
+  const insets = useSafeAreaInsets();
   // Default to true so navigating here normally (without a deep link) shows the form.
   const linkValid = route?.params?.linkValid !== false;
   const [password, setPassword] = useState('');
@@ -128,7 +130,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
     setRequestLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
-        redirectTo: 'honara7tyapp://reset-password',
+        redirectTo: 'honara7ty://reset-password',
       });
       if (error) {
         showAlert(
@@ -156,6 +158,8 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
     }
     return strings.resetPassword.newPasswordTitle;
   };
+
+  const bottomButtonSpacing = Math.max(insets.bottom + 12, 24);
 
   return (
     <PaperProvider theme={authPaperTheme}>
@@ -208,7 +212,10 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 testID="login-submit"
-                style={styles.submitBtn}
+                style={[
+                  styles.submitBtn,
+                  { marginBottom: bottomButtonSpacing },
+                ]}
                 onPress={() => navigation.navigate('Login')}
                 disabled={loading}
                 activeOpacity={0.8}
@@ -246,7 +253,10 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
                 error={requestEmailError}
               />
               <TouchableOpacity
-                style={styles.submitBtn}
+                style={[
+                  styles.submitBtn,
+                  { marginBottom: bottomButtonSpacing },
+                ]}
                 activeOpacity={0.8}
                 onPress={handleRequestNewLink}
                 disabled={requestLoading}
@@ -339,7 +349,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
             </View>
 
             <TouchableOpacity
-              style={styles.submitBtn}
+              style={[styles.submitBtn, { marginBottom: bottomButtonSpacing }]}
               activeOpacity={0.8}
               onPress={handleUpdate}
               disabled={loading}
@@ -385,21 +395,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#A98252',
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'flex-end',
+    alignSelf: 'center',
     marginBottom: 12,
   },
   infoTitle: {
     color: AUTH_NAVY,
     fontSize: 19,
     fontWeight: '800',
-    textAlign: 'right',
+    textAlign: 'center',
     marginBottom: 8,
   },
   infoDescription: {
     color: '#6F6558',
     fontSize: 14,
     lineHeight: 22,
-    textAlign: 'right',
+    textAlign: 'center',
   },
   hintRow: {
     flexDirection: 'row',

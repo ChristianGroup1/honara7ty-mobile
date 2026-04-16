@@ -54,7 +54,7 @@ const ForgotPasswordUI: React.FC<Props> = ({ navigation }) => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
-        redirectTo: 'honara7tyapp://reset-password',
+        redirectTo: 'honara7ty://reset-password',
       });
       if (error) {
         showAlert(
