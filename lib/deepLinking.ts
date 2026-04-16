@@ -1,4 +1,3 @@
-//@ts-nocheck
 import supabase from './supbase';
 
 export function parseFragment(fragment: string): Record<string, string> {
@@ -20,10 +19,9 @@ function parseQueryString(url: string): Record<string, string> {
   try {
     const parsedUrl = new URL(url);
     const result: Record<string, string> = {};
-    //@ts-ignore
-    parsedUrl.searchParams.forEach((value, key) => {
+    for (const [key, value] of Array.from(parsedUrl.searchParams)) {
       result[key] = value;
-    });
+    }
 
     return result;
   } catch {
@@ -40,9 +38,9 @@ function isResetPasswordUrl(url: string): boolean {
   try {
     const parsedUrl = new URL(url);
     return (
-      parsedUrl.protocol === 'honara7ty:' &&
-      (parsedUrl.hostname === 'reset-password' ||
-        parsedUrl.pathname === '/reset-password')
+      (parsedUrl as any).protocol === 'honara7ty:' &&
+      ((parsedUrl as any).hostname === 'reset-password' ||
+        (parsedUrl as any).pathname === '/reset-password')
     );
   } catch {
     return url.startsWith('honara7ty://reset-password');
