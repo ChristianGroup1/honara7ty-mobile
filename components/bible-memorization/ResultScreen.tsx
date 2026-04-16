@@ -13,6 +13,7 @@ type Props = StackScreenProps<MemorizationStackParamList, 'Result'>;
 const ResultScreen = ({ navigation, route }: Props) => {
   const strings = getStrings().bibleMemorization.result;
   const result = route.params;
+  const isFullTextMode = result.difficulty === 'fullText';
   const isPerfect = result.score === result.total;
   const isGood = !isPerfect && result.score >= result.total * 0.7;
   const statusIcon = isPerfect
@@ -91,7 +92,11 @@ const ResultScreen = ({ navigation, route }: Props) => {
 
         <View style={styles.verseBox}>
           <View style={styles.verseBoxHeader}>
-            <Text style={styles.verseBoxTitle}>{strings.reviewAnswers}</Text>
+            <Text style={styles.verseBoxTitle}>
+              {isFullTextMode
+                ? strings.writtenReviewAnswers
+                : strings.reviewAnswers}
+            </Text>
             <MaterialCommunityIcons
               name="check-circle-outline"
               size={18}
@@ -123,7 +128,7 @@ const ResultScreen = ({ navigation, route }: Props) => {
                         }`}
                   </Text>
                 </View>
-              ) : (
+              ) : isFullTextMode ? null : (
                 <Text key={i} style={styles.wordText}>
                   {slot.word}{' '}
                 </Text>

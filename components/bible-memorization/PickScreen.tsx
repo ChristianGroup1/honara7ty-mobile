@@ -503,7 +503,9 @@ const PickScreen = ({ navigation }: Props) => {
               ? strings.easyHint
               : difficulty === 'medium'
               ? strings.mediumHint
-              : strings.hardHint}
+              : difficulty === 'hard'
+              ? strings.hardHint
+              : strings.fullTextHint}
           </Text>
         </View>
 

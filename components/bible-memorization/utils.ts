@@ -13,6 +13,10 @@ export const DIFFICULTY_LEVELS = {
     hideRatio: 0.35,
   },
   hard: { label: memorizationStrings.difficultyLevels.hard, hideRatio: 0.5 },
+  fullText: {
+    label: memorizationStrings.difficultyLevels.fullText,
+    hideRatio: 1,
+  },
 } as const;
 
 const MIN_WORD_LENGTH = 3;
@@ -42,6 +46,15 @@ export function buildSlots(
 ): WordSlot[] {
   const clean = stripVerseNumber(verseText);
   const words = clean.split(' ').filter(w => w.trim());
+
+  if (difficulty === 'fullText') {
+    return words.map(word => ({
+      word,
+      hidden: true,
+      userInput: '',
+    }));
+  }
+
   const candidates = words
     .map((w, i) => ({ i, w }))
     .filter(({ w }) => w.replace(/[،.؟!:؛]/g, '').length >= MIN_WORD_LENGTH);
@@ -57,4 +70,28 @@ export function buildSlots(
     hidden: hiddenIndices.has(i),
     userInput: '',
   }));
+}
+
+export function buildFullTextResultSlots(
+  verseText: string,
+  userText: string,
+): WordSlot[] {
+  const expectedWords = stripVerseNumber(verseText)
+    .split(' ')
+    .filter(word => word.trim());
+  const userWords = userText
+    .split(/\s+/)
+    .map(word => word.trim())
+    .filter(Boolean);
+
+  return expectedWords.map((word, index) => {
+    const userInput = userWords[index] ?? '';
+    return {
+      word,
+      hidden: true,
+      userInput,
+      correct:
+        normalizeArabicAnswer(userInput) === normalizeArabicAnswer(word),
+    };
+  });
 }

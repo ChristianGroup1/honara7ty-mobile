@@ -14,7 +14,11 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import MemorizationHeader from './MemorizationHeader';
 import { memorizationStyles as styles } from './styles';
 import { MemorizationStackParamList, WordSlot } from './types';
-import { buildSlots, normalizeArabicAnswer } from './utils';
+import {
+  buildFullTextResultSlots,
+  buildSlots,
+  normalizeArabicAnswer,
+} from './utils';
 import { getStrings } from '../../localization';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Recite'>;
@@ -24,9 +28,11 @@ const ReciteScreen = ({ navigation, route }: Props) => {
   const selection = route.params;
   const scrollRef = useRef<ScrollView | null>(null);
   const inputRefs = useRef<Array<TextInput | null>>([]);
+  const [fullVerseAnswer, setFullVerseAnswer] = useState('');
   const [slots, setSlots] = useState<WordSlot[]>(
     buildSlots(selection.verseOriginal, selection.difficulty),
   );
+  const isFullTextMode = selection.difficulty === 'fullText';
 
   const scrollToFocusedInput = (index: number) => {
     const target = inputRefs.current[index];
@@ -44,6 +50,22 @@ const ReciteScreen = ({ navigation, route }: Props) => {
   };
 
   const checkAnswers = () => {
+    if (isFullTextMode) {
+      const updated = buildFullTextResultSlots(
+        selection.verseOriginal,
+        fullVerseAnswer,
+      );
+      const correct = updated.filter(slot => slot.correct).length;
+
+      navigation.navigate('Result', {
+        ...selection,
+        slots: updated,
+        score: correct,
+        total: updated.length,
+      });
+      return;
+    }
+
     let correct = 0;
     const updated = slots.map(slot => {
       if (!slot.hidden) {
@@ -96,19 +118,31 @@ const ReciteScreen = ({ navigation, route }: Props) => {
 
           <View style={styles.statusPillsRow}>
             <View style={styles.statusPill}>
-              <MaterialCommunityIcons name="circle-slice-3" size={16} color="#0A1124" />
+              <MaterialCommunityIcons
+                name="circle-slice-3"
+                size={16}
+                color="#0A1124"
+              />
               <Text style={styles.statusPillText}>
                 {selection.difficulty === 'easy'
                   ? getStrings().bibleMemorization.difficultyLevels.easy
                   : selection.difficulty === 'medium'
-                    ? getStrings().bibleMemorization.difficultyLevels.medium
-                    : getStrings().bibleMemorization.difficultyLevels.hard}
+                  ? getStrings().bibleMemorization.difficultyLevels.medium
+                  : selection.difficulty === 'hard'
+                  ? getStrings().bibleMemorization.difficultyLevels.hard
+                  : getStrings().bibleMemorization.difficultyLevels.fullText}
               </Text>
             </View>
             <View style={styles.statusPill}>
-              <MaterialCommunityIcons name="form-textbox" size={16} color="#0A1124" />
+              <MaterialCommunityIcons
+                name="form-textbox"
+                size={16}
+                color="#0A1124"
+              />
               <Text style={styles.statusPillText}>
-                {strings.blanks(slots.filter(slot => slot.hidden).length)}
+                {isFullTextMode
+                  ? strings.fullTextWords(slots.length)
+                  : strings.blanks(slots.filter(slot => slot.hidden).length)}
               </Text>
             </View>
           </View>
@@ -116,39 +150,63 @@ const ReciteScreen = ({ navigation, route }: Props) => {
           <View style={styles.verseBox}>
             <View style={styles.verseBoxHeader}>
               <Text style={styles.verseBoxTitle}>{strings.verseTextTitle}</Text>
-              <MaterialCommunityIcons name="feather" size={18} color="#C9A84C" />
+              <MaterialCommunityIcons
+                name="feather"
+                size={18}
+                color="#C9A84C"
+              />
             </View>
-            <View style={styles.wordsWrap}>
-              {slots.map((slot, i) =>
-                slot.hidden ? (
-                  <TextInput
-                    key={i}
-                    ref={ref => {
-                      inputRefs.current[i] = ref;
-                    }}
-                    style={styles.blankInput}
-                    value={slot.userInput}
-                    onFocus={() => scrollToFocusedInput(i)}
-                    onChangeText={val =>
-                      setSlots(prev =>
-                        prev.map((current, index) =>
-                          index === i ? { ...current, userInput: val } : current,
-                        ),
-                      )
-                    }
-                    placeholder={strings.blankPlaceholder}
-                    placeholderTextColor="#AAA"
-                    textAlign="center"
-                    textAlignVertical="center"
-                    returnKeyType="next"
-                  />
-                ) : (
-                  <Text key={i} style={styles.wordText}>
-                    {slot.word}{' '}
-                  </Text>
-                ),
-              )}
-            </View>
+            {isFullTextMode ? (
+              <>
+                <Text style={styles.instructionText}>
+                  {strings.fullTextInstruction}
+                </Text>
+                <TextInput
+                  style={styles.fullVerseInput}
+                  multiline
+                  textAlignVertical="top"
+                  value={fullVerseAnswer}
+                  textAlign="right"
+                  onChangeText={setFullVerseAnswer}
+                  placeholder={strings.fullTextPlaceholder}
+                  placeholderTextColor="#98A2B3"
+                />
+              </>
+            ) : (
+              <View style={styles.wordsWrap}>
+                {slots.map((slot, i) =>
+                  slot.hidden ? (
+                    <TextInput
+                      key={i}
+                      ref={ref => {
+                        inputRefs.current[i] = ref;
+                      }}
+                      style={styles.blankInput}
+                      value={slot.userInput}
+                      onFocus={() => scrollToFocusedInput(i)}
+                      onChangeText={val =>
+                        setSlots(prev =>
+                          prev.map((current, index) =>
+                            index === i
+                              ? { ...current, userInput: val }
+                              : current,
+                          ),
+                        )
+                      }
+                      placeholder={strings.blankPlaceholder}
+                      placeholderTextColor="#AAA"
+                      textAlign="center"
+                      textAlignVertical="center"
+                      returnKeyType="next"
+                    />
+                  ) : (
+                    <Text key={i} style={styles.wordText}>
+                      {slot.word}{' '}
+                    </Text>
+                  ),
+                )}
+              </View>
+            )}
           </View>
 
           <TouchableOpacity style={styles.primaryBtn} onPress={checkAnswers}>
