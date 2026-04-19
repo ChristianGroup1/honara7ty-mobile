@@ -24,6 +24,11 @@ import CustomAlert, { AlertButton, AlertConfig } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
 import { getStrings } from '../../localization';
 import AppHeader from '../shared/AppHeader';
+import {
+  refreshProfileRecord,
+  saveAuthMetadata,
+  saveProfileRecord,
+} from '../../lib/offlineSync';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -123,11 +128,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
       setUser(currentUser);
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('church, sect, birth_date, gender, devotion_time')
-        .eq('id', currentUser.id)
-        .maybeSingle();
+      const { data: profile } = await refreshProfileRecord(currentUser.id);
 
       const nextForm: EditableProfileForm = {
         fullName:
@@ -253,32 +254,22 @@ const ProfileScreen = ({ navigation }: any) => {
 
     setSaving(true);
     try {
-      const profileSave = supabase
-        .from('profiles')
-        .upsert(nextProfilePayload, { onConflict: 'id' });
-
-      const authSave = authMetadataChanged
-        ? supabase.auth.updateUser({
-            data: {
-              ...user.user_metadata,
-              full_name: trimmedFullName,
-              phone: trimmedPhone || null,
-            },
-          })
-        : Promise.resolve({ data: { user }, error: null });
-
       const [profileResult, authResult] = await Promise.all([
-        profileSave,
-        authSave,
+        saveProfileRecord({
+          userId: user.id,
+          profile: nextProfilePayload,
+        }),
+        authMetadataChanged
+          ? saveAuthMetadata({
+              userId: user.id,
+              metadata: {
+                ...user.user_metadata,
+                full_name: trimmedFullName,
+                phone: trimmedPhone || null,
+              },
+            })
+          : Promise.resolve({ offline: false }),
       ]);
-
-      if (profileResult.error) {
-        throw profileResult.error;
-      }
-
-      if (authResult.error) {
-        throw authResult.error;
-      }
 
       const updatedUser = {
         ...user,
@@ -310,7 +301,9 @@ const ProfileScreen = ({ navigation }: any) => {
 
       showAlert(
         strings.saveSuccessTitle,
-        strings.saveSuccessMessage,
+        profileResult.offline || authResult.offline
+          ? strings.saveOfflineMessage
+          : strings.saveSuccessMessage,
         undefined,
         'success',
       );

@@ -24,6 +24,29 @@ jest.mock('@react-native-google-signin/google-signin', () => ({
   },
 }));
 
+jest.mock('@react-native-community/netinfo', () => ({
+  __esModule: true,
+  default: {
+    addEventListener: jest.fn(() => jest.fn()),
+    fetch: jest.fn().mockResolvedValue({
+      isConnected: true,
+      isInternetReachable: true,
+    }),
+  },
+  useNetInfo: jest.fn(() => ({
+    isConnected: true,
+    isInternetReachable: true,
+  })),
+}));
+
+jest.mock('react-native-config', () => ({
+  __esModule: true,
+  default: {
+    POSTHOG_PROJECT_TOKEN: 'test-token',
+    POSTHOG_HOST: 'https://example.com',
+  },
+}));
+
 jest.mock('posthog-react-native', () => {
   return jest.fn().mockImplementation(() => ({
     screen: jest.fn(),

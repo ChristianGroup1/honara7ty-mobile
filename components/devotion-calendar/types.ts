@@ -6,6 +6,7 @@ export type DevotionDayLog = {
   reading_chapter?: number | null;
   chapters_read?: number | null;
   selected_chapters?: number[] | null;
+  pendingSync?: boolean;
 };
 
 export type CalendarCell = {

@@ -33,8 +33,8 @@ import {
   normalizeSelectedChapters,
   toggleChapterSelection,
 } from '../shared/chapterSelection';
-import { syncReadingLogForDate } from '../../lib/readingLog';
 import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
+import { refreshDevotionLogs, saveDevotionLog } from '../../lib/offlineSync';
 
 const DevotionCalendarScreen = ({ navigation }: any) => {
   const strings = getStrings().devotionCalendar;
@@ -84,34 +84,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('devotion_log')
-        .select(
-          'date, completed, reading_book, reading_chapter, chapters_read, selected_chapters',
-        )
-        .eq('user_id', userId)
-        .order('date', { ascending: false });
-
-      if (error) {
-        setAlertConfig({
-          visible: true,
-          title: strings.errorTitle,
-          message: error.message,
-          type: 'error',
-        });
-        return;
-      }
-
-      const logsMap: Record<string, DevotionDayLog> = {};
-      (data ?? []).forEach(item => {
-        logsMap[item.date as string] = {
-          completed: Boolean(item.completed),
-          reading_book: (item as any).reading_book,
-          reading_chapter: (item as any).reading_chapter,
-          chapters_read: (item as any).chapters_read,
-          selected_chapters: (item as any).selected_chapters,
-        };
-      });
+      const { data: logsMap } = await refreshDevotionLogs(userId);
       setDevotionLogsByDate(logsMap);
     } finally {
       setLoading(false);
@@ -268,8 +241,6 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
       }
 
       const payload = {
-        user_id: userId,
-        date: selectedDate,
         completed: selectedCompleted,
         reading_book: selectedCompleted ? selectedBook : null,
         reading_chapter: selectedCompleted
@@ -281,49 +252,25 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         selected_chapters: selectedCompleted ? normalizedChapters : null,
       };
 
-      const { error } = await supabase
-        .from('devotion_log')
-        .upsert(payload, { onConflict: 'user_id,date' });
-
-      if (error) {
-        setAlertConfig({
-          visible: true,
-          title: strings.errorTitle,
-          message: error.message,
-          type: 'error',
-        });
-        return;
-      }
-
-      const { error: readingLogError } = await syncReadingLogForDate({
+      const result = await saveDevotionLog({
         userId,
         date: selectedDate,
-        completed: selectedCompleted,
-        readingBook: selectedCompleted ? selectedBook : null,
-        selectedChapters: selectedCompleted ? normalizedChapters : [],
+        payload,
       });
-
-      if (readingLogError) {
-        setAlertConfig({
-          visible: true,
-          title: 'تعذر حفظ سجل القراءات',
-          message: readingLogError.message,
-          type: 'warning',
-        });
-        return;
-      }
 
       if (selectedDate === todayIso) {
         await syncDevotionReminderSchedule(userId, { startTomorrow: true });
       }
 
+      setDevotionLogsByDate(result.data);
       setAlertConfig({
         visible: true,
         title: strings.saveSuccessTitle,
-        message: strings.saveSuccessMessage,
+        message: result.offline
+          ? strings.savedOfflineMessage
+          : strings.saveSuccessMessage,
         type: 'success',
       });
-      await loadDevotionDays();
       setEditorVisible(false);
     } finally {
       setSaving(false);

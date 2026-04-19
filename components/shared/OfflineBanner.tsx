@@ -1,0 +1,105 @@
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getStrings } from '../../localization';
+
+type Props = {
+  visible: boolean;
+  inline?: boolean;
+};
+
+const OfflineBanner = ({ visible, inline = false }: Props) => {
+  const insets = useSafeAreaInsets();
+  const strings = getStrings().shared.offline;
+
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <View
+      style={[
+        styles.shell,
+        inline ? styles.shellInline : { paddingTop: insets.top + 8 },
+      ]}
+    >
+      <View style={styles.banner}>
+        <View style={styles.iconWrap}>
+          <MaterialCommunityIcons name="wifi-off" size={16} color="#FFF4DF" />
+        </View>
+        <View style={styles.copy}>
+          <Text style={styles.title}>{strings.title}</Text>
+          <Text style={styles.message}>{strings.message}</Text>
+        </View>
+        <View style={styles.statusPill}>
+          <Text style={styles.statusText}>Offline</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  shell: {
+    backgroundColor: '#0A1124',
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
+  shellInline: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 0,
+  },
+  banner: {
+    backgroundColor: '#8F4F10',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,244,223,0.18)',
+  },
+  iconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  copy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  title: {
+    color: '#FFF8EB',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'left',
+  },
+  message: {
+    color: '#FCE7C7',
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 2,
+    textAlign: 'left',
+  },
+  statusPill: {
+    marginLeft: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  statusText: {
+    color: '#FFF4DF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+});
+
+export default OfflineBanner;

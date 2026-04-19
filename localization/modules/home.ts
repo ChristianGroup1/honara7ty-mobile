@@ -45,6 +45,8 @@ export const homeStrings = {
   permissionEnable: 'تفعيل الإشعارات',
   permissionOpenSettings: 'فتح الإعدادات',
   saveAnswer: 'حفظ الإجابة',
+  savedOfflineMessage:
+    'تم حفظ التغيير على الجهاز، وسيتم إرساله تلقائياً عند عودة الإنترنت.',
   quickActions: {
     devotionGuide: 'شرح الخلوة',
     settings: 'اعدادات الخلوة',

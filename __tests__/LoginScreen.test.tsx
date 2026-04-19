@@ -27,6 +27,14 @@ jest.mock('../lib/supbase', () => ({
   },
 }));
 
+jest.mock('../lib/notificationPermissionFlow', () => ({
+  hasSeenNotificationPermissionPrompt: jest.fn().mockResolvedValue(true),
+}));
+
+jest.mock('../lib/ensureDefaultDevotionTime', () => ({
+  ensureDefaultDevotionTime: jest.fn().mockResolvedValue(undefined),
+}));
+
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import LoginScreen from '../components/login/LoginScreen';
@@ -77,7 +85,7 @@ test('login shows validation errors before calling supabase', async () => {
 test('login navigates to main tabs after successful login', async () => {
   (supabase.auth.signInWithPassword as jest.Mock).mockResolvedValue({
     data: {
-      user: { user_metadata: { onboarding_completed: true } },
+      user: { id: 'user-1', user_metadata: { onboarding_completed: true } },
     },
     error: null,
   });

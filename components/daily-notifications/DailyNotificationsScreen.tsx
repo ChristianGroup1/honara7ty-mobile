@@ -44,6 +44,10 @@ import {
   toggleChapterSelection,
 } from '../shared/chapterSelection';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
+import {
+  refreshProfileRecord,
+  saveProfileRecord,
+} from '../../lib/offlineSync';
 
 const DailyNotificationsScreen = ({ navigation }: any) => {
   const strings = getStrings().dailyNotifications;
@@ -103,13 +107,7 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
         setLoading(false);
         return;
       }
-      const { data } = await supabase
-        .from('profiles')
-        .select(
-          'devotion_time, reading_book, reading_chapter, daily_chapters_target, selected_chapters',
-        )
-        .eq('id', userId)
-        .single();
+      const { data } = await refreshProfileRecord(userId);
       if (data?.devotion_time) {
         const [h, m] = (data.devotion_time as string).split(':').map(Number);
         const d = new Date();
@@ -120,14 +118,13 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
         d.setHours(7, 0, 0, 0);
         setDevotionTime(d);
 
-        await supabase.from('profiles').upsert(
-          {
-            id: userId,
+        await saveProfileRecord({
+          userId,
+          profile: {
             devotion_time: '07:00',
             updated_at: new Date().toISOString(),
           },
-          { onConflict: 'id' },
-        );
+        });
       }
       if (data?.reading_book) {
         setReadingBook(data.reading_book);
@@ -272,33 +269,30 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
       return;
     }
 
-    const { error } = await supabase.from('profiles').upsert(
-      {
-        id: userId,
+    const result = await saveProfileRecord({
+      userId,
+      profile: {
         devotion_time: timeString,
         reading_book: readingBook,
         reading_chapter: firstSelectedChapter(normalizedChapters),
         daily_chapters_target: normalizedChapters.length || null,
         selected_chapters: normalizedChapters,
       },
-      { onConflict: 'id' },
+    });
+
+    try {
+      await scheduleDailyDevotionReminder(hours, minutes);
+    } catch {}
+
+    setSaved(true);
+    showAlert(
+      strings.saveSuccessTitle,
+      result.offline
+        ? strings.saveOfflineMessage(timeString)
+        : strings.saveSuccessMessage(timeString),
+      undefined,
+      'success',
     );
-
-    if (error) {
-      showAlert(strings.saveErrorTitle, error.message);
-    } else {
-      try {
-        await scheduleDailyDevotionReminder(hours, minutes);
-      } catch {}
-
-      setSaved(true);
-      showAlert(
-        strings.saveSuccessTitle,
-        strings.saveSuccessMessage(timeString),
-        undefined,
-        'success',
-      );
-    }
     setSaving(false);
   };
 

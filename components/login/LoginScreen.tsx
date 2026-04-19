@@ -27,6 +27,7 @@ import AuthScreenShell from '../auth/AuthScreenShell';
 import { authStrings } from '../auth/strings';
 import GoogleIcon from '../../assets/images/google-icon.svg';
 import { trackEvent, identifyUser } from '../../lib/analytics';
+import { startFacebookAuth } from '../../lib/socialAuth';
 
 const initializingContainerStyle = {
   flex: 1,
@@ -201,6 +202,18 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     }
   };
 
+  const handleFacebookSignIn = async () => {
+    setLoading(true);
+    try {
+      await startFacebookAuth();
+      trackEvent('user_logged_in_facebook', { method: 'facebook' });
+    } catch (error: any) {
+      showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (initializing) {
     return (
       <View style={initializingContainerStyle}>
@@ -302,9 +315,24 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         <TouchableOpacity
           style={styles.googleButton}
           onPress={handleGoogleSignIn}
+          disabled={loading}
         >
           <GoogleIcon width={20} height={20} style={styles.googleIcon} />
           <Text style={styles.googleText}>{strings.login.googleButton}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.facebookButton}
+          onPress={handleFacebookSignIn}
+          disabled={loading}
+        >
+          <MaterialCommunityIcons
+            name="facebook"
+            size={20}
+            color="#1877F2"
+            style={styles.facebookIcon}
+          />
+          <Text style={styles.googleText}>{strings.login.facebookButton}</Text>
         </TouchableOpacity>
 
         <View style={styles.footerContainer}>
@@ -395,7 +423,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
   },
+  facebookButton: {
+    flexDirection: 'row',
+    height: 58,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#a5a39fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    marginTop: 12,
+  },
   googleIcon: { width: 20, height: 20, marginLeft: 12 },
+  facebookIcon: { marginLeft: 12 },
   googleText: { fontSize: 15, color: '#22304A', fontWeight: '600' },
   footerContainer: {
     flexDirection: 'row-reverse',

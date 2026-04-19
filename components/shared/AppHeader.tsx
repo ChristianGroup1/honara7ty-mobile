@@ -1,6 +1,8 @@
 import React, { ReactNode } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useNetInfo } from '@react-native-community/netinfo';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import OfflineBanner from './OfflineBanner';
 
 const NAVY = '#0A1124';
 
@@ -44,30 +46,39 @@ const AppHeader = ({
   trailing,
   backgroundColor = NAVY,
   titleNumberOfLines = 1,
-}: AppHeaderProps) => (
-  <>
-    <View
-      style={[styles.topInset, { height: topInsetHeight, backgroundColor }]}
-    />
-    <View style={[styles.shell, { backgroundColor }]}>
-      <View style={styles.topRow}>
-        <View style={styles.identity}>
-          {leading ? <View style={styles.leadingWrap}>{leading}</View> : null}
-          <View style={[styles.textBlock, { marginRight: leading ? 24 : 0 }]}>
-            {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-            <Text
-              style={[styles.title, { textAlign: eyebrow ? 'left' : 'center' }]}
-              numberOfLines={titleNumberOfLines}
-            >
-              {title}
-            </Text>
+}: AppHeaderProps) => {
+  const netInfo = useNetInfo();
+  const isOffline = !(
+    netInfo.isConnected &&
+    netInfo.isInternetReachable !== false
+  );
+
+  return (
+    <>
+      <View
+        style={[styles.topInset, { height: topInsetHeight, backgroundColor }]}
+      />
+      <View style={[styles.shell, { backgroundColor }]}>
+        <View style={styles.topRow}>
+          <View style={styles.identity}>
+            {leading ? <View style={styles.leadingWrap}>{leading}</View> : null}
+            <View style={[styles.textBlock, { marginRight: leading ? 24 : 0 }]}>
+              {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
+              <Text
+                style={[styles.title, { textAlign: eyebrow ? 'left' : 'center' }]}
+                numberOfLines={titleNumberOfLines}
+              >
+                {title}
+              </Text>
+            </View>
           </View>
+          {trailing ? <View style={styles.trailingWrap}>{trailing}</View> : null}
         </View>
-        {trailing ? <View style={styles.trailingWrap}>{trailing}</View> : null}
       </View>
-    </View>
-  </>
-);
+      <OfflineBanner visible={isOffline} inline />
+    </>
+  );
+};
 
 const styles = StyleSheet.create({
   topInset: {

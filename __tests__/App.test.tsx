@@ -9,6 +9,10 @@ jest.mock('../hooks/useAppBootstrap', () => ({
   useAppBootstrap: jest.fn(),
 }));
 
+jest.mock('../hooks/useOfflineSync', () => ({
+  useOfflineSync: jest.fn(() => ({ isOffline: false })),
+}));
+
 jest.mock('../navigation/RootNavigator', () => {
   const { Text } = require('react-native');
   return () => <Text>root navigator</Text>;

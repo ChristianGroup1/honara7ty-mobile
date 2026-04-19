@@ -21,6 +21,11 @@ import { spiritualReflectionStyles as styles, GOLD, NAVY } from './styles';
 import { Reflection } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
+import {
+  deleteReflection as removeReflection,
+  refreshReflections,
+  saveReflection,
+} from '../../lib/offlineSync';
 
 const SpiritualReflectionScreen = ({ navigation }: any) => {
   const strings = getStrings().spiritualReflection;
@@ -68,14 +73,8 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
       setLoading(false);
       return;
     }
-    const { data, error } = await supabase
-      .from('reflections')
-      .select('*')
-      .eq('user_id', userId)
-      .order('date', { ascending: false });
-    if (!error && data) {
-      setReflections(data as Reflection[]);
-    }
+    const { data } = await refreshReflections(userId);
+    setReflections(data);
     setLoading(false);
   }, []);
 
@@ -132,28 +131,16 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
       return;
     }
 
-    if (editItem) {
-      const { error } = await supabase
-        .from('reflections')
-        .update({ content: trimmed })
-        .eq('id', editItem.id);
-      if (error) {
-        showAlert(strings.errors.genericTitle, error.message);
-      }
-    } else {
-      const { error } = await supabase.from('reflections').insert({
-        user_id: userId,
-        content: trimmed,
-        date: new Date().toISOString().split('T')[0],
-      });
-      if (error) {
-        showAlert(strings.errors.genericTitle, error.message);
-      }
-    }
+    const result = await saveReflection({
+      userId,
+      reflection: editItem,
+      content: trimmed,
+      date: editItem?.date ?? new Date().toISOString().split('T')[0],
+    });
 
     setSaving(false);
     setShowModal(false);
-    await fetchReflections();
+    setReflections(result.data);
   };
 
   const deleteReflection = (item: Reflection) => {
@@ -166,15 +153,14 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
           text: strings.delete,
           style: 'destructive',
           onPress: async () => {
-            const { error } = await supabase
-              .from('reflections')
-              .delete()
-              .eq('id', item.id);
-            if (!error) {
-              setReflections(prev => prev.filter(r => r.id !== item.id));
-            } else {
-              showAlert(strings.errors.genericTitle, error.message);
+            const { data: sessionData } = await supabase.auth.getSession();
+            const userId = sessionData?.session?.user?.id;
+            if (!userId) {
+              return;
             }
+
+            const result = await removeReflection({ userId, reflection: item });
+            setReflections(result.data);
           },
         },
       ],
@@ -280,13 +266,15 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
         onClose={closeDetail}
         onEdit={openEdit}
         onDelete={async item => {
-          const { error } = await supabase
-            .from('reflections')
-            .delete()
-            .eq('id', item.id);
-          if (!error) {
-            setReflections(prev => prev.filter(r => r.id !== item.id));
+          const { data: sessionData } = await supabase.auth.getSession();
+          const userId = sessionData?.session?.user?.id;
+          if (!userId) {
+            return;
           }
+
+          const result = await removeReflection({ userId, reflection: item });
+          setReflections(result.data);
+          closeDetail();
         }}
       />
 

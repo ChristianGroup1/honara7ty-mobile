@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Linking } from 'react-native';
-import { handleRecoveryUrl } from '../lib/deepLinking';
+import { handleOAuthCallbackUrl, handleRecoveryUrl } from '../lib/deepLinking';
 import { navigationRef } from '../navigation/navigationRef';
 import supabase from '../lib/supbase';
 import { syncDevotionReminderSchedule } from '../lib/devotionReminder';
@@ -58,6 +58,33 @@ export function useAppBootstrap() {
           null,
           'Linking.getInitialURL',
         );
+        const didHandleOAuthCallback = await withTimeout(
+          handleOAuthCallbackUrl(initialUrl),
+          BOOTSTRAP_TIMEOUT_MS,
+          false,
+          'handleOAuthCallbackUrl',
+        );
+        if (didHandleOAuthCallback) {
+          const { data } = await withTimeout(
+            supabase.auth.getSession(),
+            BOOTSTRAP_TIMEOUT_MS,
+            { data: { session: null }, error: null },
+            'supabase.auth.getSession',
+          );
+
+          applySessionState(data?.session ?? null);
+
+          if (data?.session) {
+            syncReminderScheduleSafely(data.session.user?.id);
+            identifyUser(data.session.user.id, {
+              email: data.session.user.email ?? null,
+              onboarding_completed:
+                data.session.user?.user_metadata?.onboarding_completed === true,
+            });
+          }
+          hideSplashAfter(800);
+          return;
+        }
         const { isRecovery, isValid } = await withTimeout(
           handleRecoveryUrl(initialUrl),
           BOOTSTRAP_TIMEOUT_MS,
@@ -77,7 +104,7 @@ export function useAppBootstrap() {
         const { data } = await withTimeout(
           supabase.auth.getSession(),
           BOOTSTRAP_TIMEOUT_MS,
-          { data: { session: null } },
+          { data: { session: null }, error: null },
           'supabase.auth.getSession',
         );
 
@@ -119,6 +146,11 @@ export function useAppBootstrap() {
     checkSession();
 
     const sub = Linking.addEventListener('url', async ({ url }) => {
+      const didHandleOAuthCallback = await handleOAuthCallbackUrl(url);
+      if (didHandleOAuthCallback) {
+        return;
+      }
+
       const { isRecovery, isValid } = await handleRecoveryUrl(url);
       if (isRecovery && navigationRef.isReady()) {
         navigationRef.navigate('ResetPassword', { linkValid: isValid });

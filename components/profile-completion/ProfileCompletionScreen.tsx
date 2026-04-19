@@ -23,6 +23,7 @@ import CustomInput from '../shared/CustomInput';
 import { authPaperTheme, AUTH_GOLD } from '../auth/theme';
 import AuthScreenShell from '../auth/AuthScreenShell';
 import { authStrings } from '../auth/strings';
+import { saveProfileRecord } from '../../lib/offlineSync';
 
 const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
   const strings = authStrings;
@@ -122,29 +123,44 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
         return;
       }
 
-      const { error } = await supabase.from('profiles').upsert({
-        id: currentUserId,
-        church: profileData.church || null,
-        sect: profileData.sect || null,
-        birth_date: profileData.birthDate || null,
-        gender: profileData.gender || null,
-        devotion_time: '07:00',
-        updated_at: new Date().toISOString(),
+      const result = await saveProfileRecord({
+        userId: currentUserId,
+        profile: {
+          church: profileData.church || null,
+          sect: profileData.sect || null,
+          birth_date: profileData.birthDate || null,
+          gender: profileData.gender || null,
+          devotion_time: '07:00',
+          updated_at: new Date().toISOString(),
+        },
       });
 
-      if (error) {
-        showAlert(strings.common.genericErrorTitle, error.message);
+      identifyUser(currentUserId, {
+        email: sessionData?.session?.user?.email ?? undefined,
+        name: sessionData?.session?.user?.user_metadata?.full_name ?? undefined,
+      });
+      trackEvent('user_signed_up', {
+        has_church: Boolean(profileData.church),
+        has_gender: Boolean(profileData.gender),
+        has_birth_date: Boolean(profileData.birthDate),
+      });
+      if (result.offline) {
+        showAlert(
+          strings.common.genericErrorTitle,
+          'تم حفظ البيانات على الجهاز، وسيتم رفعها عند عودة الإنترنت.',
+          [
+            {
+              text: strings.common.next,
+              onPress: () =>
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Onboarding' }],
+                }),
+            },
+          ],
+          'info',
+        );
       } else {
-        identifyUser(currentUserId, {
-          email: sessionData?.session?.user?.email ?? undefined,
-          name: sessionData?.session?.user?.user_metadata?.full_name ?? undefined,
-        });
-        trackEvent('user_signed_up', {
-          has_church: Boolean(profileData.church),
-          has_gender: Boolean(profileData.gender),
-          has_birth_date: Boolean(profileData.birthDate),
-        });
-        // New users always go through onboarding after completing their profile
         navigation.reset({
           index: 0,
           routes: [{ name: 'Onboarding' }],
@@ -283,7 +299,6 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
             <DateTimePicker
               value={pickerDate}
               mode="date"
-              style={{ textAlign: 'right' }}
               display="default"
               onChange={handleDateChange}
               maximumDate={new Date()}

@@ -42,11 +42,11 @@ import {
 } from '../shared/chapterSelection';
 import NotificationPermissionCard from '../shared/NotificationPermissionCard';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
-import { syncReadingLogForDate } from '../../lib/readingLog';
 import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
 import { trackEvent } from '../../lib/analytics';
 import { logoutCurrentUser } from '../../lib/logout';
 import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermissionFlow';
+import { refreshDevotionLogs, saveDevotionLog } from '../../lib/offlineSync';
 
 const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
@@ -138,14 +138,8 @@ const HomeScreen = ({ route, navigation }: any) => {
 
         setUser(sessionUser);
 
-        const { data } = await supabase
-          .from('devotion_log')
-          .select(
-            'completed, reading_book, reading_chapter, chapters_read, selected_chapters',
-          )
-          .eq('user_id', userId)
-          .eq('date', getTodayDate())
-          .maybeSingle();
+        const { data: devotionLogs } = await refreshDevotionLogs(userId);
+        const data = devotionLogs[getTodayDate()];
 
         setDevotionAnswer(data ? (data.completed as boolean) : null);
         if (data?.reading_book) {
@@ -240,46 +234,21 @@ const HomeScreen = ({ route, navigation }: any) => {
       return;
     }
 
-    const { error } = await supabase
-      .from('devotion_log')
-      .upsert(
-        {
-          user_id: userId,
-          date: getTodayDate(),
-          completed,
-          reading_book: completed ? readingBook : null,
-          reading_chapter: completed
-            ? firstSelectedChapter(normalizedChapters)
-            : null,
-          chapters_read: completed ? normalizedChapters.length || null : null,
-          selected_chapters: completed ? normalizedChapters : null,
-        },
-        { onConflict: 'user_id,date' },
-      );
+    const payload = {
+      completed,
+      reading_book: completed ? readingBook : null,
+      reading_chapter: completed
+        ? firstSelectedChapter(normalizedChapters)
+        : null,
+      chapters_read: completed ? normalizedChapters.length || null : null,
+      selected_chapters: completed ? normalizedChapters : null,
+    };
 
-    if (error) {
-      showAlert('خطأ', error.message, undefined, 'error');
-      return;
-    }
-
-    const { error: readingLogError } = await syncReadingLogForDate({
+    const { offline } = await saveDevotionLog({
       userId,
       date: getTodayDate(),
-      completed,
-      readingBook: completed ? readingBook : null,
-      selectedChapters: completed ? normalizedChapters : [],
+      payload,
     });
-
-    if (readingLogError) {
-      setDevotionAnswer(completed);
-      showAlert(
-        'تعذر حفظ سجل القراءات',
-        readingLogError.message,
-        undefined,
-        'warning',
-      );
-      return;
-    }
 
     await syncDevotionReminderSchedule(userId, { startTomorrow: true });
 
@@ -291,11 +260,16 @@ const HomeScreen = ({ route, navigation }: any) => {
 
     setDevotionAnswer(completed);
     if (completed) {
-      showAlert(strings.correctStreakTitle, YES_MESSAGE, undefined, 'success');
+      showAlert(
+        strings.correctStreakTitle,
+        offline ? strings.savedOfflineMessage : YES_MESSAGE,
+        undefined,
+        'success',
+      );
     } else {
       showAlert(
         strings.startNowTitle,
-        NO_MESSAGE,
+        offline ? strings.savedOfflineMessage : NO_MESSAGE,
         [{ text: strings.later, style: 'cancel' }],
         'info',
         true,

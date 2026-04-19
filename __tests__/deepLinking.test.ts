@@ -10,6 +10,7 @@ jest.mock('../lib/supbase', () => ({
 
 import { handleRecoveryUrl, parseFragment } from '../lib/deepLinking';
 import supabase from '../lib/supbase';
+import { handleOAuthCallbackUrl } from '../lib/deepLinking';
 
 describe('deepLinking', () => {
   const mockExchangeCodeForSession =
@@ -85,6 +86,31 @@ describe('deepLinking', () => {
     ).resolves.toEqual({
       isRecovery: true,
       isValid: false,
+    });
+  });
+
+  it('exchanges the OAuth code when it arrives on the auth callback URL', async () => {
+    mockExchangeCodeForSession.mockResolvedValue({ error: null });
+
+    await expect(
+      handleOAuthCallbackUrl('honara7ty://auth-callback?code=facebook-code'),
+    ).resolves.toBe(true);
+
+    expect(mockExchangeCodeForSession).toHaveBeenCalledWith('facebook-code');
+  });
+
+  it('accepts OAuth tokens when they arrive on the auth callback URL', async () => {
+    mockSetSession.mockResolvedValue({ error: null });
+
+    await expect(
+      handleOAuthCallbackUrl(
+        'honara7ty://auth-callback#access_token=token&refresh_token=refresh',
+      ),
+    ).resolves.toBe(true);
+
+    expect(mockSetSession).toHaveBeenCalledWith({
+      access_token: 'token',
+      refresh_token: 'refresh',
     });
   });
 });

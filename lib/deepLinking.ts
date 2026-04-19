@@ -47,6 +47,47 @@ function isResetPasswordUrl(url: string): boolean {
   }
 }
 
+function isAuthCallbackUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    return (
+      (parsedUrl as any).protocol === 'honara7ty:' &&
+      ((parsedUrl as any).hostname === 'auth-callback' ||
+        (parsedUrl as any).pathname === '/auth-callback')
+    );
+  } catch {
+    return url.startsWith('honara7ty://auth-callback');
+  }
+}
+
+export async function handleOAuthCallbackUrl(
+  url: string | null,
+): Promise<boolean> {
+  if (!url || !isAuthCallbackUrl(url)) {
+    return false;
+  }
+
+  const queryParams = parseQueryString(url);
+  const hashIndex = url.indexOf('#');
+  const hashParams = hashIndex === -1 ? {} : parseFragment(url.slice(hashIndex + 1));
+  const params = { ...queryParams, ...hashParams };
+
+  if (!params.code) {
+    if (params.access_token && params.refresh_token) {
+      const { error } = await supabase.auth.setSession({
+        access_token: params.access_token,
+        refresh_token: params.refresh_token,
+      });
+      return !error;
+    }
+
+    return false;
+  }
+
+  const { error } = await supabase.auth.exchangeCodeForSession(params.code);
+  return !error;
+}
+
 export async function handleRecoveryUrl(
   url: string | null,
 ): Promise<{ isRecovery: boolean; isValid: boolean }> {

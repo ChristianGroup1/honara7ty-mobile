@@ -29,6 +29,7 @@ import StreakCard from './StreakCard';
 import { computeStreak } from './utils';
 import { getStrings } from '../../localization';
 import { trackEvent } from '../../lib/analytics';
+import { refreshDevotionLogs } from '../../lib/offlineSync';
 
 declare const navigator: any;
 
@@ -47,12 +48,10 @@ const BadgesScreen = ({ navigation }: any) => {
         setLoading(false);
         return;
       }
-      const { data } = await supabase
-        .from('devotion_log')
-        .select('date')
-        .eq('user_id', userId)
-        .eq('completed', true);
-      const dates = (data ?? []).map((r: any) => r.date as string);
+      const { data } = await refreshDevotionLogs(userId);
+      const dates = Object.entries(data)
+        .filter(([, value]) => value.completed)
+        .map(([date]) => date);
       const newStreak = computeStreak(dates);
       setStreak(newStreak);
     } catch {

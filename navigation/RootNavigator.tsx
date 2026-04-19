@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { StatusBar } from 'react-native';
 import {
   NavigationContainer,
@@ -78,6 +78,37 @@ const RootNavigator = ({
   needsOnboarding,
 }: RootNavigatorProps) => {
   const routeNameRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!navigationRef.isReady()) {
+      return;
+    }
+
+    if (isRecoveryMode) {
+      navigationRef.reset({
+        index: 0,
+        routes: [{ name: 'ResetPassword', params: { linkValid: recoveryLinkValid } }],
+      });
+      return;
+    }
+
+    if (isLoggedIn) {
+      navigationRef.reset({
+        index: 0,
+        routes: [
+          {
+            name: needsOnboarding ? 'Onboarding' : 'MainTabs',
+          },
+        ],
+      });
+      return;
+    }
+
+    navigationRef.reset({
+      index: 0,
+      routes: [{ name: 'Welcome' }],
+    });
+  }, [isLoggedIn, isRecoveryMode, recoveryLinkValid, needsOnboarding]);
 
   return (
     <NavigationContainer

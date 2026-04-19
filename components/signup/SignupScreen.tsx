@@ -29,6 +29,8 @@ import AuthScreenShell from '../auth/AuthScreenShell';
 import { authStrings } from '../auth/strings';
 import GoogleIcon from '../../assets/images/google-icon.svg';
 import { trackEvent, identifyUser } from '../../lib/analytics';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { startFacebookAuth } from '../../lib/socialAuth';
 
 type Props = { navigation: any };
 
@@ -208,6 +210,18 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const handleFacebookSignUp = async () => {
+    setLoading(true);
+    try {
+      await startFacebookAuth();
+      trackEvent('user_signed_up_facebook', { method: 'facebook' });
+    } catch (error: any) {
+      showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <PaperProvider theme={authPaperTheme}>
       <AuthScreenShell
@@ -319,9 +333,24 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         <TouchableOpacity
           style={styles.googleButton}
           onPress={handleGoogleSignUp}
+          disabled={loading}
         >
           <GoogleIcon width={20} height={20} style={styles.googleIcon} />
           <Text style={styles.googleText}>{strings.signup.googleButton}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.facebookButton}
+          onPress={handleFacebookSignUp}
+          disabled={loading}
+        >
+          <MaterialCommunityIcons
+            name="facebook"
+            size={20}
+            color="#1877F2"
+            style={styles.facebookIcon}
+          />
+          <Text style={styles.googleText}>{strings.signup.facebookButton}</Text>
         </TouchableOpacity>
 
         <View style={styles.footerContainer}>
@@ -459,7 +488,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFF',
   },
+  facebookButton: {
+    flexDirection: 'row',
+    height: 54,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#a5a39fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    marginTop: 12,
+  },
   googleIcon: { width: 20, height: 20, marginLeft: 10 },
+  facebookIcon: { marginLeft: 10 },
   googleText: { fontSize: 14, color: '#22304A', fontWeight: '600' },
   footerContainer: {
     flexDirection: 'row-reverse',

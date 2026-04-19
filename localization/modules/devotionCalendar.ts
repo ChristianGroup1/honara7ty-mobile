@@ -35,6 +35,8 @@ export const devotionCalendarStrings = {
   futureDateMessage: 'اختار يوم اليوم أو قبله عشان تسجل الخلوة.',
   saveSuccessTitle: 'تم الحفظ ✅',
   saveSuccessMessage: 'تم تحديث حالة اليوم بنجاح.',
+  savedOfflineMessage:
+    'تم حفظ اليوم على الجهاز، وسيتم رفعه إلى الحساب تلقائياً عند عودة الإنترنت.',
   completed: 'مكتمل',
   today: 'اليوم',
   remainingDays: 'باقي الأيام',

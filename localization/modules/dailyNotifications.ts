@@ -10,6 +10,8 @@ export const dailyNotificationsStrings = {
   saveSuccessTitle: 'تم الحفظ ✅',
   saveSuccessMessage: (timeString: string) =>
     `تم حفظ وقتك مع الله: ${timeString}\nهنبعتلك تذكير كل يوم عشان ماتفوتش وقتك مع الله 🙏`,
+  saveOfflineMessage: (timeString: string) =>
+    `تم حفظ الإعدادات محلياً: ${timeString}\nوسيتم رفعها إلى حسابك تلقائياً عند عودة الإنترنت.`,
   saved: 'تم الحفظ',
   readyToSave: 'جاهز للحفظ',
   morning: 'بداية اليوم',

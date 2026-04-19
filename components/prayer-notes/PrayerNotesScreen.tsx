@@ -24,6 +24,12 @@ import { PrayerNote } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
 import { trackEvent } from '../../lib/analytics';
+import {
+  deletePrayerNote,
+  refreshPrayerNotes,
+  savePrayerNote,
+  togglePrayerNoteAnswered,
+} from '../../lib/offlineSync';
 
 const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const strings = getStrings().prayerNotes;
@@ -61,12 +67,8 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
       setLoading(false);
       return;
     }
-    const { data, error } = await supabase
-      .from('prayer_notes')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    if (!error && data) setNotes(data as PrayerNote[]);
+    const { data } = await refreshPrayerNotes(userId);
+    setNotes(data);
     setLoading(false);
   }, []);
 
@@ -132,26 +134,19 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     }
 
     if (editItem) {
-      const { error } = await supabase
-        .from('prayer_notes')
-        .update({ content: trimmed })
-        .eq('id', editItem.id);
-      if (error) showAlert(strings.errors.genericTitle, error.message);
-      else
-        setNotes(prev =>
-          prev.map(n =>
-            n.id === editItem.id ? { ...n, content: trimmed } : n,
-          ),
-        );
+      const result = await savePrayerNote({
+        userId,
+        note: editItem,
+        content: trimmed,
+      });
+      setNotes(result.data);
     } else {
-      const { error } = await supabase
-        .from('prayer_notes')
-        .insert({ user_id: userId, content: trimmed, is_answered: false });
-      if (error) showAlert(strings.errors.genericTitle, error.message);
-      else {
-        trackEvent('prayer_note_created');
-        await fetchNotes();
-      }
+      const result = await savePrayerNote({
+        userId,
+        content: trimmed,
+      });
+      trackEvent('prayer_note_created');
+      setNotes(result.data);
     }
 
     setSaving(false);
@@ -159,20 +154,17 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   };
 
   const toggleAnswered = async (note: PrayerNote) => {
-    const { error } = await supabase
-      .from('prayer_notes')
-      .update({ is_answered: !note.is_answered })
-      .eq('id', note.id);
-    if (!error) {
-      if (!note.is_answered) {
-        trackEvent('prayer_note_marked_answered');
-      }
-      setNotes(prev =>
-        prev.map(n =>
-          n.id === note.id ? { ...n, is_answered: !n.is_answered } : n,
-        ),
-      );
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData?.session?.user?.id;
+    if (!userId) {
+      return;
     }
+
+    const result = await togglePrayerNoteAnswered({ userId, note });
+    if (!note.is_answered) {
+      trackEvent('prayer_note_marked_answered');
+    }
+    setNotes(result.data);
   };
 
   const deleteNote = (note: PrayerNote) => {
@@ -185,12 +177,14 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
           text: strings.delete,
           style: 'destructive',
           onPress: async () => {
-            const { error } = await supabase
-              .from('prayer_notes')
-              .delete()
-              .eq('id', note.id);
-            if (!error) setNotes(prev => prev.filter(n => n.id !== note.id));
-            else showAlert(strings.errors.genericTitle, error.message);
+            const { data: sessionData } = await supabase.auth.getSession();
+            const userId = sessionData?.session?.user?.id;
+            if (!userId) {
+              return;
+            }
+
+            const result = await deletePrayerNote({ userId, note });
+            setNotes(result.data);
           },
         },
       ],

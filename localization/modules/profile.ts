@@ -6,6 +6,8 @@ export const profileStrings = {
   },
   saveSuccessTitle: 'تم الحفظ',
   saveSuccessMessage: 'تم تحديث بياناتك بنجاح.',
+  saveOfflineMessage:
+    'تم حفظ بياناتك على الجهاز، وسيتم مزامنتها تلقائياً عند عودة الإنترنت.',
   saveErrorTitle: 'خطأ',
   saveErrorMessage: 'حدث خطأ أثناء حفظ البيانات.',
   logoutTitle: 'تسجيل الخروج',
