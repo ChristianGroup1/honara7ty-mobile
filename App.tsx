@@ -6,7 +6,7 @@
  */
 
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SplashScreen } from './screens';
 import RootNavigator from './navigation/RootNavigator';
@@ -14,9 +14,12 @@ import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useOfflineSync } from './hooks/useOfflineSync';
 import notifee, { EventType } from '@notifee/react-native';
 import { DEVOTION_PRESS_ACTION_ID } from './lib/notifications';
+import { initializeAnalyticsNetworkListener } from './lib/analytics';
 
 function App() {
   useOfflineSync();
+  useEffect(() => initializeAnalyticsNetworkListener(), []);
+
   const {
     showSplash,
     isLoggedIn,
