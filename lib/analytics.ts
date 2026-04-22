@@ -1,41 +1,17 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from '@react-native-community/netinfo';
-import PostHog from 'posthog-react-native';
+import Smartlook, { Properties } from 'react-native-smartlook-analytics';
 import { analyticsConfig } from './analyticsConfig';
 
 type AnalyticsProperties = Record<
   string,
   string | number | boolean | null | undefined
 >;
-type PostHogSafeProperties = Record<string, string | number | boolean | null>;
-
-function normalizeProperties(
-  properties?: AnalyticsProperties,
-): PostHogSafeProperties | undefined {
-  if (!properties) {
-    return undefined;
-  }
-
-  const normalized: PostHogSafeProperties = {};
-
-  for (const [key, value] of Object.entries(properties)) {
-    if (value !== undefined) {
-      normalized[key] = value;
-    }
-  }
-
-  return normalized;
-}
 
 const isAnalyticsEnabled =
-  analyticsConfig.enabled && analyticsConfig.apiKey.trim().length > 0;
+  analyticsConfig.enabled && analyticsConfig.projectKey.trim().length > 0;
 
-let posthogClient: PostHog | null = null;
+let smartlookStarted = false;
 let analyticsInitFailed = false;
-let analyticsNetworkMonitorStarted = false;
-let analyticsConsolePatched = false;
-let analyticsIsOnline = true;
-let originalConsoleError: typeof console.error | null = null;
+let analyticsStartPromise: Promise<void> | null = null;
 
 function safeCall(maybePromise: unknown) {
   if (
@@ -48,135 +24,127 @@ function safeCall(maybePromise: unknown) {
   }
 }
 
-function patchConsoleForOfflinePostHog() {
-  if (analyticsConsolePatched) {
-    return;
+function toSmartlookProperties(properties?: AnalyticsProperties) {
+  if (!properties) {
+    return undefined;
   }
 
-  analyticsConsolePatched = true;
-  originalConsoleError = console.error;
+  const smartlookProperties = new Properties();
+  let hasProperties = false;
 
-  console.error = (...args: unknown[]) => {
-    const [firstArg] = args;
-    const message =
-      typeof firstArg === 'string'
-        ? firstArg
-        : firstArg instanceof Error
-        ? firstArg.message
-        : '';
-
-    if (
-      !analyticsIsOnline &&
-      typeof message === 'string' &&
-      message.startsWith('Error while flushing PostHog')
-    ) {
-      return;
+  for (const [key, value] of Object.entries(properties)) {
+    if (value === undefined || value === null) {
+      continue;
     }
 
-    originalConsoleError?.(...args);
-  };
-}
-
-function applyAnalyticsConnectivityState(isOnline: boolean) {
-  analyticsIsOnline = isOnline;
-
-  if (!posthogClient) {
-    return;
+    smartlookProperties.putString(key, String(value));
+    hasProperties = true;
   }
 
-  if (isOnline) {
-    safeCall(posthogClient.flush());
-    return;
-  }
+  return hasProperties ? smartlookProperties : undefined;
 }
 
-function ensureAnalyticsNetworkMonitor() {
-  if (analyticsNetworkMonitorStarted || !isAnalyticsEnabled) {
-    return;
-  }
-
-  analyticsNetworkMonitorStarted = true;
-  patchConsoleForOfflinePostHog();
-
-  safeCall(
-    NetInfo.fetch().then(state => {
-      applyAnalyticsConnectivityState(
-        Boolean(state.isConnected && state.isInternetReachable !== false),
-      );
-    }),
-  );
-
-  NetInfo.addEventListener(state => {
-    applyAnalyticsConnectivityState(
-      Boolean(state.isConnected && state.isInternetReachable !== false),
-    );
-  });
-}
-
-function getPosthogClient() {
+function ensureSmartlookStarted() {
   if (!isAnalyticsEnabled || analyticsInitFailed) {
-    return null;
+    return false;
   }
 
-  ensureAnalyticsNetworkMonitor();
-
-  if (posthogClient) {
-    return posthogClient;
+  if (smartlookStarted) {
+    return true;
   }
 
-  try {
-    posthogClient = new PostHog(analyticsConfig.apiKey, {
-      host: analyticsConfig.host || undefined,
-      customStorage: AsyncStorage,
-      captureAppLifecycleEvents: true,
+  if (!analyticsStartPromise) {
+    analyticsStartPromise = (async () => {
+      await Smartlook.instance.preferences.setProjectKey(
+        analyticsConfig.projectKey,
+      );
+      await Smartlook.instance.preferences.setAdaptiveFrameRateEnabled(false);
+      await Smartlook.instance.start();
+      smartlookStarted = true;
+    })().catch(error => {
+      analyticsInitFailed = true;
+      console.warn('Analytics initialization failed', error);
     });
-    return posthogClient;
-  } catch (error) {
-    analyticsInitFailed = true;
-    console.warn('Analytics initialization failed', error);
-    return null;
   }
+
+  safeCall(analyticsStartPromise);
+  return true;
+}
+
+function runWithSmartlook(callback: () => Promise<void>) {
+  if (!ensureSmartlookStarted()) {
+    return;
+  }
+
+  safeCall((analyticsStartPromise ?? Promise.resolve()).then(callback));
 }
 
 export function analyticsEnabled() {
   return isAnalyticsEnabled && !analyticsInitFailed;
 }
 
-export function trackScreen(screenName: string, properties?: AnalyticsProperties) {
-  const client = getPosthogClient();
-  if (!client) {
-    return;
-  }
-
-  safeCall(client.screen(screenName, normalizeProperties(properties)));
-}
-
-export function trackEvent(eventName: string, properties?: AnalyticsProperties) {
-  const client = getPosthogClient();
-  if (!client) {
-    return;
-  }
-
-  safeCall(client.capture(eventName, normalizeProperties(properties)));
-}
-
-export function identifyUser(
-  userId: string,
+export function trackScreen(
+  screenName: string,
   properties?: AnalyticsProperties,
 ) {
-  const client = getPosthogClient();
-  if (!client) {
-    return;
-  }
+  runWithSmartlook(() =>
+    Smartlook.instance.analytics.trackNavigationEnter(
+      screenName,
+      toSmartlookProperties(properties),
+    ),
+  );
+}
 
-  safeCall(client.identify(userId, normalizeProperties(properties)));
+export function trackEvent(
+  eventName: string,
+  properties?: AnalyticsProperties,
+) {
+  runWithSmartlook(() =>
+    Smartlook.instance.analytics.trackEvent(
+      eventName,
+      toSmartlookProperties(properties),
+    ),
+  );
+}
+
+export function identifyUser(userId: string, properties?: AnalyticsProperties) {
+  runWithSmartlook(async () => {
+    await Smartlook.instance.user.setIdentifier(userId);
+
+    const email = properties?.email;
+    if (typeof email === 'string' && email.trim()) {
+      await Smartlook.instance.user.setEmail(email);
+    }
+
+    const name = properties?.name;
+    if (typeof name === 'string' && name.trim()) {
+      await Smartlook.instance.user.setName(name);
+    }
+
+    for (const [key, value] of Object.entries(properties ?? {})) {
+      if (
+        value === undefined ||
+        value === null ||
+        key === 'email' ||
+        key === 'name'
+      ) {
+        continue;
+      }
+
+      await Smartlook.instance.user.setUserProperty(key, String(value));
+    }
+  });
 }
 
 export function resetAnalytics() {
-  const client = getPosthogClient();
-  if (!client) {
+  if (!isAnalyticsEnabled || analyticsInitFailed) {
     return;
   }
 
-  safeCall(client.reset());
+  safeCall(
+    Promise.resolve(Smartlook.instance.reset()).then(() => {
+      smartlookStarted = false;
+      analyticsStartPromise = null;
+    }),
+  );
 }

@@ -4,6 +4,21 @@ apply plugin: "com.facebook.react"
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
 
+def smartlookCrashApiToken = project.hasProperty("SMARTLOOK_API_TOKEN")
+        ? project.property("SMARTLOOK_API_TOKEN")
+        : (project.env.get("SMARTLOOK_API_TOKEN") ?: System.getenv("SMARTLOOK_API_TOKEN") ?: "")
+
+if (smartlookCrashApiToken) {
+    apply plugin: "com.smartlook.crash-gradle-plugin"
+
+    smartlookCrashGradlePlugin {
+        apiKey = smartlookCrashApiToken
+        force = true
+    }
+} else {
+    logger.warn("Smartlook Crash Reports disabled: missing SMARTLOOK_API_TOKEN.")
+}
+
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
 
@@ -91,8 +106,8 @@ android {
         applicationId "com.honara7ty.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 6
-        versionName "6.0"
+        versionCode 7
+        versionName "7.0"
     }
     signingConfigs {
         debug {
@@ -128,7 +143,7 @@ dependencies {
     implementation("com.google.android.play:app-update:2.1.0")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
     implementation 'com.google.android.gms:play-services-auth:20.4.0'
-    implementation("com.posthog:posthog-android:3.+")
+    implementation("com.smartlook.android:smartlook-analytics-okhttp:2.3.30")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

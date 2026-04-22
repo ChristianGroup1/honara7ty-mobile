@@ -1,8 +1,7 @@
 /* eslint-env jest */
 
-jest.mock(
-  '@react-native-async-storage/async-storage',
-  () => require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
 jest.mock('react-native-gesture-handler', () => ({
@@ -42,18 +41,49 @@ jest.mock('@react-native-community/netinfo', () => ({
 jest.mock('react-native-config', () => ({
   __esModule: true,
   default: {
-    POSTHOG_PROJECT_TOKEN: 'test-token',
-    POSTHOG_HOST: 'https://example.com',
+    SMARTLOOK_PROJECT_KEY: 'test-project-key',
   },
 }));
 
-jest.mock('posthog-react-native', () => {
-  return jest.fn().mockImplementation(() => ({
-    screen: jest.fn(),
-    capture: jest.fn(),
-    identify: jest.fn(),
+jest.mock('react-native-smartlook-analytics', () => {
+  const instance = {
+    analytics: {
+      trackEvent: jest.fn(),
+      trackNavigationEnter: jest.fn(),
+    },
+    preferences: {
+      setProjectKey: jest.fn(),
+      setAdaptiveFrameRateEnabled: jest.fn(),
+    },
+    user: {
+      setIdentifier: jest.fn(),
+      setEmail: jest.fn(),
+      setName: jest.fn(),
+      setUserProperty: jest.fn(),
+      openNewUser: jest.fn(),
+    },
+    start: jest.fn(),
     reset: jest.fn(),
-  }));
+  };
+
+  class Properties {
+    map = new Map();
+
+    putString(key, value) {
+      this.map.set(key, value);
+      return this;
+    }
+
+    toObject() {
+      return Object.fromEntries(this.map);
+    }
+  }
+
+  return {
+    __esModule: true,
+    default: { instance },
+    Properties,
+  };
 });
 
 jest.mock('@notifee/react-native', () => {

@@ -8,8 +8,8 @@ declare module '*.svg' {
 
 declare module 'react-native-config' {
   interface NativeConfig {
-    POSTHOG_PROJECT_TOKEN?: string;
-    POSTHOG_HOST?: string;
+    SMARTLOOK_PROJECT_KEY?: string;
+    SMARTLOOK_API_TOKEN?: string;
   }
 
   const Config: NativeConfig;
