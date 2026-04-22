@@ -63,6 +63,7 @@ jest.mock('@notifee/react-native', () => {
     createChannel: jest.fn(),
     createTriggerNotification: jest.fn(),
     cancelTriggerNotifications: jest.fn(),
+    cancelTriggerNotification: jest.fn(),
     requestPermission: jest.fn(),
     getNotificationSettings: jest.fn(),
   };
@@ -83,8 +84,17 @@ jest.mock('@notifee/react-native', () => {
     AndroidImportance: {
       HIGH: 'HIGH',
     },
+    AndroidStyle: {
+      BIGTEXT: 'BIGTEXT',
+    },
+    AndroidVisibility: {
+      PUBLIC: 'PUBLIC',
+    },
     TriggerType: {
       TIMESTAMP: 'TIMESTAMP',
+    },
+    RepeatFrequency: {
+      DAILY: 'DAILY',
     },
     TimestampTriggerAlarmManagerType: {
       SET_EXACT_AND_ALLOW_WHILE_IDLE: 'SET_EXACT_AND_ALLOW_WHILE_IDLE',

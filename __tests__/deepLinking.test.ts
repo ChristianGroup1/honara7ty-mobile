@@ -10,7 +10,10 @@ jest.mock('../lib/supbase', () => ({
 
 import { handleRecoveryUrl, parseFragment } from '../lib/deepLinking';
 import supabase from '../lib/supbase';
-import { handleOAuthCallbackUrl } from '../lib/deepLinking';
+import {
+  __resetOAuthCallbackCacheForTests,
+  handleOAuthCallbackUrl,
+} from '../lib/deepLinking';
 
 describe('deepLinking', () => {
   const mockExchangeCodeForSession =
@@ -20,6 +23,7 @@ describe('deepLinking', () => {
   beforeEach(() => {
     mockExchangeCodeForSession.mockReset();
     mockSetSession.mockReset();
+    __resetOAuthCallbackCacheForTests();
   });
 
   it('parses fragment pairs', () => {
@@ -112,5 +116,15 @@ describe('deepLinking', () => {
       access_token: 'token',
       refresh_token: 'refresh',
     });
+  });
+
+  it('does not process the same OAuth callback URL more than once', async () => {
+    mockExchangeCodeForSession.mockResolvedValue({ error: null });
+    const url = 'honara7ty://auth-callback?code=facebook-code';
+
+    await expect(handleOAuthCallbackUrl(url)).resolves.toBe(true);
+    await expect(handleOAuthCallbackUrl(url)).resolves.toBe(true);
+
+    expect(mockExchangeCodeForSession).toHaveBeenCalledTimes(1);
   });
 });

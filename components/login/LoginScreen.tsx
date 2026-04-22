@@ -129,14 +129,20 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         password,
       });
       if (error) {
-        showAlert(strings.login.signInErrorTitle, localizeAuthError(error.message));
+        showAlert(
+          strings.login.signInErrorTitle,
+          localizeAuthError(error.message),
+        );
       } else {
         identifyUser(data.user.id, { email: data.user.email ?? undefined });
         trackEvent('user_logged_in', { method: 'email' });
         await navigateAfterLogin(data.user);
       }
     } catch (err: any) {
-      showAlert(strings.common.genericErrorTitle, localizeAuthError(err.message));
+      showAlert(
+        strings.common.genericErrorTitle,
+        localizeAuthError(err.message),
+      );
     } finally {
       setLoading(false);
     }
@@ -156,7 +162,10 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         });
 
         if (error) {
-          showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
+          showAlert(
+            strings.common.genericErrorTitle,
+            localizeAuthError(error.message),
+          );
         } else {
           const loggedInUser = data?.user ?? googleUser;
           if (loggedInUser?.id) {
@@ -197,7 +206,10 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           'warning',
         );
       } else {
-        showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
+        showAlert(
+          strings.common.genericErrorTitle,
+          localizeAuthError(error.message),
+        );
       }
     }
   };
@@ -208,7 +220,10 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
       await startFacebookAuth();
       trackEvent('user_logged_in_facebook', { method: 'facebook' });
     } catch (error: any) {
-      showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
+      showAlert(
+        strings.common.genericErrorTitle,
+        localizeAuthError(error.message),
+      );
     } finally {
       setLoading(false);
     }
@@ -272,7 +287,9 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
               size={16}
               color="#6D7890"
             />
-            <Text style={styles.securityHintText}>{strings.common.secureHint}</Text>
+            <Text style={styles.securityHintText}>
+              {strings.common.secureHint}
+            </Text>
           </View>
           <TouchableOpacity
             onPress={() => navigation.navigate('ForgotPassword')}
@@ -311,16 +328,6 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           <Text style={styles.dividerText}>{strings.common.or}</Text>
           <View style={styles.dividerLine} />
         </View>
-
-        <TouchableOpacity
-          style={styles.googleButton}
-          onPress={handleGoogleSignIn}
-          disabled={loading}
-        >
-          <GoogleIcon width={20} height={20} style={styles.googleIcon} />
-          <Text style={styles.googleText}>{strings.login.googleButton}</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.facebookButton}
           onPress={handleFacebookSignIn}
@@ -333,6 +340,15 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
             style={styles.facebookIcon}
           />
           <Text style={styles.googleText}>{strings.login.facebookButton}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.googleButton}
+          onPress={handleGoogleSignIn}
+          disabled={loading}
+        >
+          <GoogleIcon width={20} height={20} style={styles.googleIcon} />
+          <Text style={styles.googleText}>{strings.login.googleButton}</Text>
         </TouchableOpacity>
 
         <View style={styles.footerContainer}>

@@ -137,7 +137,10 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
       });
 
       if (error) {
-        showAlert(strings.signup.signUpErrorTitle, localizeAuthError(error.message));
+        showAlert(
+          strings.signup.signUpErrorTitle,
+          localizeAuthError(error.message),
+        );
       } else {
         const signedInUserId = data.session?.user?.id ?? data.user?.id;
         navigation.navigate('ProfileCompletion', {
@@ -147,7 +150,10 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         });
       }
     } catch (err: any) {
-      showAlert(strings.common.genericErrorTitle, localizeAuthError(err.message));
+      showAlert(
+        strings.common.genericErrorTitle,
+        localizeAuthError(err.message),
+      );
     } finally {
       setLoading(false);
     }
@@ -167,7 +173,10 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         });
 
         if (error) {
-          showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
+          showAlert(
+            strings.common.genericErrorTitle,
+            localizeAuthError(error.message),
+          );
         } else {
           if (data?.user?.id) {
             identifyUser(data.user.id, {
@@ -205,7 +214,10 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           'warning',
         );
       } else {
-        showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
+        showAlert(
+          strings.common.genericErrorTitle,
+          localizeAuthError(error.message),
+        );
       }
     }
   };
@@ -216,7 +228,10 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
       await startFacebookAuth();
       trackEvent('user_signed_up_facebook', { method: 'facebook' });
     } catch (error: any) {
-      showAlert(strings.common.genericErrorTitle, localizeAuthError(error.message));
+      showAlert(
+        strings.common.genericErrorTitle,
+        localizeAuthError(error.message),
+      );
     } finally {
       setLoading(false);
     }
@@ -331,15 +346,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <TouchableOpacity
-          style={styles.googleButton}
-          onPress={handleGoogleSignUp}
-          disabled={loading}
-        >
-          <GoogleIcon width={20} height={20} style={styles.googleIcon} />
-          <Text style={styles.googleText}>{strings.signup.googleButton}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={styles.facebookButton}
           onPress={handleFacebookSignUp}
           disabled={loading}
@@ -351,6 +357,15 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
             style={styles.facebookIcon}
           />
           <Text style={styles.googleText}>{strings.signup.facebookButton}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.googleButton}
+          onPress={handleGoogleSignUp}
+          disabled={loading}
+        >
+          <GoogleIcon width={20} height={20} style={styles.googleIcon} />
+          <Text style={styles.googleText}>{strings.signup.googleButton}</Text>
         </TouchableOpacity>
 
         <View style={styles.footerContainer}>

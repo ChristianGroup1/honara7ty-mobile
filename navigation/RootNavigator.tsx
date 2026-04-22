@@ -33,6 +33,22 @@ interface RootNavigatorProps {
   needsOnboarding: boolean;
 }
 
+function getInitialRouteName({
+  isLoggedIn,
+  isRecoveryMode,
+  needsOnboarding,
+}: Omit<RootNavigatorProps, 'recoveryLinkValid'>): keyof RootStackParamList {
+  if (isRecoveryMode) {
+    return 'ResetPassword';
+  }
+
+  if (isLoggedIn) {
+    return needsOnboarding ? 'Onboarding' : 'MainTabs';
+  }
+
+  return 'Welcome';
+}
+
 function getActiveRoute(
   state?: NavigationState | PartialState<NavigationState>,
 ): Route<string> | undefined {
@@ -78,9 +94,21 @@ const RootNavigator = ({
   needsOnboarding,
 }: RootNavigatorProps) => {
   const routeNameRef = useRef<string | undefined>(undefined);
+  const navigationReadyRef = useRef(false);
+  const initialRouteName = getInitialRouteName({
+    isLoggedIn,
+    isRecoveryMode,
+    needsOnboarding,
+  });
 
   useEffect(() => {
-    if (!navigationRef.isReady()) {
+    if (!navigationReadyRef.current || !navigationRef.isReady()) {
+      return;
+    }
+
+    const currentRouteName = getActiveRoute(navigationRef.getRootState())?.name;
+
+    if (currentRouteName === initialRouteName) {
       return;
     }
 
@@ -108,12 +136,19 @@ const RootNavigator = ({
       index: 0,
       routes: [{ name: 'Welcome' }],
     });
-  }, [isLoggedIn, isRecoveryMode, recoveryLinkValid, needsOnboarding]);
+  }, [
+    initialRouteName,
+    isLoggedIn,
+    isRecoveryMode,
+    recoveryLinkValid,
+    needsOnboarding,
+  ]);
 
   return (
     <NavigationContainer
       ref={navigationRef}
       onReady={() => {
+        navigationReadyRef.current = true;
         const currentRoute = getActiveRoute(navigationRef.getRootState());
         const currentRouteName = currentRoute?.name;
 
@@ -142,15 +177,7 @@ const RootNavigator = ({
     >
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
       <Stack.Navigator
-        initialRouteName={
-          isRecoveryMode
-            ? 'ResetPassword'
-            : isLoggedIn
-            ? needsOnboarding
-              ? 'Onboarding'
-              : 'MainTabs'
-            : 'Welcome'
-        }
+        initialRouteName={initialRouteName}
       >
         <Stack.Screen
           name="MainTabs"

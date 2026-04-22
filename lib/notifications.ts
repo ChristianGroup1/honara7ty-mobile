@@ -103,8 +103,9 @@ function buildFollowUpTriggerDate(
   primaryTrigger: Date,
   hours: number,
   minutes: number,
-): Date {
+): Date | null {
   const followUpTriggerDate = new Date(primaryTrigger);
+  const minimumFollowUpTime = new Date(primaryTrigger.getTime() + 30 * 60 * 1000);
 
   if (hours < 12) {
     followUpTriggerDate.setHours(hours + 12, minutes, 0, 0);
@@ -112,10 +113,20 @@ function buildFollowUpTriggerDate(
   }
 
   const dayEnd = new Date(primaryTrigger);
-  dayEnd.setHours(23, 59, 59, 999);
+  dayEnd.setHours(23, 59, 0, 0);
   const remainingMs = dayEnd.getTime() - primaryTrigger.getTime();
-  const halfRemainingMs = Math.max(30 * 60 * 1000, Math.floor(remainingMs / 2));
+
+  if (remainingMs < 30 * 60 * 1000) {
+    return null;
+  }
+
+  const halfRemainingMs = Math.floor(remainingMs / 2);
   followUpTriggerDate.setTime(primaryTrigger.getTime() + halfRemainingMs);
+
+  if (followUpTriggerDate < minimumFollowUpTime) {
+    return minimumFollowUpTime;
+  }
+
   return followUpTriggerDate;
 }
 
@@ -151,8 +162,8 @@ export async function scheduleDailyDevotionReminder(
   await ensureChannel();
 
   // Cancel the existing reminder so we don't stack duplicates.
-  await notifee.cancelNotification(NOTIFICATION_ID);
-  await notifee.cancelNotification(FOLLOW_UP_NOTIFICATION_ID);
+  await notifee.cancelTriggerNotification(NOTIFICATION_ID);
+  await notifee.cancelTriggerNotification(FOLLOW_UP_NOTIFICATION_ID);
 
   // Build the next fire date at the requested local time.
   const trigger = buildPrimaryTriggerDate(hours, minutes, options);
@@ -202,6 +213,10 @@ export async function scheduleDailyDevotionReminder(
   }
 
   const followUpTrigger = buildFollowUpTriggerDate(trigger, hours, minutes);
+  if (!followUpTrigger) {
+    return;
+  }
+
   const followUpTimestampTrigger: TimestampTrigger = {
     type: TriggerType.TIMESTAMP,
     timestamp: followUpTrigger.getTime(),
@@ -242,6 +257,6 @@ export async function scheduleDailyDevotionReminder(
 
 /** Cancel the daily devotion reminder (e.g., when user removes their time). */
 export async function cancelDevotionReminder(): Promise<void> {
-  await notifee.cancelNotification(NOTIFICATION_ID);
-  await notifee.cancelNotification(FOLLOW_UP_NOTIFICATION_ID);
+  await notifee.cancelTriggerNotification(NOTIFICATION_ID);
+  await notifee.cancelTriggerNotification(FOLLOW_UP_NOTIFICATION_ID);
 }

@@ -1,5 +1,23 @@
 import supabase from './supbase';
 
+const oauthCallbackInFlight = new Map<string, Promise<boolean>>();
+const oauthCallbackResultCache = new Map<string, boolean>();
+const MAX_CACHED_OAUTH_CALLBACKS = 10;
+
+function cacheOAuthCallbackResult(url: string, result: boolean) {
+  oauthCallbackResultCache.delete(url);
+  oauthCallbackResultCache.set(url, result);
+
+  if (oauthCallbackResultCache.size <= MAX_CACHED_OAUTH_CALLBACKS) {
+    return;
+  }
+
+  const oldestKey = oauthCallbackResultCache.keys().next().value;
+  if (oldestKey) {
+    oauthCallbackResultCache.delete(oldestKey);
+  }
+}
+
 export function parseFragment(fragment: string): Record<string, string> {
   const result: Record<string, string> = {};
 
@@ -67,25 +85,56 @@ export async function handleOAuthCallbackUrl(
     return false;
   }
 
-  const queryParams = parseQueryString(url);
-  const hashIndex = url.indexOf('#');
-  const hashParams = hashIndex === -1 ? {} : parseFragment(url.slice(hashIndex + 1));
-  const params = { ...queryParams, ...hashParams };
-
-  if (!params.code) {
-    if (params.access_token && params.refresh_token) {
-      const { error } = await supabase.auth.setSession({
-        access_token: params.access_token,
-        refresh_token: params.refresh_token,
-      });
-      return !error;
-    }
-
-    return false;
+  const cachedResult = oauthCallbackResultCache.get(url);
+  if (typeof cachedResult === 'boolean') {
+    return cachedResult;
   }
 
-  const { error } = await supabase.auth.exchangeCodeForSession(params.code);
-  return !error;
+  const inFlight = oauthCallbackInFlight.get(url);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const callbackPromise = (async () => {
+    const queryParams = parseQueryString(url);
+    const hashIndex = url.indexOf('#');
+    const hashParams =
+      hashIndex === -1 ? {} : parseFragment(url.slice(hashIndex + 1));
+    const params = { ...queryParams, ...hashParams };
+
+    if (!params.code) {
+      if (params.access_token && params.refresh_token) {
+        const { error } = await supabase.auth.setSession({
+          access_token: params.access_token,
+          refresh_token: params.refresh_token,
+        });
+        const result = !error;
+        cacheOAuthCallbackResult(url, result);
+        return result;
+      }
+
+      cacheOAuthCallbackResult(url, false);
+      return false;
+    }
+
+    const { error } = await supabase.auth.exchangeCodeForSession(params.code);
+    const result = !error;
+    cacheOAuthCallbackResult(url, result);
+    return result;
+  })();
+
+  oauthCallbackInFlight.set(url, callbackPromise);
+
+  try {
+    return await callbackPromise;
+  } finally {
+    oauthCallbackInFlight.delete(url);
+  }
+}
+
+export function __resetOAuthCallbackCacheForTests() {
+  oauthCallbackInFlight.clear();
+  oauthCallbackResultCache.clear();
 }
 
 export async function handleRecoveryUrl(
