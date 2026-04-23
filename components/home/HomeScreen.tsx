@@ -6,15 +6,14 @@ import {
   StatusBar,
   View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import supabase from '../../lib/supbase';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
-import {
-  NAVY,
-  NO_MESSAGE,
-  YES_MESSAGE,
-} from './constants';
+import { NAVY, NO_MESSAGE, YES_MESSAGE } from './constants';
 import DailyQuestionCard from './DailyQuestionCard';
 import FeatureCard from './FeatureCard';
 import HomeHeader from './HomeHeader';
@@ -43,7 +42,7 @@ import {
 import NotificationPermissionCard from '../shared/NotificationPermissionCard';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
 import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
-import { trackEvent } from '../../lib/analytics';
+
 import { logoutCurrentUser } from '../../lib/logout';
 import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermissionFlow';
 import { refreshDevotionLogs, saveDevotionLog } from '../../lib/offlineSync';
@@ -149,7 +148,9 @@ const HomeScreen = ({ route, navigation }: any) => {
           );
           if (matchedBook) {
             setSelectedTestament(matchedBook.testament);
-            const nextSelectedChapters = Array.isArray((data as any).selected_chapters)
+            const nextSelectedChapters = Array.isArray(
+              (data as any).selected_chapters,
+            )
               ? normalizeSelectedChapters(
                   (data as any).selected_chapters.map(Number),
                   matchedBook.chapters,
@@ -183,9 +184,6 @@ const HomeScreen = ({ route, navigation }: any) => {
   }, [refreshNotificationPermission]);
 
   const handleNotificationPermissionAction = async () => {
-    trackEvent('notification_permission_requested', {
-      current_state: notificationPermissionState,
-    });
     setPermissionLoading(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -251,12 +249,6 @@ const HomeScreen = ({ route, navigation }: any) => {
     });
 
     await syncDevotionReminderSchedule(userId, { startTomorrow: true });
-
-    trackEvent('devotion_logged', {
-      completed,
-      reading_book: completed ? readingBook : null,
-      chapters_count: completed ? normalizedChapters.length : null,
-    });
 
     setDevotionAnswer(completed);
     if (completed) {
@@ -341,8 +333,9 @@ const HomeScreen = ({ route, navigation }: any) => {
       setSelectedChapters(normalized);
     }
   }, [selectedBook, selectedChapters]);
-  
-  const canSaveReading = !pendingCompleted || (!!readingBook && selectedChapters.length > 0);
+
+  const canSaveReading =
+    !pendingCompleted || (!!readingBook && selectedChapters.length > 0);
 
   const saveDevotionSheet = async () => {
     setAnswerSheetVisible(false);
@@ -375,10 +368,7 @@ const HomeScreen = ({ route, navigation }: any) => {
       />
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: 28 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 28 }]}
         showsVerticalScrollIndicator={false}
       >
         <QuickActionsGrid navigation={navigation} />
@@ -448,7 +438,11 @@ const HomeScreen = ({ route, navigation }: any) => {
         onSetReadingBook={setReadingBook}
         onToggleChapter={chapter =>
           setSelectedChapters(current =>
-            toggleChapterSelection(current, chapter, selectedBook?.chapters ?? 0),
+            toggleChapterSelection(
+              current,
+              chapter,
+              selectedBook?.chapters ?? 0,
+            ),
           )
         }
         onSave={saveDevotionSheet}

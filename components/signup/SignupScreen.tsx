@@ -28,7 +28,6 @@ import { authPaperTheme, AUTH_GOLD } from '../auth/theme';
 import AuthScreenShell from '../auth/AuthScreenShell';
 import { authStrings } from '../auth/strings';
 import GoogleIcon from '../../assets/images/google-icon.svg';
-import { trackEvent, identifyUser } from '../../lib/analytics';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { startFacebookAuth } from '../../lib/socialAuth';
 
@@ -179,12 +178,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           );
         } else {
           if (data?.user?.id) {
-            identifyUser(data.user.id, {
-              email: data.user.email ?? undefined,
-              name: data.user.user_metadata?.full_name ?? undefined,
-            });
-          }
-          trackEvent('user_signed_up_google', { method: 'google' });
+           
           await ensureDefaultDevotionTime(data?.user?.id);
           navigation.replace('Onboarding');
         }
@@ -226,7 +220,6 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
     setLoading(true);
     try {
       await startFacebookAuth();
-      trackEvent('user_signed_up_facebook', { method: 'facebook' });
     } catch (error: any) {
       showAlert(
         strings.common.genericErrorTitle,

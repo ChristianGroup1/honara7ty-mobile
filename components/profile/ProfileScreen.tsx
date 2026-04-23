@@ -11,7 +11,10 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker, {
@@ -19,7 +22,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import supabase from '../../lib/supbase';
 import { logoutCurrentUser } from '../../lib/logout';
-import { trackEvent } from '../../lib/analytics';
+
 import CustomAlert, { AlertButton, AlertConfig } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
 import { getStrings } from '../../localization';
@@ -85,10 +88,13 @@ const ProfileScreen = ({ navigation }: any) => {
     birthDate: '',
     gender: '',
   });
-  const [initialForm, setInitialForm] = useState<EditableProfileForm | null>(null);
+  const [initialForm, setInitialForm] = useState<EditableProfileForm | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [currentDevotionTime, setCurrentDevotionTime] = useState<string>('07:00');
+  const [currentDevotionTime, setCurrentDevotionTime] =
+    useState<string>('07:00');
   const [activePicker, setActivePicker] = useState<PickerType>(null);
   const [pickerDate, setPickerDate] = useState<Date>(() => {
     const fallback = new Date();
@@ -175,23 +181,21 @@ const ProfileScreen = ({ navigation }: any) => {
     user?.email?.split('@')[0] ||
     strings.defaultUser;
 
-  const initials = displayName
-    .split(' ')
-    .filter((word: string) => word.length > 0)
-    .slice(0, 2)
-    .map((word: string) => word[0] ?? '')
-    .join('')
-    .toUpperCase() || '🙏';
+  const initials =
+    displayName
+      .split(' ')
+      .filter((word: string) => word.length > 0)
+      .slice(0, 2)
+      .map((word: string) => word[0] ?? '')
+      .join('')
+      .toUpperCase() || '🙏';
 
   const handlePickerOpen = () => {
     setActivePicker('birthDate');
     setPickerDate(parseDateString(form.birthDate));
   };
 
-  const handlePickerChange = (
-    event: DateTimePickerEvent,
-    selected?: Date,
-  ) => {
+  const handlePickerChange = (event: DateTimePickerEvent, selected?: Date) => {
     if (event.type === 'dismissed') {
       setActivePicker(null);
       return;
@@ -293,12 +297,6 @@ const ProfileScreen = ({ navigation }: any) => {
       setForm(normalizedForm);
       setInitialForm(normalizedForm);
 
-      trackEvent('profile_updated', {
-        has_church: Boolean(trimmedChurch),
-        has_gender: Boolean(form.gender),
-        has_birth_date: Boolean(form.birthDate),
-      });
-
       showAlert(
         strings.saveSuccessTitle,
         profileResult.offline || authResult.offline
@@ -341,7 +339,12 @@ const ProfileScreen = ({ navigation }: any) => {
                 navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
               }
             } catch (err: any) {
-              showAlert(strings.saveErrorTitle, err.message, undefined, 'error');
+              showAlert(
+                strings.saveErrorTitle,
+                err.message,
+                undefined,
+                'error',
+              );
             }
           },
         },
@@ -362,7 +365,11 @@ const ProfileScreen = ({ navigation }: any) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyState}>
-          <MaterialCommunityIcons name="account-off-outline" size={54} color="#9AA0AA" />
+          <MaterialCommunityIcons
+            name="account-off-outline"
+            size={54}
+            color="#9AA0AA"
+          />
           <Text style={styles.emptyTitle}>{strings.noSessionTitle}</Text>
           <Text style={styles.emptyText}>{strings.noSessionMessage}</Text>
         </View>
@@ -385,7 +392,11 @@ const ProfileScreen = ({ navigation }: any) => {
               <Text style={styles.avatarText}>{initials}</Text>
             </View>
             <View style={styles.avatarBadge}>
-              <MaterialCommunityIcons name="check-decagram" size={16} color={NAVY} />
+              <MaterialCommunityIcons
+                name="check-decagram"
+                size={16}
+                color={NAVY}
+              />
             </View>
           </View>
 
@@ -394,8 +405,14 @@ const ProfileScreen = ({ navigation }: any) => {
 
           <View style={styles.heroMetaRow}>
             <View style={styles.heroMetaPill}>
-              <MaterialCommunityIcons name="book-open-variant" size={15} color={NAVY} />
-              <Text style={styles.heroMetaText}>{strings.accountSavedBadge}</Text>
+              <MaterialCommunityIcons
+                name="book-open-variant"
+                size={15}
+                color={NAVY}
+              />
+              <Text style={styles.heroMetaText}>
+                {strings.accountSavedBadge}
+              </Text>
             </View>
           </View>
         </View>
@@ -403,7 +420,11 @@ const ProfileScreen = ({ navigation }: any) => {
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIconWrap}>
-              <MaterialCommunityIcons name="account-edit-outline" size={18} color={NAVY} />
+              <MaterialCommunityIcons
+                name="account-edit-outline"
+                size={18}
+                color={NAVY}
+              />
             </View>
             <View style={styles.sectionCopy}>
               <Text style={styles.sectionTitle}>{strings.basicInfoTitle}</Text>
@@ -487,7 +508,11 @@ const ProfileScreen = ({ navigation }: any) => {
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIconWrap}>
-              <MaterialCommunityIcons name="calendar-heart" size={18} color={NAVY} />
+              <MaterialCommunityIcons
+                name="calendar-heart"
+                size={18}
+                color={NAVY}
+              />
             </View>
             <View style={styles.sectionCopy}>
               <Text style={styles.sectionTitle}>{strings.personalTitle}</Text>
@@ -561,7 +586,11 @@ const ProfileScreen = ({ navigation }: any) => {
             <ActivityIndicator color="#FFF" />
           ) : (
             <>
-              <MaterialCommunityIcons name="content-save-outline" size={20} color="#FFF" />
+              <MaterialCommunityIcons
+                name="content-save-outline"
+                size={20}
+                color="#FFF"
+              />
               <Text style={styles.saveBtnText}>
                 {hasChanges ? strings.save : strings.noChanges}
               </Text>
@@ -587,11 +616,17 @@ const ProfileScreen = ({ navigation }: any) => {
               <View style={styles.pickerHandle} />
               <View style={styles.pickerHeader}>
                 <TouchableOpacity onPress={() => setActivePicker(null)}>
-                  <Text style={styles.pickerActionSecondary}>{strings.cancel}</Text>
+                  <Text style={styles.pickerActionSecondary}>
+                    {strings.cancel}
+                  </Text>
                 </TouchableOpacity>
-                <Text style={styles.pickerTitle}>{strings.datePickerTitle}</Text>
+                <Text style={styles.pickerTitle}>
+                  {strings.datePickerTitle}
+                </Text>
                 <TouchableOpacity onPress={confirmPickerSelection}>
-                  <Text style={styles.pickerActionPrimary}>{strings.confirm}</Text>
+                  <Text style={styles.pickerActionPrimary}>
+                    {strings.confirm}
+                  </Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker

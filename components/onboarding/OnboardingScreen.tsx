@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
 import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermissionFlow';
-import { trackEvent } from '../../lib/analytics';
+
 import { getStrings } from '../../localization';
 import type { OnboardingSlide } from '../../localization/modules/onboarding';
 
@@ -139,13 +139,6 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
     if (!currentSlide) {
       return;
     }
-
-    trackEvent('onboarding_slide_viewed', {
-      slide_index: currentIndex,
-      slide_key: currentSlide.key,
-      has_title: Boolean(currentSlide.title),
-      has_verse: Boolean(currentSlide.verse),
-    });
   }, [currentIndex, slides]);
 
   const onViewableItemsChanged = useRef(
@@ -178,7 +171,6 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
     }
 
     setFinishing(true);
-    trackEvent('onboarding_completed', { slides_count: slides.length });
 
     const { data } = await supabase.auth.getSession();
     const userId = data?.session?.user?.id;
@@ -205,11 +197,6 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const goNext = () => {
-    trackEvent('onboarding_next_tapped', {
-      slide_index: currentIndex,
-      is_last_slide: currentIndex === slides.length - 1,
-    });
-
     if (currentIndex < slides.length - 1) {
       goTo(currentIndex + 1);
       return;
@@ -218,11 +205,6 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const skipToLast = () => {
-    trackEvent('onboarding_skip_tapped', {
-      slide_index: currentIndex,
-      target_slide_index: slides.length - 1,
-    });
-
     if (currentIndex === slides.length - 1) {
       handleFinish();
       return;

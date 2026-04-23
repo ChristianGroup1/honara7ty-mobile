@@ -20,7 +20,6 @@ import SignupStep1 from '../components/signup/SignupScreen';
 import MainTabNavigator from './MainTabNavigator';
 import { navigationRef } from './navigationRef';
 import { RootStackParamList } from './types';
-import { trackScreen } from '../lib/analytics';
 
 const NAVY = '#0A1124';
 
@@ -115,7 +114,9 @@ const RootNavigator = ({
     if (isRecoveryMode) {
       navigationRef.reset({
         index: 0,
-        routes: [{ name: 'ResetPassword', params: { linkValid: recoveryLinkValid } }],
+        routes: [
+          { name: 'ResetPassword', params: { linkValid: recoveryLinkValid } },
+        ],
       });
       return;
     }
@@ -157,9 +158,6 @@ const RootNavigator = ({
         }
 
         routeNameRef.current = currentRouteName;
-        trackScreen(currentRouteName, {
-          route_path: currentRouteName,
-        });
       }}
       onStateChange={() => {
         const currentRoute = getActiveRoute(navigationRef.getRootState());
@@ -170,15 +168,10 @@ const RootNavigator = ({
         }
 
         routeNameRef.current = currentRouteName;
-        trackScreen(currentRouteName, {
-          route_path: currentRouteName,
-        });
       }}
     >
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <Stack.Navigator
-        initialRouteName={initialRouteName}
-      >
+      <Stack.Navigator initialRouteName={initialRouteName}>
         <Stack.Screen
           name="MainTabs"
           component={MainTabNavigator}

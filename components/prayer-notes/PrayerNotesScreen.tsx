@@ -23,7 +23,7 @@ import { prayerNotesStyles as styles } from './styles';
 import { PrayerNote } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
-import { trackEvent } from '../../lib/analytics';
+
 import {
   deletePrayerNote,
   refreshPrayerNotes,
@@ -145,7 +145,6 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         userId,
         content: trimmed,
       });
-      trackEvent('prayer_note_created');
       setNotes(result.data);
     }
 
@@ -162,7 +161,6 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
 
     const result = await togglePrayerNoteAnswered({ userId, note });
     if (!note.is_answered) {
-      trackEvent('prayer_note_marked_answered');
     }
     setNotes(result.data);
   };

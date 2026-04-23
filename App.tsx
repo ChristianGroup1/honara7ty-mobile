@@ -14,11 +14,9 @@ import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useOfflineSync } from './hooks/useOfflineSync';
 import notifee, { EventType } from '@notifee/react-native';
 import { DEVOTION_PRESS_ACTION_ID } from './lib/notifications';
-import { initializeAnalyticsNetworkListener } from './lib/analytics';
 
 function App() {
   useOfflineSync();
-  useEffect(() => initializeAnalyticsNetworkListener(), []);
 
   const {
     showSplash,

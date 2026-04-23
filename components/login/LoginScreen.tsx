@@ -26,7 +26,6 @@ import { authPaperTheme, AUTH_NAVY } from '../auth/theme';
 import AuthScreenShell from '../auth/AuthScreenShell';
 import { authStrings } from '../auth/strings';
 import GoogleIcon from '../../assets/images/google-icon.svg';
-import { trackEvent, identifyUser } from '../../lib/analytics';
 import { startFacebookAuth } from '../../lib/socialAuth';
 
 const initializingContainerStyle = {
@@ -134,8 +133,6 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           localizeAuthError(error.message),
         );
       } else {
-        identifyUser(data.user.id, { email: data.user.email ?? undefined });
-        trackEvent('user_logged_in', { method: 'email' });
         await navigateAfterLogin(data.user);
       }
     } catch (err: any) {
@@ -169,15 +166,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         } else {
           const loggedInUser = data?.user ?? googleUser;
           if (loggedInUser?.id) {
-            identifyUser(loggedInUser.id, {
-              email: loggedInUser.email ?? undefined,
-              name:
-                loggedInUser.user_metadata?.full_name ??
-                googleUser?.name ??
-                undefined,
-            });
           }
-          trackEvent('user_logged_in_google', { method: 'google' });
           await navigateAfterLogin(loggedInUser);
         }
       } else {
@@ -218,7 +207,6 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     setLoading(true);
     try {
       await startFacebookAuth();
-      trackEvent('user_logged_in_facebook', { method: 'facebook' });
     } catch (error: any) {
       showAlert(
         strings.common.genericErrorTitle,

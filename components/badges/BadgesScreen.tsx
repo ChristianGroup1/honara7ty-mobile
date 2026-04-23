@@ -28,7 +28,6 @@ import { badgesStyles as styles } from './styles';
 import StreakCard from './StreakCard';
 import { computeStreak } from './utils';
 import { getStrings } from '../../localization';
-import { trackEvent } from '../../lib/analytics';
 import { refreshDevotionLogs } from '../../lib/offlineSync';
 
 declare const navigator: any;
@@ -67,7 +66,6 @@ const BadgesScreen = ({ navigation }: any) => {
   );
 
   const handleShare = async (badge: BadgeConfig) => {
-    trackEvent('badge_shared', { badge_key: badge.key, streak_days: streak });
     try {
       const webLink = `${WEB_URL}/badges/${badge.key}`;
 

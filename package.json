@@ -33,7 +33,6 @@
     "react-native-safe-area-context": "^5.6.2",
     "react-native-screens": "^4.19.0",
     "react-native-scroll-into-view": "^2.0.2",
-    "react-native-smartlook-analytics": "^2.1.21",
     "react-native-svg": "^15.15.4",
     "react-native-svg-transformer": "^1.5.3",
     "react-native-text-input-interactive": "^0.1.5",
