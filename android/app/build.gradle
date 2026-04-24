@@ -81,6 +81,7 @@ def enableProguardInReleaseBuilds = true
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -91,8 +92,8 @@ android {
         applicationId "com.honara7ty.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
-        versionName "7.0"
+        versionCode 8
+        versionName "8.0"
     }
     signingConfigs {
         debug {

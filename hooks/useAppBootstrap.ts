@@ -5,6 +5,8 @@ import { navigationRef } from '../navigation/navigationRef';
 import supabase from '../lib/supbase';
 import { syncDevotionReminderSchedule } from '../lib/devotionReminder';
 import { BOOTSTRAP_TIMEOUT_MS, withTimeout } from '../lib/withTimeout';
+import { clearClarityUser, setClarityUser } from '../lib/clarity';
+import { clearSentryUser, setSentryUser } from '../lib/sentry';
 
 export function useAppBootstrap() {
   const [showSplash, setShowSplash] = useState(true);
@@ -75,7 +77,11 @@ export function useAppBootstrap() {
 
           if (data?.session) {
             syncReminderScheduleSafely(data.session.user?.id);
-           
+            setClarityUser(data.session.user.id);
+            setSentryUser({
+              id: data.session.user.id,
+              email: data.session.user.email ?? null,
+            });
           }
           hideSplashAfter(800);
           return;
@@ -107,11 +113,17 @@ export function useAppBootstrap() {
 
         if (data?.session) {
           syncReminderScheduleSafely(data.session.user?.id);
-        
+          setClarityUser(data.session.user.id);
+          setSentryUser({
+            id: data.session.user.id,
+            email: data.session.user.email ?? null,
+          });
         }
       } catch (error) {
         console.warn('Bootstrap session check failed', error);
         applySessionState(null);
+        clearClarityUser();
+        clearSentryUser();
       } finally {
         hideSplashAfter(1200);
       }
@@ -122,8 +134,16 @@ export function useAppBootstrap() {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       applySessionState(session);
       syncReminderScheduleSafely(session?.user?.id);
-
-     
+      if (session?.user?.id) {
+        setClarityUser(session.user.id);
+        setSentryUser({
+          id: session.user.id,
+          email: session.user.email ?? null,
+        });
+      } else {
+        clearClarityUser();
+        clearSentryUser();
+      }
     });
 
     checkSession();

@@ -14,10 +14,14 @@ import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useOfflineSync } from './hooks/useOfflineSync';
 import notifee, { EventType } from '@notifee/react-native';
 import { DEVOTION_PRESS_ACTION_ID } from './lib/notifications';
+import { initializeSentry, Sentry } from './lib/sentry';
+import { initializeClarity } from './lib/clarity';
+
+initializeSentry();
+initializeClarity();
 
 function App() {
   useOfflineSync();
-
   const {
     showSplash,
     isLoggedIn,
@@ -75,4 +79,4 @@ export async function notifeeBackgroundEventHandler({ type, detail }: any) {
 
 notifee.onBackgroundEvent(notifeeBackgroundEventHandler);
 
-export default App;
+export default Sentry.wrap(App);

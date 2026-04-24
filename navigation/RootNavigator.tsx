@@ -20,6 +20,12 @@ import SignupStep1 from '../components/signup/SignupScreen';
 import MainTabNavigator from './MainTabNavigator';
 import { navigationRef } from './navigationRef';
 import { RootStackParamList } from './types';
+import { trackClarityScreen } from '../lib/clarity';
+import {
+  registerSentryNavigationContainer,
+  Sentry,
+  trackSentryScreen,
+} from '../lib/sentry';
 
 const NAVY = '#0A1124';
 
@@ -94,6 +100,7 @@ const RootNavigator = ({
 }: RootNavigatorProps) => {
   const routeNameRef = useRef<string | undefined>(undefined);
   const navigationReadyRef = useRef(false);
+
   const initialRouteName = getInitialRouteName({
     isLoggedIn,
     isRecoveryMode,
@@ -150,6 +157,7 @@ const RootNavigator = ({
       ref={navigationRef}
       onReady={() => {
         navigationReadyRef.current = true;
+        registerSentryNavigationContainer(navigationRef);
         const currentRoute = getActiveRoute(navigationRef.getRootState());
         const currentRouteName = currentRoute?.name;
 
@@ -158,6 +166,8 @@ const RootNavigator = ({
         }
 
         routeNameRef.current = currentRouteName;
+        trackClarityScreen(currentRouteName);
+        trackSentryScreen(currentRouteName);
       }}
       onStateChange={() => {
         const currentRoute = getActiveRoute(navigationRef.getRootState());
@@ -168,6 +178,8 @@ const RootNavigator = ({
         }
 
         routeNameRef.current = currentRouteName;
+        trackClarityScreen(currentRouteName);
+        trackSentryScreen(currentRouteName);
       }}
     >
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />

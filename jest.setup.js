@@ -40,7 +40,40 @@ jest.mock('@react-native-community/netinfo', () => ({
 
 jest.mock('react-native-config', () => ({
   __esModule: true,
-  default: {},
+  default: {
+    SENTRY_DSN: 'https://public@example.ingest.sentry.io/1',
+    SENTRY_ENVIRONMENT: 'test',
+  },
+}));
+
+jest.mock('@sentry/react-native', () => {
+  const integration = {
+    registerNavigationContainer: jest.fn(),
+  };
+
+  return {
+    __esModule: true,
+    addBreadcrumb: jest.fn(),
+    init: jest.fn(),
+    mobileReplayIntegration: jest.fn(() => ({ name: 'MobileReplay' })),
+    setTag: jest.fn(),
+    setUser: jest.fn(),
+    wrap: jest.fn(component => component),
+    reactNavigationIntegration: jest.fn(() => integration),
+  };
+});
+
+jest.mock('@microsoft/react-native-clarity', () => ({
+  __esModule: true,
+  LogLevel: {
+    None: 'None',
+    Verbose: 'Verbose',
+  },
+  initialize: jest.fn(),
+  setCustomUserId: jest.fn().mockResolvedValue(true),
+  setCurrentScreenName: jest.fn().mockResolvedValue(true),
+  setOnSessionStartedCallback: jest.fn(() => true),
+  startNewSession: jest.fn(callback => callback?.('clarity-session-id')),
 }));
 
 jest.mock('@notifee/react-native', () => {

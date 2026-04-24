@@ -7,6 +7,9 @@ declare module '*.svg' {
 }
 
 declare module 'react-native-config' {
-  const Config: Record<string, string | undefined>;
+  const Config: Record<string, string | undefined> & {
+    SENTRY_DSN?: string;
+    SENTRY_ENVIRONMENT?: string;
+  };
   export default Config;
 }

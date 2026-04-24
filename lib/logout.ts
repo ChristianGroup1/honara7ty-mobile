@@ -2,12 +2,15 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { configureGoogleSignIn } from './googleSignInConfig';
 import supabase from './supbase';
 import { cancelDevotionReminder } from './notifications';
+import { clearClarityUser } from './clarity';
+import { clearSentryUser } from './sentry';
 
 export async function logoutCurrentUser() {
   configureGoogleSignIn();
 
   await cancelDevotionReminder();
-  resetAnalytics();
+  clearClarityUser();
+  clearSentryUser();
   await supabase.auth.signOut();
 
   try {
