@@ -47,7 +47,7 @@ This project now stores prayer note/reflection text encrypted at rest in Supabas
 
 1. In Supabase SQL Editor, set an encryption key (once per database):
    ```sql
-   ALTER DATABASE postgres SET app.settings.encryption_key = '<strong-random-secret>';
+   ALTER DATABASE <your_database_name> SET app.settings.encryption_key = '<strong-random-secret>';
    SELECT pg_reload_conf();
    ```
 2. Run `supabase/schema.sql` in SQL Editor.
