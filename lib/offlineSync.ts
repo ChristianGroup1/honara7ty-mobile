@@ -738,9 +738,13 @@ export async function togglePrayerNoteAnswered(params: {
 }) {
   const key = deriveKey(params.userId);
   const notes = await getPrayerNotesCache(params.userId);
-  // params.note.content is decrypted (from screen state); re-encrypt for storage.
+  // params.note.content is decrypted (from screen state); guard against
+  // accidental double-encryption by checking before encrypting.
+  const plainContent = isEncrypted(params.note.content)
+    ? decryptText(params.note.content, key)
+    : params.note.content;
   const noteToStore = encryptNote(
-    { ...params.note, is_answered: !params.note.is_answered, pendingSync: true },
+    { ...params.note, content: plainContent, is_answered: !params.note.is_answered, pendingSync: true },
     key,
   );
   const nextNotes = notes.map(note =>

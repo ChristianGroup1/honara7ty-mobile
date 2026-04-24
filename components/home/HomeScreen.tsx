@@ -142,7 +142,11 @@ const HomeScreen = ({ route, navigation }: any) => {
         setUser(sessionUser);
 
         // One-time silent migration: encrypt any legacy plaintext content.
-        migrateContentEncryption(userId);
+        migrateContentEncryption(userId).catch(err => {
+          if (__DEV__) {
+            console.warn('[encryption] migration error:', err);
+          }
+        });
 
         const { data: devotionLogs } = await refreshDevotionLogs(userId);
         const data = devotionLogs[getTodayDate()];

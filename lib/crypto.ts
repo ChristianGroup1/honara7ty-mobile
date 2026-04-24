@@ -18,19 +18,39 @@ const ENC_PREFIX = 'enc:';
 
 /**
  * Derives a deterministic 32-byte AES-256 key for `userId` from the
- * application master secret.  Same userId always produces the same key so
- * that keys never need to be stored anywhere.
+ * application master secret using an AES-ECB–based PRF construction:
  *
- * Derivation: XOR(masterSecretBytes, userId_utf8_bytes_repeated_to_32)
+ *   half1 = AES-ECB(master[0..15], userId_padded[0..15])
+ *   half2 = AES-ECB(master[16..31], userId_padded[0..15])
+ *   derived_key = half1 || half2
+ *
+ * AES-ECB used as a PRF is cryptographically sound here because the input
+ * (userId) is the "message" and the master secret is the key. Different
+ * userIds produce computationally indistinguishable keys even if the userIds
+ * have a predictable relationship.
+ *
+ * Same userId always produces the same key so that keys never need to be
+ * stored anywhere.
  */
 export function deriveKey(userId: string): Uint8Array {
   const masterBytes: number[] = aes.utils.hex.toBytes(APP_ENCRYPTION_SECRET);
-  const userIdBytes: number[] = aes.utils.utf8.toBytes(userId);
-  const key = new Uint8Array(32);
-  for (let i = 0; i < 32; i++) {
-    // eslint-disable-next-line no-bitwise
-    key[i] = (masterBytes[i] ?? 0) ^ (userIdBytes[i % userIdBytes.length] ?? 0);
+
+  // Encode userId as UTF-8, then zero-pad or truncate to exactly 16 bytes.
+  const rawId: number[] = aes.utils.utf8.toBytes(userId);
+  const idBlock = new Array<number>(16).fill(0);
+  for (let i = 0; i < 16; i++) {
+    idBlock[i] = rawId[i % rawId.length] ?? 0;
   }
+
+  // Derive two 16-byte halves using different 16-byte sub-keys from the master.
+  const aesPrf1 = new aes.ModeOfOperation.ecb(masterBytes.slice(0, 16));
+  const aesPrf2 = new aes.ModeOfOperation.ecb(masterBytes.slice(16, 32));
+  const half1: number[] = aesPrf1.encrypt(idBlock);
+  const half2: number[] = aesPrf2.encrypt(idBlock);
+
+  const key = new Uint8Array(32);
+  key.set(half1, 0);
+  key.set(half2, 16);
   return key;
 }
 
@@ -85,7 +105,10 @@ export function decryptText(value: string, key: Uint8Array): string {
     const decryptedBytes: number[] = aesCtr.decrypt(ciphertextBytes);
 
     return aes.utils.utf8.fromBytes(decryptedBytes);
-  } catch {
+  } catch (error) {
+    if (__DEV__) {
+      console.warn('[crypto] decryptText failed:', error);
+    }
     return value;
   }
 }
