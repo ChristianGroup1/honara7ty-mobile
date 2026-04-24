@@ -358,6 +358,17 @@ function mapDevotionRows(
   return logsMap;
 }
 
+function mergeServerNote(serverRow: unknown, plainContent: string): PrayerNote {
+  return { ...(serverRow as PrayerNote), content: plainContent };
+}
+
+function mergeServerReflection(
+  serverRow: unknown,
+  plainContent: string,
+): Reflection {
+  return { ...(serverRow as Reflection), content: plainContent };
+}
+
 async function flushPrayerNoteUpsert(mutation: Extract<OfflineMutation, { kind: 'prayer-note-upsert' }>) {
   if (isLocalId(mutation.note.id)) {
     const { data, error } = await supabase
@@ -374,10 +385,7 @@ async function flushPrayerNoteUpsert(mutation: Extract<OfflineMutation, { kind: 
       return false;
     }
 
-    const serverNote: PrayerNote = {
-      ...(data as PrayerNote),
-      content: mutation.note.content,
-    };
+    const serverNote = mergeServerNote(data, mutation.note.content);
     const notes = await getPrayerNotesCache(mutation.userId);
     await setPrayerNotesCache(
       mutation.userId,
@@ -449,10 +457,10 @@ async function flushReflectionUpsert(
       return false;
     }
 
-    const serverReflection: Reflection = {
-      ...(data as Reflection),
-      content: mutation.reflection.content,
-    };
+    const serverReflection = mergeServerReflection(
+      data,
+      mutation.reflection.content,
+    );
     const reflections = await getReflectionsCache(mutation.userId);
     await setReflectionsCache(
       mutation.userId,
