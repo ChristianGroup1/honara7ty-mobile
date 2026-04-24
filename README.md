@@ -41,6 +41,24 @@ Change `http://localhost:3000` to a real URL for your project (e.g. your product
 leave as-is for local development). This URL is only used as a fallback when no matching Redirect
 URL is found.
 
+## 4 — Enable encrypted prayer notes and reflections (required)
+
+This project now stores prayer note/reflection text encrypted at rest in Supabase.
+
+1. In Supabase SQL Editor, set an encryption key (once per database):
+   ```sql
+   ALTER DATABASE postgres SET app.settings.encryption_key = '<strong-random-secret>';
+   SELECT pg_reload_conf();
+   ```
+2. Run `supabase/schema.sql` in SQL Editor.
+3. Verify encrypted storage:
+   ```sql
+   SELECT id, content, content_encrypted FROM public.prayer_notes LIMIT 5;
+   SELECT id, content, content_encrypted FROM public.reflections LIMIT 5;
+   ```
+   `content` should be `NULL`, and `content_encrypted` should contain binary ciphertext.
+4. The mobile app already uses secure RPCs (`secure_list_*`, `secure_upsert_*`, `secure_delete_*`) through `lib/offlineSync.ts`, so no client secret is required.
+
 ---
 
 # Sentry Configuration

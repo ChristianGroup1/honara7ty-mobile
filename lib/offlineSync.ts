@@ -359,21 +359,20 @@ function mapDevotionRows(
 
 async function flushPrayerNoteUpsert(mutation: Extract<OfflineMutation, { kind: 'prayer-note-upsert' }>) {
   if (isLocalId(mutation.note.id)) {
-    const { data, error } = await supabase
-      .from('prayer_notes')
-      .insert({
-        user_id: mutation.userId,
-        content: mutation.note.content,
-        is_answered: mutation.note.is_answered,
-      })
-      .select('*')
-      .single();
+    const { data, error } = await supabase.rpc('secure_upsert_prayer_note', {
+      p_id: null,
+      p_content: mutation.note.content,
+      p_is_answered: mutation.note.is_answered,
+    });
 
     if (error || !data) {
       return false;
     }
 
-    const serverNote = data as PrayerNote;
+    const serverNote = (Array.isArray(data) ? data[0] : data) as PrayerNote;
+    if (!serverNote) {
+      return false;
+    }
     const notes = await getPrayerNotesCache(mutation.userId);
     await setPrayerNotesCache(
       mutation.userId,
@@ -395,15 +394,13 @@ async function flushPrayerNoteUpsert(mutation: Extract<OfflineMutation, { kind: 
     return true;
   }
 
-  const { error } = await supabase
-    .from('prayer_notes')
-    .update({
-      content: mutation.note.content,
-      is_answered: mutation.note.is_answered,
-    })
-    .eq('id', mutation.note.id);
+  const { error, data } = await supabase.rpc('secure_upsert_prayer_note', {
+    p_id: mutation.note.id,
+    p_content: mutation.note.content,
+    p_is_answered: mutation.note.is_answered,
+  });
 
-  if (error) {
+  if (error || !data || (Array.isArray(data) && data.length === 0)) {
     return false;
   }
 
@@ -414,10 +411,9 @@ async function flushPrayerNoteUpsert(mutation: Extract<OfflineMutation, { kind: 
 async function flushPrayerNoteDelete(
   mutation: Extract<OfflineMutation, { kind: 'prayer-note-delete' }>,
 ) {
-  const { error } = await supabase
-    .from('prayer_notes')
-    .delete()
-    .eq('id', mutation.noteId);
+  const { error } = await supabase.rpc('secure_delete_prayer_note', {
+    p_id: mutation.noteId,
+  });
 
   if (error) {
     return false;
@@ -431,21 +427,22 @@ async function flushReflectionUpsert(
   mutation: Extract<OfflineMutation, { kind: 'reflection-upsert' }>,
 ) {
   if (isLocalId(mutation.reflection.id)) {
-    const { data, error } = await supabase
-      .from('reflections')
-      .insert({
-        user_id: mutation.userId,
-        content: mutation.reflection.content,
-        date: mutation.reflection.date,
-      })
-      .select('*')
-      .single();
+    const { data, error } = await supabase.rpc('secure_upsert_reflection', {
+      p_id: null,
+      p_content: mutation.reflection.content,
+      p_date: mutation.reflection.date,
+    });
 
     if (error || !data) {
       return false;
     }
 
-    const serverReflection = data as Reflection;
+    const serverReflection = (Array.isArray(data)
+      ? data[0]
+      : data) as Reflection;
+    if (!serverReflection) {
+      return false;
+    }
     const reflections = await getReflectionsCache(mutation.userId);
     await setReflectionsCache(
       mutation.userId,
@@ -471,15 +468,13 @@ async function flushReflectionUpsert(
     return true;
   }
 
-  const { error } = await supabase
-    .from('reflections')
-    .update({
-      content: mutation.reflection.content,
-      date: mutation.reflection.date,
-    })
-    .eq('id', mutation.reflection.id);
+  const { error, data } = await supabase.rpc('secure_upsert_reflection', {
+    p_id: mutation.reflection.id,
+    p_content: mutation.reflection.content,
+    p_date: mutation.reflection.date,
+  });
 
-  if (error) {
+  if (error || !data || (Array.isArray(data) && data.length === 0)) {
     return false;
   }
 
@@ -490,10 +485,9 @@ async function flushReflectionUpsert(
 async function flushReflectionDelete(
   mutation: Extract<OfflineMutation, { kind: 'reflection-delete' }>,
 ) {
-  const { error } = await supabase
-    .from('reflections')
-    .delete()
-    .eq('id', mutation.reflectionId);
+  const { error } = await supabase.rpc('secure_delete_reflection', {
+    p_id: mutation.reflectionId,
+  });
 
   if (error) {
     return false;
@@ -649,11 +643,7 @@ export async function refreshPrayerNotes(userId: string) {
     return { data: await getPrayerNotesCache(userId), offline: true };
   }
 
-  const { data, error } = await supabase
-    .from('prayer_notes')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+  const { data, error } = await supabase.rpc('secure_list_prayer_notes');
 
   if (error) {
     return { data: await getPrayerNotesCache(userId), offline: true };
@@ -776,11 +766,7 @@ export async function refreshReflections(userId: string) {
     return { data: await getReflectionsCache(userId), offline: true };
   }
 
-  const { data, error } = await supabase
-    .from('reflections')
-    .select('*')
-    .eq('user_id', userId)
-    .order('date', { ascending: false });
+  const { data, error } = await supabase.rpc('secure_list_reflections');
 
   if (error) {
     return { data: await getReflectionsCache(userId), offline: true };
