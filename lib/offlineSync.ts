@@ -369,7 +369,7 @@ async function flushPrayerNoteUpsert(mutation: Extract<OfflineMutation, { kind: 
       return false;
     }
 
-    const serverNote = (Array.isArray(data) ? data[0] : data) as PrayerNote;
+    const serverNote = (data as PrayerNote[])[0];
     if (!serverNote) {
       return false;
     }
@@ -437,9 +437,7 @@ async function flushReflectionUpsert(
       return false;
     }
 
-    const serverReflection = (Array.isArray(data)
-      ? data[0]
-      : data) as Reflection;
+    const serverReflection = (data as Reflection[])[0];
     if (!serverReflection) {
       return false;
     }

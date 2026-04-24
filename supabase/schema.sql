@@ -129,7 +129,7 @@ CREATE INDEX IF NOT EXISTS reflections_user_date_idx
 DO $$
 BEGIN
   IF current_setting('app.settings.encryption_key', true) IS NULL THEN
-    RAISE EXCEPTION 'Missing app.settings.encryption_key. Set it first: ALTER DATABASE <your_database_name> SET app.settings.encryption_key = ''<strong-random-secret>'';';
+    RAISE EXCEPTION 'Missing app.settings.encryption_key. Configure it first (see README: "Enable encrypted prayer notes and reflections").';
   END IF;
 END
 $$;
@@ -227,7 +227,7 @@ BEGIN
   END IF;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Record unavailable';
+    RAISE EXCEPTION 'Prayer note not found or access denied';
   END IF;
 
   RETURN QUERY
@@ -339,7 +339,7 @@ BEGIN
   END IF;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Record unavailable';
+    RAISE EXCEPTION 'Reflection not found or access denied';
   END IF;
 
   RETURN QUERY
