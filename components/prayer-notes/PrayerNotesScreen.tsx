@@ -26,6 +26,7 @@ import { getStrings } from '../../localization';
 
 import {
   deletePrayerNote,
+  getPrayerNotesCache,
   refreshPrayerNotes,
   savePrayerNote,
   togglePrayerNoteAnswered,
@@ -60,12 +61,16 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     setAlertConfig((p: any) => ({ ...p, visible: false }));
 
   const fetchNotes = useCallback(async () => {
-    setLoading(true);
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
     if (!userId) {
       setLoading(false);
       return;
+    }
+    const cached = await getPrayerNotesCache(userId);
+    if (cached.length > 0) {
+      setNotes(cached);
+      setLoading(false);
     }
     const { data } = await refreshPrayerNotes(userId);
     setNotes(data);

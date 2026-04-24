@@ -132,7 +132,7 @@ function sortReflections(reflections: Reflection[]) {
   );
 }
 
-async function getPrayerNotesCache(userId: string) {
+export async function getPrayerNotesCache(userId: string) {
   return readJson<PrayerNote[]>(prayerNotesKey(userId), []);
 }
 
@@ -140,7 +140,7 @@ async function setPrayerNotesCache(userId: string, notes: PrayerNote[]) {
   await writeJson(prayerNotesKey(userId), sortPrayerNotes(notes));
 }
 
-async function getReflectionsCache(userId: string) {
+export async function getReflectionsCache(userId: string) {
   return readJson<Reflection[]>(reflectionsKey(userId), []);
 }
 

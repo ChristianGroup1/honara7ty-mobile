@@ -23,6 +23,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { getStrings } from '../../localization';
 import {
   deleteReflection as removeReflection,
+  getReflectionsCache,
   refreshReflections,
   saveReflection,
 } from '../../lib/offlineSync';
@@ -66,12 +67,16 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   const fetchReflections = useCallback(async () => {
-    setLoading(true);
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
     if (!userId) {
       setLoading(false);
       return;
+    }
+    const cached = await getReflectionsCache(userId);
+    if (cached.length > 0) {
+      setReflections(cached);
+      setLoading(false);
     }
     const { data } = await refreshReflections(userId);
     setReflections(data);
