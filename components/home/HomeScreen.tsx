@@ -45,7 +45,11 @@ import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
 
 import { logoutCurrentUser } from '../../lib/logout';
 import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermissionFlow';
-import { refreshDevotionLogs, saveDevotionLog } from '../../lib/offlineSync';
+import {
+  migrateContentEncryption,
+  refreshDevotionLogs,
+  saveDevotionLog,
+} from '../../lib/offlineSync';
 
 const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
@@ -136,6 +140,9 @@ const HomeScreen = ({ route, navigation }: any) => {
         }
 
         setUser(sessionUser);
+
+        // One-time silent migration: encrypt any legacy plaintext content.
+        migrateContentEncryption(userId);
 
         const { data: devotionLogs } = await refreshDevotionLogs(userId);
         const data = devotionLogs[getTodayDate()];

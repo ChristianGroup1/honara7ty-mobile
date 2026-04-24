@@ -5,6 +5,7 @@ import { PrayerNote } from '../components/prayer-notes/types';
 import { Reflection } from '../components/spiritual-reflection/types';
 import { DevotionDayLog } from '../components/devotion-calendar/types';
 import { syncReadingLogForDate } from './readingLog';
+import { deriveKey, encryptText, decryptText, isEncrypted } from './crypto';
 
 const OFFLINE_QUEUE_KEY = 'offline_sync_queue_v1';
 const LOCAL_ID_PREFIX = 'local-';
@@ -13,6 +14,26 @@ const prayerNotesKey = (userId: string) => `offline_prayer_notes:${userId}`;
 const reflectionsKey = (userId: string) => `offline_reflections:${userId}`;
 const devotionLogsKey = (userId: string) => `offline_devotion_logs:${userId}`;
 const profileRecordKey = (userId: string) => `offline_profile_record:${userId}`;
+const encryptionMigratedKey = (userId: string) =>
+  `encryption_migrated_v1:${userId}`;
+
+// ── Encryption helpers ────────────────────────────────────────────────────────
+
+function encryptNote(note: PrayerNote, key: Uint8Array): PrayerNote {
+  return { ...note, content: encryptText(note.content, key) };
+}
+
+function decryptNote(note: PrayerNote, key: Uint8Array): PrayerNote {
+  return { ...note, content: decryptText(note.content, key) };
+}
+
+function encryptReflection(reflection: Reflection, key: Uint8Array): Reflection {
+  return { ...reflection, content: encryptText(reflection.content, key) };
+}
+
+function decryptReflection(reflection: Reflection, key: Uint8Array): Reflection {
+  return { ...reflection, content: decryptText(reflection.content, key) };
+}
 
 export type ProfileRecord = {
   church?: string | null;
@@ -645,8 +666,11 @@ async function flushIfPossible() {
 export async function refreshPrayerNotes(userId: string) {
   await flushIfPossible();
 
+  const key = deriveKey(userId);
+
   if (!(await isNetworkAvailable())) {
-    return { data: await getPrayerNotesCache(userId), offline: true };
+    const cached = await getPrayerNotesCache(userId);
+    return { data: cached.map(n => decryptNote(n, key)), offline: true };
   }
 
   const { data, error } = await supabase
@@ -656,12 +680,13 @@ export async function refreshPrayerNotes(userId: string) {
     .order('created_at', { ascending: false });
 
   if (error) {
-    return { data: await getPrayerNotesCache(userId), offline: true };
+    const cached = await getPrayerNotesCache(userId);
+    return { data: cached.map(n => decryptNote(n, key)), offline: true };
   }
 
   const notes = (data ?? []) as PrayerNote[];
   await setPrayerNotesCache(userId, notes);
-  return { data: notes, offline: false };
+  return { data: notes.map(n => decryptNote(n, key)), offline: false };
 }
 
 export async function savePrayerNote(params: {
@@ -669,18 +694,20 @@ export async function savePrayerNote(params: {
   note?: PrayerNote | null;
   content: string;
 }) {
+  const key = deriveKey(params.userId);
   const notes = await getPrayerNotesCache(params.userId);
   const current = params.note
     ? notes.find(note => note.id === params.note?.id) ?? params.note
     : null;
+  const encryptedContent = encryptText(params.content, key);
   const nextNote: PrayerNote = current
     ? {
         ...current,
-        content: params.content,
+        content: encryptedContent,
       }
     : {
         id: makeLocalId(),
-        content: params.content,
+        content: encryptedContent,
         created_at: nowIso(),
         is_answered: false,
         pendingSync: true,
@@ -698,8 +725,9 @@ export async function savePrayerNote(params: {
     note: nextNote,
   });
   const result = await flushIfPossible();
+  const cached = await getPrayerNotesCache(params.userId);
   return {
-    data: await getPrayerNotesCache(params.userId),
+    data: cached.map(n => decryptNote(n, key)),
     offline: !result.synced,
   };
 }
@@ -708,25 +736,27 @@ export async function togglePrayerNoteAnswered(params: {
   userId: string;
   note: PrayerNote;
 }) {
+  const key = deriveKey(params.userId);
   const notes = await getPrayerNotesCache(params.userId);
-  const nextNote = {
-    ...params.note,
-    is_answered: !params.note.is_answered,
-    pendingSync: true,
-  };
+  // params.note.content is decrypted (from screen state); re-encrypt for storage.
+  const noteToStore = encryptNote(
+    { ...params.note, is_answered: !params.note.is_answered, pendingSync: true },
+    key,
+  );
   const nextNotes = notes.map(note =>
-    note.id === params.note.id ? nextNote : note,
+    note.id === params.note.id ? noteToStore : note,
   );
   await setPrayerNotesCache(params.userId, nextNotes);
   await enqueueMutation({
     id: makeLocalId(),
     kind: 'prayer-note-upsert',
     userId: params.userId,
-    note: nextNote,
+    note: noteToStore,
   });
   const result = await flushIfPossible();
+  const cached = await getPrayerNotesCache(params.userId);
   return {
-    data: await getPrayerNotesCache(params.userId),
+    data: cached.map(n => decryptNote(n, key)),
     offline: !result.synced,
   };
 }
@@ -735,6 +765,7 @@ export async function deletePrayerNote(params: {
   userId: string;
   note: PrayerNote;
 }) {
+  const key = deriveKey(params.userId);
   const notes = await getPrayerNotesCache(params.userId);
   await setPrayerNotesCache(
     params.userId,
@@ -763,8 +794,9 @@ export async function deletePrayerNote(params: {
   }
 
   const result = await flushIfPossible();
+  const cached = await getPrayerNotesCache(params.userId);
   return {
-    data: await getPrayerNotesCache(params.userId),
+    data: cached.map(n => decryptNote(n, key)),
     offline: !result.synced,
   };
 }
@@ -772,8 +804,11 @@ export async function deletePrayerNote(params: {
 export async function refreshReflections(userId: string) {
   await flushIfPossible();
 
+  const key = deriveKey(userId);
+
   if (!(await isNetworkAvailable())) {
-    return { data: await getReflectionsCache(userId), offline: true };
+    const cached = await getReflectionsCache(userId);
+    return { data: cached.map(r => decryptReflection(r, key)), offline: true };
   }
 
   const { data, error } = await supabase
@@ -783,12 +818,13 @@ export async function refreshReflections(userId: string) {
     .order('date', { ascending: false });
 
   if (error) {
-    return { data: await getReflectionsCache(userId), offline: true };
+    const cached = await getReflectionsCache(userId);
+    return { data: cached.map(r => decryptReflection(r, key)), offline: true };
   }
 
   const reflections = sortReflections((data ?? []) as Reflection[]);
   await setReflectionsCache(userId, reflections);
-  return { data: reflections, offline: false };
+  return { data: reflections.map(r => decryptReflection(r, key)), offline: false };
 }
 
 export async function saveReflection(params: {
@@ -797,20 +833,22 @@ export async function saveReflection(params: {
   content: string;
   date: string;
 }) {
+  const key = deriveKey(params.userId);
   const reflections = await getReflectionsCache(params.userId);
   const current = params.reflection
     ? reflections.find(reflection => reflection.id === params.reflection?.id) ??
       params.reflection
     : null;
+  const encryptedContent = encryptText(params.content, key);
   const nextReflection: Reflection = current
     ? {
         ...current,
-        content: params.content,
+        content: encryptedContent,
         date: params.date,
       }
     : {
         id: makeLocalId(),
-        content: params.content,
+        content: encryptedContent,
         date: params.date,
         created_at: nowIso(),
         pendingSync: true,
@@ -830,8 +868,9 @@ export async function saveReflection(params: {
     reflection: nextReflection,
   });
   const result = await flushIfPossible();
+  const cached = await getReflectionsCache(params.userId);
   return {
-    data: await getReflectionsCache(params.userId),
+    data: cached.map(r => decryptReflection(r, key)),
     offline: !result.synced,
   };
 }
@@ -840,6 +879,7 @@ export async function deleteReflection(params: {
   userId: string;
   reflection: Reflection;
 }) {
+  const key = deriveKey(params.userId);
   const reflections = await getReflectionsCache(params.userId);
   await setReflectionsCache(
     params.userId,
@@ -868,8 +908,9 @@ export async function deleteReflection(params: {
   }
 
   const result = await flushIfPossible();
+  const cached = await getReflectionsCache(params.userId);
   return {
-    data: await getReflectionsCache(params.userId),
+    data: cached.map(r => decryptReflection(r, key)),
     offline: !result.synced,
   };
 }
@@ -993,4 +1034,70 @@ export async function saveDevotionLog(params: {
 export async function hasPendingOfflineMutations() {
   const queue = await getQueue();
   return queue.length > 0;
+}
+
+/**
+ * One-time migration that encrypts any plaintext `content` values that were
+ * written before encryption was introduced.
+ *
+ * Call this once per session after the user is authenticated (e.g. from the
+ * home screen's mount effect).  Subsequent calls are no-ops because the
+ * completion flag is persisted in AsyncStorage.
+ *
+ * The migration is fully transparent to the user: it runs silently in the
+ * background and requires no interaction.
+ */
+export async function migrateContentEncryption(userId: string): Promise<void> {
+  const flagKey = encryptionMigratedKey(userId);
+  const alreadyMigrated = await AsyncStorage.getItem(flagKey);
+  if (alreadyMigrated) {
+    return;
+  }
+
+  const key = deriveKey(userId);
+  const online = await isNetworkAvailable();
+
+  // ── Migrate prayer notes ──────────────────────────────────────────────────
+  const notes = await getPrayerNotesCache(userId);
+  const plainNotes = notes.filter(n => !isEncrypted(n.content));
+  if (plainNotes.length > 0) {
+    const migratedNotes = notes.map(n =>
+      isEncrypted(n.content) ? n : encryptNote(n, key),
+    );
+    await setPrayerNotesCache(userId, migratedNotes);
+
+    if (online) {
+      for (const note of plainNotes) {
+        if (!isLocalId(note.id)) {
+          await supabase
+            .from('prayer_notes')
+            .update({ content: encryptText(note.content, key) })
+            .eq('id', note.id);
+        }
+      }
+    }
+  }
+
+  // ── Migrate reflections ───────────────────────────────────────────────────
+  const reflections = await getReflectionsCache(userId);
+  const plainReflections = reflections.filter(r => !isEncrypted(r.content));
+  if (plainReflections.length > 0) {
+    const migratedReflections = reflections.map(r =>
+      isEncrypted(r.content) ? r : encryptReflection(r, key),
+    );
+    await setReflectionsCache(userId, migratedReflections);
+
+    if (online) {
+      for (const reflection of plainReflections) {
+        if (!isLocalId(reflection.id)) {
+          await supabase
+            .from('reflections')
+            .update({ content: encryptText(reflection.content, key) })
+            .eq('id', reflection.id);
+        }
+      }
+    }
+  }
+
+  await AsyncStorage.setItem(flagKey, '1');
 }
