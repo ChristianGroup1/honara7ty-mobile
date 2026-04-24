@@ -161,7 +161,13 @@ AS $$
   SELECT
     pn.id,
     pn.user_id,
-    pgp_sym_decrypt(pn.content_encrypted, current_setting('app.settings.encryption_key'))::TEXT AS content,
+    COALESCE(
+      CASE
+        WHEN pn.content_encrypted IS NULL THEN pn.content
+        ELSE pgp_sym_decrypt(pn.content_encrypted, current_setting('app.settings.encryption_key'))::TEXT
+      END,
+      ''
+    ) AS content,
     pn.is_answered,
     pn.created_at
   FROM public.prayer_notes pn
@@ -191,6 +197,10 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized';
   END IF;
 
+  IF p_content IS NULL THEN
+    RAISE EXCEPTION 'Content is required';
+  END IF;
+
   IF p_id IS NULL THEN
     INSERT INTO public.prayer_notes (
       user_id,
@@ -217,14 +227,20 @@ BEGIN
   END IF;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Unauthorized or not found';
+    RAISE EXCEPTION 'Record unavailable';
   END IF;
 
   RETURN QUERY
   SELECT
     v_row.id,
     v_row.user_id,
-    pgp_sym_decrypt(v_row.content_encrypted, current_setting('app.settings.encryption_key'))::TEXT,
+    COALESCE(
+      CASE
+        WHEN v_row.content_encrypted IS NULL THEN v_row.content
+        ELSE pgp_sym_decrypt(v_row.content_encrypted, current_setting('app.settings.encryption_key'))::TEXT
+      END,
+      ''
+    ),
     v_row.is_answered,
     v_row.created_at;
 END;
@@ -257,7 +273,13 @@ AS $$
   SELECT
     r.id,
     r.user_id,
-    pgp_sym_decrypt(r.content_encrypted, current_setting('app.settings.encryption_key'))::TEXT AS content,
+    COALESCE(
+      CASE
+        WHEN r.content_encrypted IS NULL THEN r.content
+        ELSE pgp_sym_decrypt(r.content_encrypted, current_setting('app.settings.encryption_key'))::TEXT
+      END,
+      ''
+    ) AS content,
     r.date,
     r.created_at
   FROM public.reflections r
@@ -287,6 +309,10 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized';
   END IF;
 
+  IF p_content IS NULL THEN
+    RAISE EXCEPTION 'Content is required';
+  END IF;
+
   IF p_id IS NULL THEN
     INSERT INTO public.reflections (
       user_id,
@@ -313,14 +339,20 @@ BEGIN
   END IF;
 
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Unauthorized or not found';
+    RAISE EXCEPTION 'Record unavailable';
   END IF;
 
   RETURN QUERY
   SELECT
     v_row.id,
     v_row.user_id,
-    pgp_sym_decrypt(v_row.content_encrypted, current_setting('app.settings.encryption_key'))::TEXT,
+    COALESCE(
+      CASE
+        WHEN v_row.content_encrypted IS NULL THEN v_row.content
+        ELSE pgp_sym_decrypt(v_row.content_encrypted, current_setting('app.settings.encryption_key'))::TEXT
+      END,
+      ''
+    ),
     v_row.date,
     v_row.created_at;
 END;
