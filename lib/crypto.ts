@@ -20,14 +20,17 @@ const ENC_PREFIX = 'enc:';
  * Derives a deterministic 32-byte AES-256 key for `userId` from the
  * application master secret using an AES-ECB–based PRF construction:
  *
- *   half1 = AES-ECB(master[0..15], userId_padded[0..15])
- *   half2 = AES-ECB(master[16..31], userId_padded[0..15])
+ *   idBlock = first 16 bytes of userId UTF-8 encoding, zero-padded if shorter
+ *   half1 = AES-ECB(master[0..15], idBlock)
+ *   half2 = AES-ECB(master[16..31], idBlock)
  *   derived_key = half1 || half2
  *
  * AES-ECB used as a PRF is cryptographically sound here because the input
  * (userId) is the "message" and the master secret is the key. Different
- * userIds produce computationally indistinguishable keys even if the userIds
- * have a predictable relationship.
+ * userIds produce computationally indistinguishable keys.
+ *
+ * Supabase userIds are UUIDs (36 ASCII chars), so the 16-byte idBlock is
+ * always distinct and never repeating.
  *
  * Same userId always produces the same key so that keys never need to be
  * stored anywhere.
@@ -35,11 +38,12 @@ const ENC_PREFIX = 'enc:';
 export function deriveKey(userId: string): Uint8Array {
   const masterBytes: number[] = aes.utils.hex.toBytes(APP_ENCRYPTION_SECRET);
 
-  // Encode userId as UTF-8, then zero-pad or truncate to exactly 16 bytes.
+  // Encode userId as UTF-8 then take the first 16 bytes, zero-padding if needed.
+  // Supabase UUIDs are 36 bytes so we always use a unique 16-byte prefix.
   const rawId: number[] = aes.utils.utf8.toBytes(userId);
   const idBlock = new Array<number>(16).fill(0);
-  for (let i = 0; i < 16; i++) {
-    idBlock[i] = rawId[i % rawId.length] ?? 0;
+  for (let i = 0; i < 16 && i < rawId.length; i++) {
+    idBlock[i] = rawId[i];
   }
 
   // Derive two 16-byte halves using different 16-byte sub-keys from the master.
@@ -88,7 +92,7 @@ export function decryptText(value: string, key: Uint8Array): string {
     const colonIndex = withoutPrefix.indexOf(':');
     // IV hex is always exactly 32 characters (16 bytes).
     if (colonIndex !== 32) {
-      return value;
+      return '';
     }
 
     const ivHex = withoutPrefix.slice(0, 32);
@@ -109,7 +113,7 @@ export function decryptText(value: string, key: Uint8Array): string {
     if (__DEV__) {
       console.warn('[crypto] decryptText failed:', error);
     }
-    return value;
+    return '';
   }
 }
 

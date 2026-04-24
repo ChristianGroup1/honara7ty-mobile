@@ -699,7 +699,12 @@ export async function savePrayerNote(params: {
   const current = params.note
     ? notes.find(note => note.id === params.note?.id) ?? params.note
     : null;
-  const encryptedContent = encryptText(params.content, key);
+  // Guard against double-encryption: content from screen state is always
+  // plaintext, but be safe in case the caller passes an already-encrypted value.
+  const plainContent = isEncrypted(params.content)
+    ? decryptText(params.content, key)
+    : params.content;
+  const encryptedContent = encryptText(plainContent, key);
   const nextNote: PrayerNote = current
     ? {
         ...current,
@@ -843,7 +848,12 @@ export async function saveReflection(params: {
     ? reflections.find(reflection => reflection.id === params.reflection?.id) ??
       params.reflection
     : null;
-  const encryptedContent = encryptText(params.content, key);
+  // Guard against double-encryption: content from screen state is always
+  // plaintext, but be safe in case the caller passes an already-encrypted value.
+  const plainContent = isEncrypted(params.content)
+    ? decryptText(params.content, key)
+    : params.content;
+  const encryptedContent = encryptText(plainContent, key);
   const nextReflection: Reflection = current
     ? {
         ...current,
@@ -1040,68 +1050,89 @@ export async function hasPendingOfflineMutations() {
   return queue.length > 0;
 }
 
+// In-memory lock: map of userId → Promise so concurrent calls collapse.
+const migrationInFlight = new Map<string, Promise<void>>();
+
 /**
  * One-time migration that encrypts any plaintext `content` values that were
  * written before encryption was introduced.
  *
  * Call this once per session after the user is authenticated (e.g. from the
  * home screen's mount effect).  Subsequent calls are no-ops because the
- * completion flag is persisted in AsyncStorage.
+ * completion flag is persisted in AsyncStorage.  Concurrent calls for the
+ * same userId are deduplicated via an in-memory lock.
  *
  * The migration is fully transparent to the user: it runs silently in the
  * background and requires no interaction.
  */
 export async function migrateContentEncryption(userId: string): Promise<void> {
-  const flagKey = encryptionMigratedKey(userId);
-  const alreadyMigrated = await AsyncStorage.getItem(flagKey);
-  if (alreadyMigrated) {
-    return;
+  // Deduplicate concurrent invocations (e.g. rapid focus events).
+  const inflight = migrationInFlight.get(userId);
+  if (inflight) {
+    return inflight;
   }
 
-  const key = deriveKey(userId);
-  const online = await isNetworkAvailable();
+  const task = (async () => {
+    const flagKey = encryptionMigratedKey(userId);
+    const alreadyMigrated = await AsyncStorage.getItem(flagKey);
+    if (alreadyMigrated) {
+      return;
+    }
 
-  // ── Migrate prayer notes ──────────────────────────────────────────────────
-  const notes = await getPrayerNotesCache(userId);
-  const plainNotes = notes.filter(n => !isEncrypted(n.content));
-  if (plainNotes.length > 0) {
-    const migratedNotes = notes.map(n =>
-      isEncrypted(n.content) ? n : encryptNote(n, key),
-    );
-    await setPrayerNotesCache(userId, migratedNotes);
+    const key = deriveKey(userId);
+    const online = await isNetworkAvailable();
 
-    if (online) {
-      for (const note of plainNotes) {
-        if (!isLocalId(note.id)) {
-          await supabase
-            .from('prayer_notes')
-            .update({ content: encryptText(note.content, key) })
-            .eq('id', note.id);
+    // ── Migrate prayer notes ────────────────────────────────────────────────
+    const notes = await getPrayerNotesCache(userId);
+    const plainNotes = notes.filter(n => !isEncrypted(n.content));
+    if (plainNotes.length > 0) {
+      const migratedNotes = notes.map(n =>
+        isEncrypted(n.content) ? n : encryptNote(n, key),
+      );
+      await setPrayerNotesCache(userId, migratedNotes);
+
+      if (online) {
+        for (const note of plainNotes) {
+          if (!isLocalId(note.id)) {
+            // Errors on individual rows are tolerated; already-encrypted rows
+            // in cache prevent double-encryption on retry.
+            await supabase
+              .from('prayer_notes')
+              .update({ content: encryptText(note.content, key) })
+              .eq('id', note.id);
+          }
         }
       }
     }
-  }
 
-  // ── Migrate reflections ───────────────────────────────────────────────────
-  const reflections = await getReflectionsCache(userId);
-  const plainReflections = reflections.filter(r => !isEncrypted(r.content));
-  if (plainReflections.length > 0) {
-    const migratedReflections = reflections.map(r =>
-      isEncrypted(r.content) ? r : encryptReflection(r, key),
-    );
-    await setReflectionsCache(userId, migratedReflections);
+    // ── Migrate reflections ─────────────────────────────────────────────────
+    const reflections = await getReflectionsCache(userId);
+    const plainReflections = reflections.filter(r => !isEncrypted(r.content));
+    if (plainReflections.length > 0) {
+      const migratedReflections = reflections.map(r =>
+        isEncrypted(r.content) ? r : encryptReflection(r, key),
+      );
+      await setReflectionsCache(userId, migratedReflections);
 
-    if (online) {
-      for (const reflection of plainReflections) {
-        if (!isLocalId(reflection.id)) {
-          await supabase
-            .from('reflections')
-            .update({ content: encryptText(reflection.content, key) })
-            .eq('id', reflection.id);
+      if (online) {
+        for (const reflection of plainReflections) {
+          if (!isLocalId(reflection.id)) {
+            await supabase
+              .from('reflections')
+              .update({ content: encryptText(reflection.content, key) })
+              .eq('id', reflection.id);
+          }
         }
       }
     }
-  }
 
-  await AsyncStorage.setItem(flagKey, '1');
+    await AsyncStorage.setItem(flagKey, '1');
+  })();
+
+  migrationInFlight.set(userId, task);
+  try {
+    return await task;
+  } finally {
+    migrationInFlight.delete(userId);
+  }
 }
