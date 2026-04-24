@@ -194,11 +194,11 @@ DECLARE
   v_row public.prayer_notes%ROWTYPE;
 BEGIN
   IF auth.uid() IS NULL THEN
-    RAISE EXCEPTION 'Unauthorized';
+    RAISE EXCEPTION 'User must be authenticated to upsert prayer notes';
   END IF;
 
   IF p_content IS NULL THEN
-    RAISE EXCEPTION 'Content is required';
+    RAISE EXCEPTION 'Prayer note content is required';
   END IF;
 
   IF p_id IS NULL THEN
@@ -306,11 +306,11 @@ DECLARE
   v_row public.reflections%ROWTYPE;
 BEGIN
   IF auth.uid() IS NULL THEN
-    RAISE EXCEPTION 'Unauthorized';
+    RAISE EXCEPTION 'User must be authenticated to upsert reflections';
   END IF;
 
   IF p_content IS NULL THEN
-    RAISE EXCEPTION 'Content is required';
+    RAISE EXCEPTION 'Reflection content is required';
   END IF;
 
   IF p_id IS NULL THEN
