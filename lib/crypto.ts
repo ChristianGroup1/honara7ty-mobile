@@ -113,8 +113,10 @@ export function decryptContent(stored: string, userId: string): string {
     const aesCtr = new aesjs.ModeOfOperation.ctr(key, counter);
     const plainBytes = aesCtr.decrypt(cipherBytes);
     return aesjs.utils.utf8.fromBytes(plainBytes);
-  } catch {
+  } catch (err) {
+    if (__DEV__) {
+      console.warn('[crypto] decryptContent failed:', err);
+    }
     return '';
   }
 }
-

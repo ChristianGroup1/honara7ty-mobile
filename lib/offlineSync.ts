@@ -358,15 +358,18 @@ function mapDevotionRows(
   return logsMap;
 }
 
-function mergeServerNote(serverRow: unknown, plainContent: string): PrayerNote {
-  return { ...(serverRow as PrayerNote), content: plainContent };
+function mergeServerNote(
+  serverRow: Record<string, unknown>,
+  plainContent: string,
+): PrayerNote {
+  return { ...(serverRow as unknown as PrayerNote), content: plainContent };
 }
 
 function mergeServerReflection(
-  serverRow: unknown,
+  serverRow: Record<string, unknown>,
   plainContent: string,
 ): Reflection {
-  return { ...(serverRow as Reflection), content: plainContent };
+  return { ...(serverRow as unknown as Reflection), content: plainContent };
 }
 
 async function flushPrayerNoteUpsert(mutation: Extract<OfflineMutation, { kind: 'prayer-note-upsert' }>) {
