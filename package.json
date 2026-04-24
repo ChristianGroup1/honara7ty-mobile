@@ -6,7 +6,6 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
-    "postinstall": "node scripts/patch-smartlook-android.js",
     "start": "react-native start",
     "test": "jest"
   },

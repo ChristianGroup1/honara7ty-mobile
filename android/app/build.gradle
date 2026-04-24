@@ -4,21 +4,6 @@ apply plugin: "com.facebook.react"
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
 
-def smartlookCrashApiToken = project.hasProperty("SMARTLOOK_API_TOKEN")
-        ? project.property("SMARTLOOK_API_TOKEN")
-        : (project.env.get("SMARTLOOK_API_TOKEN") ?: System.getenv("SMARTLOOK_API_TOKEN") ?: "")
-
-if (smartlookCrashApiToken) {
-    apply plugin: "com.smartlook.crash-gradle-plugin"
-
-    smartlookCrashGradlePlugin {
-        apiKey = smartlookCrashApiToken
-        force = true
-    }
-} else {
-    logger.warn("Smartlook Crash Reports disabled: missing SMARTLOOK_API_TOKEN.")
-}
-
 def keystorePropertiesFile = rootProject.file("keystore.properties")
 def keystoreProperties = new Properties()
 

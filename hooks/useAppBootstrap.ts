@@ -4,7 +4,6 @@ import { handleOAuthCallbackUrl, handleRecoveryUrl } from '../lib/deepLinking';
 import { navigationRef } from '../navigation/navigationRef';
 import supabase from '../lib/supbase';
 import { syncDevotionReminderSchedule } from '../lib/devotionReminder';
-import { identifyUser, resetAnalytics } from '../lib/analytics';
 import { BOOTSTRAP_TIMEOUT_MS, withTimeout } from '../lib/withTimeout';
 
 export function useAppBootstrap() {
@@ -76,11 +75,7 @@ export function useAppBootstrap() {
 
           if (data?.session) {
             syncReminderScheduleSafely(data.session.user?.id);
-            identifyUser(data.session.user.id, {
-              email: data.session.user.email ?? null,
-              onboarding_completed:
-                data.session.user?.user_metadata?.onboarding_completed === true,
-            });
+           
           }
           hideSplashAfter(800);
           return;
@@ -112,11 +107,7 @@ export function useAppBootstrap() {
 
         if (data?.session) {
           syncReminderScheduleSafely(data.session.user?.id);
-          identifyUser(data.session.user.id, {
-            email: data.session.user.email ?? null,
-            onboarding_completed:
-              data.session.user?.user_metadata?.onboarding_completed === true,
-          });
+        
         }
       } catch (error) {
         console.warn('Bootstrap session check failed', error);
@@ -132,15 +123,7 @@ export function useAppBootstrap() {
       applySessionState(session);
       syncReminderScheduleSafely(session?.user?.id);
 
-      if (session?.user?.id) {
-        identifyUser(session.user.id, {
-          email: session.user.email ?? null,
-          onboarding_completed:
-            session.user?.user_metadata?.onboarding_completed === true,
-        });
-      } else {
-        resetAnalytics();
-      }
+     
     });
 
     checkSession();

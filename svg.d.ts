@@ -7,11 +7,6 @@ declare module '*.svg' {
 }
 
 declare module 'react-native-config' {
-  interface NativeConfig {
-    SMARTLOOK_PROJECT_KEY?: string;
-    SMARTLOOK_API_TOKEN?: string;
-  }
-
-  const Config: NativeConfig;
+  const Config: Record<string, string | undefined>;
   export default Config;
 }

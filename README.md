@@ -43,33 +43,6 @@ URL is found.
 
 ---
 
-# Analytics Configuration
-
-The app now includes a single analytics integration point in
-`lib/analyticsConfig.ts`.
-
-To enable analytics for the full app:
-
-1. Create or update `.env`
-2. Add your Smartlook mobile project key:
-   ```
-   SMARTLOOK_PROJECT_KEY=your-smartlook-project-key
-   SMARTLOOK_API_TOKEN=your-smartlook-rest-api-token
-   ```
-3. Rebuild the native app so `react-native-config` exposes the new values.
-
-Once enabled, the app will automatically:
-
-- identify signed-in users
-- reset analytics identity on logout
-- track screen changes from the root navigator
-- record Smartlook sessions
-- upload Android crash mapping files to Smartlook Crash Reports when `SMARTLOOK_API_TOKEN` is set
-
-Feature-level events can be added later with `trackEvent(...)` from `lib/analytics.ts`.
-
----
-
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.

@@ -40,51 +40,8 @@ jest.mock('@react-native-community/netinfo', () => ({
 
 jest.mock('react-native-config', () => ({
   __esModule: true,
-  default: {
-    SMARTLOOK_PROJECT_KEY: 'test-project-key',
-  },
+  default: {},
 }));
-
-jest.mock('react-native-smartlook-analytics', () => {
-  const instance = {
-    analytics: {
-      trackEvent: jest.fn(),
-      trackNavigationEnter: jest.fn(),
-    },
-    preferences: {
-      setProjectKey: jest.fn(),
-      setAdaptiveFrameRateEnabled: jest.fn(),
-    },
-    user: {
-      setIdentifier: jest.fn(),
-      setEmail: jest.fn(),
-      setName: jest.fn(),
-      setUserProperty: jest.fn(),
-      openNewUser: jest.fn(),
-    },
-    start: jest.fn(),
-    reset: jest.fn(),
-  };
-
-  class Properties {
-    map = new Map();
-
-    putString(key, value) {
-      this.map.set(key, value);
-      return this;
-    }
-
-    toObject() {
-      return Object.fromEntries(this.map);
-    }
-  }
-
-  return {
-    __esModule: true,
-    default: { instance },
-    Properties,
-  };
-});
 
 jest.mock('@notifee/react-native', () => {
   const notifee = {

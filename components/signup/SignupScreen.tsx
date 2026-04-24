@@ -177,13 +177,9 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
             localizeAuthError(error.message),
           );
         } else {
-          if (data?.user?.id) {
-           
           await ensureDefaultDevotionTime(data?.user?.id);
           navigation.replace('Onboarding');
         }
-      } else {
-        return;
       }
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
