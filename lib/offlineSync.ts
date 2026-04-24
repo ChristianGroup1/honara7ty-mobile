@@ -5,6 +5,7 @@ import { PrayerNote } from '../components/prayer-notes/types';
 import { Reflection } from '../components/spiritual-reflection/types';
 import { DevotionDayLog } from '../components/devotion-calendar/types';
 import { syncReadingLogForDate } from './readingLog';
+import { encryptContent, decryptContent } from './crypto';
 
 const OFFLINE_QUEUE_KEY = 'offline_sync_queue_v1';
 const LOCAL_ID_PREFIX = 'local-';
@@ -363,7 +364,7 @@ async function flushPrayerNoteUpsert(mutation: Extract<OfflineMutation, { kind: 
       .from('prayer_notes')
       .insert({
         user_id: mutation.userId,
-        content: mutation.note.content,
+        content: encryptContent(mutation.note.content, mutation.userId),
         is_answered: mutation.note.is_answered,
       })
       .select('*')
@@ -373,7 +374,10 @@ async function flushPrayerNoteUpsert(mutation: Extract<OfflineMutation, { kind: 
       return false;
     }
 
-    const serverNote = data as PrayerNote;
+    const serverNote: PrayerNote = {
+      ...(data as PrayerNote),
+      content: mutation.note.content,
+    };
     const notes = await getPrayerNotesCache(mutation.userId);
     await setPrayerNotesCache(
       mutation.userId,
@@ -398,7 +402,7 @@ async function flushPrayerNoteUpsert(mutation: Extract<OfflineMutation, { kind: 
   const { error } = await supabase
     .from('prayer_notes')
     .update({
-      content: mutation.note.content,
+      content: encryptContent(mutation.note.content, mutation.userId),
       is_answered: mutation.note.is_answered,
     })
     .eq('id', mutation.note.id);
@@ -435,7 +439,7 @@ async function flushReflectionUpsert(
       .from('reflections')
       .insert({
         user_id: mutation.userId,
-        content: mutation.reflection.content,
+        content: encryptContent(mutation.reflection.content, mutation.userId),
         date: mutation.reflection.date,
       })
       .select('*')
@@ -445,7 +449,10 @@ async function flushReflectionUpsert(
       return false;
     }
 
-    const serverReflection = data as Reflection;
+    const serverReflection: Reflection = {
+      ...(data as Reflection),
+      content: mutation.reflection.content,
+    };
     const reflections = await getReflectionsCache(mutation.userId);
     await setReflectionsCache(
       mutation.userId,
@@ -474,7 +481,7 @@ async function flushReflectionUpsert(
   const { error } = await supabase
     .from('reflections')
     .update({
-      content: mutation.reflection.content,
+      content: encryptContent(mutation.reflection.content, mutation.userId),
       date: mutation.reflection.date,
     })
     .eq('id', mutation.reflection.id);
@@ -660,8 +667,12 @@ export async function refreshPrayerNotes(userId: string) {
   }
 
   const notes = (data ?? []) as PrayerNote[];
-  await setPrayerNotesCache(userId, notes);
-  return { data: notes, offline: false };
+  const decryptedNotes = notes.map(note => ({
+    ...note,
+    content: decryptContent(note.content, userId),
+  }));
+  await setPrayerNotesCache(userId, decryptedNotes);
+  return { data: decryptedNotes, offline: false };
 }
 
 export async function savePrayerNote(params: {
@@ -787,8 +798,12 @@ export async function refreshReflections(userId: string) {
   }
 
   const reflections = sortReflections((data ?? []) as Reflection[]);
-  await setReflectionsCache(userId, reflections);
-  return { data: reflections, offline: false };
+  const decryptedReflections = reflections.map(reflection => ({
+    ...reflection,
+    content: decryptContent(reflection.content, userId),
+  }));
+  await setReflectionsCache(userId, decryptedReflections);
+  return { data: decryptedReflections, offline: false };
 }
 
 export async function saveReflection(params: {
