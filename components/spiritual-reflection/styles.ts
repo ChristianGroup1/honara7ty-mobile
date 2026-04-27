@@ -284,6 +284,7 @@ export const spiritualReflectionStyles = StyleSheet.create({
     minHeight: 160,
     marginTop: 12,
     textAlignVertical: 'top',
+    textAlign: 'left',
   },
   modalActions: {
     flexDirection: 'row',

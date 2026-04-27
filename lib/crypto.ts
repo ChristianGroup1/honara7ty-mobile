@@ -64,7 +64,7 @@ export function deriveKey(userId: string): Uint8Array {
  */
 export function encryptText(plaintext: string, key: Uint8Array): string {
   const iv = new Uint8Array(16);
-  crypto.getRandomValues(iv);
+  (globalThis as any).crypto.getRandomValues(iv);
 
   const counter = new aes.Counter(Array.from(iv));
   const aesCtr = new aes.ModeOfOperation.ctr(Array.from(key), counter);
