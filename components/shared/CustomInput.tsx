@@ -96,7 +96,7 @@ const CustomInput: React.FC<Props> = ({
             style={[
               styles.staticInputText,
               !value ? styles.staticInputPlaceholder : null,
-              { textAlign: 'right' },
+              { textAlign: 'left' },
             ]}
             numberOfLines={1}
           >

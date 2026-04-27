@@ -34,7 +34,7 @@ export const profileStrings = {
   sect: 'الطائفة',
   sectPlaceholder: 'اسم الطائفة',
   optional: 'اختياري',
-  personalTitle: 'بيانات شخصية وروحية',
+  personalTitle: 'بيانات شخصية ',
   personalSubtitle: 'اضبط تاريخ الميلاد والجنس من هنا.',
   birthDate: 'تاريخ الميلاد',
   birthDatePlaceholder: 'اختر تاريخ الميلاد',

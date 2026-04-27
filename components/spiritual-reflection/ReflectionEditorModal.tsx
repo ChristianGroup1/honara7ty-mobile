@@ -40,7 +40,9 @@ const ReflectionEditorModal = ({
 }: ReflectionEditorModalProps) => {
   const strings = getStrings().spiritualReflection;
   const keyboardAvoidingViewStyle = styles.flexOne;
-  const modalOverlayStyle = keyboardVisible ? styles.modalOverlayTransparent : null;
+  const modalOverlayStyle = keyboardVisible
+    ? styles.modalOverlayTransparent
+    : null;
   const saveButtonStyle = saving ? styles.saveBtnDisabled : null;
 
   return (
@@ -59,17 +61,10 @@ const ReflectionEditorModal = ({
           keyboardVerticalOffset={topInset}
           style={keyboardAvoidingViewStyle}
         >
-          <View
-            style={[
-              styles.modalOverlay,
-              modalOverlayStyle,
-            ]}
-          >
+          <View style={[styles.modalOverlay, modalOverlayStyle]}>
             <View style={styles.modalBox}>
               <Text style={styles.modalTitle}>
-                {editMode
-                  ? strings.editor.editTitle
-                  : strings.editor.newTitle}
+                {editMode ? strings.editor.editTitle : strings.editor.newTitle}
               </Text>
               <Text style={styles.modalHint}>{strings.editor.hint}</Text>
 
@@ -85,7 +80,7 @@ const ReflectionEditorModal = ({
                   placeholderTextColor="#AAA"
                   value={text}
                   onChangeText={onChangeText}
-                  textAlign="left"
+                  textAlign="right"
                   textAlignVertical="top"
                 />
               </ScrollView>

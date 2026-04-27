@@ -1,5 +1,26 @@
 /* eslint-env jest */
 
+// Polyfill crypto.getRandomValues for Jest (react-native-get-random-values
+// relies on native modules that are unavailable in the Jest environment).
+// NOTE: Math.random() is intentionally used here — this is test-only code and
+// must never run in production where crypto.getRandomValues provides real randomness.
+jest.mock('react-native-get-random-values', () => {
+  if (typeof global.crypto === 'undefined') {
+    global.crypto = {};
+  }
+  if (typeof global.crypto.getRandomValues === 'undefined') {
+    global.crypto.getRandomValues = function (array) {
+      if (array == null) {
+        return array;
+      }
+      for (let i = 0; i < array.length; i++) {
+        array[i] = Math.floor(Math.random() * 256);
+      }
+      return array;
+    };
+  }
+});
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
