@@ -1,69 +1,78 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  AppState,
   Platform,
   ScrollView,
   StatusBar,
-  StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
-import { scheduleDailyDevotionReminder } from '../../lib/notifications';
+import {
+  getNotificationPermissionState,
+  openAppNotificationSettings,
+  requestNotificationPermission,
+  scheduleDailyDevotionReminder,
+} from '../../lib/notifications';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
+import { getStrings } from '../../localization';
+import {
+  BIBLE_BOOKS,
+  NEW_TESTAMENT_BOOKS,
+  OLD_TESTAMENT_BOOKS,
+  Testament,
+} from '../data/bibleMetadata';
+import DailyNotificationsHero from './DailyNotificationsHero';
+import DailyReadingPlanCard from './DailyReadingPlanCard';
+import DailyTipsList from './DailyTipsList';
+import { dailyNotificationStyles as styles, NAVY } from './styles';
+import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
+import NotificationPermissionCard from '../shared/NotificationPermissionCard';
+import {
+  chaptersFromLegacy,
+  firstSelectedChapter,
+  normalizeSelectedChapters,
+  toggleChapterSelection,
+} from '../shared/chapterSelection';
+import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
+import {
+  refreshProfileRecord,
+  saveProfileRecord,
+} from '../../lib/offlineSync';
 
-const NAVY = '#0A1124';
-const GOLD = '#C9A84C';
-const IVORY = '#F7F2E8';
-const SKY = '#EEF3F8';
-const SLATE = '#5C6676';
-const INK = '#1F2A3A';
-
-const TIPS = [
-  {
-    icon: 'weather-sunset-up',
-    text: 'اختر وقتاً هادئاً في الصباح الباكر قبل بداية اليوم.',
-  },
-  {
-    icon: 'map-marker-outline',
-    text: 'اختر مكاناً هادئاً بعيداً عن الضوضاء والمشتتات.',
-  },
-  {
-    icon: 'book-open-outline',
-    text: 'ابدأ بقراءة الكتاب المقدس ثم الصلاة والتأمل.',
-  },
-  {
-    icon: 'cellphone-off',
-    text: 'أبعد هاتفك أثناء وقت التعبد وركّز على الحضور الإلهي.',
-  },
-  {
-    icon: 'timer-outline',
-    text: 'حتى 15 دقيقة يومياً كافية للبدء — الاستمرارية هي المفتاح.',
-  },
-];
-
-const DailyNotificationsScreen = ({ navigation, route }: any) => {
+const DailyNotificationsScreen = ({ navigation }: any) => {
+  const strings = getStrings().dailyNotifications;
   const insets = useSafeAreaInsets();
-  /** When opened as a bottom tab there is no stack to go back to. */
-  const isTab = route?.name === 'DailyNotifications';
+  const tips = [
+    { icon: 'weather-sunset-up', text: strings.tips[0] },
+    { icon: 'map-marker-outline', text: strings.tips[1] },
+    { icon: 'book-open-outline', text: strings.tips[2] },
+    { icon: 'cellphone-off', text: strings.tips[3] },
+    { icon: 'timer-outline', text: strings.tips[4] },
+  ];
   const [devotionTime, setDevotionTime] = useState<Date>(() => {
     const d = new Date();
     d.setHours(7, 0, 0, 0);
     return d;
   });
   const [showPicker, setShowPicker] = useState(false);
+  const [readingBook, setReadingBook] = useState('');
+  const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [permissionLoading, setPermissionLoading] = useState(false);
+  const [notificationPermissionState, setNotificationPermissionState] =
+    useState<'allowed' | 'denied' | 'not_determined'>('not_determined');
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -81,7 +90,15 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
-  // Load saved devotion time from Supabase profiles table
+  const refreshNotificationPermission = useCallback(async () => {
+    try {
+      const nextState = await getNotificationPermissionState();
+      setNotificationPermissionState(nextState);
+    } catch {
+      setNotificationPermissionState('not_determined');
+    }
+  }, []);
+
   useEffect(() => {
     const load = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -90,21 +107,63 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
         setLoading(false);
         return;
       }
-      const { data } = await supabase
-        .from('profiles')
-        .select('devotion_time')
-        .eq('id', userId)
-        .single();
+      const { data } = await refreshProfileRecord(userId);
       if (data?.devotion_time) {
         const [h, m] = (data.devotion_time as string).split(':').map(Number);
         const d = new Date();
         d.setHours(h, m, 0, 0);
         setDevotionTime(d);
+      } else {
+        const d = new Date();
+        d.setHours(7, 0, 0, 0);
+        setDevotionTime(d);
+
+        await saveProfileRecord({
+          userId,
+          profile: {
+            devotion_time: '07:00',
+            updated_at: new Date().toISOString(),
+          },
+        });
+      }
+      if (data?.reading_book) {
+        setReadingBook(data.reading_book);
+        const matchedBook =
+          BIBLE_BOOKS.find(book => book.bookName === data.reading_book) ??
+          BIBLE_BOOKS[0];
+        setSelectedChapters(
+          Array.isArray((data as any).selected_chapters)
+            ? normalizeSelectedChapters(
+                (data as any).selected_chapters.map(Number),
+                matchedBook.chapters,
+              )
+            : chaptersFromLegacy(
+                (data as any).reading_chapter,
+                (data as any).daily_chapters_target,
+                matchedBook.chapters,
+              ),
+        );
       }
       setLoading(false);
     };
     load();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshNotificationPermission();
+    }, [refreshNotificationPermission]),
+  );
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') {
+        refreshNotificationPermission();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [refreshNotificationPermission]);
 
   const handleTimeChange = (event: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS === 'android') {
@@ -117,6 +176,66 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
       setDevotionTime(selected);
     }
   };
+
+  const selectedBookMeta = useMemo(
+    () => BIBLE_BOOKS.find(book => book.bookName === readingBook),
+    [readingBook],
+  );
+
+  const [selectedTestament, setSelectedTestament] = useState<Testament>('old');
+
+  useEffect(() => {
+    if (selectedBookMeta) {
+      setSelectedTestament(selectedBookMeta.testament);
+    }
+  }, [selectedBookMeta]);
+
+  const booksForTestament = useMemo(
+    () =>
+      selectedTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS,
+    [selectedTestament],
+  );
+
+  useEffect(() => {
+    if (readingBook && selectedBookMeta?.testament !== selectedTestament) {
+      setReadingBook('');
+      setSelectedChapters([]);
+    }
+  }, [selectedBookMeta, selectedTestament, readingBook]);
+
+  useEffect(() => {
+    const normalized = normalizeSelectedChapters(
+      selectedChapters,
+      selectedBookMeta?.chapters ?? 0,
+    );
+    if (
+      normalized.length !== selectedChapters.length ||
+      normalized.some((chapter, index) => chapter !== selectedChapters[index])
+    ) {
+      setSelectedChapters(normalized);
+    }
+  }, [selectedBookMeta, selectedChapters]);
+
+  const chapterOptions = useMemo(
+    () =>
+      Array.from(
+        { length: selectedBookMeta?.chapters ?? 0 },
+        (_, idx) => idx + 1,
+      ),
+    [selectedBookMeta],
+  );
+
+  const testamentOptions = useMemo(
+    () => [
+      {
+        key: 'old' as const,
+        label: strings.oldTestament,
+        icon: 'book-open-page-variant-outline',
+      },
+      { key: 'new' as const, label: strings.newTestament, icon: 'cross' },
+    ],
+    [strings.newTestament, strings.oldTestament],
+  );
 
   const handleSave = async () => {
     setSaving(true);
@@ -134,30 +253,70 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
       minutes,
     ).padStart(2, '0')}`;
 
-    // Upsert into profiles table
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({ id: userId, devotion_time: timeString }, { onConflict: 'id' });
+    const normalizedChapters = normalizeSelectedChapters(
+      selectedChapters,
+      selectedBookMeta?.chapters ?? 0,
+    );
 
-    if (error) {
-      showAlert('خطأ في الحفظ', error.message);
-    } else {
-      // Schedule the daily reminder notification
-      try {
-        await scheduleDailyDevotionReminder(hours, minutes);
-      } catch {
-        // Notification scheduling is best-effort; don't block saving on failure.
+    if (!readingBook || normalizedChapters.length === 0) {
+      showAlert(
+        strings.readingSelectionRequiredTitle,
+        strings.readingSelectionRequiredMessage,
+        undefined,
+        'warning',
+      );
+      setSaving(false);
+      return;
+    }
+
+    const result = await saveProfileRecord({
+      userId,
+      profile: {
+        devotion_time: timeString,
+        reading_book: readingBook,
+        reading_chapter: firstSelectedChapter(normalizedChapters),
+        daily_chapters_target: normalizedChapters.length || null,
+        selected_chapters: normalizedChapters,
+      },
+    });
+
+    try {
+      await scheduleDailyDevotionReminder(hours, minutes);
+    } catch {}
+
+    setSaved(true);
+    showAlert(
+      strings.saveSuccessTitle,
+      result.offline
+        ? strings.saveOfflineMessage(timeString)
+        : strings.saveSuccessMessage(timeString),
+      undefined,
+      'success',
+    );
+    setSaving(false);
+  };
+
+  const handlePermissionAction = async () => {
+    setPermissionLoading(true);
+    try {
+      if (notificationPermissionState === 'denied') {
+        await openAppNotificationSettings();
+        return;
       }
 
-      setSaved(true);
-      showAlert(
-        'تم الحفظ ✅',
-        `تم حفظ وقت تعبّدك: ${timeString}\nهنبعتلك تذكير كل يوم عشان ماتفوتش وقتك مع الله 🙏`,
-        undefined,
-        'success',
-      );
+      const allowed = await requestNotificationPermission();
+      if (!allowed) {
+        return;
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      await ensureDefaultDevotionTime(sessionData?.session?.user?.id, {
+        scheduleReminder: true,
+      });
+    } finally {
+      setPermissionLoading(false);
+      await refreshNotificationPermission();
     }
-    setSaving(false);
   };
 
   const timeDisplay = devotionTime.toLocaleTimeString('ar-EG', {
@@ -165,11 +324,6 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
     minute: '2-digit',
     hour12: true,
   });
-  const topInsetStyle = { height: insets.top };
-  const saveButtonStyle = saving ? styles.saveBtnDisabled : null;
-  const statusLabel = saved ? 'تم الحفظ' : 'جاهز للحفظ';
-  const timePeriodLabel =
-    devotionTime.getHours() < 12 ? 'بداية اليوم' : 'موعد مسائي';
 
   if (loading) {
     return (
@@ -182,78 +336,47 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <View style={[styles.topInset, topInsetStyle]} />
-
-      <View style={styles.header}>
-        {!isTab && (
-          <TouchableOpacity
+      <AppHeader
+        topInsetHeight={insets.top}
+        title={strings.title}
+        leading={
+          <AppHeaderAction
+            icon="arrow-right"
             onPress={() => navigation.goBack()}
-            style={styles.backBtn}
-          >
-            <MaterialCommunityIcons name="arrow-right" size={24} color="#FFF" />
-          </TouchableOpacity>
-        )}
-        {isTab && <View style={styles.headerSpacer} />}
-        <Text style={styles.headerTitle}>وقت التعبد اليومي</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+          />
+        }
+      />
 
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.heroCard}>
-          <View style={styles.heroGlow} />
-          <View style={styles.heroTopRow}>
-            <View style={styles.heroBadge}>
-              <MaterialCommunityIcons
-                name="bell-ring-outline"
-                size={16}
-                color={NAVY}
-              />
-              <Text style={styles.heroBadgeText}>تذكير يومي</Text>
-            </View>
-            <View style={styles.heroIconWrap}>
-              <MaterialCommunityIcons
-                name="book-heart-outline"
-                size={24}
-                color={GOLD}
-              />
-            </View>
-          </View>
+        <DailyNotificationsHero
+          strings={strings}
+          timeDisplay={timeDisplay}
+          onEditTime={() => setShowPicker(true)}
+        />
 
-          <Text style={styles.heroTitle}>
-            خصص لحظة ثابتة كل يوم لوقت هادئ مع الله
-          </Text>
-          <Text style={styles.heroSubtitle}>
-            اختر التوقيت الأنسب لك، وسنذكّرك يوميًا حتى يبقى وقت التعبد جزءًا
-            ثابتًا من يومك.
-          </Text>
-
-          <TouchableOpacity
-            style={styles.timePanel}
-            onPress={() => setShowPicker(true)}
-          >
-            <View style={styles.timePanelIcon}>
-              <MaterialCommunityIcons
-                name="clock-time-four-outline"
-                size={26}
-                color="#FFF"
-              />
-            </View>
-            <View style={styles.timePanelBody}>
-              <Text style={styles.timeLabel}>الوقت المختار</Text>
-              <Text style={styles.timeText}>{timeDisplay}</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+        {notificationPermissionState !== 'allowed' && (
+          <NotificationPermissionCard
+            title={strings.permissionNoticeTitle}
+            body={strings.permissionNoticeBody}
+            actionLabel={
+              notificationPermissionState === 'denied'
+                ? strings.permissionOpenSettings
+                : strings.permissionEnable
+            }
+            onPress={handlePermissionAction}
+            loading={permissionLoading}
+          />
+        )}
 
         {Platform.OS === 'ios' && (
           <View style={styles.pickerCard}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>تعديل الموعد</Text>
+              <Text style={styles.sectionTitle}>{strings.editTime}</Text>
               <Text style={styles.sectionSubtitle}>
-                حرّك المؤشر لاختيار الوقت المناسب
+                {strings.editTimeSubtitle}
               </Text>
             </View>
             <DateTimePicker
@@ -276,332 +399,39 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           />
         )}
 
-        <TouchableOpacity
-          style={[styles.saveBtn, saveButtonStyle]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <>
-              <MaterialCommunityIcons
-                name={saved ? 'check-bold' : 'content-save-outline'}
-                size={20}
-                color="#FFF"
-              />
-              <Text style={styles.saveBtnText}>حفظ الوقت</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        <DailyReadingPlanCard
+          strings={strings}
+          selectedTestament={selectedTestament}
+          testamentOptions={testamentOptions}
+          booksForTestament={booksForTestament}
+          readingBook={readingBook}
+          chapterOptions={chapterOptions}
+          selectedChapters={selectedChapters}
+          timeDisplay={timeDisplay}
+          saving={saving}
+          saved={saved}
+          canSaveReading={!!readingBook && selectedChapters.length > 0}
+          onSetTestament={setSelectedTestament}
+          onSetReadingBook={setReadingBook}
+          onToggleChapter={chapter =>
+            setSelectedChapters(current =>
+              toggleChapterSelection(
+                current,
+                chapter,
+                selectedBookMeta?.chapters ?? 0,
+              ),
+            )
+          }
+          onEditTime={() => setShowPicker(true)}
+          onSave={handleSave}
+        />
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>نصائح للتعبد الفعّال</Text>
-          <Text style={styles.sectionSubtitle}>
-            خطوات صغيرة تساعدك على الاستمرار كل يوم
-          </Text>
-        </View>
-        {TIPS.map((tip, i) => (
-          <View key={i} style={styles.tipCard}>
-            <View style={styles.tipBody}>
-              <Text style={styles.tipIndex}>0{i + 1}</Text>
-              <Text style={styles.tipText}>{tip.text}</Text>
-            </View>
-            <View style={styles.tipIconWrap}>
-              <MaterialCommunityIcons name={tip.icon} size={24} color={NAVY} />
-            </View>
-          </View>
-        ))}
+        <DailyTipsList strings={strings} tips={tips} />
       </ScrollView>
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: SKY },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  topInset: { backgroundColor: NAVY },
-  header: {
-    backgroundColor: NAVY,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 16,
-  },
-  backBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerSpacer: { width: 40 },
-  headerTitle: { color: '#FFF', fontSize: 19, fontWeight: '800' },
-
-  content: { padding: 18, paddingBottom: 40 },
-
-  heroCard: {
-    backgroundColor: NAVY,
-    borderRadius: 30,
-    padding: 22,
-    marginBottom: 18,
-    overflow: 'hidden',
-    shadowColor: NAVY,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    elevation: 8,
-  },
-  heroGlow: {
-    position: 'absolute',
-    top: -30,
-    left: -20,
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(201,168,76,0.14)',
-  },
-  heroTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-  },
-  heroBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: IVORY,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  heroBadgeText: {
-    color: NAVY,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  heroIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroTitle: {
-    color: '#FFF',
-    fontSize: 26,
-    fontWeight: '800',
-    lineHeight: 34,
-    textAlign: 'left',
-    marginBottom: 10,
-  },
-  heroSubtitle: {
-    color: 'rgba(255,255,255,0.72)',
-    fontSize: 14,
-    lineHeight: 23,
-    textAlign: 'left',
-    marginBottom: 18,
-  },
-  timePanel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    marginBottom: 16,
-  },
-  timePanelIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    backgroundColor: GOLD,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 14,
-  },
-  timePanelBody: {
-    flex: 1,
-  },
-  timeLabel: {
-    color: 'rgba(255,255,255,0.64)',
-    fontSize: 13,
-    marginBottom: 4,
-    textAlign: 'left',
-  },
-  editChip: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: IVORY,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timeText: {
-    color: '#FFF',
-    fontSize: 30,
-
-    fontWeight: '800',
-    textAlign: 'left',
-    letterSpacing: 0.2,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  metaCard: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 18,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-  },
-  metaValue: {
-    color: IVORY,
-    fontSize: 15,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  metaLabel: {
-    color: 'rgba(255,255,255,0.56)',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  pickerCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 24,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#0B1A33',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 18,
-    elevation: 3,
-  },
-  iosPicker: { alignSelf: 'center' },
-  quickActionCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 22,
-    padding: 16,
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#0B1A33',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 18,
-    elevation: 2,
-  },
-  quickActionIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
-    backgroundColor: '#EFF3F8',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
-  },
-  quickActionBody: {
-    flex: 1,
-  },
-  quickActionTitle: {
-    color: INK,
-    fontSize: 15,
-    fontWeight: '800',
-    textAlign: 'right',
-    marginBottom: 4,
-  },
-  quickActionText: {
-    color: SLATE,
-    fontSize: 13,
-    lineHeight: 20,
-    textAlign: 'right',
-  },
-
-  saveBtn: {
-    backgroundColor: GOLD,
-    borderRadius: 18,
-    paddingVertical: 18,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 28,
-    elevation: 5,
-    shadowColor: GOLD,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.28,
-    shadowRadius: 18,
-  },
-  saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
-
-  sectionHeader: {
-    textAlign: 'left',
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: NAVY,
-    textAlign: 'left',
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    color: SLATE,
-    fontSize: 13,
-    textAlign: 'left',
-  },
-  tipCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 22,
-    padding: 16,
-    flexDirection: 'row-reverse',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-    shadowColor: '#0B1A33',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.05,
-    shadowRadius: 18,
-    elevation: 2,
-  },
-  tipIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: '#F2F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  tipBody: {
-    flex: 1,
-  },
-  tipIndex: {
-    color: GOLD,
-    fontSize: 12,
-    fontWeight: '800',
-    marginBottom: 4,
-    textAlign: 'left',
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 14,
-    color: INK,
-    textAlign: 'left',
-    lineHeight: 24,
-  },
-});
 
 export default DailyNotificationsScreen;

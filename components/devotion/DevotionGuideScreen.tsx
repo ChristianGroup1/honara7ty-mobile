@@ -14,6 +14,8 @@ import {
 } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ARTICLES, CARD_ACCENTS } from './devotionData';
+import { getStrings } from '../../localization';
+import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 
 const NAVY = '#0A1124';
 const BG = '#F2F4F8';
@@ -21,36 +23,24 @@ const BG = '#F2F4F8';
 type Props = { navigation: any };
 
 const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
+  const strings = getStrings().devotion;
   const insets = useSafeAreaInsets();
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+      <AppHeader
+        topInsetHeight={insets.top}
+        title={strings.guide.title}
+        leading={
+          <AppHeaderAction
+            icon="arrow-right"
+            onPress={() => navigation.goBack()}
+            size={24}
+          />
+        }
+      />
 
-      {/* Add spacing for status bar */}
-      <View style={{ height: insets.top, backgroundColor: NAVY }} />
-
-      {/* ── Creative Header ── */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-        >
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>شرح الخلوة</Text>
-        {/* <TouchableOpacity
-                onPress={handleShareAll}
-                style={styles.shareHeaderBtn}
-              >
-                <MaterialCommunityIcons name="share-variant" size={22} color="#FFF" />
-              </TouchableOpacity> */}
-      </View>
-
-      {/* ── Decorative wave ── */}
-      {/* <View style={styles.wave} /> */}
-
-      {/* ── Articles List ── */}
       <ScrollView
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}

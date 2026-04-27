@@ -1,8 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  Image,
+  I18nManager,
   StatusBar,
   StyleSheet,
   Text,
@@ -13,476 +15,639 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
+import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermissionFlow';
 
-// ─── Responsive helpers ──────────────────────────────────────────────────────
-const { width: W, height: H } = Dimensions.get('window');
-const TOP_RATIO = 0.52;   // illustration panel = 52% of screen height
-const BOT_RATIO = 0.48;   // text panel        = 48% of screen height
+import { getStrings } from '../../localization';
+import type { OnboardingSlide } from '../../localization/modules/onboarding';
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+type Slide = OnboardingSlide;
+
+const WHITE = '#FFFFFF';
+const PAPER = '#FBFBFA';
+const TEXT = '#4F5562';
+const TITLE = '#3F4653';
+const SHADOW = '#9197A3';
+const MIST = '#D5DCE6';
 const NAVY = '#0A1124';
+const SHEET_HEIGHT = Math.max(SCREEN_HEIGHT * 0.34, 290);
 
-// Card overlap: how many px the white card climbs over the top panel
-const CARD_OVERLAP = W * 0.07;
-const CARD_RADIUS  = W * 0.07;   // rounded top corners of the white card
-const BTN_RADIUS   = W * 0.12;   // pill-shaped button
-
-// ─── Slide definitions ───────────────────────────────────────────────────────
-interface Slide {
-  key: string;
-  title?: string;
-  body?: string;
-  verse?: string;
-  verseRef?: string;
-}
-
-const SLIDES: Slide[] = [
+const THEMES = [
   {
-    key: '1',
-    body: 'اقرأ كتابك كل يوم، فيه قوة ليومك ونور لطريقك.',
-    verse: 'وُجِدَ كَلاَمُكَ فَأَكَلْتُهُ، فَكَانَ كَلاَمُكَ لِي\nلِلسُّرُورِ وَلِفَرَحِ قَلْبِي',
-    verseRef: 'إرميا 15 : 16',
+    background: '#0C1121',
+    accent: '#C9A84C',
+    secondary: 'rgba(255,255,255,0.16)',
+    icon: 'book-open-page-variant',
+    label: 'بداية هادئة',
+    intro: true,
   },
   {
-    key: '2',
-    title: 'مرحباً بك في تطبيق حفظ الآيات',
-    body: '"هنا نساعدك تفتح كتابك المقدس وتقرأ فيه كل يوم بانتظام، وفي وقت محدد يناسبك علشان تفضل ثابت في علاقتك مع كلمة الله."',
+    background: '#0C1121',
+    accent: '#76A9FA',
+    secondary: 'rgba(255,255,255,0.16)',
+    icon: 'headphones',
+    label: 'رسالة يومية',
+    intro: false,
   },
   {
-    key: '3',
-    title: 'خلّي البداية اليوم',
-    body: 'ابدأ من النهارده حدد وقت تقابل فيه مع الله وتتغذى فيه من كلمته الحيه ومتكسلش يلا بينا',
+    background: '#0C1121',
+    accent: '#7FD6B3',
+    secondary: 'rgba(255,255,255,0.16)',
+    icon: 'calendar',
+    label: 'ثبات عملي',
+    intro: false,
   },
-];
+] as const;
 
-const archRowStyle = {
-  flexDirection: 'row' as const,
-  alignItems: 'flex-end' as const,
-  gap: W * 0.035,
-};
-
-const groupIllustrationContainerStyle = {
-  width: W * 0.72,
-  height: W * 0.72,
-  alignItems: 'center' as const,
-  justifyContent: 'center' as const,
-};
-
-const groupGlowOuterStyle = {
-  position: 'absolute' as const,
-  width: W * 0.72,
-  height: W * 0.72,
-  borderRadius: (W * 0.72) / 2,
-  backgroundColor: 'rgba(255,255,255,0.04)',
-};
-
-const groupGlowInnerStyle = {
-  position: 'absolute' as const,
-  width: W * 0.72 * 0.65,
-  height: W * 0.72 * 0.65,
-  borderRadius: W * 0.72 * 0.325,
-  backgroundColor: 'rgba(255,255,255,0.07)',
-};
-
-const groupAccountsRowStyle = {
-  flexDirection: 'row' as const,
-  alignItems: 'flex-end' as const,
-  gap: W * 0.03,
-};
-
-const groupBottomRowStyle = {
-  flexDirection: 'row' as const,
-  gap: W * 0.06,
-};
-
-const bookIllustrationContainerStyle = {
-  width: W * 0.78,
-  height: W * 0.78,
-  alignItems: 'center' as const,
-  justifyContent: 'center' as const,
-};
-
-const bookGlowOuterStyle = {
-  position: 'absolute' as const,
-  width: W * 0.78,
-  height: W * 0.78,
-  borderRadius: (W * 0.78) / 2,
-  backgroundColor: 'rgba(255,255,255,0.04)',
-};
-
-const bookGlowMiddleStyle = {
-  position: 'absolute' as const,
-  width: W * 0.78 * 0.7,
-  height: W * 0.78 * 0.7,
-  borderRadius: W * 0.78 * 0.35,
-  backgroundColor: 'rgba(255,255,255,0.07)',
-};
-
-const bookGlowInnerStyle = {
-  position: 'absolute' as const,
-  width: W * 0.78 * 0.45,
-  height: W * 0.78 * 0.45,
-  borderRadius: W * 0.78 * 0.225,
-  backgroundColor: 'rgba(255,255,255,0.05)',
-};
-
-// ─── Slide illustrations ─────────────────────────────────────────────────────
-const ArchIllustration: React.FC = () => {
-  const archW  = W * 0.21;
-  const shortH = W * 0.52;
-  const tallH  = W * 0.68;
-  const radius = archW / 2;
-  const iconSz = Math.round(archW * 0.62);
-
-  const arch = (height: number, opacity: number) => ({
-    width: archW, height,
-    borderTopLeftRadius: radius, borderTopRightRadius: radius,
-    backgroundColor: `rgba(255,255,255,${opacity})`,
-    alignItems: 'center' as const, justifyContent: 'flex-end' as const,
-    paddingBottom: W * 0.04,
-  });
+const HeroArtwork = ({
+  icon,
+  accent,
+  secondary,
+  label,
+  index,
+}: {
+  icon: string;
+  accent: string;
+  secondary: string;
+  label: string;
+  index: number;
+}) => {
+  const cardRotation = index % 2 === 0 ? '-8deg' : '8deg';
+  const badgeRotation = index % 2 === 0 ? '10deg' : '-10deg';
+  const topBadgeRotation = index % 2 === 0 ? '-10deg' : '10deg';
 
   return (
-    <View style={archRowStyle}>
-      <View style={arch(shortH, 0.10)}>
-        <MaterialCommunityIcons name="human-female" size={iconSz} color="rgba(255,255,255,0.9)" />
+    <View style={styles.heroArtwork}>
+      <View style={styles.heroGlowLarge} />
+      <View
+        style={[styles.heroGlowSmall, { backgroundColor: accent + '33' }]}
+      />
+      <View style={styles.dotClusterTop} />
+      <View style={styles.ringTopRight} />
+      <View style={styles.ringBottomLeft} />
+      <View style={styles.heroPill}>
+        <MaterialCommunityIcons name={icon} size={16} color={accent} />
+        <Text style={styles.heroPillText}>{label}</Text>
       </View>
-      <View style={arch(tallH, 0.16)}>
-        <MaterialCommunityIcons name="book-open-page-variant" size={Math.round(iconSz * 1.15)} color="#FFFFFF" />
+
+      <View style={styles.photoShadow} />
+
+      <View style={[styles.photoCard]}>
+        <Image
+          source={require('../../assets/images/logo.png')}
+          style={styles.heroLogo}
+          resizeMode="contain"
+        />
       </View>
-      <View style={arch(shortH, 0.10)}>
-        <MaterialCommunityIcons name="human-male" size={iconSz} color="rgba(255,255,255,0.9)" />
+
+      <View
+        style={[
+          styles.heroBadge,
+          {
+            backgroundColor: accent,
+            transform: [{ rotate: badgeRotation }],
+          },
+        ]}
+      >
+        <MaterialCommunityIcons name={icon} size={26} color="#FFFFFF" />
       </View>
     </View>
   );
 };
 
-const GroupIllustration: React.FC = () => {
-  const big  = Math.round(W * 0.22);
-  const med  = Math.round(W * 0.16);
-  const sm   = Math.round(W * 0.13);
-
-  return (
-    <View style={groupIllustrationContainerStyle}>
-      <View style={groupGlowOuterStyle} />
-      <View style={groupGlowInnerStyle} />
-      <View style={groupAccountsRowStyle}>
-        <MaterialCommunityIcons name="account" size={med} color="rgba(255,255,255,0.65)" />
-        <MaterialCommunityIcons name="account" size={big} color="#FFFFFF" />
-        <MaterialCommunityIcons name="account" size={med} color="rgba(255,255,255,0.65)" />
-      </View>
-      <MaterialCommunityIcons name="book-open-variant" size={big} color="#F9C74F" />
-      <View style={groupBottomRowStyle}>
-        <MaterialCommunityIcons name="account" size={sm} color="rgba(255,255,255,0.55)" />
-        <MaterialCommunityIcons name="account" size={sm} color="rgba(255,255,255,0.55)" />
-        <MaterialCommunityIcons name="account" size={sm} color="rgba(255,255,255,0.55)" />
-      </View>
-    </View>
-  );
+type Props = {
+  navigation: any;
+  route?: {
+    params?: {
+      inApp?: boolean;
+    };
+  };
 };
 
-const BookIllustration: React.FC = () => {
-  const bookSz = Math.round(W * 0.5);
-
-  return (
-    <View style={bookIllustrationContainerStyle}>
-      <View style={bookGlowOuterStyle} />
-      <View style={bookGlowMiddleStyle} />
-      <View style={bookGlowInnerStyle} />
-      <MaterialCommunityIcons name="book-open-page-variant" size={bookSz} color="#FFFFFF" />
-    </View>
-  );
-};
-
-const ILLUSTRATIONS: Record<string, React.FC> = {
-  '1': ArchIllustration,
-  '2': GroupIllustration,
-  '3': BookIllustration,
-};
-
-type Props = { navigation: any };
-
-const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
+const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
+  const strings = getStrings().onboarding;
+  const slides = strings.slides;
   const insets = useSafeAreaInsets();
+  const listRef = useRef<FlatList<Slide>>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [finishing, setFinishing] = useState(false);
-  const listRef = useRef<FlatList<Slide>>(null);
+  const inApp = route?.params?.inApp === true;
+
+  useEffect(() => {
+    const currentSlide = slides[currentIndex];
+    if (!currentSlide) {
+      return;
+    }
+  }, [currentIndex, slides]);
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems.length > 0 && viewableItems[0].index != null) {
-        setCurrentIndex(viewableItems[0].index);
+      const nextIndex = viewableItems[0]?.index;
+      if (typeof nextIndex === 'number') {
+        setCurrentIndex(nextIndex);
       }
     },
   ).current;
 
-  const goTo = (idx: number) => {
-    listRef.current?.scrollToIndex({ index: idx, animated: true });
+  const goTo = (index: number) => {
+    setCurrentIndex(index);
+    listRef.current?.scrollToIndex({ index, animated: true });
   };
 
-  const goPrev = () => {
-    if (currentIndex > 0) { goTo(currentIndex - 1); }
-  };
-  const goNext = () => {
-    if (currentIndex < SLIDES.length - 1) {
-      goTo(currentIndex + 1);
-    } else {
-      handleFinish();
-    }
-  };
+  const getItemLayout = (
+    _data: ArrayLike<Slide> | null | undefined,
+    index: number,
+  ) => ({
+    length: SCREEN_WIDTH,
+    offset: SCREEN_WIDTH * index,
+    index,
+  });
 
   const handleFinish = async () => {
-    setFinishing(true);
-    try {
-      await supabase.auth.updateUser({ data: { onboarding_completed: true } });
-    } catch (err) {
-      if (__DEV__) {
-        console.warn('[Onboarding] updateUser error:', err);
-      }
-    } finally {
-      setFinishing(false);
-      navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+    if (inApp) {
+      navigation.goBack();
+      return;
     }
+
+    setFinishing(true);
+
+    const { data } = await supabase.auth.getSession();
+    const userId = data?.session?.user?.id;
+    const seenPermissionPrompt = await hasSeenNotificationPermissionPrompt(
+      userId,
+    );
+    const nextRoute = seenPermissionPrompt
+      ? 'MainTabs'
+      : 'NotificationPermission';
+
+    if (__DEV__) {
+      console.warn('[Onboarding] finish routing', {
+        userId: userId ?? null,
+        seenPermissionPrompt,
+        nextRoute,
+      });
+    }
+
+    setFinishing(false);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: nextRoute }],
+    });
   };
 
-  const isFirst = currentIndex === 0;
-  const isLast  = currentIndex === SLIDES.length - 1;
-
-  // Heights – clamp so nothing breaks on very small screens
-  const topH = Math.max(H * TOP_RATIO, 200);
-  const botH = Math.max(H * BOT_RATIO, 220);
-  const rootStyle = { paddingTop: insets.top };
-  const footerStyle = {
-    paddingBottom: Math.max(insets.bottom, 16),
-    backgroundColor: '#FFFFFF',
+  const goNext = () => {
+    if (currentIndex < slides.length - 1) {
+      goTo(currentIndex + 1);
+      return;
+    }
+    handleFinish();
   };
 
-  const renderSlide = ({ item }: { item: Slide }) => {
-    const Illustration = ILLUSTRATIONS[item.key];
-    const slideWidthStyle = { width: W };
-    const topPanelStyle = { height: topH, backgroundColor: NAVY };
-    const cardStyle = { minHeight: botH };
+  const skipToLast = () => {
+    if (currentIndex === slides.length - 1) {
+      handleFinish();
+      return;
+    }
+    goTo(slides.length - 1);
+  };
+
+  const renderSlide = ({ item, index }: { item: Slide; index: number }) => {
+    const theme = THEMES[index % THEMES.length];
+    const isIntro = theme.intro === true;
 
     return (
-      <View style={slideWidthStyle}>
-        {/* ── Top illustration panel ── */}
-        <View style={[styles.topPanel, topPanelStyle]}>
-          {Illustration ? <Illustration /> : null}
+      <View style={[styles.slide, { backgroundColor: theme.background }]}>
+        <View
+          style={[
+            styles.topArea,
+            {
+              paddingTop: insets.top + 10,
+              paddingBottom: SHEET_HEIGHT - 26,
+            },
+          ]}
+        >
+          <HeroArtwork
+            icon={theme.icon}
+            accent={theme.accent}
+            secondary={theme.secondary}
+            label={theme.label}
+            index={index}
+          />
         </View>
 
-        {/* ── Bottom text card ── */}
-        <View style={[styles.card, cardStyle]}>
-          {/* Title (optional) */}
-          {item.title ? (
-            <Text style={styles.slideTitle}>{item.title}</Text>
-          ) : null}
-
-          {/* Body */}
-          {item.body ? (
-            <Text style={[
-              styles.slideBody,
-              !item.title && !item.verse && styles.slideBodyLarge,
-            ]}>
-              {item.body}
-            </Text>
-          ) : null}
-
-          {/* Verse block */}
-          {item.verse ? (
-            <View style={styles.verseBlock}>
-              <Text style={styles.verseText}>{item.verse}</Text>
-              <Text style={styles.verseRef}>{item.verseRef}</Text>
+        <View
+          style={[
+            styles.bottomCard,
+            {
+              paddingBottom: Math.max(insets.bottom, 18) + 10,
+            },
+          ]}
+        >
+          <View style={styles.contentBlock}>
+            <View style={styles.dotsRow}>
+              {slides.map((_, dotIndex) => (
+                <View
+                  key={dotIndex}
+                  style={[
+                    styles.dot,
+                    dotIndex === currentIndex
+                      ? [styles.dotActive, { backgroundColor: theme.accent }]
+                      : null,
+                  ]}
+                />
+              ))}
             </View>
-          ) : null}
+
+            {item.title ? <Text style={styles.title}>{item.title}</Text> : null}
+
+            {item.body ? (
+              <Text style={[styles.body, !item.title ? styles.bodyLead : null]}>
+                {item.body}
+              </Text>
+            ) : null}
+
+            {item.verse ? (
+              <View style={styles.verseWrap}>
+                <Text style={styles.verseText}>{item.verse}</Text>
+                <Text style={styles.verseRef}>{item.verseRef}</Text>
+              </View>
+            ) : null}
+          </View>
+
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              onPress={skipToLast}
+              disabled={finishing}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.skipText}>{strings.skip}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.nextButton, { backgroundColor: theme.accent }]}
+              onPress={goNext}
+              disabled={finishing}
+              activeOpacity={0.88}
+            >
+              {finishing ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <MaterialCommunityIcons
+                  name={
+                    currentIndex === slides.length - 1 ? 'check' : 'arrow-left'
+                  }
+                  size={22}
+                  color="#FFFFFF"
+                />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
   };
 
   return (
-    <View style={[styles.root, rootStyle]}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <View style={styles.root}>
+      <StatusBar
+        barStyle={'light-content'}
+        translucent
+        backgroundColor="transparent"
+      />
 
-      {/* ── Horizontal slides ── */}
       <FlatList
         ref={listRef}
-        data={SLIDES}
+        data={slides}
         renderItem={renderSlide}
         keyExtractor={item => item.key}
+        getItemLayout={getItemLayout}
         horizontal
         pagingEnabled
+        bounces={false}
         showsHorizontalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
-        scrollEventThrottle={16}
+        viewabilityConfig={{ viewAreaCoveragePercentThreshold: 60 }}
+        initialNumToRender={1}
+        maxToRenderPerBatch={2}
+        windowSize={3}
         scrollEnabled={!finishing}
       />
 
-      {/* ── Footer (dots + buttons) ── */}
-      <View style={[styles.footer, footerStyle]}>
-        {/* Dots */}
-        <View style={styles.dotsRow}>
-          {SLIDES.map((_, i) => (
-            <View key={i} style={[styles.dot, i === currentIndex && styles.dotActive]} />
-          ))}
-        </View>
-
-        {/* Buttons */}
-        {isLast ? (
-          // Last slide: single full-width start button
+      {inApp ? (
+        <View
+          style={[styles.backButtonWrap, { top: insets.top + 18, left: 16 }]}
+        >
           <TouchableOpacity
-            style={[styles.startBtn, finishing && styles.btnDisabled]}
-            onPress={handleFinish}
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
             activeOpacity={0.85}
-            disabled={finishing}
           >
-            {finishing
-              ? <ActivityIndicator color="#FFF" />
-              : <Text style={styles.startBtnText}>ابدأ معنا!</Text>}
+            <MaterialCommunityIcons
+              name={I18nManager.isRTL ? 'arrow-right' : 'arrow-left'}
+              size={22}
+              color={'#fff'}
+            />
           </TouchableOpacity>
-        ) : (
-          // Other slides: Previous (right) + Next (left) — RTL
-          <View style={styles.navRow}>
-            {/* Previous — right side in RTL */}
-            <TouchableOpacity
-              style={[styles.navBtn, isFirst && styles.navBtnHidden]}
-              onPress={goPrev}
-              disabled={isFirst}
-            >
-              <Text style={styles.navBtnText}>← سابق</Text>
-            </TouchableOpacity>
-
-            {/* Next — left side in RTL */}
-            <TouchableOpacity style={styles.navBtn} onPress={goNext}>
-              <Text style={styles.navBtnText}>لاحق →</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+        </View>
+      ) : null}
     </View>
   );
 };
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#FFFFFF' },
+  root: {
+    flex: 1,
+    backgroundColor: PAPER,
+  },
+  backButtonWrap: {
+    position: 'absolute',
+    zIndex: 120,
+    elevation: 30,
+    left: 16,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
 
-  /* top illustration */
-  topPanel: {
-    width: W,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  /* white card */
-  card: {
-    width: W,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: CARD_RADIUS,
-    borderTopRightRadius: CARD_RADIUS,
-    marginTop: -CARD_OVERLAP,   // overlap the top panel slightly
-    paddingHorizontal: W * 0.06,
-    paddingTop: W * 0.07,
-    paddingBottom: 8,
+  slide: {
+    width: SCREEN_WIDTH,
+    minHeight: SCREEN_HEIGHT,
+    overflow: 'hidden',
+  },
+  topArea: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-
-  slideTitle: {
-    fontSize: Math.max(W * 0.055, 20),
-    fontWeight: 'bold',
-    color: '#111',
-    textAlign: 'center',
-    marginBottom: W * 0.04,
+  timeText: {
+    color: '#111111',
+    fontSize: 16,
+    fontWeight: '800',
   },
-  slideBody: {
-    fontSize: Math.max(W * 0.042, 15),
-    color: '#333',
-    textAlign: 'center',
-    lineHeight: Math.max(W * 0.07, 26),
-  },
-  slideBodyLarge: {
-    fontSize: Math.max(W * 0.05, 18),
-    color: '#888',
-    fontWeight: '500',
-  },
-
-  verseBlock: {
-    marginTop: W * 0.05,
+  statusIcons: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 2,
   },
-  verseText: {
-    fontSize: Math.max(W * 0.048, 17),
-    fontWeight: 'bold',
-    color: '#111',
-    textAlign: 'center',
-    lineHeight: Math.max(W * 0.075, 28),
+  introArtwork: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  verseRef: {
-    marginTop: 8,
-    fontSize: Math.max(W * 0.038, 14),
-    color: '#777',
-    textAlign: 'center',
+  introLogo: {
+    width: SCREEN_WIDTH * 0.46,
+    height: SCREEN_WIDTH * 0.46,
   },
-
-  /* footer */
-  footer: {
-    backgroundColor: '#FFF',
-    paddingTop: 12,
-    paddingHorizontal: W * 0.05,
+  heroArtwork: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroGlowLarge: {
+    position: 'absolute',
+    top: SCREEN_HEIGHT * 0.08,
+    alignSelf: 'center',
+    width: SCREEN_WIDTH * 0.62,
+    height: SCREEN_WIDTH * 0.62,
+    borderRadius: SCREEN_WIDTH * 0.31,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  heroGlowSmall: {
+    position: 'absolute',
+    top: SCREEN_HEIGHT * 0.2,
+    right: SCREEN_WIDTH * 0.16,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+  },
+  dotClusterTop: {
+    position: 'absolute',
+    top: SCREEN_HEIGHT * 0.12,
+    left: SCREEN_WIDTH * 0.14,
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  ringTopRight: {
+    position: 'absolute',
+    top: SCREEN_HEIGHT * 0.06,
+    right: -SCREEN_WIDTH * 0.08,
+    width: SCREEN_WIDTH * 0.26,
+    height: SCREEN_WIDTH * 0.26,
+    borderRadius: SCREEN_WIDTH * 0.13,
+    borderWidth: 14,
+    borderColor: WHITE,
+    backgroundColor: 'transparent',
+  },
+  ringBottomLeft: {
+    position: 'absolute',
+    bottom: SCREEN_HEIGHT * 0.04,
+    left: -SCREEN_WIDTH * 0.09,
+    width: SCREEN_WIDTH * 0.24,
+    height: SCREEN_WIDTH * 0.24,
+    borderRadius: SCREEN_WIDTH * 0.12,
+    borderWidth: 12,
+    borderColor: WHITE,
+    backgroundColor: 'transparent',
+  },
+  photoShadow: {
+    position: 'absolute',
+    bottom: SCREEN_HEIGHT * 0.09,
+    width: SCREEN_WIDTH * 0.42,
+    height: 28,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+  },
+  photoCard: {
+    width: SCREEN_WIDTH * 0.44,
+    height: SCREEN_WIDTH * 0.44,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.24,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  photoCardInner: {
+    position: 'absolute',
+    inset: 14,
+    borderRadius: 22,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  heroLogo: {
+    width: SCREEN_WIDTH * 0.3,
+    height: SCREEN_WIDTH * 0.3,
+  },
+  heroPill: {
+    position: 'absolute',
+    top: SCREEN_HEIGHT * 0.12,
+    left: SCREEN_WIDTH * 0.05,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.94)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  heroPillText: {
+    color: NAVY,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  heroBadge: {
+    position: 'absolute',
+    right: SCREEN_WIDTH * 0.11,
+    top: SCREEN_HEIGHT * 0.46,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 7,
+  },
+  heroBadgeTop: {
+    position: 'absolute',
+    right: SCREEN_WIDTH * 0.65,
+    top: SCREEN_HEIGHT * 0.12,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 7,
+  },
+  bottomCard: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: SHEET_HEIGHT,
+    backgroundColor: WHITE,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 26,
+    paddingTop: 18,
+    paddingBottom: 22,
+    justifyContent: 'space-between',
+    shadowColor: SHADOW,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  contentBlock: {
+    flexShrink: 1,
   },
   dotsRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
-    backgroundColor: '#D0D0D0',
+    borderRadius: 999,
+    backgroundColor: MIST,
   },
   dotActive: {
-    width: 24,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: NAVY,
+    width: 28,
   },
-
-  /* two-button nav row */
-  navRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
+  title: {
+    color: TITLE,
+    textAlign: 'center',
+    fontSize: 22,
+    lineHeight: 29,
+    fontWeight: '900',
+    marginBottom: 10,
   },
-  navBtn: {
-    backgroundColor: NAVY,
-    borderRadius: BTN_RADIUS,
-    paddingVertical: Math.max(H * 0.018, 13),
-    paddingHorizontal: W * 0.1,
-    minWidth: W * 0.35,
-    alignItems: 'center',
-  },
-  navBtnHidden: { opacity: 0 },
-  navBtnText: {
-    color: '#FFF',
-    fontSize: Math.max(W * 0.04, 15),
+  body: {
+    color: TEXT,
+    textAlign: 'left',
+    fontSize: 17,
+    lineHeight: 27,
     fontWeight: '600',
   },
-
-  /* last slide — full width start button */
-  startBtn: {
-    backgroundColor: NAVY,
-    borderRadius: BTN_RADIUS,
-    paddingVertical: Math.max(H * 0.02, 14),
+  bodyLead: {
+    textAlign: 'center',
+    fontSize: 20,
+    lineHeight: 31,
+    color: TITLE,
+    fontWeight: '800',
+  },
+  verseWrap: {
+    marginTop: 16,
+  },
+  verseText: {
+    color: TITLE,
+    textAlign: 'left',
+    fontSize: 16,
+    lineHeight: 26,
+    fontWeight: '700',
+  },
+  verseRef: {
+    marginTop: 8,
+    color: TEXT,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  actionRow: {
+    marginTop: 24,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    justifyContent: 'space-between',
   },
-  startBtnText: {
-    color: '#FFF',
-    fontSize: Math.max(W * 0.045, 16),
-    fontWeight: 'bold',
+  skipText: {
+    color: TITLE,
+    fontSize: 16,
+    fontWeight: '700',
   },
-  btnDisabled: { opacity: 0.6 },
+  nextButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 7,
+  },
 });
 
 export default OnboardingScreen;

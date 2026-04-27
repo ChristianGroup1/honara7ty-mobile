@@ -1,19 +1,108 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- White monochrome notification icon — a simple cross shape -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
 
-  <!-- Vertical bar of the cross -->
-  <path
-      android:fillColor="#FFFFFF"
-      android:pathData="M10,2 L14,2 L14,22 L10,22 Z"/>
+    <!-- Background transparent -->
 
-  <!-- Horizontal bar of the cross -->
-  <path
-      android:fillColor="#FFFFFF"
-      android:pathData="M2,8 L22,8 L22,12 L2,12 Z"/>
+    <!-- Location pin -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="
+            M54,12
+            C43,12 34,21 34,32
+            C34,47 48,55 54,68
+            C60,55 74,47 74,32
+            C74,21 65,12 54,12 Z" />
+
+    <!-- Inner white circle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="
+            M54,21
+            A11,11 0 1,1 53.9,21 Z" />
+
+    <!-- Cross -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="
+            M52,26
+            L56,26
+            L56,33
+            L63,33
+            L63,37
+            L56,37
+            L56,50
+            L52,50
+            L52,37
+            L45,37
+            L45,33
+            L52,33 Z" />
+
+    <!-- Book left pages -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="
+            M18,66
+            C24,61 31,60 39,61
+            C45,62 50,65 54,70
+            L54,92
+            C49,86 43,82 36,80
+            C30,78 24,78 18,81 Z" />
+
+    <!-- Book right pages -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="
+            M90,66
+            C84,61 77,60 69,61
+            C63,62 58,65 54,70
+            L54,92
+            C59,86 65,82 72,80
+            C78,78 84,78 90,81 Z" />
+
+    <!-- Center fold -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="
+            M53,69
+            L55,69
+            L55,92
+            L53,92 Z" />
+
+    <!-- Left page lines -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:fillColor="#00000000"
+        android:pathData="M24,70 C31,67 39,68 47,72" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:fillColor="#00000000"
+        android:pathData="M23,75 C31,72 40,73 48,77" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:fillColor="#00000000"
+        android:pathData="M22,80 C30,77 39,78 47,82" />
+
+    <!-- Right page lines -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:fillColor="#00000000"
+        android:pathData="M61,72 C69,68 77,67 84,70" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:fillColor="#00000000"
+        android:pathData="M60,77 C68,73 77,72 85,75" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:fillColor="#00000000"
+        android:pathData="M61,82 C69,78 78,77 86,80" />
 
 </vector>

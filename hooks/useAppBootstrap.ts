@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Linking } from 'react-native';
-import { handleRecoveryUrl } from '../lib/deepLinking';
+import { handleOAuthCallbackUrl, handleRecoveryUrl } from '../lib/deepLinking';
 import { navigationRef } from '../navigation/navigationRef';
 import supabase from '../lib/supbase';
+import { syncDevotionReminderSchedule } from '../lib/devotionReminder';
+import { BOOTSTRAP_TIMEOUT_MS, withTimeout } from '../lib/withTimeout';
+import { clearClarityUser, setClarityUser } from '../lib/clarity';
+import { clearSentryUser, setSentryUser } from '../lib/sentry';
 
 export function useAppBootstrap() {
   const [showSplash, setShowSplash] = useState(true);
@@ -12,44 +16,158 @@ export function useAppBootstrap() {
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
-    const checkSession = async () => {
-      const initialUrl = await Linking.getInitialURL();
-      const { isRecovery, isValid } = await handleRecoveryUrl(initialUrl);
+    let isMounted = true;
+    let splashTimeout: ReturnType<typeof setTimeout> | undefined;
 
-      if (isRecovery) {
-        setIsRecoveryMode(true);
-        setRecoveryLinkValid(isValid);
-        setTimeout(() => setShowSplash(false), 800);
+    const hideSplashAfter = (delayMs: number) => {
+      if (splashTimeout) {
+        clearTimeout(splashTimeout);
+      }
+
+      splashTimeout = setTimeout(() => {
+        if (isMounted) {
+          setShowSplash(false);
+        }
+      }, delayMs);
+    };
+
+    const applySessionState = (session: any) => {
+      const onboardingDone =
+        session?.user?.user_metadata?.onboarding_completed === true;
+
+      if (!isMounted) {
         return;
       }
 
-      const { data } = await supabase.auth.getSession();
-
-      if (data?.session) {
-        const onboardingDone =
-          data.session.user?.user_metadata?.onboarding_completed === true;
-
-        if (onboardingDone) {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(true);
-          setNeedsOnboarding(true);
-        }
-      }
-
-      setTimeout(() => setShowSplash(false), 2000);
+      setIsLoggedIn(Boolean(session));
+      setNeedsOnboarding(Boolean(session) && !onboardingDone);
+      setIsRecoveryMode(false);
+      setRecoveryLinkValid(true);
     };
+
+    const syncReminderScheduleSafely = (userId?: string | null) => {
+      void syncDevotionReminderSchedule(userId).catch(error => {
+        console.warn('Failed to sync devotion reminder schedule', error);
+      });
+    };
+
+    const checkSession = async () => {
+      try {
+        const initialUrl = await withTimeout<string | null>(
+          Linking.getInitialURL(),
+          BOOTSTRAP_TIMEOUT_MS,
+          null,
+          'Linking.getInitialURL',
+        );
+        const didHandleOAuthCallback = await withTimeout(
+          handleOAuthCallbackUrl(initialUrl),
+          BOOTSTRAP_TIMEOUT_MS,
+          false,
+          'handleOAuthCallbackUrl',
+        );
+        if (didHandleOAuthCallback) {
+          const { data } = await withTimeout(
+            supabase.auth.getSession(),
+            BOOTSTRAP_TIMEOUT_MS,
+            { data: { session: null }, error: null },
+            'supabase.auth.getSession',
+          );
+
+          applySessionState(data?.session ?? null);
+
+          if (data?.session) {
+            syncReminderScheduleSafely(data.session.user?.id);
+            setClarityUser(data.session.user.id);
+            setSentryUser({
+              id: data.session.user.id,
+              email: data.session.user.email ?? null,
+            });
+          }
+          hideSplashAfter(800);
+          return;
+        }
+        const { isRecovery, isValid } = await withTimeout(
+          handleRecoveryUrl(initialUrl),
+          BOOTSTRAP_TIMEOUT_MS,
+          { isRecovery: false, isValid: false },
+          'handleRecoveryUrl',
+        );
+
+        if (isRecovery) {
+          if (isMounted) {
+            setIsRecoveryMode(true);
+            setRecoveryLinkValid(isValid);
+          }
+          hideSplashAfter(800);
+          return;
+        }
+
+        const { data } = await withTimeout(
+          supabase.auth.getSession(),
+          BOOTSTRAP_TIMEOUT_MS,
+          { data: { session: null }, error: null },
+          'supabase.auth.getSession',
+        );
+
+        applySessionState(data?.session ?? null);
+
+        if (data?.session) {
+          syncReminderScheduleSafely(data.session.user?.id);
+          setClarityUser(data.session.user.id);
+          setSentryUser({
+            id: data.session.user.id,
+            email: data.session.user.email ?? null,
+          });
+        }
+      } catch (error) {
+        console.warn('Bootstrap session check failed', error);
+        applySessionState(null);
+        clearClarityUser();
+        clearSentryUser();
+      } finally {
+        hideSplashAfter(1200);
+      }
+    };
+
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      applySessionState(session);
+      syncReminderScheduleSafely(session?.user?.id);
+      if (session?.user?.id) {
+        setClarityUser(session.user.id);
+        setSentryUser({
+          id: session.user.id,
+          email: session.user.email ?? null,
+        });
+      } else {
+        clearClarityUser();
+        clearSentryUser();
+      }
+    });
 
     checkSession();
 
     const sub = Linking.addEventListener('url', async ({ url }) => {
+      const didHandleOAuthCallback = await handleOAuthCallbackUrl(url);
+      if (didHandleOAuthCallback) {
+        return;
+      }
+
       const { isRecovery, isValid } = await handleRecoveryUrl(url);
       if (isRecovery && navigationRef.isReady()) {
         navigationRef.navigate('ResetPassword', { linkValid: isValid });
       }
     });
 
-    return () => sub.remove();
+    return () => {
+      isMounted = false;
+      if (splashTimeout) {
+        clearTimeout(splashTimeout);
+      }
+      sub.remove();
+      authSubscription.unsubscribe();
+    };
   }, []);
 
   return {

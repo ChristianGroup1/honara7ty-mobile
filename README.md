@@ -43,6 +43,71 @@ URL is found.
 
 ---
 
+# Sentry Configuration
+
+Sentry is initialized from `lib/sentry.ts`.
+
+To enable it, add these values to `.env` and rebuild the native app:
+
+```env
+SENTRY_DSN=your-sentry-dsn
+SENTRY_ENVIRONMENT=development
+```
+
+The current setup enables:
+
+- runtime error reporting
+- React Navigation performance tracing
+- screen breadcrumbs and current-screen tagging
+- active user identity via `Sentry.setUser(...)`
+- Mobile Replay with low production sampling
+- Metro support for better stack traces and source maps
+
+Native release artifact upload is not configured yet. That requires Sentry auth and project
+settings at build time.
+
+---
+
+# Clarity Configuration
+
+Clarity is initialized from `lib/clarity.ts` with project ID `wgoxraerys`.
+
+The current setup:
+
+- starts Clarity once on app launch
+- sets the current Clarity screen name from React Navigation route changes
+- sets Clarity `customUserId` from the signed-in Supabase user
+
+Clarity itself does not add a new runtime permission popup for this app. I verified the current
+native setup does not add camera, microphone, or location permissions for Clarity.
+
+Note: this app already has its own notification permission flow, and iOS already contains an
+`NSLocationWhenInUseUsageDescription` entry unrelated to Clarity.
+
+Because Clarity uses native code, you need a fresh native build after installing it.
+
+---
+
+# Release Checklist
+
+Before publishing a build with Sentry and Clarity enabled:
+
+1. Build a fresh native release. JS reload is not enough for Clarity.
+2. Verify Sentry is sending events from the production build.
+3. Verify Clarity initializes on a production-like device build and that recordings appear after processing time.
+4. Update your privacy policy to disclose session replay / analytics collection.
+5. Complete Google Play Data safety entries for analytics/session replay data collection as applicable to your app.
+6. Complete App Store privacy disclosures to match the data your app collects and links to users.
+7. Review Clarity masking/privacy settings in the Clarity dashboard before rollout.
+8. Sanity-check that no new permission popup was introduced by Clarity. For this repo, none was added by the Clarity integration itself.
+
+Operational note:
+
+- Clarity recordings can take up to about 2 hours to become available.
+- Clarity should work in published builds without adding a new OS permission dialog.
+
+---
+
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.

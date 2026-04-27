@@ -14,9 +14,19 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   sect          TEXT,
   birth_date    TEXT,                   -- stored as "YYYY-MM-DD" string
   gender        TEXT,
-  devotion_time TEXT,                   -- stored as "HH:MM" string (e.g. "07:30")
+  devotion_time TEXT DEFAULT '07:00',   -- stored as "HH:MM" string (e.g. "07:30")
+  reading_book  TEXT,
+  reading_chapter INT,
+  daily_chapters_target INT DEFAULT 1,
+  selected_chapters INT[],
   updated_at    TIMESTAMPTZ DEFAULT now()
 );
+
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS selected_chapters INT[];
+
+ALTER TABLE public.profiles
+  ALTER COLUMN devotion_time SET DEFAULT '07:00';
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
@@ -136,10 +146,17 @@ CREATE TABLE IF NOT EXISTS public.devotion_log (
   user_id    UUID    NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
   date       DATE    NOT NULL,   -- YYYY-MM-DD (local date of answer)
   completed  BOOLEAN NOT NULL DEFAULT true,
+  reading_book TEXT,
+  reading_chapter INT,
+  chapters_read INT,
+  selected_chapters INT[],
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
   PRIMARY KEY (user_id, date)
 );
+
+ALTER TABLE public.devotion_log
+  ADD COLUMN IF NOT EXISTS selected_chapters INT[];
 
 ALTER TABLE public.devotion_log ENABLE ROW LEVEL SECURITY;
 

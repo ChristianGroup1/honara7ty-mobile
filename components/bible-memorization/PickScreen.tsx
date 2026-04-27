@@ -26,6 +26,7 @@ import {
   VerseSelectionMode,
 } from './types';
 import { DIFFICULTY_LEVELS } from './utils';
+import { getStrings } from '../../localization';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Pick'>;
 type PickerType = 'chapter' | 'verseStart' | 'verseEnd' | null;
@@ -35,6 +36,7 @@ interface VerseOption {
 }
 
 const PickScreen = ({ navigation }: Props) => {
+  const strings = getStrings().bibleMemorization.pick;
   const { width } = useWindowDimensions();
   const isCompactWidth = width < 360;
   const bookCardWidth = isCompactWidth ? width * 0.42 : width * 0.36;
@@ -101,11 +103,13 @@ const PickScreen = ({ navigation }: Props) => {
   const pickerTitle = useMemo(() => {
     switch (activePicker) {
       case 'chapter':
-        return 'اختر الإصحاح';
+        return strings.pickerTitles.chapter;
       case 'verseStart':
-        return verseMode === 'single' ? 'اختر العدد' : 'من عدد';
+        return verseMode === 'single'
+          ? strings.pickerTitles.singleVerse
+          : strings.pickerTitles.fromVerse;
       case 'verseEnd':
-        return 'إلى عدد';
+        return strings.pickerTitles.toVerse;
       default:
         return '';
     }
@@ -171,7 +175,12 @@ const PickScreen = ({ navigation }: Props) => {
 
   const startMemorization = () => {
     if (!selectedBook || !selectedChapterData) {
-      showAlert('تنبيه', 'اختر السفر والإصحاح أولاً.', undefined, 'warning');
+      showAlert(
+        strings.alerts.title,
+        strings.alerts.selectBookAndChapter,
+        undefined,
+        'warning',
+      );
       return;
     }
 
@@ -180,8 +189,8 @@ const PickScreen = ({ navigation }: Props) => {
 
     if (end < start) {
       showAlert(
-        'تنبيه',
-        'آخر عدد يجب أن يكون بعد أول عدد.',
+        strings.alerts.title,
+        strings.alerts.invalidVerseRange,
         undefined,
         'warning',
       );
@@ -195,8 +204,8 @@ const PickScreen = ({ navigation }: Props) => {
 
     if (selectedTexts.length === 0) {
       showAlert(
-        'تنبيه',
-        'لم يتم العثور على الأعداد المطلوبة.',
+        strings.alerts.title,
+        strings.alerts.versesNotFound,
         undefined,
         'warning',
       );
@@ -214,8 +223,8 @@ const PickScreen = ({ navigation }: Props) => {
       bookLabel: selectedBook.bookName,
       chapterLabel:
         start === end
-          ? `إصحاح ${selectedChapter}، عدد ${start}`
-          : `إصحاح ${selectedChapter}، الأعداد ${start}-${end}`,
+          ? strings.chapterLabelSingle(selectedChapter, start)
+          : strings.chapterLabelRange(selectedChapter, start, end),
     });
   };
 
@@ -252,12 +261,13 @@ const PickScreen = ({ navigation }: Props) => {
   return (
     <View style={styles.container}>
       <MemorizationHeader
-        title="حفظ الكتاب المقدس"
+        title={strings.title}
         onBack={() => navigation.getParent()?.goBack()}
       />
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.heroCard}>
+          <View style={styles.heroGlow} />
           <View style={styles.heroTopRow}>
             <View style={styles.heroIconWrap}>
               <MaterialCommunityIcons
@@ -267,14 +277,12 @@ const PickScreen = ({ navigation }: Props) => {
               />
             </View>
             <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>Memorization Flow</Text>
+              <Text style={styles.heroBadgeText}>{strings.heroBadge}</Text>
             </View>
           </View>
-          <Text style={styles.heroEyebrow}>ابدأ من هنا</Text>
-          <Text style={styles.heroTitle}>اختر المرجع الذي تريد حفظه</Text>
-          <Text style={styles.heroText}>
-            حدّد السفر والإصحاح والأعداد، ثم اختر مستوى التحدي المناسب لك.
-          </Text>
+          <Text style={styles.heroEyebrow}>{strings.heroEyebrow}</Text>
+          <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
+          <Text style={styles.heroText}>{strings.heroText}</Text>
         </View>
 
         <View style={styles.sectionCard}>
@@ -287,9 +295,9 @@ const PickScreen = ({ navigation }: Props) => {
               />
             </View>
             <View style={styles.sectionHeadingText}>
-              <Text style={styles.sectionLabel}>اختر السفر</Text>
+              <Text style={styles.sectionLabel}>{strings.chooseBook}</Text>
               <Text style={styles.sectionCaption}>
-                تنقّل بين أسفار العهدين واختر المرجع المناسب.
+                {strings.chooseBookCaption}
               </Text>
             </View>
           </View>
@@ -307,15 +315,7 @@ const PickScreen = ({ navigation }: Props) => {
                   activeTestament === 'old' && styles.testamentTabTextActive,
                 ]}
               >
-                العهد القديم
-              </Text>
-              <Text
-                style={[
-                  styles.testamentTabCount,
-                  activeTestament === 'old' && styles.testamentTabCountActive,
-                ]}
-              >
-                {OLD_TESTAMENT_BOOKS.length}
+                {strings.oldTestament}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -331,23 +331,15 @@ const PickScreen = ({ navigation }: Props) => {
                   activeTestament === 'new' && styles.testamentTabTextActive,
                 ]}
               >
-                العهد الجديد
-              </Text>
-              <Text
-                style={[
-                  styles.testamentTabCount,
-                  activeTestament === 'new' && styles.testamentTabCountActive,
-                ]}
-              >
-                {NEW_TESTAMENT_BOOKS.length}
+                {strings.newTestament}
               </Text>
             </TouchableOpacity>
           </View>
 
           <Text style={styles.subSectionLabel}>
             {activeTestament === 'old'
-              ? 'أسفار العهد القديم'
-              : 'أسفار العهد الجديد'}
+              ? strings.oldTestamentBooks
+              : strings.newTestamentBooks}
           </Text>
           <FlatList
             data={visibleBooks}
@@ -390,9 +382,7 @@ const PickScreen = ({ navigation }: Props) => {
               </TouchableOpacity>
             )}
           />
-          <Text style={styles.sliderHint}>
-            اسحب يمينًا ويسارًا للتنقل بين الأسفار
-          </Text>
+          <Text style={styles.sliderHint}>{strings.sliderHint}</Text>
         </View>
 
         <View style={styles.sectionCard}>
@@ -405,21 +395,21 @@ const PickScreen = ({ navigation }: Props) => {
               />
             </View>
             <View style={styles.sectionHeadingText}>
-              <Text style={styles.sectionLabel}>اختر المكان</Text>
+              <Text style={styles.sectionLabel}>{strings.choosePlace}</Text>
               <Text style={styles.sectionCaption}>
-                حدّد الإصحاح والعدد أو مدى الأعداد التي تريد تسميعها.
+                {strings.choosePlaceCaption}
               </Text>
             </View>
           </View>
 
           {renderPickerButton(
-            'الإصحاح',
-            `إصحاح ${selectedChapter}`,
+            strings.chapter,
+            strings.chapterValue(selectedChapter),
             'chapter',
             !selectedBook,
           )}
 
-          <Text style={styles.sectionLabel}>نوع التحديد</Text>
+          <Text style={styles.sectionLabel}>{strings.selectionType}</Text>
           <View style={styles.modeRow}>
             <TouchableOpacity
               style={[
@@ -436,7 +426,7 @@ const PickScreen = ({ navigation }: Props) => {
                   verseMode === 'single' && styles.modeChipTextActive,
                 ]}
               >
-                عدد واحد
+                {strings.singleVerse}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -454,22 +444,22 @@ const PickScreen = ({ navigation }: Props) => {
                   verseMode === 'range' && styles.modeChipTextActive,
                 ]}
               >
-                كذا عدد
+                {strings.rangeVerse}
               </Text>
             </TouchableOpacity>
           </View>
 
           {renderPickerButton(
-            verseMode === 'single' ? 'العدد' : 'من عدد',
-            `عدد ${selectedVerseStart}`,
+            verseMode === 'single' ? strings.verse : strings.fromVerse,
+            strings.verseValue(selectedVerseStart),
             'verseStart',
             !selectedChapterData,
           )}
 
           {verseMode === 'range'
             ? renderPickerButton(
-                'إلى عدد',
-                `عدد ${selectedVerseEnd}`,
+                strings.toVerse,
+                strings.verseValue(selectedVerseEnd),
                 'verseEnd',
                 !selectedChapterData,
               )
@@ -482,10 +472,8 @@ const PickScreen = ({ navigation }: Props) => {
               <MaterialCommunityIcons name="brain" size={18} color="#0A1124" />
             </View>
             <View style={styles.sectionHeadingText}>
-              <Text style={styles.sectionLabel}>مستوى الحفظ</Text>
-              <Text style={styles.sectionCaption}>
-                كل مستوى يغيّر عدد الكلمات المخفية أثناء التسميع.
-              </Text>
+              <Text style={styles.sectionLabel}>{strings.levelTitle}</Text>
+              <Text style={styles.sectionCaption}>{strings.levelCaption}</Text>
             </View>
           </View>
           <View style={styles.levelRow}>
@@ -512,16 +500,18 @@ const PickScreen = ({ navigation }: Props) => {
 
           <Text style={styles.helperText}>
             {difficulty === 'easy'
-              ? 'سيتم إخفاء كلمات قليلة لتبدأ بسهولة.'
+              ? strings.easyHint
               : difficulty === 'medium'
-              ? 'سيتم إخفاء عدد متوسط من الكلمات.'
-              : 'سيتم إخفاء عدد أكبر من الكلمات لتحدي أقوى.'}
+              ? strings.mediumHint
+              : difficulty === 'hard'
+              ? strings.hardHint
+              : strings.fullTextHint}
           </Text>
         </View>
 
         <TouchableOpacity style={styles.primaryBtn} onPress={startMemorization}>
           <MaterialCommunityIcons name="brain" size={20} color="#FFF" />
-          <Text style={styles.primaryBtnText}>ابدأ التسميع</Text>
+          <Text style={styles.primaryBtnText}>{strings.start}</Text>
         </TouchableOpacity>
       </ScrollView>
 

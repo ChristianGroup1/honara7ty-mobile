@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -15,15 +15,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import supabase from '../../lib/supbase';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import { MUTED, NAVY } from './constants';
-import PrayerComposer from './PrayerComposer';
 import PrayerDetailModal from './PrayerDetailModal';
+import PrayerEditorModal from './PrayerEditorModal';
 import PrayerNotesHeader from './PrayerNotesHeader';
 import PrayerNoteCard from './PrayerNoteCard';
 import { prayerNotesStyles as styles } from './styles';
 import { PrayerNote } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getStrings } from '../../localization';
+
+import {
+  deletePrayerNote,
+  refreshPrayerNotes,
+  savePrayerNote,
+  togglePrayerNoteAnswered,
+} from '../../lib/offlineSync';
 
 const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
+  const strings = getStrings().prayerNotes;
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [notes, setNotes] = useState<PrayerNote[]>([]);
@@ -32,8 +41,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const [newNote, setNewNote] = useState('');
   const [editItem, setEditItem] = useState<PrayerNote | null>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [composerHeight, setComposerHeight] = useState(74);
+  const [showModal, setShowModal] = useState(false);
   const [detailItem, setDetailItem] = useState<PrayerNote | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [alertConfig, setAlertConfig] = useState<any>({
@@ -41,7 +49,6 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     title: '',
   });
   const [query, setQuery] = useState('');
-  const quickInputRef = useRef<TextInput>(null);
 
   const showAlert = (
     title: string,
@@ -60,12 +67,8 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
       setLoading(false);
       return;
     }
-    const { data, error } = await supabase
-      .from('prayer_notes')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    if (!error && data) setNotes(data as PrayerNote[]);
+    const { data } = await refreshPrayerNotes(userId);
+    setNotes(data);
     setLoading(false);
   }, []);
 
@@ -79,13 +82,11 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     const hideEvent =
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
-    const showSub = Keyboard.addListener(showEvent, (e: any) => {
+    const showSub = Keyboard.addListener(showEvent, () => {
       setKeyboardVisible(true);
-      setKeyboardHeight(e.endCoordinates?.height || 0);
     });
     const hideSub = Keyboard.addListener(hideEvent, () => {
       setKeyboardVisible(false);
-      setKeyboardHeight(0);
     });
     return () => {
       showSub.remove();
@@ -96,13 +97,20 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const resetComposer = () => {
     setEditItem(null);
     setNewNote('');
+    setShowModal(false);
+  };
+
+  const openNew = () => {
+    setEditItem(null);
+    setNewNote('');
+    setShowModal(true);
   };
 
   const openEdit = (note: PrayerNote) => {
     setEditItem(note);
     setNewNote(note.content);
     setShowDetailModal(false);
-    requestAnimationFrame(() => quickInputRef.current?.focus());
+    setShowModal(true);
   };
 
   const openDetail = (note: PrayerNote) => {
@@ -126,23 +134,18 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     }
 
     if (editItem) {
-      const { error } = await supabase
-        .from('prayer_notes')
-        .update({ content: trimmed })
-        .eq('id', editItem.id);
-      if (error) showAlert('خطأ', error.message);
-      else
-        setNotes(prev =>
-          prev.map(n =>
-            n.id === editItem.id ? { ...n, content: trimmed } : n,
-          ),
-        );
+      const result = await savePrayerNote({
+        userId,
+        note: editItem,
+        content: trimmed,
+      });
+      setNotes(result.data);
     } else {
-      const { error } = await supabase
-        .from('prayer_notes')
-        .insert({ user_id: userId, content: trimmed, is_answered: false });
-      if (error) showAlert('خطأ', error.message);
-      else await fetchNotes();
+      const result = await savePrayerNote({
+        userId,
+        content: trimmed,
+      });
+      setNotes(result.data);
     }
 
     setSaving(false);
@@ -150,34 +153,36 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   };
 
   const toggleAnswered = async (note: PrayerNote) => {
-    const { error } = await supabase
-      .from('prayer_notes')
-      .update({ is_answered: !note.is_answered })
-      .eq('id', note.id);
-    if (!error)
-      setNotes(prev =>
-        prev.map(n =>
-          n.id === note.id ? { ...n, is_answered: !n.is_answered } : n,
-        ),
-      );
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData?.session?.user?.id;
+    if (!userId) {
+      return;
+    }
+
+    const result = await togglePrayerNoteAnswered({ userId, note });
+    if (!note.is_answered) {
+    }
+    setNotes(result.data);
   };
 
   const deleteNote = (note: PrayerNote) => {
     showAlert(
-      'حذف طلبه الصلاة',
-      'هل تريد حذف هذه طلبه الصلاة؟',
+      strings.deleteTitle,
+      strings.deleteMessage,
       [
-        { text: 'إلغاء', style: 'cancel' },
+        { text: strings.cancel, style: 'cancel' },
         {
-          text: 'حذف',
+          text: strings.delete,
           style: 'destructive',
           onPress: async () => {
-            const { error } = await supabase
-              .from('prayer_notes')
-              .delete()
-              .eq('id', note.id);
-            if (!error) setNotes(prev => prev.filter(n => n.id !== note.id));
-            else showAlert('خطأ', error.message);
+            const { data: sessionData } = await supabase.auth.getSession();
+            const userId = sessionData?.session?.user?.id;
+            if (!userId) {
+              return;
+            }
+
+            const result = await deletePrayerNote({ userId, note });
+            setNotes(result.data);
           },
         },
       ],
@@ -188,15 +193,8 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const filtered = notes.filter(n =>
     n.content.toLowerCase().includes(query.trim().toLowerCase()),
   );
-
-  const composerBottomOffset = keyboardVisible
-    ? keyboardHeight + 55
-    : insets.bottom
-    ? insets.bottom + 16
-    : 24;
-
-  // Keep the last list item scrollable above the floating composer.
-  const listBottomPadding = composerHeight + composerBottomOffset + 16;
+  const answeredCount = notes.filter(note => note.is_answered).length;
+  const shouldShowHero = query.trim().length === 0 && !keyboardVisible;
   const isCompactWidth = windowWidth < 380;
   const isNarrowWidth = windowWidth < 360;
 
@@ -206,12 +204,13 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
       <PrayerNotesHeader
         topInsetHeight={insets.top}
         onBack={() => navigation.goBack()}
+        onAdd={openNew}
       />
 
       <View style={styles.searchRow}>
         <MaterialCommunityIcons name="magnify" size={18} color={MUTED} />
         <TextInput
-          placeholder="ابحث في طلبات الصلاة..."
+          placeholder={strings.searchPlaceholder}
           placeholderTextColor={MUTED}
           style={styles.searchInput}
           value={query}
@@ -222,14 +221,45 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" color={NAVY} />
       ) : filtered.length === 0 ? (
-        <View style={styles.emptyWrap}>
-          <MaterialCommunityIcons
-            name="heart-plus-outline"
-            size={56}
-            color="#E6E6E6"
-          />
-          <Text style={styles.emptyTitle}>لا توجد طلبات صلاة</Text>
-        </View>
+        <>
+          {shouldShowHero ? (
+            <View style={styles.list}>
+              <View style={styles.heroCard}>
+                <View style={styles.heroGlow} />
+                <View style={styles.heroTopRow}>
+                  <View style={styles.heroIconWrap}>
+                    <MaterialCommunityIcons
+                      name="hand-heart"
+                      size={24}
+                      color="#FFF"
+                    />
+                  </View>
+                  <View style={styles.heroBadge}>
+                    <Text style={styles.heroBadgeText}>
+                      {strings.heroBadge}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.heroEyebrow}>{strings.headerEyebrow}</Text>
+                <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
+                <Text style={styles.heroText}>{strings.heroText}</Text>
+              </View>
+            </View>
+          ) : null}
+
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIconWrap}>
+              <MaterialCommunityIcons
+                name="hand-heart"
+                size={42}
+                color="#C9A84C"
+              />
+            </View>
+            <Text style={styles.emptyTitle}>{strings.emptyTitle}</Text>
+            <Text style={styles.emptyTextSmall}>{strings.emptyMessage}</Text>
+          </View>
+        </>
       ) : (
         <FlatList
           data={filtered}
@@ -244,23 +274,45 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
               onDelete={deleteNote}
             />
           )}
-          contentContainerStyle={[
-            styles.list,
-            { paddingBottom: listBottomPadding },
-          ]}
+          contentContainerStyle={[styles.list, { paddingBottom: 32 }]}
+          ListHeaderComponent={
+            shouldShowHero ? (
+              <View style={styles.heroCard}>
+                <View style={styles.heroGlow} />
+                <View style={styles.heroTopRow}>
+                  <View style={styles.heroIconWrap}>
+                    <MaterialCommunityIcons
+                      name="hand-heart"
+                      size={24}
+                      color="#FFF"
+                    />
+                  </View>
+                  <View style={styles.heroBadge}>
+                    <Text style={styles.heroBadgeText}>
+                      {strings.heroBadge}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.heroEyebrow}>{strings.headerEyebrow}</Text>
+                <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
+                <Text style={styles.heroText}>{strings.heroText}</Text>
+              </View>
+            ) : null
+          }
         />
       )}
-      <PrayerComposer
-        bottomOffset={composerBottomOffset}
-        composerHeight={composerHeight}
+
+      <PrayerEditorModal
+        visible={showModal}
+        keyboardVisible={keyboardVisible}
+        topInset={insets.top}
         editMode={Boolean(editItem)}
-        newNote={newNote}
+        text={newNote}
         saving={saving}
-        inputRef={quickInputRef}
-        onLayoutHeight={setComposerHeight}
         onChangeText={setNewNote}
-        onReset={resetComposer}
-        onSubmit={handleComposerSubmit}
+        onClose={resetComposer}
+        onSave={handleComposerSubmit}
       />
 
       <PrayerDetailModal

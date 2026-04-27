@@ -1,31 +1,33 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { prayerNotesStyles as styles } from './styles';
+import { getStrings } from '../../localization';
+import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 
 interface PrayerNotesHeaderProps {
   topInsetHeight: number;
   onBack: () => void;
+  onAdd: () => void;
 }
 
 const PrayerNotesHeader = ({
   topInsetHeight,
   onBack,
+  onAdd,
 }: PrayerNotesHeaderProps) => {
+  const strings = getStrings().prayerNotes;
   return (
-    <>
-      <View style={[styles.topInset, { height: topInsetHeight }]} />
-      <View style={styles.header}>
-        <View style={styles.headerCenter}>
-          <Text style={styles.title} numberOfLines={1}>
-            طلبات الصلاة
-          </Text>
-        </View>
-        <TouchableOpacity onPress={onBack} style={styles.headerIcon}>
-          <MaterialCommunityIcons name="arrow-left" size={20} color="#FFF" />
-        </TouchableOpacity>
-      </View>
-    </>
+    <AppHeader
+      topInsetHeight={topInsetHeight}
+      eyebrow={strings.headerEyebrow}
+      title={strings.title}
+      leading={<AppHeaderAction icon="arrow-right" onPress={onBack} />}
+      trailing={
+        <AppHeaderAction
+          icon="plus"
+          onPress={onAdd}
+          backgroundColor="rgba(201,168,76,0.16)"
+        />
+      }
+    />
   );
 };
 

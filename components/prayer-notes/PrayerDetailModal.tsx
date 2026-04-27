@@ -1,7 +1,15 @@
 import React from 'react';
-import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { prayerNotesStyles as styles } from './styles';
 import { PrayerNote } from './types';
+import { getStrings } from '../../localization';
 
 interface PrayerDetailModalProps {
   visible: boolean;
@@ -24,23 +32,21 @@ const PrayerDetailModal = ({
   onEdit,
   onDelete,
 }: PrayerDetailModalProps) => {
-  const modalOverlayStyle = keyboardVisible ? styles.modalOverlayTransparent : null;
+  const strings = getStrings().prayerNotes;
+  const modalOverlayStyle = keyboardVisible
+    ? styles.modalOverlayTransparent
+    : null;
   const scrollStyle = { maxHeight: Math.min(windowHeight * 0.6, 420) };
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View
-        style={[
-          styles.modalOverlay,
-          modalOverlayStyle,
-        ]}
-      >
+      <View style={[styles.modalOverlay, modalOverlayStyle]}>
         <Pressable style={styles.modalPressable} onPress={onClose} />
         <View style={[styles.modalBox, styles.modalBoxPadded]}>
-          <Text style={styles.modalTitle}>تفاصيل طلبه الصلاة</Text>
+          <Text style={styles.modalTitle}>{strings.detailTitle}</Text>
 
           <ScrollView
-            style={[styles.modalScroll, scrollStyle]}
+            style={[styles.modalScrollArea, scrollStyle]}
             contentContainerStyle={styles.modalScrollContent}
             showsVerticalScrollIndicator
             keyboardShouldPersistTaps="handled"
@@ -54,12 +60,12 @@ const PrayerDetailModal = ({
               isCompactWidth && styles.detailActionsCompact,
             ]}
           >
-            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-              <Text style={styles.cancelBtnText}>إغلاق</Text>
+            <TouchableOpacity style={styles.secondaryBtn} onPress={onClose}>
+              <Text style={styles.cancelBtnText}>{strings.close}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.saveBtn, styles.saveBtnPrimary]}
+              style={styles.saveBtn}
               onPress={() => {
                 if (detailItem) {
                   onClose();
@@ -67,11 +73,11 @@ const PrayerDetailModal = ({
                 }
               }}
             >
-              <Text style={[styles.saveBtnText, styles.saveBtnTextLight]}>تعديل</Text>
+              <Text style={styles.saveBtnText}>{strings.edit}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.cancelBtn, styles.dangerBtn]}
+              style={styles.deleteBtn}
               onPress={() => {
                 if (detailItem) {
                   onDelete(detailItem);
@@ -79,7 +85,7 @@ const PrayerDetailModal = ({
                 }
               }}
             >
-              <Text style={styles.dangerBtnText}>حذف</Text>
+              <Text style={styles.deleteBtnText}>{strings.delete}</Text>
             </TouchableOpacity>
           </View>
         </View>

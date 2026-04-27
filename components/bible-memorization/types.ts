@@ -1,6 +1,6 @@
 import { BibleBook } from '../data/bibleMetadata';
 
-export type Difficulty = 'easy' | 'medium' | 'hard';
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'fullText';
 export type VerseSelectionMode = 'single' | 'range';
 
 export interface WordSlot {

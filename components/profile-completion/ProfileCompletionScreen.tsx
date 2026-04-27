@@ -1,17 +1,13 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
   Text,
-  Image,
-  SafeAreaView,
-  StatusBar,
   Platform,
   TouchableOpacity,
   useWindowDimensions,
   Modal,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -23,13 +19,18 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import supabase from '../../lib/supbase'; // ← استورد supabase
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
-import { authPaperTheme, AUTH_GOLD, AUTH_NAVY } from '../auth/theme';
+import { authPaperTheme, AUTH_GOLD } from '../auth/theme';
+import AuthScreenShell from '../auth/AuthScreenShell';
+import { authStrings } from '../auth/strings';
+import { saveProfileRecord } from '../../lib/offlineSync';
 
 const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
-  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
-  // ← استقبل userId من Signup
-  const { userId } = route?.params || {};
+  const strings = authStrings;
+  const { width: windowWidth } = useWindowDimensions();
   const isCompactWidth = windowWidth < 360;
+  const requiresLoginBeforeSubmit =
+    route?.params?.requires_login_before_submit === true;
+  const pendingEmail = route?.params?.email as string | undefined;
 
   const [profileData, setProfileData] = useState({
     church: '',
@@ -88,6 +89,16 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
     setProfileData({ ...profileData, birthDate: formatDate(pickerDate) });
   };
 
+  const profileNotice = useMemo(() => {
+    if (!requiresLoginBeforeSubmit) {
+      return null;
+    }
+
+    return pendingEmail
+      ? strings.profileCompletion.requiresLoginNotice(pendingEmail)
+      : strings.profileCompletion.requiresLoginNotice();
+  }, [pendingEmail, requiresLoginBeforeSubmit]);
+
   // ✅ دالة حفظ البروفايل في Supabase
   const handleCreateAccount = async () => {
     setLoading(true);
@@ -96,34 +107,57 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
       const { data: sessionData } = await supabase.auth.getSession();
       const currentUserId = sessionData?.session?.user?.id;
 
-      // استخدم الـ session userId دايماً أأمن
-      const finalUserId = currentUserId || userId;
-
-      if (!finalUserId) {
-        showAlert('خطأ', 'لازم تسجل دخول الأول');
+      if (!currentUserId) {
+        showAlert(
+          strings.profileCompletion.requiresLoginTitle,
+          strings.profileCompletion.requiresLoginMessage,
+          [
+            {
+              text: strings.common.login,
+              onPress: () => navigation.navigate('Login'),
+            },
+          ],
+          'warning',
+        );
         return;
       }
 
-      const { error } = await supabase.from('profiles').upsert({
-        id: finalUserId, // ← من الـ session مش params
-        church: profileData.church || null,
-        sect: profileData.sect || null,
-        birth_date: profileData.birthDate || null,
-        gender: profileData.gender || null,
-        updated_at: new Date().toISOString(),
+      const result = await saveProfileRecord({
+        userId: currentUserId,
+        profile: {
+          church: profileData.church || null,
+          sect: profileData.sect || null,
+          birth_date: profileData.birthDate || null,
+          gender: profileData.gender || null,
+          devotion_time: '07:00',
+          updated_at: new Date().toISOString(),
+        },
       });
 
-      if (error) {
-        showAlert('خطأ', error.message);
+      if (result.offline) {
+        showAlert(
+          strings.common.genericErrorTitle,
+          'تم حفظ البيانات على الجهاز، وسيتم رفعها عند عودة الإنترنت.',
+          [
+            {
+              text: strings.common.next,
+              onPress: () =>
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Onboarding' }],
+                }),
+            },
+          ],
+          'info',
+        );
       } else {
-        // New users always go through onboarding after completing their profile
         navigation.reset({
           index: 0,
           routes: [{ name: 'Onboarding' }],
         });
       }
     } catch (err: any) {
-      showAlert('خطأ', err.message);
+      showAlert(strings.common.genericErrorTitle, err.message);
     } finally {
       setLoading(false);
     }
@@ -131,277 +165,236 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
 
   return (
     <PaperProvider theme={authPaperTheme}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="light-content"
-          translucent={false}
-          backgroundColor={AUTH_NAVY}
-        />
-        <View style={[styles.darkHeaderLayer, { height: windowHeight * 0.42 }]} />
-
-        <View style={styles.headerContent}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => navigation.goBack()}
-          >
-            <View style={styles.backBtnCircle}>
-              <MaterialCommunityIcons
-                name="chevron-left"
-                size={28}
-                color="white"
-              />
-            </View>
-          </TouchableOpacity>
-          <Image
-            source={require('../../assets/images/logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.title}>إكمال الملف الشخصي</Text>
-          <View style={styles.titleAccent} />
-          <Text style={styles.headerSubtitle}>
-            أهلاً وسهلاً! خلينا نتعرف عليك أكثر.
-          </Text>
+      <AuthScreenShell
+        title={strings.profileCompletion.title}
+        onBack={() => navigation.goBack()}
+        headerExtras={
           <View style={styles.stepContainer}>
             <View style={styles.stepDone} />
             <View style={styles.stepActive} />
           </View>
-          <Text style={styles.stepLabel}>الخطوة 2 من 2</Text>
+        }
+        formPointerEvents="box-none"
+      >
+        {profileNotice ? (
+          <View style={styles.noticeCard}>
+            <MaterialCommunityIcons
+              name="information-outline"
+              size={18}
+              color="#8A6A3F"
+              style={styles.noticeIcon}
+            />
+            <Text style={styles.noticeText}>{profileNotice}</Text>
+          </View>
+        ) : null}
+
+        {/* ── Section: معلومات الكنيسة ── */}
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="church"
+            size={18}
+            color={authPaperTheme.colors.primary}
+            style={styles.sectionIcon}
+          />
+          <Text style={styles.sectionTitle}>
+            {strings.profileCompletion.churchSection}
+          </Text>
         </View>
 
-        <KeyboardAwareScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-          bounces={false}
-          showsVerticalScrollIndicator={false}
-          overScrollMode="never"
-          decelerationRate="normal"
-          enableOnAndroid={true}
-          extraScrollHeight={80}
-          extraHeight={80}
-          keyboardOpeningTime={0}
-        >
-          <View style={styles.formContainer} pointerEvents="box-none">
-            {/* ── Section: معلومات الكنيسة ── */}
-            <View style={styles.sectionHeader}>
-              <MaterialCommunityIcons
-                name="church"
-                size={18}
-                color={authPaperTheme.colors.primary}
-                style={styles.sectionIcon}
-              />
-              <Text style={styles.sectionTitle}>معلومات الكنيسة</Text>
-            </View>
+        <CustomInput
+          fieldLabel={strings.profileCompletion.church}
+          placeholder={strings.profileCompletion.churchPlaceholder}
+          icon="home-variant-outline"
+          badge={strings.profileCompletion.optional}
+          value={profileData.church}
+          onChangeText={(t: string) =>
+            setProfileData({ ...profileData, church: t })
+          }
+        />
 
-            <CustomInput
-              fieldLabel="الكنيسة"
-              placeholder="اسم الكنيسة"
-              icon="home-variant-outline"
-              badge="اختياري"
-              value={profileData.church}
-              onChangeText={(t: string) =>
-                setProfileData({ ...profileData, church: t })
-              }
-            />
+        <CustomInput
+          fieldLabel={strings.profileCompletion.sect}
+          placeholder={strings.profileCompletion.sectPlaceholder}
+          icon="home-outline"
+          badge={strings.profileCompletion.optional}
+          value={profileData.sect}
+          onChangeText={(t: string) =>
+            setProfileData({ ...profileData, sect: t })
+          }
+        />
 
-            <CustomInput
-              fieldLabel="الطائفة"
-              placeholder="اسم الطائفة"
-              icon="home-outline"
-              badge="اختياري"
-              value={profileData.sect}
-              onChangeText={(t: string) =>
-                setProfileData({ ...profileData, sect: t })
-              }
-            />
+        {/* ── Section: معلومات شخصية ── */}
+        <View style={styles.sectionHeader2}>
+          <MaterialCommunityIcons
+            name="account-details"
+            size={18}
+            color={authPaperTheme.colors.primary}
+            style={styles.sectionIcon}
+          />
+          <Text style={styles.sectionTitle}>
+            {strings.profileCompletion.personalSection}
+          </Text>
+        </View>
 
-            {/* ── Section: معلومات شخصية ── */}
-            <View style={styles.sectionHeader2}>
-              <MaterialCommunityIcons
-                name="account-details"
-                size={18}
-                color={authPaperTheme.colors.primary}
-                style={styles.sectionIcon}
-              />
-              <Text style={styles.sectionTitle}>معلومات شخصية</Text>
-            </View>
+        {/* تاريخ الميلاد */}
+        <CustomInput
+          fieldLabel={strings.profileCompletion.birthDate}
+          placeholder={strings.profileCompletion.birthDatePlaceholder}
+          icon="calendar-blank-outline"
+          value={profileData.birthDate}
+          onPress={() => setShowDatePicker(true)}
+        />
 
-            {/* تاريخ الميلاد */}
-            <CustomInput
-              fieldLabel="تاريخ الميلاد"
-              placeholder="اضغط لاختيار التاريخ"
-              icon="calendar-blank-outline"
-              value={profileData.birthDate}
-              onPress={() => setShowDatePicker(true)}
-            />
-
-            {/* ── Date Picker Modal (iOS bottom sheet / Android native) ── */}
-            {Platform.OS === 'ios' ? (
-              <Modal
-                visible={showDatePicker}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setShowDatePicker(false)}
-              >
-                <View style={styles.modalOverlay}>
-                  <View style={styles.pickerSheet}>
-                    <View style={styles.pickerHandle} />
-                    <View style={styles.pickerHeader}>
-                      <TouchableOpacity
-                        onPress={() => setShowDatePicker(false)}
-                      >
-                        <Text style={styles.pickerCancelText}>إلغاء</Text>
-                      </TouchableOpacity>
-                      <Text style={styles.pickerTitle}>تاريخ الميلاد</Text>
-                      <TouchableOpacity onPress={confirmDate}>
-                        <Text style={styles.pickerConfirmText}>تأكيد</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <DateTimePicker
-                      value={pickerDate}
-                      mode="date"
-                      display="spinner"
-                      onChange={handleDateChange}
-                      maximumDate={new Date()}
-                      minimumDate={new Date(1900, 0, 1)}
-                      locale="ar"
-                      style={styles.pickerSpinner}
-                    />
-                  </View>
+        {/* ── Date Picker Modal (iOS bottom sheet / Android native) ── */}
+        {Platform.OS === 'ios' ? (
+          <Modal
+            visible={showDatePicker}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowDatePicker(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.pickerSheet}>
+                <View style={styles.pickerHandle} />
+                <View style={styles.pickerHeader}>
+                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                    <Text style={styles.pickerCancelText}>
+                      {strings.profileCompletion.cancel}
+                    </Text>
+                  </TouchableOpacity>
+                  <Text style={styles.pickerTitle}>
+                    {strings.profileCompletion.datePickerTitle}
+                  </Text>
+                  <TouchableOpacity onPress={confirmDate}>
+                    <Text style={styles.pickerConfirmText}>
+                      {strings.profileCompletion.confirm}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-              </Modal>
-            ) : (
-              showDatePicker && (
                 <DateTimePicker
                   value={pickerDate}
                   mode="date"
-                  display="default"
+                  display="spinner"
                   onChange={handleDateChange}
                   maximumDate={new Date()}
                   minimumDate={new Date(1900, 0, 1)}
+                  locale="ar"
+                  style={styles.pickerSpinner}
                 />
-              )
-            )}
-
-            {/* الجنس – inline chips */}
-            <View style={styles.inputWrapper}>
-              <Text style={styles.fieldLabel}>الجنس</Text>
-              <View
-                style={[
-                  styles.genderRow,
-                  isCompactWidth && styles.genderRowCompact,
-                ]}
-              >
-                {[
-                  { label: 'ذكر', icon: 'gender-male' },
-                  { label: 'أنثى', icon: 'gender-female' },
-                ].map(({ label, icon }) => {
-                  const active = profileData.gender === label;
-                  return (
-                    <TouchableOpacity
-                      key={label}
-                      style={[
-                        styles.genderChip,
-                        active && styles.genderChipActive,
-                      ]}
-                      activeOpacity={0.7}
-                      onPress={() =>
-                        setProfileData({ ...profileData, gender: label })
-                      }
-                    >
-                      <MaterialCommunityIcons
-                        name={icon}
-                        size={22}
-                        color={active ? '#FFF' : '#666'}
-                      />
-                      <Text
-                        style={[
-                          styles.genderChipText,
-                          active && styles.genderChipTextActive,
-                        ]}
-                      >
-                        {label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
               </View>
             </View>
+          </Modal>
+        ) : (
+          showDatePicker && (
+            <DateTimePicker
+              value={pickerDate}
+              mode="date"
+              display="default"
+              onChange={handleDateChange}
+              maximumDate={new Date()}
+              minimumDate={new Date(1900, 0, 1)}
+            />
+          )
+        )}
 
-            {/* زرار إنشاء الحساب */}
-            <TouchableOpacity
-              style={styles.submitBtn}
-              activeOpacity={0.8}
-              onPress={handleCreateAccount}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFF" />
-              ) : (
-                <View style={styles.submitRow}>
+        {/* الجنس – inline chips */}
+        <View style={styles.inputWrapper}>
+          <Text style={styles.fieldLabel}>
+            {strings.profileCompletion.gender}
+          </Text>
+          <View
+            style={[
+              styles.genderRow,
+              isCompactWidth && styles.genderRowCompact,
+            ]}
+          >
+            {[
+              { label: strings.profileCompletion.male, icon: 'gender-male' },
+              {
+                label: strings.profileCompletion.female,
+                icon: 'gender-female',
+              },
+            ].map(({ label, icon }) => {
+              const active = profileData.gender === label;
+              return (
+                <TouchableOpacity
+                  key={label}
+                  style={[styles.genderChip, active && styles.genderChipActive]}
+                  activeOpacity={0.7}
+                  onPress={() =>
+                    setProfileData({ ...profileData, gender: label })
+                  }
+                >
                   <MaterialCommunityIcons
-                    name="check"
+                    name={icon}
                     size={22}
-                    color="#FFF"
-                    style={styles.submitIcon}
+                    color={active ? '#FFF' : '#666'}
                   />
-                  <Text style={styles.submitText}>إنشاء الحساب</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.genderChipText,
+                      active && styles.genderChipTextActive,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
-        </KeyboardAwareScrollView>
-      </SafeAreaView>
+        </View>
+
+        {/* زرار إنشاء الحساب */}
+        <TouchableOpacity
+          style={styles.submitBtn}
+          activeOpacity={0.8}
+          onPress={handleCreateAccount}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#FFF" />
+          ) : (
+            <View style={styles.submitRow}>
+              <MaterialCommunityIcons
+                name="check"
+                size={22}
+                color="#FFF"
+                style={styles.submitIcon}
+              />
+              <Text style={styles.submitText}>
+                {strings.profileCompletion.submit}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </AuthScreenShell>
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </PaperProvider>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F6FA' },
-  darkHeaderLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#0A1124',
+  noticeCard: {
+    flexDirection: 'row-reverse',
+    alignItems: 'flex-start',
+    backgroundColor: '#FFF6E7',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#ECD9AE',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 18,
   },
-  headerContent: {
-    alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? 44 : 14,
-    paddingBottom: 24,
+  noticeIcon: {
+    marginLeft: 8,
+    marginTop: 2,
   },
-  backBtn: { alignSelf: 'flex-start', marginLeft: 16, marginBottom: 6 },
-  backBtnCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logo: { width: 76, height: 76 },
-  title: {
-    color: '#FFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 10,
-    letterSpacing: 0.5,
-  },
-  titleAccent: {
-    width: 40,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: AUTH_GOLD,
-    marginTop: 6,
-  },
-  headerSubtitle: {
-    color: 'rgba(255,255,255,0.65)',
+  noticeText: {
+    flex: 1,
+    color: '#7A6441',
     fontSize: 13,
-    marginTop: 8,
-    textAlign: 'center',
-    paddingHorizontal: 40,
     lineHeight: 20,
+    textAlign: 'right',
   },
   stepContainer: {
     flexDirection: 'row',
@@ -426,33 +419,35 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
     fontSize: 12,
     marginTop: 6,
-  },
-  scrollContainer: { flexGrow: 1 },
-  formContainer: {
-    backgroundColor: '#F5F6FA',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 40,
+    textAlign: 'center',
+    marginBottom: 8,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
     marginTop: 4,
+    backgroundColor: '#e5e4e2ff',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
   sectionHeader2: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
     marginTop: 12,
+    backgroundColor: '#e5e4e2ff',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
   sectionIcon: { marginLeft: 6 },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: '#0A1124',
+    paddingLeft: 6,
   },
   inputWrapper: { marginBottom: 14 },
   fieldLabel: {
@@ -549,10 +544,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 24,
     elevation: 4,
-    shadowColor: '#0A1124',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   submitRow: {
     flexDirection: 'row',

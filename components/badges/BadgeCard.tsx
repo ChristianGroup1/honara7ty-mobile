@@ -3,6 +3,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BadgeConfig } from './constants';
 import { badgesStyles as styles } from './styles';
+import { getStrings } from '../../localization';
 
 interface BadgeCardProps {
   badge: BadgeConfig;
@@ -11,6 +12,7 @@ interface BadgeCardProps {
 }
 
 const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
+  const strings = getStrings().badges;
   const earned = streak >= badge.days;
   const progress = Math.min(streak / badge.days, 1);
   const daysLeft = Math.max(badge.days - streak, 0);
@@ -30,9 +32,12 @@ const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
   const earnedTextStyle = { color: badge.color };
   const topAccentStyle = { backgroundColor: badge.color };
   const progressMetaStyle = { color: badge.color };
+  const cardShellStyle = earned
+    ? styles.badgeCardEarned
+    : styles.badgeCardLocked;
 
   return (
-    <View style={[styles.badgeCard, earned && styles.badgeCardEarned]}>
+    <View style={[styles.badgeCard, cardShellStyle]}>
       <View style={[styles.badgeCardAccent, topAccentStyle]} />
 
       <View style={styles.badgeTopRow}>
@@ -43,12 +48,12 @@ const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
           ]}
         >
           <Text style={[styles.badgeStateText, earned && earnedTextStyle]}>
-            {earned ? 'تم الإنجاز' : 'قيد التقدم'}
+            {earned ? strings.card.earned : strings.card.inProgress}
           </Text>
         </View>
         <View style={[styles.badgeDayChip, badgeTintStyle]}>
           <Text style={[styles.badgeDayChipText, earnedTextStyle]}>
-            {badge.days} يوم
+            {strings.card.days(badge.days)}
           </Text>
         </View>
       </View>
@@ -76,11 +81,13 @@ const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
 
       <Text style={styles.badgeTitle}>{badge.title}</Text>
       <Text style={styles.badgeSubtitle}>
-        {earned ? 'أكملت هذا الوسام بنجاح' : `تبقّى ${daysLeft} يوم للوصول`}
+        {earned
+          ? strings.card.earnedSubtitle
+          : strings.card.remainingSubtitle(daysLeft)}
       </Text>
 
       <View style={styles.progressMetaRow}>
-        <Text style={styles.progressLabel}>نسبة التقدم</Text>
+        <Text style={styles.progressLabel}>{strings.card.progressLabel}</Text>
         <Text style={[styles.progressMetaText, progressMetaStyle]}>
           {Math.round(progress * 100)}%
         </Text>
@@ -91,21 +98,28 @@ const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
       </View>
 
       {earned ? (
-        <TouchableOpacity
-          style={[styles.earnedTag, earnedTagStyle]}
-          onPress={() => onShare(badge)}
-        >
-          <MaterialCommunityIcons
-            name="share-variant"
-            size={12}
-            color={badge.color}
-          />
-          <Text style={[styles.earnedText, earnedTextStyle]}>شارك</Text>
-        </TouchableOpacity>
+        // <TouchableOpacity
+        //   style={[styles.earnedTag, earnedTagStyle]}
+        //   onPress={() => onShare(badge)}
+        // >
+        //   <MaterialCommunityIcons
+        //     name="share-variant"
+        //     size={12}
+        //     color={badge.color}
+        //   />
+        //   <Text style={[styles.earnedText, earnedTextStyle]}>
+        //     {strings.card.share}
+        //   </Text>
+        // </TouchableOpacity>
+        <View style={[styles.earnedTag, earnedTagStyle]}>
+          <Text style={[styles.earnedText, earnedTextStyle]}>
+            {strings.card.earnedSubtitle}
+          </Text>
+        </View>
       ) : (
         <View style={styles.pendingRow}>
           <MaterialCommunityIcons name="timer-sand" size={14} color="#7E8896" />
-          <Text style={styles.pendingText}>{daysLeft} يوم متبقي</Text>
+          <Text style={styles.pendingText}>{strings.card.remainingDays(daysLeft)}</Text>
         </View>
       )}
     </View>

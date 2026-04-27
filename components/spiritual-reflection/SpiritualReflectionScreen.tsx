@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   StatusBar,
   Text,
+  TextInput,
   View,
   Keyboard,
   useWindowDimensions,
@@ -16,11 +17,18 @@ import ReflectionCard from './ReflectionCard';
 import ReflectionDetailModal from './ReflectionDetailModal';
 import ReflectionEditorModal from './ReflectionEditorModal';
 import SpiritualReflectionHeader from './SpiritualReflectionHeader';
-import { spiritualReflectionStyles as styles, NAVY } from './styles';
+import { spiritualReflectionStyles as styles, GOLD, NAVY } from './styles';
 import { Reflection } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getStrings } from '../../localization';
+import {
+  deleteReflection as removeReflection,
+  refreshReflections,
+  saveReflection,
+} from '../../lib/offlineSync';
 
 const SpiritualReflectionScreen = ({ navigation }: any) => {
+  const strings = getStrings().spiritualReflection;
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [reflections, setReflections] = useState<Reflection[]>([]);
@@ -39,8 +47,14 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
   }>({ visible: false, title: '' });
   const [detailItem, setDetailItem] = useState<Reflection | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [query, setQuery] = useState('');
   const isCompactWidth = windowWidth < 380;
   const isNarrowWidth = windowWidth < 360;
+  const latestReflection = reflections[0] ?? null;
+  const filteredReflections = reflections.filter(reflection =>
+    reflection.content.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+  const shouldShowHero = query.trim().length === 0 && !keyboardVisible;
 
   const showAlert = (
     title: string,
@@ -59,14 +73,8 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
       setLoading(false);
       return;
     }
-    const { data, error } = await supabase
-      .from('reflections')
-      .select('*')
-      .eq('user_id', userId)
-      .order('date', { ascending: false });
-    if (!error && data) {
-      setReflections(data as Reflection[]);
-    }
+    const { data } = await refreshReflections(userId);
+    setReflections(data);
     setLoading(false);
   }, []);
 
@@ -123,49 +131,36 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
       return;
     }
 
-    if (editItem) {
-      const { error } = await supabase
-        .from('reflections')
-        .update({ content: trimmed })
-        .eq('id', editItem.id);
-      if (error) {
-        showAlert('خطأ', error.message);
-      }
-    } else {
-      const { error } = await supabase.from('reflections').insert({
-        user_id: userId,
-        content: trimmed,
-        date: new Date().toISOString().split('T')[0],
-      });
-      if (error) {
-        showAlert('خطأ', error.message);
-      }
-    }
+    const result = await saveReflection({
+      userId,
+      reflection: editItem,
+      content: trimmed,
+      date: editItem?.date ?? new Date().toISOString().split('T')[0],
+    });
 
     setSaving(false);
     setShowModal(false);
-    await fetchReflections();
+    setReflections(result.data);
   };
 
   const deleteReflection = (item: Reflection) => {
     showAlert(
-      'حذف التأمل',
-      'هل تريد حذف هذا التأمل؟',
+      strings.deleteTitle,
+      strings.deleteMessage,
       [
-        { text: 'إلغاء', style: 'cancel' },
+        { text: strings.cancel, style: 'cancel' },
         {
-          text: 'حذف',
+          text: strings.delete,
           style: 'destructive',
           onPress: async () => {
-            const { error } = await supabase
-              .from('reflections')
-              .delete()
-              .eq('id', item.id);
-            if (!error) {
-              setReflections(prev => prev.filter(r => r.id !== item.id));
-            } else {
-              showAlert('خطأ', error.message);
+            const { data: sessionData } = await supabase.auth.getSession();
+            const userId = sessionData?.session?.user?.id;
+            if (!userId) {
+              return;
             }
+
+            const result = await removeReflection({ userId, reflection: item });
+            setReflections(result.data);
           },
         },
       ],
@@ -182,11 +177,22 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
         onAdd={openNew}
       />
 
+      <View style={styles.searchRow}>
+        <MaterialCommunityIcons name="magnify" size={18} color="#8A94A6" />
+        <TextInput
+          placeholder={strings.searchPlaceholder}
+          placeholderTextColor="#8A94A6"
+          style={styles.searchInput}
+          value={query}
+          onChangeText={setQuery}
+        />
+      </View>
+
       {loading ? (
         <ActivityIndicator style={styles.loader} size="large" color={NAVY} />
       ) : (
         <FlatList
-          data={reflections}
+          data={filteredReflections}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <ReflectionCard
@@ -198,19 +204,42 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
             />
           )}
           contentContainerStyle={styles.list}
+          ListHeaderComponent={
+            shouldShowHero ? (
+              <View style={styles.heroCard}>
+                <View style={styles.heroGlow} />
+                <View style={styles.heroTopRow}>
+                  <View style={styles.heroIconWrap}>
+                    <MaterialCommunityIcons
+                      name="book-open-variant"
+                      size={24}
+                      color="#FFF"
+                    />
+                  </View>
+                  <View style={styles.heroBadge}>
+                    <Text style={styles.heroBadgeText}>
+                      {strings.heroBadge}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={styles.heroEyebrow}>{strings.headerEyebrow}</Text>
+                <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
+                <Text style={styles.heroText}>{strings.heroText}</Text>
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIconWrap}>
                 <MaterialCommunityIcons
-                  name="notebook-heart-outline"
-                  size={48}
-                  color="#EEE"
+                  name="book-open-variant"
+                  size={42}
+                  color={GOLD}
                 />
               </View>
-              <Text style={styles.emptyTitle}>لا يوجد تأملات بعد</Text>
-              <Text style={styles.emptyTextSmall}>
-                اضغط + لإنشاء أول تأملك وتوثيق ما كلمك الله به اليوم.
-              </Text>
+              <Text style={styles.emptyTitle}>{strings.emptyTitle}</Text>
+              <Text style={styles.emptyTextSmall}>{strings.emptyMessage}</Text>
             </View>
           }
         />
@@ -237,13 +266,15 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
         onClose={closeDetail}
         onEdit={openEdit}
         onDelete={async item => {
-          const { error } = await supabase
-            .from('reflections')
-            .delete()
-            .eq('id', item.id);
-          if (!error) {
-            setReflections(prev => prev.filter(r => r.id !== item.id));
+          const { data: sessionData } = await supabase.auth.getSession();
+          const userId = sessionData?.session?.user?.id;
+          if (!userId) {
+            return;
           }
+
+          const result = await removeReflection({ userId, reflection: item });
+          setReflections(result.data);
+          closeDetail();
         }}
       />
 

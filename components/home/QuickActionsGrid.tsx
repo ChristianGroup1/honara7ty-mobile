@@ -3,19 +3,37 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { homeStyles as styles } from './styles';
 import { NAVY } from './constants';
+import { getStrings } from '../../localization';
 
 interface QuickActionsGridProps {
   navigation: any;
 }
 
-const quickActions = [
-  { route: 'DevotionGuide', icon: 'head-cog-outline', label: 'شرح الخلوة' },
-  { route: 'DailyNotifications', icon: 'cog-outline', label: 'اعدادات الخلوة' },
-  { route: 'Badges', icon: 'medal-outline', label: 'الأوسمة والجوائز' },
-  { route: 'BibleMemorization', icon: 'book-open-outline', label: 'حفظ الكتاب المقدس' },
-];
-
 const QuickActionsGrid = ({ navigation }: QuickActionsGridProps) => {
+  const strings = getStrings().home;
+  const quickActions = [
+    {
+      route: 'DevotionGuide',
+      icon: 'head-cog-outline',
+      label: strings.quickActions.devotionGuide,
+    },
+    {
+      route: 'DailyNotifications',
+      icon: 'cog-outline',
+      label: strings.quickActions.settings,
+    },
+    {
+      route: 'Badges',
+      icon: 'medal-outline',
+      label: strings.quickActions.badges,
+    },
+    {
+      route: 'BibleMemorization',
+      icon: 'book-open-outline',
+      label: strings.quickActions.bibleMemorization,
+    },
+  ];
+
   return (
     <View style={styles.buttonsGrid}>
       {quickActions.map(action => (

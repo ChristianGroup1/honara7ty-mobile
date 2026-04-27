@@ -1,0 +1,35 @@
+export const prayerNotesStrings = {
+  title: 'طلبات الصلاة',
+  headerEyebrow: 'مساحة صلاة',
+  heroBadge: 'طلباتك قدام ربنا',
+  heroTitle: 'اكتب طلبات الصلاة اللي شاغلة قلبك',
+  heroText:
+    'سجّل صلواتك وارجع لها بعدين، سواء طلب جديد أو حاجة ربنا استجاب لها.',
+  totalNotes: 'إجمالي الطلبات',
+  answeredNotes: 'طلبات مستجابة',
+  emptyMessage: 'اضغط + لإنشاء طلبة صلاة.',
+
+  errors: {
+    genericTitle: 'خطأ',
+  },
+  deleteTitle: 'حذف طلبه الصلاة',
+  deleteMessage: 'هل تريد حذف هذه طلبه الصلاة؟',
+  cancel: 'إلغاء',
+  delete: 'حذف',
+  searchPlaceholder: 'ابحث في طلبات الصلاة...',
+  emptyTitle: 'لا توجد طلبات صلاة',
+  editBanner: 'تعديل طلبة الصلاة',
+  editPlaceholder: 'عدّل طلبة الصلاة...',
+  addPlaceholder: 'أضف طلب سريعاً...',
+  detailTitle: 'تفاصيل طلبه الصلاة',
+  close: 'إغلاق',
+  edit: 'تعديل',
+  editor: {
+    editTitle: 'تعديل طلبة الصلاة',
+    newTitle: 'طلبة صلاة جديدة',
+    hint: 'اكتب الطلبة اللي عايز تفضل تصلي بيها',
+    placeholder: 'اكتب هنا...',
+    saveEdit: 'حفظ التعديل',
+    add: 'إضافة',
+  },
+} as const;

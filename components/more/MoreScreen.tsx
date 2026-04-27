@@ -12,65 +12,62 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { getStrings } from '../../localization';
+import AppHeader from '../shared/AppHeader';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
 
-const ITEMS = [
-  {
-    key: 'BibleMemorization',
-    icon: 'brain',
-    title: 'حفظ الكتاب المقدس',
-    subtitle: 'اختبر حفظك للآيات',
-    color: '#1A7A7A',
-  },
-  {
-    key: 'Badges',
-    icon: 'medal-outline',
-    title: 'شارات الثبات',
-    subtitle: 'انظر إنجازاتك',
-    color: GOLD,
-  },
-  {
-    key: 'DevotionCalendar',
-    icon: 'calendar-check-outline',
-    title: 'تقويم الخلوة',
-    subtitle: 'راجع الأيام التي التزمت فيها',
-    color: '#2E8B57',
-  },
-];
-
 const MoreScreen = ({ navigation }: any) => {
+  const strings = getStrings().more;
   const insets = useSafeAreaInsets();
+  const items = [
+    {
+      key: 'AboutIdea',
+      icon: 'lightbulb-on-outline',
+      title: strings.items.aboutIdea.title,
+      subtitle: strings.items.aboutIdea.subtitle,
+      color: '#D97B29',
+    },
+    {
+      key: 'BibleMemorization',
+      icon: 'brain',
+      title: strings.items.bibleMemorization.title,
+      subtitle: strings.items.bibleMemorization.subtitle,
+      color: '#1A7A7A',
+    },
+    {
+      key: 'Badges',
+      icon: 'medal-outline',
+      title: strings.items.badges.title,
+      subtitle: strings.items.badges.subtitle,
+      color: GOLD,
+    },
+    {
+      key: 'DevotionCalendar',
+      icon: 'calendar-check-outline',
+      title: strings.items.devotionCalendar.title,
+      subtitle: strings.items.devotionCalendar.subtitle,
+      color: '#2E8B57',
+    },
+  ];
+
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <View style={{ height: insets.top, backgroundColor: NAVY }} />
-
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>المزيد</Text>
-      </View>
+      <AppHeader topInsetHeight={insets.top} title={strings.title} />
 
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {ITEMS.map(item => (
+        {items.map(item => (
           <TouchableOpacity
             key={item.key}
             style={styles.row}
             activeOpacity={0.8}
             onPress={() => navigation.navigate(item.key)}
           >
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={22}
-              color="#CCC"
-            />
-            <View style={styles.rowBody}>
-              <Text style={styles.rowTitle}>{item.title}</Text>
-              <Text style={styles.rowSub}>{item.subtitle}</Text>
-            </View>
             <View
               style={[
                 styles.iconCircle,
@@ -83,6 +80,16 @@ const MoreScreen = ({ navigation }: any) => {
                 color={item.color}
               />
             </View>
+
+            <View style={styles.rowBody}>
+              <Text style={styles.rowTitle}>{item.title}</Text>
+              <Text style={styles.rowSub}>{item.subtitle}</Text>
+            </View>
+            <MaterialCommunityIcons
+              name="chevron-left"
+              size={22}
+              color="#CCC"
+            />
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -114,7 +121,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.07,
     shadowRadius: 6,
   },
-  rowBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-end' },
+  rowBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-start' },
   rowTitle: {
     fontSize: 16,
     fontWeight: 'bold',

@@ -6,6 +6,7 @@ export { default as LoginUi } from '../components/login/LoginScreen';
 export { default as ForgotPasswordUi } from '../components/forgot-password/ForgotPasswordScreen';
 export { default as ResetPasswordUi } from '../components/reset-password/ResetPasswordScreen';
 export { default as OnboardingScreen } from '../components/onboarding/OnboardingScreen';
+export { default as NotificationPermissionScreen } from '../components/notification-permission/NotificationPermissionScreen';
 export { default as PrayerNotesScreen } from '../components/prayer-notes/PrayerNotesScreen';
 export { default as SpiritualReflectionScreen } from '../components/spiritual-reflection/SpiritualReflectionScreen';
 export { default as DailyNotificationsScreen } from '../components/daily-notifications/DailyNotificationsScreen';

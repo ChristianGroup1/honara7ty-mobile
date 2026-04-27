@@ -14,17 +14,25 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import MemorizationHeader from './MemorizationHeader';
 import { memorizationStyles as styles } from './styles';
 import { MemorizationStackParamList, WordSlot } from './types';
-import { buildSlots, normalizeArabicAnswer } from './utils';
+import {
+  buildFullTextResultSlots,
+  buildSlots,
+  normalizeArabicAnswer,
+} from './utils';
+import { getStrings } from '../../localization';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Recite'>;
 
 const ReciteScreen = ({ navigation, route }: Props) => {
+  const strings = getStrings().bibleMemorization.recite;
   const selection = route.params;
   const scrollRef = useRef<ScrollView | null>(null);
   const inputRefs = useRef<Array<TextInput | null>>([]);
+  const [fullVerseAnswer, setFullVerseAnswer] = useState('');
   const [slots, setSlots] = useState<WordSlot[]>(
     buildSlots(selection.verseOriginal, selection.difficulty),
   );
+  const isFullTextMode = selection.difficulty === 'fullText';
 
   const scrollToFocusedInput = (index: number) => {
     const target = inputRefs.current[index];
@@ -42,6 +50,22 @@ const ReciteScreen = ({ navigation, route }: Props) => {
   };
 
   const checkAnswers = () => {
+    if (isFullTextMode) {
+      const updated = buildFullTextResultSlots(
+        selection.verseOriginal,
+        fullVerseAnswer,
+      );
+      const correct = updated.filter(slot => slot.correct).length;
+
+      navigation.navigate('Result', {
+        ...selection,
+        slots: updated,
+        score: correct,
+        total: updated.length,
+      });
+      return;
+    }
+
     let correct = 0;
     const updated = slots.map(slot => {
       if (!slot.hidden) {
@@ -70,7 +94,7 @@ const ReciteScreen = ({ navigation, route }: Props) => {
   return (
     <View style={styles.container}>
       <MemorizationHeader
-        title="التسميع"
+        title={strings.title}
         onBack={() => navigation.goBack()}
       />
 
@@ -89,78 +113,114 @@ const ReciteScreen = ({ navigation, route }: Props) => {
             <Text style={styles.refText}>
               {selection.bookLabel} - {selection.chapterLabel}
             </Text>
-            <Text style={styles.instructionText}>
-              أكمل الكلمات المحجوبة في النص التالي:
-            </Text>
+            <Text style={styles.instructionText}>{strings.instruction}</Text>
           </View>
 
           <View style={styles.statusPillsRow}>
             <View style={styles.statusPill}>
-              <MaterialCommunityIcons name="circle-slice-3" size={16} color="#0A1124" />
+              <MaterialCommunityIcons
+                name="circle-slice-3"
+                size={16}
+                color="#0A1124"
+              />
               <Text style={styles.statusPillText}>
                 {selection.difficulty === 'easy'
-                  ? 'سهل'
+                  ? getStrings().bibleMemorization.difficultyLevels.easy
                   : selection.difficulty === 'medium'
-                    ? 'متوسط'
-                    : 'صعب'}
+                  ? getStrings().bibleMemorization.difficultyLevels.medium
+                  : selection.difficulty === 'hard'
+                  ? getStrings().bibleMemorization.difficultyLevels.hard
+                  : getStrings().bibleMemorization.difficultyLevels.fullText}
               </Text>
             </View>
             <View style={styles.statusPill}>
-              <MaterialCommunityIcons name="form-textbox" size={16} color="#0A1124" />
+              <MaterialCommunityIcons
+                name="form-textbox"
+                size={16}
+                color="#0A1124"
+              />
               <Text style={styles.statusPillText}>
-                {slots.filter(slot => slot.hidden).length} فراغ
+                {isFullTextMode
+                  ? strings.fullTextWords(slots.length)
+                  : strings.blanks(slots.filter(slot => slot.hidden).length)}
               </Text>
             </View>
           </View>
 
           <View style={styles.verseBox}>
             <View style={styles.verseBoxHeader}>
-              <Text style={styles.verseBoxTitle}>نص التسميع</Text>
-              <MaterialCommunityIcons name="feather" size={18} color="#C9A84C" />
+              <Text style={styles.verseBoxTitle}>{strings.verseTextTitle}</Text>
+              <MaterialCommunityIcons
+                name="feather"
+                size={18}
+                color="#C9A84C"
+              />
             </View>
-            <View style={styles.wordsWrap}>
-              {slots.map((slot, i) =>
-                slot.hidden ? (
-                  <TextInput
-                    key={i}
-                    ref={ref => {
-                      inputRefs.current[i] = ref;
-                    }}
-                    style={styles.blankInput}
-                    value={slot.userInput}
-                    onFocus={() => scrollToFocusedInput(i)}
-                    onChangeText={val =>
-                      setSlots(prev =>
-                        prev.map((current, index) =>
-                          index === i ? { ...current, userInput: val } : current,
-                        ),
-                      )
-                    }
-                    placeholder="___"
-                    placeholderTextColor="#AAA"
-                    textAlign="center"
-                    textAlignVertical="center"
-                    returnKeyType="next"
-                  />
-                ) : (
-                  <Text key={i} style={styles.wordText}>
-                    {slot.word}{' '}
-                  </Text>
-                ),
-              )}
-            </View>
+            {isFullTextMode ? (
+              <>
+                <Text style={styles.instructionText}>
+                  {strings.fullTextInstruction}
+                </Text>
+                <TextInput
+                  style={styles.fullVerseInput}
+                  multiline
+                  textAlignVertical="top"
+                  value={fullVerseAnswer}
+                  textAlign="right"
+                  onChangeText={setFullVerseAnswer}
+                  placeholder={strings.fullTextPlaceholder}
+                  placeholderTextColor="#98A2B3"
+                />
+              </>
+            ) : (
+              <View style={styles.wordsWrap}>
+                {slots.map((slot, i) =>
+                  slot.hidden ? (
+                    <TextInput
+                      key={i}
+                      ref={ref => {
+                        inputRefs.current[i] = ref;
+                      }}
+                      style={styles.blankInput}
+                      value={slot.userInput}
+                      onFocus={() => scrollToFocusedInput(i)}
+                      onChangeText={val =>
+                        setSlots(prev =>
+                          prev.map((current, index) =>
+                            index === i
+                              ? { ...current, userInput: val }
+                              : current,
+                          ),
+                        )
+                      }
+                      placeholder={strings.blankPlaceholder}
+                      placeholderTextColor="#AAA"
+                      textAlign="center"
+                      textAlignVertical="center"
+                      returnKeyType="next"
+                    />
+                  ) : (
+                    <Text key={i} style={styles.wordText}>
+                      {slot.word}{' '}
+                    </Text>
+                  ),
+                )}
+              </View>
+            )}
           </View>
 
           <TouchableOpacity style={styles.primaryBtn} onPress={checkAnswers}>
             <MaterialCommunityIcons name="check-bold" size={20} color="#FFF" />
-            <Text style={styles.primaryBtnText}>عرض النتيجة</Text>
+            <Text style={styles.primaryBtnText}>{strings.showResult}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.ghostBtn}
             onPress={() => navigation.navigate('Pick')}
           >
-            <Text style={styles.ghostBtnText}>اختر مرجعًا آخر</Text>
+            <Text style={styles.ghostBtnText}>
+              {strings.chooseAnotherReference}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

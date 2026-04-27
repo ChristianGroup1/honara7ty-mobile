@@ -31,10 +31,16 @@ const ReflectionCard = ({
       onPress={() => onOpenDetail(item)}
       style={[styles.card, isNarrowWidth && styles.cardCompact]}
     >
+      <View style={styles.cardAccent} />
+
       <View style={styles.cardBody}>
         <View style={styles.cardHeader}>
-          <View style={styles.dateRow}>
-            <MaterialCommunityIcons name="calendar-outline" size={14} color={GOLD} />
+          <View style={styles.cardDatePill}>
+            <MaterialCommunityIcons
+              name="calendar-outline"
+              size={14}
+              color={GOLD}
+            />
             <Text style={styles.dateText}>{formatDate(item.date)}</Text>
           </View>
         </View>
@@ -42,7 +48,9 @@ const ReflectionCard = ({
         <Text style={styles.cardContent}>{preview}</Text>
       </View>
 
-      <View style={[styles.actionGroup, isNarrowWidth && styles.actionGroupCompact]}>
+      <View
+        style={[styles.actionGroup, isNarrowWidth && styles.actionGroupCompact]}
+      >
         <TouchableOpacity
           onPress={() => onOpenEdit(item)}
           style={[styles.actionBtnCircle, styles.editBtn]}
@@ -58,7 +66,11 @@ const ReflectionCard = ({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           activeOpacity={0.8}
         >
-          <MaterialCommunityIcons name="trash-can-outline" size={16} color="#fff" />
+          <MaterialCommunityIcons
+            name="trash-can-outline"
+            size={16}
+            color="#fff"
+          />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>

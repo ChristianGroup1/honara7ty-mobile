@@ -1,6 +1,8 @@
 import UIKit
 import React
+import React_RCTLinking
 import React_RCTAppDelegate
+import React_RCTLinking
 import ReactAppDependencyProvider
 
 @main

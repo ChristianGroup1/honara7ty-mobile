@@ -11,16 +11,27 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import supabase from '../../lib/supbase';
+import { logoutCurrentUser } from '../../lib/logout';
+
 import CustomAlert, { AlertButton, AlertConfig } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
+import { getStrings } from '../../localization';
+import AppHeader from '../shared/AppHeader';
+import {
+  refreshProfileRecord,
+  saveAuthMetadata,
+  saveProfileRecord,
+} from '../../lib/offlineSync';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -63,6 +74,7 @@ const parseDateString = (value?: string | null): Date => {
 };
 
 const ProfileScreen = ({ navigation }: any) => {
+  const strings = getStrings().profile;
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isCompactWidth = width < 360;
@@ -76,9 +88,13 @@ const ProfileScreen = ({ navigation }: any) => {
     birthDate: '',
     gender: '',
   });
-  const [initialForm, setInitialForm] = useState<EditableProfileForm | null>(null);
+  const [initialForm, setInitialForm] = useState<EditableProfileForm | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [currentDevotionTime, setCurrentDevotionTime] =
+    useState<string>('07:00');
   const [activePicker, setActivePicker] = useState<PickerType>(null);
   const [pickerDate, setPickerDate] = useState<Date>(() => {
     const fallback = new Date();
@@ -118,11 +134,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
       setUser(currentUser);
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('church, sect, birth_date, gender, devotion_time')
-        .eq('id', currentUser.id)
-        .maybeSingle();
+      const { data: profile } = await refreshProfileRecord(currentUser.id);
 
       const nextForm: EditableProfileForm = {
         fullName:
@@ -136,6 +148,7 @@ const ProfileScreen = ({ navigation }: any) => {
         gender: profile?.gender || '',
       };
 
+      setCurrentDevotionTime(profile?.devotion_time || '07:00');
       setForm(nextForm);
       setInitialForm(nextForm);
       setPickerDate(parseDateString(nextForm.birthDate));
@@ -166,25 +179,23 @@ const ProfileScreen = ({ navigation }: any) => {
     form.fullName.trim() ||
     user?.user_metadata?.name ||
     user?.email?.split('@')[0] ||
-    'مستخدم';
+    strings.defaultUser;
 
-  const initials = displayName
-    .split(' ')
-    .filter((word: string) => word.length > 0)
-    .slice(0, 2)
-    .map((word: string) => word[0] ?? '')
-    .join('')
-    .toUpperCase() || '🙏';
+  const initials =
+    displayName
+      .split(' ')
+      .filter((word: string) => word.length > 0)
+      .slice(0, 2)
+      .map((word: string) => word[0] ?? '')
+      .join('')
+      .toUpperCase() || '🙏';
 
   const handlePickerOpen = () => {
     setActivePicker('birthDate');
     setPickerDate(parseDateString(form.birthDate));
   };
 
-  const handlePickerChange = (
-    event: DateTimePickerEvent,
-    selected?: Date,
-  ) => {
+  const handlePickerChange = (event: DateTimePickerEvent, selected?: Date) => {
     if (event.type === 'dismissed') {
       setActivePicker(null);
       return;
@@ -210,16 +221,18 @@ const ProfileScreen = ({ navigation }: any) => {
   const handleSave = async () => {
     const trimmedFullName = form.fullName.trim();
     const trimmedPhone = form.phone.trim();
+    const trimmedChurch = form.church.trim();
+    const trimmedSect = form.sect.trim();
     const nextErrors = { fullName: '', phone: '' };
     let hasError = false;
 
     if (!trimmedFullName) {
-      nextErrors.fullName = 'يرجى إدخال الاسم';
+      nextErrors.fullName = strings.validation.fullNameRequired;
       hasError = true;
     }
 
     if (trimmedPhone && !PHONE_REGEX.test(trimmedPhone)) {
-      nextErrors.phone = 'يرجى إدخال رقم هاتف صحيح';
+      nextErrors.phone = strings.validation.phoneInvalid;
       hasError = true;
     }
 
@@ -229,35 +242,38 @@ const ProfileScreen = ({ navigation }: any) => {
       return;
     }
 
+    const nextProfilePayload = {
+      id: user.id,
+      church: trimmedChurch || null,
+      sect: trimmedSect || null,
+      birth_date: form.birthDate || null,
+      gender: form.gender || null,
+      devotion_time: currentDevotionTime || '07:00',
+      updated_at: new Date().toISOString(),
+    };
+
+    const authMetadataChanged =
+      (user.user_metadata?.full_name || '') !== trimmedFullName ||
+      (user.user_metadata?.phone || '') !== trimmedPhone;
+
     setSaving(true);
     try {
-      const { error: authError } = await supabase.auth.updateUser({
-        data: {
-          ...user.user_metadata,
-          full_name: trimmedFullName,
-          phone: trimmedPhone || null,
-        },
-      });
-
-      if (authError) {
-        throw authError;
-      }
-
-      const { error: profileError } = await supabase.from('profiles').upsert(
-        {
-          id: user.id,
-          church: form.church.trim() || null,
-          sect: form.sect.trim() || null,
-          birth_date: form.birthDate || null,
-          gender: form.gender || null,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'id' },
-      );
-
-      if (profileError) {
-        throw profileError;
-      }
+      const [profileResult, authResult] = await Promise.all([
+        saveProfileRecord({
+          userId: user.id,
+          profile: nextProfilePayload,
+        }),
+        authMetadataChanged
+          ? saveAuthMetadata({
+              userId: user.id,
+              metadata: {
+                ...user.user_metadata,
+                full_name: trimmedFullName,
+                phone: trimmedPhone || null,
+              },
+            })
+          : Promise.resolve({ offline: false }),
+      ]);
 
       const updatedUser = {
         ...user,
@@ -274,21 +290,28 @@ const ProfileScreen = ({ navigation }: any) => {
         ...form,
         fullName: trimmedFullName,
         phone: trimmedPhone,
-        church: form.church.trim(),
-        sect: form.sect.trim(),
+        church: trimmedChurch,
+        sect: trimmedSect,
       };
 
       setForm(normalizedForm);
       setInitialForm(normalizedForm);
 
       showAlert(
-        'تم الحفظ',
-        'تم تحديث بياناتك بنجاح.',
+        strings.saveSuccessTitle,
+        profileResult.offline || authResult.offline
+          ? strings.saveOfflineMessage
+          : strings.saveSuccessMessage,
         undefined,
         'success',
       );
     } catch (err: any) {
-      showAlert('خطأ', err.message ?? 'حدث خطأ أثناء حفظ البيانات.', undefined, 'error');
+      showAlert(
+        strings.saveErrorTitle,
+        err.message ?? strings.saveErrorMessage,
+        undefined,
+        'error',
+      );
     } finally {
       setSaving(false);
     }
@@ -296,17 +319,16 @@ const ProfileScreen = ({ navigation }: any) => {
 
   const handleLogout = () => {
     showAlert(
-      'تسجيل الخروج',
-      'هل أنت متأكد أنك تريد تسجيل الخروج؟',
+      strings.logoutTitle,
+      strings.logoutMessage,
       [
-        { text: 'إلغاء', style: 'cancel' },
+        { text: strings.cancel, style: 'cancel' },
         {
-          text: 'خروج',
+          text: strings.logout,
           style: 'destructive',
           onPress: async () => {
             try {
-              await supabase.auth.signOut();
-              await GoogleSignin.signOut();
+              await logoutCurrentUser();
               const parentNavigation = navigation.getParent?.();
               if (parentNavigation) {
                 parentNavigation.reset({
@@ -317,7 +339,12 @@ const ProfileScreen = ({ navigation }: any) => {
                 navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
               }
             } catch (err: any) {
-              showAlert('خطأ', err.message, undefined, 'error');
+              showAlert(
+                strings.saveErrorTitle,
+                err.message,
+                undefined,
+                'error',
+              );
             }
           },
         },
@@ -338,11 +365,13 @@ const ProfileScreen = ({ navigation }: any) => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyState}>
-          <MaterialCommunityIcons name="account-off-outline" size={54} color="#9AA0AA" />
-          <Text style={styles.emptyTitle}>لا توجد جلسة نشطة</Text>
-          <Text style={styles.emptyText}>
-            سجّل الدخول أولاً للوصول إلى الملف الشخصي.
-          </Text>
+          <MaterialCommunityIcons
+            name="account-off-outline"
+            size={54}
+            color="#9AA0AA"
+          />
+          <Text style={styles.emptyTitle}>{strings.noSessionTitle}</Text>
+          <Text style={styles.emptyText}>{strings.noSessionMessage}</Text>
         </View>
       </SafeAreaView>
     );
@@ -351,11 +380,7 @@ const ProfileScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <View style={[styles.topInset, { height: insets.top }]} />
-
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>الملف الشخصي</Text>
-      </View>
+      <AppHeader topInsetHeight={insets.top} title={strings.title} />
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -367,7 +392,11 @@ const ProfileScreen = ({ navigation }: any) => {
               <Text style={styles.avatarText}>{initials}</Text>
             </View>
             <View style={styles.avatarBadge}>
-              <MaterialCommunityIcons name="check-decagram" size={16} color={NAVY} />
+              <MaterialCommunityIcons
+                name="check-decagram"
+                size={16}
+                color={NAVY}
+              />
             </View>
           </View>
 
@@ -376,8 +405,14 @@ const ProfileScreen = ({ navigation }: any) => {
 
           <View style={styles.heroMetaRow}>
             <View style={styles.heroMetaPill}>
-              <MaterialCommunityIcons name="book-open-variant" size={15} color={NAVY} />
-              <Text style={styles.heroMetaText}>بياناتك محفوظة على الحساب</Text>
+              <MaterialCommunityIcons
+                name="book-open-variant"
+                size={15}
+                color={NAVY}
+              />
+              <Text style={styles.heroMetaText}>
+                {strings.accountSavedBadge}
+              </Text>
             </View>
           </View>
         </View>
@@ -385,19 +420,23 @@ const ProfileScreen = ({ navigation }: any) => {
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIconWrap}>
-              <MaterialCommunityIcons name="account-edit-outline" size={18} color={NAVY} />
+              <MaterialCommunityIcons
+                name="account-edit-outline"
+                size={18}
+                color={NAVY}
+              />
             </View>
             <View style={styles.sectionCopy}>
-              <Text style={styles.sectionTitle}>البيانات الأساسية</Text>
+              <Text style={styles.sectionTitle}>{strings.basicInfoTitle}</Text>
               <Text style={styles.sectionSubtitle}>
-                يمكنك تعديل الاسم والهاتف والبيانات الشخصية من هنا.
+                {strings.basicInfoSubtitle}
               </Text>
             </View>
           </View>
 
           <CustomInput
-            fieldLabel="الاسم"
-            placeholder="أدخل اسمك"
+            fieldLabel={strings.name}
+            placeholder={strings.namePlaceholder}
             value={form.fullName}
             onChangeText={text => {
               setForm(prev => ({ ...prev, fullName: text }));
@@ -410,17 +449,17 @@ const ProfileScreen = ({ navigation }: any) => {
           />
 
           <CustomInput
-            fieldLabel="البريد الإلكتروني"
-            placeholder="البريد الإلكتروني"
+            fieldLabel={strings.email}
+            placeholder={strings.emailPlaceholder}
             value={user.email ?? ''}
             icon="email-outline"
             editable={false}
-            badge="ثابت"
+            badge={strings.fixed}
           />
 
           <CustomInput
-            fieldLabel="رقم الهاتف"
-            placeholder="أدخل رقم هاتفك"
+            fieldLabel={strings.phone}
+            placeholder={strings.phonePlaceholder}
             value={form.phone}
             onChangeText={text => {
               setForm(prev => ({ ...prev, phone: text }));
@@ -440,55 +479,59 @@ const ProfileScreen = ({ navigation }: any) => {
               <MaterialCommunityIcons name="church" size={18} color={NAVY} />
             </View>
             <View style={styles.sectionCopy}>
-              <Text style={styles.sectionTitle}>الكنيسة والانتماء</Text>
+              <Text style={styles.sectionTitle}>{strings.churchTitle}</Text>
               <Text style={styles.sectionSubtitle}>
-                أضف معلوماتك الكنسية لتبقى بياناتك مكتملة.
+                {strings.churchSubtitle}
               </Text>
             </View>
           </View>
 
           <CustomInput
-            fieldLabel="الكنيسة"
-            placeholder="اسم الكنيسة"
+            fieldLabel={strings.church}
+            placeholder={strings.churchPlaceholder}
             value={form.church}
             onChangeText={text => setForm(prev => ({ ...prev, church: text }))}
             icon="church"
-            badge="اختياري"
+            badge={strings.optional}
           />
 
           <CustomInput
-            fieldLabel="الطائفة"
-            placeholder="اسم الطائفة"
+            fieldLabel={strings.sect}
+            placeholder={strings.sectPlaceholder}
             value={form.sect}
             onChangeText={text => setForm(prev => ({ ...prev, sect: text }))}
             icon="account-group-outline"
-            badge="اختياري"
+            badge={strings.optional}
           />
         </View>
 
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIconWrap}>
-              <MaterialCommunityIcons name="calendar-heart" size={18} color={NAVY} />
+              <MaterialCommunityIcons
+                name="calendar-heart"
+                size={18}
+                color={NAVY}
+              />
             </View>
             <View style={styles.sectionCopy}>
-              <Text style={styles.sectionTitle}>بيانات شخصية وروحية</Text>
+              <Text style={styles.sectionTitle}>{strings.personalTitle}</Text>
               <Text style={styles.sectionSubtitle}>
-                اضبط تاريخ الميلاد والجنس من هنا.
+                {strings.personalSubtitle}
               </Text>
             </View>
           </View>
 
           <CustomInput
-            fieldLabel="تاريخ الميلاد"
-            placeholder="اختر تاريخ الميلاد"
+            fieldLabel={strings.birthDate}
+            placeholder={strings.birthDatePlaceholder}
             value={form.birthDate}
             icon="calendar-blank-outline"
             onPress={handlePickerOpen}
           />
 
           <View style={styles.genderBlock}>
-            <Text style={styles.genderLabel}>الجنس</Text>
+            <Text style={styles.genderLabel}>{strings.gender}</Text>
             <View
               style={[
                 styles.genderRow,
@@ -496,8 +539,8 @@ const ProfileScreen = ({ navigation }: any) => {
               ]}
             >
               {[
-                { label: 'ذكر', icon: 'gender-male' },
-                { label: 'أنثى', icon: 'gender-female' },
+                { label: strings.male, icon: 'gender-male' },
+                { label: strings.female, icon: 'gender-female' },
               ].map(option => {
                 const active = form.gender === option.label;
                 return (
@@ -543,9 +586,13 @@ const ProfileScreen = ({ navigation }: any) => {
             <ActivityIndicator color="#FFF" />
           ) : (
             <>
-              <MaterialCommunityIcons name="content-save-outline" size={20} color="#FFF" />
+              <MaterialCommunityIcons
+                name="content-save-outline"
+                size={20}
+                color="#FFF"
+              />
               <Text style={styles.saveBtnText}>
-                {hasChanges ? 'حفظ التعديلات' : 'لا توجد تغييرات'}
+                {hasChanges ? strings.save : strings.noChanges}
               </Text>
             </>
           )}
@@ -553,7 +600,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <MaterialCommunityIcons name="logout" size={20} color="#FFF" />
-          <Text style={styles.logoutText}>تسجيل الخروج</Text>
+          <Text style={styles.logoutText}>{strings.logout}</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -569,11 +616,17 @@ const ProfileScreen = ({ navigation }: any) => {
               <View style={styles.pickerHandle} />
               <View style={styles.pickerHeader}>
                 <TouchableOpacity onPress={() => setActivePicker(null)}>
-                  <Text style={styles.pickerActionSecondary}>إلغاء</Text>
+                  <Text style={styles.pickerActionSecondary}>
+                    {strings.cancel}
+                  </Text>
                 </TouchableOpacity>
-                <Text style={styles.pickerTitle}>تاريخ الميلاد</Text>
+                <Text style={styles.pickerTitle}>
+                  {strings.datePickerTitle}
+                </Text>
                 <TouchableOpacity onPress={confirmPickerSelection}>
-                  <Text style={styles.pickerActionPrimary}>تأكيد</Text>
+                  <Text style={styles.pickerActionPrimary}>
+                    {strings.confirm}
+                  </Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker

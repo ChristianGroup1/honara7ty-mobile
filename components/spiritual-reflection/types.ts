@@ -3,4 +3,5 @@ export interface Reflection {
   content: string;
   date: string;
   created_at: string;
+  pendingSync?: boolean;
 }

@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'reac
 import { spiritualReflectionStyles as styles } from './styles';
 import { Reflection } from './types';
 import { formatDate } from './utils';
+import { getStrings } from '../../localization';
 
 interface ReflectionDetailModalProps {
   visible: boolean;
@@ -25,6 +26,7 @@ const ReflectionDetailModal = ({
   onEdit,
   onDelete,
 }: ReflectionDetailModalProps) => {
+  const strings = getStrings().spiritualReflection;
   const modalOverlayStyle = keyboardVisible ? styles.modalOverlayTransparent : null;
   const scrollStyle = { maxHeight: Math.min(windowHeight * 0.6, 420) };
 
@@ -38,7 +40,7 @@ const ReflectionDetailModal = ({
       >
         <Pressable style={styles.modalPressable} onPress={onClose} />
         <View style={[styles.modalBox, styles.modalBoxPadded]}>
-          <Text style={styles.modalTitle}>تفاصيل التأمل</Text>
+          <Text style={styles.modalTitle}>{strings.detailTitle}</Text>
           <Text style={styles.modalHint}>
             {detailItem ? formatDate(detailItem.date) : ''}
           </Text>
@@ -59,7 +61,7 @@ const ReflectionDetailModal = ({
             ]}
           >
             <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-              <Text style={styles.cancelBtnText}>إغلاق</Text>
+              <Text style={styles.cancelBtnText}>{strings.close}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -71,7 +73,7 @@ const ReflectionDetailModal = ({
                 }
               }}
             >
-              <Text style={styles.saveBtnText}>تعديل</Text>
+              <Text style={styles.saveBtnText}>{strings.edit}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -83,7 +85,7 @@ const ReflectionDetailModal = ({
                 }
               }}
             >
-              <Text style={styles.deleteBtnText}>حذف</Text>
+              <Text style={styles.deleteBtnText}>{strings.delete}</Text>
             </TouchableOpacity>
           </View>
         </View>

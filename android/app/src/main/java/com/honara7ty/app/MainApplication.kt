@@ -1,4 +1,4 @@
-package com.honara7ty
+package com.honara7ty.app
 
 import android.app.Application
 import com.facebook.react.PackageList

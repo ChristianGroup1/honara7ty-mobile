@@ -3,4 +3,5 @@ export interface PrayerNote {
   content: string;
   created_at: string;
   is_answered: boolean;
+  pendingSync?: boolean;
 }

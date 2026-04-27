@@ -1,5 +1,23 @@
 import supabase from './supbase';
 
+const oauthCallbackInFlight = new Map<string, Promise<boolean>>();
+const oauthCallbackResultCache = new Map<string, boolean>();
+const MAX_CACHED_OAUTH_CALLBACKS = 10;
+
+function cacheOAuthCallbackResult(url: string, result: boolean) {
+  oauthCallbackResultCache.delete(url);
+  oauthCallbackResultCache.set(url, result);
+
+  if (oauthCallbackResultCache.size <= MAX_CACHED_OAUTH_CALLBACKS) {
+    return;
+  }
+
+  const oldestKey = oauthCallbackResultCache.keys().next().value;
+  if (oldestKey) {
+    oauthCallbackResultCache.delete(oldestKey);
+  }
+}
+
 export function parseFragment(fragment: string): Record<string, string> {
   const result: Record<string, string> = {};
 
@@ -15,6 +33,110 @@ export function parseFragment(fragment: string): Record<string, string> {
   return result;
 }
 
+function parseQueryString(url: string): Record<string, string> {
+  try {
+    const parsedUrl = new URL(url);
+    const result: Record<string, string> = {};
+    for (const [key, value] of Array.from(parsedUrl.searchParams)) {
+      result[key] = value;
+    }
+
+    return result;
+  } catch {
+    const questionIndex = url.indexOf('?');
+    if (questionIndex === -1) {
+      return {};
+    }
+
+    return parseFragment(url.slice(questionIndex + 1).split('#')[0]);
+  }
+}
+
+function isResetPasswordUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    return (
+      (parsedUrl as any).protocol === 'honara7ty:' &&
+      ((parsedUrl as any).hostname === 'reset-password' ||
+        (parsedUrl as any).pathname === '/reset-password')
+    );
+  } catch {
+    return url.startsWith('honara7ty://reset-password');
+  }
+}
+
+function isAuthCallbackUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+    return (
+      (parsedUrl as any).protocol === 'honara7ty:' &&
+      ((parsedUrl as any).hostname === 'auth-callback' ||
+        (parsedUrl as any).pathname === '/auth-callback')
+    );
+  } catch {
+    return url.startsWith('honara7ty://auth-callback');
+  }
+}
+
+export async function handleOAuthCallbackUrl(
+  url: string | null,
+): Promise<boolean> {
+  if (!url || !isAuthCallbackUrl(url)) {
+    return false;
+  }
+
+  const cachedResult = oauthCallbackResultCache.get(url);
+  if (typeof cachedResult === 'boolean') {
+    return cachedResult;
+  }
+
+  const inFlight = oauthCallbackInFlight.get(url);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const callbackPromise = (async () => {
+    const queryParams = parseQueryString(url);
+    const hashIndex = url.indexOf('#');
+    const hashParams =
+      hashIndex === -1 ? {} : parseFragment(url.slice(hashIndex + 1));
+    const params = { ...queryParams, ...hashParams };
+
+    if (!params.code) {
+      if (params.access_token && params.refresh_token) {
+        const { error } = await supabase.auth.setSession({
+          access_token: params.access_token,
+          refresh_token: params.refresh_token,
+        });
+        const result = !error;
+        cacheOAuthCallbackResult(url, result);
+        return result;
+      }
+
+      cacheOAuthCallbackResult(url, false);
+      return false;
+    }
+
+    const { error } = await supabase.auth.exchangeCodeForSession(params.code);
+    const result = !error;
+    cacheOAuthCallbackResult(url, result);
+    return result;
+  })();
+
+  oauthCallbackInFlight.set(url, callbackPromise);
+
+  try {
+    return await callbackPromise;
+  } finally {
+    oauthCallbackInFlight.delete(url);
+  }
+}
+
+export function __resetOAuthCallbackCacheForTests() {
+  oauthCallbackInFlight.clear();
+  oauthCallbackResultCache.clear();
+}
+
 export async function handleRecoveryUrl(
   url: string | null,
 ): Promise<{ isRecovery: boolean; isValid: boolean }> {
@@ -22,34 +144,23 @@ export async function handleRecoveryUrl(
     return { isRecovery: false, isValid: false };
   }
 
-  const isResetUrl = url.startsWith('honara7ty://reset-password');
-
-  if (isResetUrl) {
-    const questionIndex = url.indexOf('?');
-    if (questionIndex !== -1) {
-      const queryString = url.slice(questionIndex + 1).split('#')[0];
-      const queryParams = parseFragment(queryString);
-      if (queryParams.code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(
-          queryParams.code,
-        );
-        return { isRecovery: true, isValid: !error };
-      }
-    }
-  }
-
+  const isResetUrl = isResetPasswordUrl(url);
+  const queryParams = parseQueryString(url);
   const hashIndex = url.indexOf('#');
-  if (hashIndex === -1) {
-    return { isRecovery: false, isValid: false };
-  }
-
-  const params = parseFragment(url.slice(hashIndex + 1));
+  const hashParams = hashIndex === -1 ? {} : parseFragment(url.slice(hashIndex + 1));
+  const params = { ...queryParams, ...hashParams };
 
   if (isResetUrl && params.error) {
     return { isRecovery: true, isValid: false };
   }
 
+  if (isResetUrl && params.code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(params.code);
+    return { isRecovery: true, isValid: !error };
+  }
+
   if (
+    isResetUrl &&
     params.type === 'recovery' &&
     params.access_token &&
     params.refresh_token
