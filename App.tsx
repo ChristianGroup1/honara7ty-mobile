@@ -16,9 +16,15 @@ import notifee, { EventType } from '@notifee/react-native';
 import { DEVOTION_PRESS_ACTION_ID } from './lib/notifications';
 import { initializeSentry, Sentry } from './lib/sentry';
 import { initializeClarity } from './lib/clarity';
+import {
+  initializeFirebase,
+  registerFirebaseGlobalErrorHandler,
+} from './lib/firebase';
 
 initializeSentry();
 initializeClarity();
+initializeFirebase();
+registerFirebaseGlobalErrorHandler();
 
 function App() {
   useOfflineSync();

@@ -4,6 +4,7 @@ import supabase from './supbase';
 import { cancelDevotionReminder } from './notifications';
 import { clearClarityUser } from './clarity';
 import { clearSentryUser } from './sentry';
+import { clearFirebaseUser } from './firebase';
 
 export async function logoutCurrentUser() {
   configureGoogleSignIn();
@@ -11,6 +12,7 @@ export async function logoutCurrentUser() {
   await cancelDevotionReminder();
   clearClarityUser();
   clearSentryUser();
+  clearFirebaseUser();
   await supabase.auth.signOut();
 
   try {

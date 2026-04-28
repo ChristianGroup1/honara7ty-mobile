@@ -7,6 +7,7 @@ import { syncDevotionReminderSchedule } from '../lib/devotionReminder';
 import { BOOTSTRAP_TIMEOUT_MS, withTimeout } from '../lib/withTimeout';
 import { clearClarityUser, setClarityUser } from '../lib/clarity';
 import { clearSentryUser, setSentryUser } from '../lib/sentry';
+import { clearFirebaseUser, setFirebaseUser } from '../lib/firebase';
 
 export function useAppBootstrap() {
   const [showSplash, setShowSplash] = useState(true);
@@ -82,6 +83,10 @@ export function useAppBootstrap() {
               id: data.session.user.id,
               email: data.session.user.email ?? null,
             });
+            setFirebaseUser({
+              id: data.session.user.id,
+              email: data.session.user.email ?? null,
+            });
           }
           hideSplashAfter(800);
           return;
@@ -118,12 +123,17 @@ export function useAppBootstrap() {
             id: data.session.user.id,
             email: data.session.user.email ?? null,
           });
+          setFirebaseUser({
+            id: data.session.user.id,
+            email: data.session.user.email ?? null,
+          });
         }
       } catch (error) {
         console.warn('Bootstrap session check failed', error);
         applySessionState(null);
         clearClarityUser();
         clearSentryUser();
+        clearFirebaseUser();
       } finally {
         hideSplashAfter(1200);
       }
@@ -140,9 +150,14 @@ export function useAppBootstrap() {
           id: session.user.id,
           email: session.user.email ?? null,
         });
+        setFirebaseUser({
+          id: session.user.id,
+          email: session.user.email ?? null,
+        });
       } else {
         clearClarityUser();
         clearSentryUser();
+        clearFirebaseUser();
       }
     });
 

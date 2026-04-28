@@ -26,6 +26,7 @@ import {
   Sentry,
   trackSentryScreen,
 } from '../lib/sentry';
+import { trackFirebaseScreen } from '../lib/firebase';
 
 const NAVY = '#0A1124';
 
@@ -168,6 +169,7 @@ const RootNavigator = ({
         routeNameRef.current = currentRouteName;
         trackClarityScreen(currentRouteName);
         trackSentryScreen(currentRouteName);
+        trackFirebaseScreen(currentRouteName);
       }}
       onStateChange={() => {
         const currentRoute = getActiveRoute(navigationRef.getRootState());
@@ -180,6 +182,7 @@ const RootNavigator = ({
         routeNameRef.current = currentRouteName;
         trackClarityScreen(currentRouteName);
         trackSentryScreen(currentRouteName);
+        trackFirebaseScreen(currentRouteName);
       }}
     >
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
