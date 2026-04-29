@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Used by Firebase Analytics for app analytics attribution. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
     <!-- Notification permissions -->
     <!-- Required on Android 13+ (API 33+) to post notifications -->
