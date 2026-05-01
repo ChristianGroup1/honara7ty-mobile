@@ -23,7 +23,6 @@ import { RootStackParamList } from './types';
 import { trackClarityScreen } from '../lib/clarity';
 import {
   registerSentryNavigationContainer,
-  Sentry,
   trackSentryScreen,
 } from '../lib/sentry';
 import { trackFirebaseScreen } from '../lib/firebase';

@@ -88,20 +88,19 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   useEffect(() => {
     configureGoogleSignIn();
 
-    // Check if user is already signed in
-    checkUserSignedIn();
+    // Check if user is already signed in with a timeout so the UI never
+    // gets stuck in the initializing state.
+    const timeout = setTimeout(() => setInitializing(false), 5000);
+    checkUserSignedIn().finally(() => clearTimeout(timeout));
   }, []);
 
   const checkUserSignedIn = async () => {
     try {
-      const userInfo = await GoogleSignin.signInSilently(); // Auto sign-in if already logged in
-      if (userInfo && userInfo?.data?.user) {
-        return;
-      }
+      await GoogleSignin.signInSilently();
     } catch {
-      return;
+      // Silent sign-in not available – expected on fresh installs
     } finally {
-      setInitializing(false); // Hide loader after checking
+      setInitializing(false);
     }
   };
 

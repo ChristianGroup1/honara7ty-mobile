@@ -19,6 +19,10 @@ export function useAppBootstrap() {
   useEffect(() => {
     let isMounted = true;
     let splashTimeout: ReturnType<typeof setTimeout> | undefined;
+    // Tracks whether the initial checkSession has completed so we can
+    // suppress the INITIAL_SESSION event from onAuthStateChange and avoid
+    // duplicate state updates (which cause the double-render flash).
+    let bootstrapComplete = false;
 
     const hideSplashAfter = (delayMs: number) => {
       if (splashTimeout) {
@@ -52,6 +56,24 @@ export function useAppBootstrap() {
       });
     };
 
+    const setUserIdentity = (session: any) => {
+      if (session?.user?.id) {
+        setClarityUser(session.user.id);
+        setSentryUser({
+          id: session.user.id,
+          email: session.user.email ?? null,
+        });
+        setFirebaseUser({
+          id: session.user.id,
+          email: session.user.email ?? null,
+        });
+      } else {
+        clearClarityUser();
+        clearSentryUser();
+        clearFirebaseUser();
+      }
+    };
+
     const checkSession = async () => {
       try {
         const initialUrl = await withTimeout<string | null>(
@@ -78,15 +100,7 @@ export function useAppBootstrap() {
 
           if (data?.session) {
             syncReminderScheduleSafely(data.session.user?.id);
-            setClarityUser(data.session.user.id);
-            setSentryUser({
-              id: data.session.user.id,
-              email: data.session.user.email ?? null,
-            });
-            setFirebaseUser({
-              id: data.session.user.id,
-              email: data.session.user.email ?? null,
-            });
+            setUserIdentity(data.session);
           }
           hideSplashAfter(800);
           return;
@@ -118,15 +132,7 @@ export function useAppBootstrap() {
 
         if (data?.session) {
           syncReminderScheduleSafely(data.session.user?.id);
-          setClarityUser(data.session.user.id);
-          setSentryUser({
-            id: data.session.user.id,
-            email: data.session.user.email ?? null,
-          });
-          setFirebaseUser({
-            id: data.session.user.id,
-            email: data.session.user.email ?? null,
-          });
+          setUserIdentity(data.session);
         }
       } catch (error) {
         console.warn('Bootstrap session check failed', error);
@@ -135,6 +141,7 @@ export function useAppBootstrap() {
         clearSentryUser();
         clearFirebaseUser();
       } finally {
+        bootstrapComplete = true;
         hideSplashAfter(1200);
       }
     };
@@ -142,23 +149,16 @@ export function useAppBootstrap() {
     const {
       data: { subscription: authSubscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // Skip the initial INITIAL_SESSION event – checkSession handles it.
+      // This prevents duplicate applySessionState calls that cause the
+      // double-render flash when the app boots.
+      if (!bootstrapComplete) {
+        return;
+      }
+
       applySessionState(session);
       syncReminderScheduleSafely(session?.user?.id);
-      if (session?.user?.id) {
-        setClarityUser(session.user.id);
-        setSentryUser({
-          id: session.user.id,
-          email: session.user.email ?? null,
-        });
-        setFirebaseUser({
-          id: session.user.id,
-          email: session.user.email ?? null,
-        });
-      } else {
-        clearClarityUser();
-        clearSentryUser();
-        clearFirebaseUser();
-      }
+      setUserIdentity(session);
     });
 
     checkSession();
