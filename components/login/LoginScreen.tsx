@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -44,6 +44,8 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   const [loading, setLoading] = useState(false); // Login action loading state
   const [initializing, setInitializing] = useState(true); // Initial Google check
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
+  const googleSignInInProgressRef = useRef(false);
+  const facebookSignInInProgressRef = useRef(false);
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
     title: string;
@@ -146,6 +148,13 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   };
 
   const handleGoogleSignIn = async () => {
+    if (loading || googleSignInInProgressRef.current) {
+      return;
+    }
+
+    googleSignInInProgressRef.current = true;
+    setLoading(true);
+
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo: any = await GoogleSignin.signIn();
@@ -170,7 +179,10 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           await navigateAfterLogin(loggedInUser);
         }
       } else {
-        return;
+        showAlert(
+          strings.common.genericErrorTitle,
+          localizeAuthError('Missing Google ID token'),
+        );
       }
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -200,10 +212,18 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           localizeAuthError(error.message),
         );
       }
+    } finally {
+      setLoading(false);
+      googleSignInInProgressRef.current = false;
     }
   };
 
   const handleFacebookSignIn = async () => {
+    if (loading || facebookSignInInProgressRef.current) {
+      return;
+    }
+
+    facebookSignInInProgressRef.current = true;
     setLoading(true);
     try {
       await startFacebookAuth();
@@ -214,6 +234,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
       );
     } finally {
       setLoading(false);
+      facebookSignInInProgressRef.current = false;
     }
   };
 

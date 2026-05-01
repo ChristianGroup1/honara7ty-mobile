@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -63,19 +63,15 @@ const THEMES = [
 const HeroArtwork = ({
   icon,
   accent,
-  secondary,
   label,
   index,
 }: {
   icon: string;
   accent: string;
-  secondary: string;
   label: string;
   index: number;
 }) => {
-  const cardRotation = index % 2 === 0 ? '-8deg' : '8deg';
   const badgeRotation = index % 2 === 0 ? '10deg' : '-10deg';
-  const topBadgeRotation = index % 2 === 0 ? '-10deg' : '10deg';
 
   return (
     <View style={styles.heroArtwork}>
@@ -132,26 +128,20 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   const listRef = useRef<FlatList<Slide>>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [finishing, setFinishing] = useState(false);
+  const finishInProgressRef = useRef(false);
   const inApp = route?.params?.inApp === true;
-
-  useEffect(() => {
-    const currentSlide = slides[currentIndex];
-    if (!currentSlide) {
-      return;
-    }
-  }, [currentIndex, slides]);
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       const nextIndex = viewableItems[0]?.index;
       if (typeof nextIndex === 'number') {
-        setCurrentIndex(nextIndex);
+        setCurrentIndex(prev => (prev === nextIndex ? prev : nextIndex));
       }
     },
   ).current;
 
   const goTo = (index: number) => {
-    setCurrentIndex(index);
+    setCurrentIndex(prev => (prev === index ? prev : index));
     listRef.current?.scrollToIndex({ index, animated: true });
   };
 
@@ -165,35 +155,45 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   });
 
   const handleFinish = async () => {
+    if (finishInProgressRef.current) {
+      return;
+    }
+
+    finishInProgressRef.current = true;
+
     if (inApp) {
       navigation.goBack();
+      finishInProgressRef.current = false;
       return;
     }
 
     setFinishing(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const userId = data?.session?.user?.id;
+      const seenPermissionPrompt = await hasSeenNotificationPermissionPrompt(
+        userId,
+      );
+      const nextRoute = seenPermissionPrompt
+        ? 'MainTabs'
+        : 'NotificationPermission';
 
-    const { data } = await supabase.auth.getSession();
-    const userId = data?.session?.user?.id;
-    const seenPermissionPrompt = await hasSeenNotificationPermissionPrompt(
-      userId,
-    );
-    const nextRoute = seenPermissionPrompt
-      ? 'MainTabs'
-      : 'NotificationPermission';
+      if (__DEV__) {
+        console.warn('[Onboarding] finish routing', {
+          userId: userId ?? null,
+          seenPermissionPrompt,
+          nextRoute,
+        });
+      }
 
-    if (__DEV__) {
-      console.warn('[Onboarding] finish routing', {
-        userId: userId ?? null,
-        seenPermissionPrompt,
-        nextRoute,
+      navigation.reset({
+        index: 0,
+        routes: [{ name: nextRoute }],
       });
+    } finally {
+      setFinishing(false);
+      finishInProgressRef.current = false;
     }
-
-    setFinishing(false);
-    navigation.reset({
-      index: 0,
-      routes: [{ name: nextRoute }],
-    });
   };
 
   const goNext = () => {
@@ -214,7 +214,6 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const renderSlide = ({ item, index }: { item: Slide; index: number }) => {
     const theme = THEMES[index % THEMES.length];
-    const isIntro = theme.intro === true;
 
     return (
       <View style={[styles.slide, { backgroundColor: theme.background }]}>
@@ -230,7 +229,6 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
           <HeroArtwork
             icon={theme.icon}
             accent={theme.accent}
-            secondary={theme.secondary}
             label={theme.label}
             index={index}
           />
