@@ -28,6 +28,8 @@ import { authStrings } from '../auth/strings';
 import GoogleIcon from '../../assets/images/google-icon.svg';
 import { startFacebookAuth } from '../../lib/socialAuth';
 
+const SILENT_SIGNIN_TIMEOUT_MS = 5000;
+
 const initializingContainerStyle = {
   flex: 1,
   justifyContent: 'center' as const,
@@ -90,7 +92,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
 
     // Check if user is already signed in with a timeout so the UI never
     // gets stuck in the initializing state.
-    const timeout = setTimeout(() => setInitializing(false), 5000);
+    const timeout = setTimeout(() => setInitializing(false), SILENT_SIGNIN_TIMEOUT_MS);
     checkUserSignedIn().finally(() => clearTimeout(timeout));
   }, []);
 
