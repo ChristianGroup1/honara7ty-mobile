@@ -135,13 +135,13 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       const nextIndex = viewableItems[0]?.index;
       if (typeof nextIndex === 'number') {
-        setCurrentIndex(prev => (prev === nextIndex ? prev : nextIndex));
+        setCurrentIndex(nextIndex);
       }
     },
   ).current;
 
   const goTo = (index: number) => {
-    setCurrentIndex(prev => (prev === index ? prev : index));
+    setCurrentIndex(index);
     listRef.current?.scrollToIndex({ index, animated: true });
   };
 

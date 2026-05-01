@@ -183,6 +183,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           strings.common.genericErrorTitle,
           localizeAuthError('Missing Google ID token'),
         );
+        return;
       }
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
