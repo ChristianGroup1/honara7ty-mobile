@@ -179,6 +179,9 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           await navigateAfterLogin(loggedInUser);
         }
       } else {
+        if (__DEV__) {
+          console.warn('[Auth] Google sign-in completed without idToken');
+        }
         showAlert(
           strings.common.genericErrorTitle,
           localizeAuthError('Missing Google ID token'),
