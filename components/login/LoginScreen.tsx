@@ -8,10 +8,7 @@ import {
 } from 'react-native';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
-import {
-  Provider as PaperProvider,
-  ActivityIndicator,
-} from 'react-native-paper';
+import { Provider as PaperProvider, ActivityIndicator } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
@@ -22,20 +19,11 @@ import {
   GoogleSignin,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { authPaperTheme, AUTH_NAVY } from '../auth/theme';
+import { authPaperTheme } from '../auth/theme';
 import AuthScreenShell from '../auth/AuthScreenShell';
 import { authStrings } from '../auth/strings';
 import GoogleIcon from '../../assets/images/google-icon.svg';
 import { startFacebookAuth } from '../../lib/socialAuth';
-
-const SILENT_SIGNIN_TIMEOUT_MS = 5000;
-
-const initializingContainerStyle = {
-  flex: 1,
-  justifyContent: 'center' as const,
-  alignItems: 'center' as const,
-  backgroundColor: AUTH_NAVY,
-};
 
 const LoginUI: React.FC<any> = ({ navigation }) => {
   const strings = authStrings;
@@ -44,7 +32,6 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
   const [loading, setLoading] = useState(false); // Login action loading state
-  const [initializing, setInitializing] = useState(true); // Initial Google check
   const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
   const googleSignInInProgressRef = useRef(false);
   const facebookSignInInProgressRef = useRef(false);
@@ -89,22 +76,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
 
   useEffect(() => {
     configureGoogleSignIn();
-
-    // Check if user is already signed in with a timeout so the UI never
-    // gets stuck in the initializing state.
-    const timeout = setTimeout(() => setInitializing(false), SILENT_SIGNIN_TIMEOUT_MS);
-    checkUserSignedIn().finally(() => clearTimeout(timeout));
   }, []);
-
-  const checkUserSignedIn = async () => {
-    try {
-      await GoogleSignin.signInSilently();
-    } catch {
-      // Silent sign-in not available – expected on fresh installs
-    } finally {
-      setInitializing(false);
-    }
-  };
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
@@ -243,13 +215,6 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
     }
   };
 
-  if (initializing) {
-    return (
-      <View style={initializingContainerStyle}>
-        <ActivityIndicator size="large" color="#ffffff" />
-      </View>
-    );
-  }
   return (
     <PaperProvider theme={authPaperTheme}>
       <AuthScreenShell
