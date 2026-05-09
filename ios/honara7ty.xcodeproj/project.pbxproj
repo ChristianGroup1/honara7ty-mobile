@@ -188,7 +188,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nSENTRY_XCODE=\"$REACT_NATIVE_PATH/../@sentry/react-native/scripts/sentry-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $SENTRY_XCODE\"\n";
+			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nSENTRY_XCODE=\"$REACT_NATIVE_PATH/../@sentry/react-native/scripts/sentry-xcode.sh\"\n\n/bin/sh \"$WITH_ENVIRONMENT\" /bin/sh \"$SENTRY_XCODE\"\n";
 		};
 		031F8602C4F792981AC9224B /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -323,6 +323,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.honara7ty.app;
 				PRODUCT_NAME = honara7ty;
+				SWIFT_OBJC_BRIDGING_HEADER = "honara7ty/honara7ty-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -350,6 +351,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.honara7ty.app;
 				PRODUCT_NAME = honara7ty;
+				SWIFT_OBJC_BRIDGING_HEADER = "honara7ty/honara7ty-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};

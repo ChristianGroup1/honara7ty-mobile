@@ -53,6 +53,11 @@ const hiddenTabScreenOptions = {
 const MainTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const strings = getStrings().navigation;
+  const bottomInset = Math.max(insets.bottom, 0);
+  const tabBarBaseHeight = Platform.OS === 'android' ? 60 : 58;
+  const tabBarBottomPadding =
+    Platform.OS === 'android' ? Math.max(bottomInset, 8) : bottomInset + 6;
+  const tabBarHeight = tabBarBaseHeight + tabBarBottomPadding;
   const tabLabels: Record<string, string> = {
     Home: strings.tabs.home,
     Profile: strings.tabs.profile,
@@ -71,17 +76,9 @@ const MainTabNavigator = () => {
         tabBarStyle: {
           backgroundColor: NAVY,
           borderTopWidth: 0,
-          paddingBottom: Math.max(
-            insets.bottom,
-            Platform.OS === 'android' ? 8 : 4,
-          ),
-          paddingTop: 8,
-          height:
-            (Platform.OS === 'android' ? 60 : 80) +
-            Math.max(
-              insets.bottom - (Platform.OS === 'android' ? 8 : 4),
-              0,
-            ),
+          paddingBottom: tabBarBottomPadding,
+          paddingTop: 6,
+          height: tabBarHeight,
           elevation: 12,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -3 },
@@ -89,7 +86,7 @@ const MainTabNavigator = () => {
           shadowRadius: 8,
         },
         tabBarLabel: tabLabels[route.name] ?? route.name,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginBottom: 2 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginBottom: 0 },
         tabBarIcon: ({ color, focused }) =>
           renderTabBarIcon(route.name, color, focused),
       })}

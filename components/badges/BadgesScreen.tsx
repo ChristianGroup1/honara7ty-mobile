@@ -10,7 +10,6 @@ import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Platform,
-  SafeAreaView,
   ScrollView,
   Share,
   StatusBar,
@@ -18,7 +17,10 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
 import BadgeCard from './BadgeCard';
@@ -110,7 +112,7 @@ const BadgesScreen = ({ navigation }: any) => {
   const spotlightDaysLeft = Math.max(spotlightBadge.days - streak, 0);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
       <BadgesHeader
         topInsetHeight={insets.top}

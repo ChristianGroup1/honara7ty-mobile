@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
-  SafeAreaView,
   StatusBar,
   Text,
   TextInput,
@@ -11,7 +10,10 @@ import {
   Keyboard,
   useWindowDimensions,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import supabase from '../../lib/supbase';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import { MUTED, NAVY } from './constants';
@@ -199,7 +201,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const isNarrowWidth = windowWidth < 360;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
       <PrayerNotesHeader
         topInsetHeight={insets.top}

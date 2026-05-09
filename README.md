@@ -5,6 +5,55 @@ This is a new [**React Native**](https://reactnative.dev) project, bootstrapped 
 Before the **Reset Password** flow works end-to-end, you must configure the following in the
 [Supabase Dashboard](https://supabase.com/dashboard) for your project:
 
+## Web data reader
+
+This repo includes a standalone React web frontend for reading the existing Supabase tables.
+It has its own `web/package.json`, `web/package-lock.json`, and `web/node_modules`.
+
+```sh
+cd web
+npm install
+npm run dev
+```
+
+You can also run it from the repo root:
+
+```sh
+npm run web
+```
+
+Then open:
+
+```text
+http://localhost:5173
+```
+
+The web app reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from `web/.env`.
+If those values are not set, it falls back to the same Supabase project configured in
+the mobile app. Because the database uses Row Level Security, sign in with a Supabase
+user account before reading profile, reading log, prayer, reflection, testimony, or
+devotion rows.
+
+### Admin access for the web reader
+
+To let your signed-in account read all users' rows, run `supabase/admin-policies.sql`
+in the Supabase SQL Editor.
+
+Then add your Supabase Auth user id to `public.admin_users`:
+
+```sql
+insert into public.admin_users (user_id)
+values ('YOUR_AUTH_USER_ID')
+on conflict (user_id) do nothing;
+```
+
+You can find `YOUR_AUTH_USER_ID` in Supabase Dashboard → Authentication → Users.
+Admin access is read-only for other users' data; normal insert, update, and delete
+access remains limited to each user's own rows.
+
+The admin web view includes per-user details, a monthly devotion calendar, and
+completion counts from `devotion_log.completed = true`.
+
 ## 1 — Add the app deep-link to Redirect URLs
 
 `Authentication` → `URL Configuration` → **Redirect URLs** → click **Add URL**

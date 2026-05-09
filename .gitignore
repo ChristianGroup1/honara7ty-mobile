@@ -5,6 +5,7 @@
 # Xcode
 #
 build/
+web/dist/
 *.pbxuser
 !default.pbxuser
 *.mode1v3
