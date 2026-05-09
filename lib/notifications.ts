@@ -19,23 +19,35 @@ import notifee, {
   AndroidStyle,
   AndroidVisibility,
   AuthorizationStatus,
-  EventType,
   RepeatFrequency,
   TimestampTrigger,
   TriggerType,
 } from '@notifee/react-native';
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { getStrings } from '../localization';
 
 const CHANNEL_ID = 'devotion_reminder';
 const NOTIFICATION_ID = 'daily_devotion';
 const FOLLOW_UP_NOTIFICATION_ID = 'daily_devotion_follow_up';
 export const DEVOTION_PRESS_ACTION_ID = 'open_devotion';
+const DEVOTION_NOTIFICATION_IDS = [
+  NOTIFICATION_ID,
+  FOLLOW_UP_NOTIFICATION_ID,
+] as const;
 
 export type NotificationPermissionState =
   | 'allowed'
   | 'denied'
   | 'not_determined';
+
+export async function clearDevotionNotifications(): Promise<void> {
+  const ids = [...DEVOTION_NOTIFICATION_IDS];
+  await Promise.all([
+    notifee.cancelDisplayedNotifications(ids),
+    notifee.cancelTriggerNotifications(ids),
+    ...ids.map(id => notifee.cancelNotification(id)),
+  ]);
+}
 
 /** Ensure the Android notification channel exists (no-op on iOS). */
 async function ensureChannel(): Promise<void> {
@@ -54,7 +66,11 @@ async function ensureChannel(): Promise<void> {
  * Returns true when notifications are allowed.
  */
 export async function requestNotificationPermission(): Promise<boolean> {
-  const settings = await notifee.requestPermission();
+  const settings = await notifee.requestPermission({
+    alert: true,
+    badge: true,
+    sound: true,
+  });
   return (
     settings.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
     settings.authorizationStatus === AuthorizationStatus.PROVISIONAL
@@ -130,6 +146,23 @@ function buildFollowUpTriggerDate(
   return followUpTriggerDate;
 }
 
+function buildTimestampTrigger(timestamp: number): TimestampTrigger {
+  const trigger: TimestampTrigger = {
+    type: TriggerType.TIMESTAMP,
+    timestamp,
+    repeatFrequency: RepeatFrequency.DAILY,
+  };
+
+  if (Platform.OS === 'android') {
+    // Use AlarmManager to fire reliably on Android 12+ even in Doze mode.
+    trigger.alarmManager = {
+      type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,
+    };
+  }
+
+  return trigger;
+}
+
 export async function openAppNotificationSettings(): Promise<void> {
   try {
     await notifee.openNotificationSettings();
@@ -154,30 +187,33 @@ export async function scheduleDailyDevotionReminder(
   options?: { startTomorrow?: boolean; includeFollowUp?: boolean },
 ): Promise<void> {
   const strings = getStrings().notifications;
-  const permissionState = await getNotificationPermissionState();
-  if (permissionState !== 'allowed') {
+
+  // Always clear old delivered/scheduled reminders first. This removes
+  // legacy iOS payloads that were scheduled with invalid image attachments.
+  await clearDevotionNotifications();
+
+  let permissionState = await getNotificationPermissionState();
+  if (permissionState === 'denied') {
     return;
+  }
+
+  if (permissionState === 'not_determined') {
+    const allowed = await requestNotificationPermission();
+    if (!allowed) {
+      return;
+    }
+    permissionState = await getNotificationPermissionState();
+    if (permissionState !== 'allowed') {
+      return;
+    }
   }
 
   await ensureChannel();
 
-  // Cancel the existing reminder so we don't stack duplicates.
-  await notifee.cancelTriggerNotification(NOTIFICATION_ID);
-  await notifee.cancelTriggerNotification(FOLLOW_UP_NOTIFICATION_ID);
-
   // Build the next fire date at the requested local time.
   const trigger = buildPrimaryTriggerDate(hours, minutes, options);
 
-  const timestampTrigger: TimestampTrigger = {
-    type: TriggerType.TIMESTAMP,
-    timestamp: trigger.getTime(),
-    repeatFrequency: RepeatFrequency.DAILY,
-    // Use AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE to fire reliably on Android 12+
-    // even when the device is in Doze mode.
-    alarmManager: {
-      type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,
-    },
-  };
+  const timestampTrigger = buildTimestampTrigger(trigger.getTime());
 
   await notifee.createTriggerNotification(
     {
@@ -187,6 +223,16 @@ export async function scheduleDailyDevotionReminder(
       data: {
         kind: 'devotion_reminder',
         target: 'DevotionModal',
+      },
+      ios: {
+        sound: 'default',
+        foregroundPresentationOptions: {
+          alert: true,
+          banner: true,
+          list: true,
+          sound: true,
+          badge: true,
+        },
       },
       android: {
         channelId: CHANNEL_ID,
@@ -217,14 +263,9 @@ export async function scheduleDailyDevotionReminder(
     return;
   }
 
-  const followUpTimestampTrigger: TimestampTrigger = {
-    type: TriggerType.TIMESTAMP,
-    timestamp: followUpTrigger.getTime(),
-    repeatFrequency: RepeatFrequency.DAILY,
-    alarmManager: {
-      type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,
-    },
-  };
+  const followUpTimestampTrigger = buildTimestampTrigger(
+    followUpTrigger.getTime(),
+  );
 
   await notifee.createTriggerNotification(
     {
@@ -234,6 +275,17 @@ export async function scheduleDailyDevotionReminder(
       data: {
         kind: 'devotion_reminder',
         target: 'DevotionModal',
+      },
+      ios: {
+        sound: 'default',
+        
+        foregroundPresentationOptions: {
+          alert: true,
+          banner: true,
+          list: true,
+          sound: true,
+          badge: true,
+        },
       },
       android: {
         channelId: CHANNEL_ID,
@@ -257,6 +309,5 @@ export async function scheduleDailyDevotionReminder(
 
 /** Cancel the daily devotion reminder (e.g., when user removes their time). */
 export async function cancelDevotionReminder(): Promise<void> {
-  await notifee.cancelTriggerNotification(NOTIFICATION_ID);
-  await notifee.cancelTriggerNotification(FOLLOW_UP_NOTIFICATION_ID);
+  await clearDevotionNotifications();
 }

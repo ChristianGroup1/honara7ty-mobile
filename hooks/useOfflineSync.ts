@@ -1,22 +1,16 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
-import NetInfo, { useNetInfo } from '@react-native-community/netinfo';
+import NetInfo from '@react-native-community/netinfo';
 import { flushOfflineQueue } from '../lib/offlineSync';
 
 export function useOfflineSync() {
-  const netInfo = useNetInfo();
-  const isOffline = !(
-    netInfo.isConnected &&
-    netInfo.isInternetReachable !== false
-  );
-
   useEffect(() => {
-    if (!isOffline) {
-      void flushOfflineQueue();
-    }
-  }, [isOffline]);
+    void NetInfo.fetch().then(state => {
+      if (state.isConnected && state.isInternetReachable !== false) {
+        void flushOfflineQueue();
+      }
+    });
 
-  useEffect(() => {
     const unsubscribeNetInfo = NetInfo.addEventListener(state => {
       if (state.isConnected && state.isInternetReachable !== false) {
         void flushOfflineQueue();
@@ -37,6 +31,4 @@ export function useOfflineSync() {
       appStateSubscription.remove();
     };
   }, []);
-
-  return { isOffline };
 }

@@ -11,9 +11,10 @@ export const getAuthChromeMetrics = ({
 }: AuthChromeMetricsInput) => {
   const isCompactHeight = height < 720;
   const isCompactWidth = width < 360;
+  const baseHeaderHeight = Math.max(150, Math.min(height * 0.22, 210));
 
   return {
-    headerHeight: Math.max(150, Math.min(height * 0.22, 210)),
+    headerHeight: topInset + baseHeaderHeight,
     headerPaddingTop: topInset + (isCompactHeight ? 2 : 6),
     headerPaddingBottom: isCompactHeight ? 10 : 14,
     backButtonOffset: isCompactWidth ? 16 : 20,

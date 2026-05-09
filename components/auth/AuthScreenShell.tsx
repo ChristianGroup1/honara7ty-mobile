@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Image,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -59,16 +58,15 @@ const AuthScreenShell: React.FC<AuthScreenShellProps> = ({
     children: scrollChildren,
     ...restScrollProps
   } = scrollProps ?? {};
-  const topInsetStyle = { height: insets.top, backgroundColor: '#fff' };
 
   return (
-    <SafeAreaView
+    <View
       style={[styles.container, { backgroundColor: containerBackgroundColor }]}
     >
-      <StatusBar barStyle="light-content" backgroundColor={'#fff'} />
-
-      {/* Add spacing for status bar */}
-      <View style={topInsetStyle} />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={containerBackgroundColor}
+      />
 
       <View
         style={[
@@ -183,15 +181,15 @@ const AuthScreenShell: React.FC<AuthScreenShellProps> = ({
               paddingHorizontal: authChrome.formHorizontalPadding,
               paddingTop: authChrome.formTopPadding,
               paddingBottom: authChrome.formBottomPadding,
-              height: '100%',
             },
+            styles.formFill,
           ]}
           pointerEvents={formPointerEvents}
         >
           {children}
         </View>
       </KeyboardAwareScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -296,6 +294,9 @@ const styles = StyleSheet.create({
     elevation: 6,
     borderWidth: 1,
     borderColor: '#ECE3D6',
+  },
+  formFill: {
+    height: '100%',
   },
 });
 

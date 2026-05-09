@@ -467,10 +467,13 @@ export const badgesStyles = StyleSheet.create({
     fontWeight: '700',
     color: NAVY,
     marginBottom: 4,
+    textAlign: 'left',
   },
   motivationalText: {
     fontSize: 12,
     color: '#666',
     lineHeight: 18,
+    textAlign: 'left',
+
   },
 });

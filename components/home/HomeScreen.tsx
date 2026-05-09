@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   AppState,
@@ -55,6 +55,7 @@ const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
   const insets = useSafeAreaInsets();
   const userFromParams = route?.params?.user;
+  const hasLoadedRef = useRef(Boolean(userFromParams));
   const [user, setUser] = useState<any>(userFromParams || null);
   const [loading, setLoading] = useState(!userFromParams);
   /** null = not yet answered today, true = answered yes, false = answered no */
@@ -110,78 +111,94 @@ const HomeScreen = ({ route, navigation }: any) => {
     }
   }, []);
 
-  /* ── Load user once ── */
-  useEffect(() => {
-    if (!userFromParams) {
-      supabase.auth.getSession().then(({ data }) => {
-        if (data?.session?.user) {
-          setUser(data.session.user);
-        } else {
-          setUser(null);
-          clearDevotionState();
-        }
-        setLoading(false);
-      });
-    }
-  }, [clearDevotionState, userFromParams]);
-
   /* ── Check today's devotion answer whenever screen is focused ── */
   useFocusEffect(
     useCallback(() => {
+      let isActive = true;
+
       const checkDevotion = async () => {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const sessionUser = sessionData?.session?.user;
-        const userId = sessionUser?.id;
-
-        if (!userId) {
-          setUser(null);
-          clearDevotionState();
-          return;
+        if (!hasLoadedRef.current && !userFromParams) {
+          setLoading(true);
         }
 
-        setUser(sessionUser);
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const sessionUser = sessionData?.session?.user;
+          const userId = sessionUser?.id;
 
-        // One-time silent migration: encrypt any legacy plaintext content.
-        migrateContentEncryption(userId).catch(err => {
-          if (__DEV__) {
-            console.warn('[encryption] migration error:', err);
+          if (!isActive) {
+            return;
           }
-        });
 
-        const { data: devotionLogs } = await refreshDevotionLogs(userId);
-        const data = devotionLogs[getTodayDate()];
+          if (!userId) {
+            setUser(null);
+            clearDevotionState();
+            return;
+          }
 
-        setDevotionAnswer(data ? (data.completed as boolean) : null);
-        if (data?.reading_book) {
-          setReadingBook(data.reading_book);
-          const matchedBook = BIBLE_BOOKS.find(
-            book => book.bookName === data.reading_book,
-          );
-          if (matchedBook) {
-            setSelectedTestament(matchedBook.testament);
-            const nextSelectedChapters = Array.isArray(
-              (data as any).selected_chapters,
-            )
-              ? normalizeSelectedChapters(
-                  (data as any).selected_chapters.map(Number),
-                  matchedBook.chapters,
-                )
-              : chaptersFromLegacy(
-                  (data as any).reading_chapter,
-                  (data as any).chapters_read,
-                  matchedBook.chapters,
-                );
-            setSelectedChapters(nextSelectedChapters);
+          setUser(sessionUser);
+
+          // One-time silent migration: encrypt any legacy plaintext content.
+          migrateContentEncryption(userId).catch(err => {
+            if (__DEV__) {
+              console.warn('[encryption] migration error:', err);
+            }
+          });
+
+          const { data: devotionLogs } = await refreshDevotionLogs(userId);
+
+          if (!isActive) {
+            return;
+          }
+
+          const data = devotionLogs[getTodayDate()];
+
+          setDevotionAnswer(data ? (data.completed as boolean) : null);
+          if (data?.reading_book) {
+            setReadingBook(data.reading_book);
+            const matchedBook = BIBLE_BOOKS.find(
+              book => book.bookName === data.reading_book,
+            );
+            if (matchedBook) {
+              setSelectedTestament(matchedBook.testament);
+              const nextSelectedChapters = Array.isArray(
+                (data as any).selected_chapters,
+              )
+                ? normalizeSelectedChapters(
+                    (data as any).selected_chapters.map(Number),
+                    matchedBook.chapters,
+                  )
+                : chaptersFromLegacy(
+                    (data as any).reading_chapter,
+                    (data as any).chapters_read,
+                    matchedBook.chapters,
+                  );
+              setSelectedChapters(nextSelectedChapters);
+            }
+          }
+
+          void syncDevotionReminderSchedule(userId, {
+            startTomorrow: Boolean(data),
+          }).catch(error => {
+            if (__DEV__) {
+              console.warn('Failed to sync devotion reminder schedule', error);
+            }
+          });
+        } finally {
+          if (isActive) {
+            hasLoadedRef.current = true;
+            setLoading(false);
           }
         }
-
-        await syncDevotionReminderSchedule(userId, {
-          startTomorrow: Boolean(data),
-        });
       };
-      checkDevotion();
-      refreshNotificationPermission();
-    }, [clearDevotionState, refreshNotificationPermission]),
+
+      void checkDevotion();
+      void refreshNotificationPermission();
+
+      return () => {
+        isActive = false;
+      };
+    }, [clearDevotionState, refreshNotificationPermission, userFromParams]),
   );
 
   useEffect(() => {
@@ -324,12 +341,19 @@ const HomeScreen = ({ route, navigation }: any) => {
     setAnswerSheetVisible(true);
   };
 
-  const selectedBook = BIBLE_BOOKS.find(book => book.bookName === readingBook);
-  const selectedTestamentBooks =
-    selectedTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS;
-  const chapterOptions = Array.from(
-    { length: selectedBook?.chapters ?? 0 },
-    (_, idx) => idx + 1,
+  const selectedBook = useMemo(
+    () => BIBLE_BOOKS.find(book => book.bookName === readingBook),
+    [readingBook],
+  );
+  const selectedTestamentBooks = useMemo(
+    () =>
+      selectedTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS,
+    [selectedTestament],
+  );
+  const chapterOptions = useMemo(
+    () =>
+      Array.from({ length: selectedBook?.chapters ?? 0 }, (_, idx) => idx + 1),
+    [selectedBook],
   );
 
   useEffect(() => {

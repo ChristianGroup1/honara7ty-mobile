@@ -2,10 +2,12 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   AppState,
+  Modal,
   Platform,
   ScrollView,
   StatusBar,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import {
@@ -64,6 +66,9 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
     d.setHours(7, 0, 0, 0);
     return d;
   });
+  const [pendingDevotionTime, setPendingDevotionTime] = useState<Date>(
+    devotionTime,
+  );
   const [showPicker, setShowPicker] = useState(false);
   const [readingBook, setReadingBook] = useState('');
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
@@ -165,6 +170,11 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
     return () => subscription.remove();
   }, [refreshNotificationPermission]);
 
+  const openTimePicker = () => {
+    setPendingDevotionTime(devotionTime);
+    setShowPicker(true);
+  };
+
   const handleTimeChange = (event: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS === 'android') {
       setShowPicker(false);
@@ -173,8 +183,17 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
       return;
     }
     if (selected) {
-      setDevotionTime(selected);
+      if (Platform.OS === 'ios') {
+        setPendingDevotionTime(selected);
+      } else {
+        setDevotionTime(selected);
+      }
     }
+  };
+
+  const confirmIosTime = () => {
+    setDevotionTime(pendingDevotionTime);
+    setShowPicker(false);
   };
 
   const selectedBookMeta = useMemo(
@@ -354,7 +373,7 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
         <DailyNotificationsHero
           strings={strings}
           timeDisplay={timeDisplay}
-          onEditTime={() => setShowPicker(true)}
+          onEditTime={openTimePicker}
         />
 
         {notificationPermissionState !== 'allowed' && (
@@ -369,25 +388,6 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
             onPress={handlePermissionAction}
             loading={permissionLoading}
           />
-        )}
-
-        {Platform.OS === 'ios' && (
-          <View style={styles.pickerCard}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>{strings.editTime}</Text>
-              <Text style={styles.sectionSubtitle}>
-                {strings.editTimeSubtitle}
-              </Text>
-            </View>
-            <DateTimePicker
-              value={devotionTime}
-              mode="time"
-              display="spinner"
-              onChange={handleTimeChange}
-              locale="ar"
-              style={styles.iosPicker}
-            />
-          </View>
         )}
 
         {showPicker && Platform.OS === 'android' && (
@@ -422,12 +422,49 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
               ),
             )
           }
-          onEditTime={() => setShowPicker(true)}
+          onEditTime={openTimePicker}
           onSave={handleSave}
         />
 
         <DailyTipsList strings={strings} tips={tips} />
       </ScrollView>
+
+      {showPicker && Platform.OS === 'ios' ? (
+        <Modal
+          visible
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowPicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.pickerSheet}>
+              <View style={styles.pickerHandle} />
+              <View style={styles.pickerHeader}>
+                <TouchableOpacity onPress={() => setShowPicker(false)}>
+                  <Text style={styles.pickerActionSecondary}>إلغاء</Text>
+                </TouchableOpacity>
+                <View style={styles.pickerTitleWrap}>
+                  <Text style={styles.pickerTitle}>{strings.editTime}</Text>
+                  <Text style={styles.pickerSubtitle}>
+                    {strings.editTimeSubtitle}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={confirmIosTime}>
+                  <Text style={styles.pickerActionPrimary}>تأكيد</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={pendingDevotionTime}
+                mode="time"
+                display="spinner"
+                onChange={handleTimeChange}
+                locale="ar"
+                style={styles.iosPicker}
+              />
+            </View>
+          </View>
+        </Modal>
+      ) : null}
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </SafeAreaView>

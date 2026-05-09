@@ -186,52 +186,50 @@ const RootNavigator = ({
       }}
     >
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <Stack.Navigator initialRouteName={initialRouteName}>
+      <Stack.Navigator
+        initialRouteName={initialRouteName}
+        detachInactiveScreens
+        screenOptions={{
+          headerShown: false,
+          cardStyle: { backgroundColor: NAVY },
+        }}
+      >
         <Stack.Screen
           name="MainTabs"
           component={MainTabNavigator}
-          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Welcome"
           component={WelcomeScreen}
-          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="SignupStep1"
           component={SignupStep1}
-          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="ProfileCompletion"
           component={ProfileCompletion}
-          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Login"
           component={LoginUi}
-          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="ForgotPassword"
           component={ForgotPasswordUi}
-          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="ResetPassword"
           component={ResetPasswordUi}
-          options={{ headerShown: false }}
           initialParams={{ linkValid: recoveryLinkValid }}
         />
         <Stack.Screen
           name="Onboarding"
           component={OnboardingScreen}
-          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="NotificationPermission"
           component={NotificationPermissionScreen}
-          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

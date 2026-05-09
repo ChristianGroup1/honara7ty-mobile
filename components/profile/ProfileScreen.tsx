@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -78,6 +78,7 @@ const ProfileScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isCompactWidth = width < 360;
+  const hasLoadedProfileRef = useRef(false);
 
   const [user, setUser] = useState<any>(null);
   const [form, setForm] = useState<EditableProfileForm>({
@@ -157,13 +158,11 @@ const ProfileScreen = ({ navigation }: any) => {
     }
   }, []);
 
-  useEffect(() => {
-    loadProfile(true);
-  }, [loadProfile]);
-
   useFocusEffect(
     React.useCallback(() => {
-      loadProfile(false);
+      const shouldShowLoader = !hasLoadedProfileRef.current;
+      hasLoadedProfileRef.current = true;
+      void loadProfile(shouldShowLoader);
     }, [loadProfile]),
   );
 
@@ -743,6 +742,7 @@ const styles = StyleSheet.create({
   heroMetaText: {
     color: '#FFF',
     fontSize: 12,
+
     fontWeight: '700',
   },
   sectionCard: {
@@ -779,11 +779,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     marginBottom: 4,
+    textAlign: 'left',
   },
   sectionSubtitle: {
     color: '#737B86',
     fontSize: 13,
     lineHeight: 20,
+    textAlign: 'left',
   },
   genderBlock: { marginBottom: 14 },
   genderLabel: {
@@ -791,6 +793,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: NAVY,
     marginBottom: 6,
+    textAlign: 'left',
   },
   genderRow: {
     flexDirection: 'row',

@@ -103,8 +103,10 @@ jest.mock('@notifee/react-native', () => {
     onForegroundEvent: jest.fn(() => jest.fn()),
     createChannel: jest.fn(),
     createTriggerNotification: jest.fn(),
+    cancelDisplayedNotifications: jest.fn(),
     cancelTriggerNotifications: jest.fn(),
     cancelTriggerNotification: jest.fn(),
+    cancelNotification: jest.fn(),
     requestPermission: jest.fn(),
     getNotificationSettings: jest.fn(),
   };
@@ -141,8 +143,10 @@ jest.mock('@notifee/react-native', () => {
       SET_EXACT_AND_ALLOW_WHILE_IDLE: 'SET_EXACT_AND_ALLOW_WHILE_IDLE',
     },
     AuthorizationStatus: {
+      NOT_DETERMINED: -1,
       AUTHORIZED: 1,
       DENIED: 0,
+      PROVISIONAL: 2,
     },
   };
 });

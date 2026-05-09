@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   I18nManager,
+  Platform,
   View,
   Text,
   StyleSheet,
@@ -96,7 +97,7 @@ const CustomInput: React.FC<Props> = ({
             style={[
               styles.staticInputText,
               !value ? styles.staticInputPlaceholder : null,
-              { textAlign: 'left' },
+              styles.staticInputTextAlign,
             ]}
             numberOfLines={1}
           >
@@ -111,7 +112,7 @@ const CustomInput: React.FC<Props> = ({
           placeholder={placeholder}
           value={value}
           onChangeText={handleChangeText}
-          multiline={!isPassword}
+          multiline={Platform.OS === 'ios' ? false : !isPassword}
           secureTextEntry={isPassword ? secureText : false}
           mainColor="#0A1124"
           originalColor="#E0E0E0"
@@ -235,6 +236,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: '#0A1124',
+  },
+  staticInputTextAlign: {
+    textAlign: 'left',
   },
   staticInputPlaceholder: {
     color: '#999',

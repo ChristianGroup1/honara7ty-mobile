@@ -69,8 +69,13 @@ const MainTabNavigator = () => {
     <Tab.Navigator
       initialRouteName="Home"
       backBehavior="history"
+      detachInactiveScreens
+      sceneContainerStyle={{ backgroundColor: NAVY }}
       screenOptions={({ route }) => ({
         headerShown: false,
+        lazy: true,
+        freezeOnBlur: true,
+        tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: GOLD,
         tabBarInactiveTintColor: 'rgba(255,255,255,0.45)',
         tabBarStyle: {
