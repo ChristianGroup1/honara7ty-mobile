@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
   Modal,
+  Platform,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -97,8 +98,11 @@ const PickScreen = ({ navigation }: Props) => {
     [selectedVerseStart, verseOptions],
   );
 
-  const visibleBooks =
-    activeTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS;
+  const visibleBooks = useMemo(
+    () =>
+      activeTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS,
+    [activeTestament],
+  );
 
   const pickerTitle = useMemo(() => {
     switch (activePicker) {
@@ -113,7 +117,14 @@ const PickScreen = ({ navigation }: Props) => {
       default:
         return '';
     }
-  }, [activePicker, verseMode]);
+  }, [
+    activePicker,
+    strings.pickerTitles.chapter,
+    strings.pickerTitles.fromVerse,
+    strings.pickerTitles.singleVerse,
+    strings.pickerTitles.toVerse,
+    verseMode,
+  ]);
 
   const pickerOptions = useMemo(() => {
     switch (activePicker) {
@@ -128,14 +139,49 @@ const PickScreen = ({ navigation }: Props) => {
     }
   }, [activePicker, chapterOptions, verseEndOptions, verseOptions]);
 
-  const handleBookSelect = (book: BibleBook) => {
+  const handleBookSelect = useCallback((book: BibleBook) => {
     const firstVerse = book.chaptersData[0]?.verses[0]?.verse ?? 1;
     setActiveTestament(book.testament);
     setSelectedBook(book);
     setSelectedChapter(1);
     setSelectedVerseStart(firstVerse);
     setSelectedVerseEnd(firstVerse);
-  };
+  }, []);
+
+  const keyExtractor = useCallback((item: BibleBook) => item.bookID, []);
+
+  const renderBook = useCallback(
+    ({ item }: { item: BibleBook }) => (
+      <TouchableOpacity
+        style={[
+          styles.bookCard,
+          isCompactWidth ? styles.bookCardCompact : null,
+          selectedBook?.bookID === item.bookID && styles.bookCardActive,
+        ]}
+        onPress={() => handleBookSelect(item)}
+      >
+        <View style={styles.bookCardTop}>
+          {selectedBook?.bookID === item.bookID ? (
+            <MaterialCommunityIcons
+              name="check-circle"
+              size={16}
+              color="#C9A84C"
+            />
+          ) : null}
+        </View>
+        <Text
+          style={[
+            styles.bookCardTitle,
+            isCompactWidth ? styles.bookCardTitleCompact : null,
+            selectedBook?.bookID === item.bookID && styles.bookCardTitleActive,
+          ]}
+        >
+          {item.shortName}
+        </Text>
+      </TouchableOpacity>
+    ),
+    [handleBookSelect, isCompactWidth, selectedBook],
+  );
 
   const handleModeChange = (mode: VerseSelectionMode) => {
     setVerseMode(mode);
@@ -347,40 +393,15 @@ const PickScreen = ({ navigation }: Props) => {
             nestedScrollEnabled
             directionalLockEnabled
             showsHorizontalScrollIndicator={false}
-            keyExtractor={item => item.bookID}
+            keyExtractor={keyExtractor}
             contentContainerStyle={styles.bookSliderContent}
             snapToInterval={bookCardWidth + 10}
             decelerationRate="fast"
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.bookCard,
-                  isCompactWidth ? styles.bookCardCompact : null,
-                  selectedBook?.bookID === item.bookID && styles.bookCardActive,
-                ]}
-                onPress={() => handleBookSelect(item)}
-              >
-                <View style={styles.bookCardTop}>
-                  {selectedBook?.bookID === item.bookID ? (
-                    <MaterialCommunityIcons
-                      name="check-circle"
-                      size={16}
-                      color="#C9A84C"
-                    />
-                  ) : null}
-                </View>
-                <Text
-                  style={[
-                    styles.bookCardTitle,
-                    isCompactWidth ? styles.bookCardTitleCompact : null,
-                    selectedBook?.bookID === item.bookID &&
-                      styles.bookCardTitleActive,
-                  ]}
-                >
-                  {item.shortName}
-                </Text>
-              </TouchableOpacity>
-            )}
+            renderItem={renderBook}
+            removeClippedSubviews={Platform.OS === 'android'}
+            initialNumToRender={8}
+            maxToRenderPerBatch={8}
+            windowSize={5}
           />
           <Text style={styles.sliderHint}>{strings.sliderHint}</Text>
         </View>

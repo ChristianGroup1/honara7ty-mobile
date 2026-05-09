@@ -32,6 +32,7 @@ const SHADOW = '#9197A3';
 const MIST = '#D5DCE6';
 const NAVY = '#0A1124';
 const SHEET_HEIGHT = Math.max(SCREEN_HEIGHT * 0.34, 290);
+const VIEWABILITY_CONFIG = { viewAreaCoveragePercentThreshold: 60 };
 
 const THEMES = [
   {
@@ -63,19 +64,15 @@ const THEMES = [
 const HeroArtwork = ({
   icon,
   accent,
-  secondary,
   label,
   index,
 }: {
   icon: string;
   accent: string;
-  secondary: string;
   label: string;
   index: number;
 }) => {
-  const cardRotation = index % 2 === 0 ? '-8deg' : '8deg';
   const badgeRotation = index % 2 === 0 ? '10deg' : '-10deg';
-  const topBadgeRotation = index % 2 === 0 ? '-10deg' : '10deg';
 
   return (
     <View style={styles.heroArtwork}>
@@ -214,7 +211,6 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const renderSlide = ({ item, index }: { item: Slide; index: number }) => {
     const theme = THEMES[index % THEMES.length];
-    const isIntro = theme.intro === true;
 
     return (
       <View style={[styles.slide, { backgroundColor: theme.background }]}>
@@ -230,7 +226,6 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
           <HeroArtwork
             icon={theme.icon}
             accent={theme.accent}
-            secondary={theme.secondary}
             label={theme.label}
             index={index}
           />
@@ -308,6 +303,14 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   };
 
+  const backButtonWrapStyle = React.useMemo(
+    () =>
+      StyleSheet.compose(styles.backButtonWrap, {
+        top: insets.top + 18,
+      }),
+    [insets.top],
+  );
+
   return (
     <View style={styles.root}>
       <StatusBar
@@ -327,7 +330,7 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
         bounces={false}
         showsHorizontalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={{ viewAreaCoveragePercentThreshold: 60 }}
+        viewabilityConfig={VIEWABILITY_CONFIG}
         initialNumToRender={1}
         maxToRenderPerBatch={2}
         windowSize={3}
@@ -335,9 +338,7 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
       />
 
       {inApp ? (
-        <View
-          style={[styles.backButtonWrap, { top: insets.top + 18, left: 16 }]}
-        >
+        <View style={backButtonWrapStyle}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}

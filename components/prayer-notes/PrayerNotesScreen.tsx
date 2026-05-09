@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -52,14 +52,19 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   });
   const [query, setQuery] = useState('');
 
-  const showAlert = (
-    title: string,
-    message?: string,
-    buttons?: AlertButton[],
-    type: any = 'info',
-  ) => setAlertConfig({ visible: true, title, message, buttons, type });
-  const hideAlert = () =>
-    setAlertConfig((p: any) => ({ ...p, visible: false }));
+  const showAlert = useCallback(
+    (
+      title: string,
+      message?: string,
+      buttons?: AlertButton[],
+      type: any = 'info',
+    ) => setAlertConfig({ visible: true, title, message, buttons, type }),
+    [],
+  );
+  const hideAlert = useCallback(
+    () => setAlertConfig((p: any) => ({ ...p, visible: false })),
+    [],
+  );
 
   const fetchNotes = useCallback(async () => {
     setLoading(true);
@@ -96,35 +101,35 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     };
   }, []);
 
-  const resetComposer = () => {
+  const resetComposer = useCallback(() => {
     setEditItem(null);
     setNewNote('');
     setShowModal(false);
-  };
+  }, []);
 
-  const openNew = () => {
+  const openNew = useCallback(() => {
     setEditItem(null);
     setNewNote('');
     setShowModal(true);
-  };
+  }, []);
 
-  const openEdit = (note: PrayerNote) => {
+  const openEdit = useCallback((note: PrayerNote) => {
     setEditItem(note);
     setNewNote(note.content);
     setShowDetailModal(false);
     setShowModal(true);
-  };
+  }, []);
 
-  const openDetail = (note: PrayerNote) => {
+  const openDetail = useCallback((note: PrayerNote) => {
     setDetailItem(note);
     setShowDetailModal(true);
-  };
-  const closeDetail = () => {
+  }, []);
+  const closeDetail = useCallback(() => {
     setShowDetailModal(false);
     setDetailItem(null);
-  };
+  }, []);
 
-  const handleComposerSubmit = async () => {
+  const handleComposerSubmit = useCallback(async () => {
     const trimmed = newNote.trim();
     if (!trimmed) return;
     setSaving(true);
@@ -152,9 +157,9 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
 
     setSaving(false);
     resetComposer();
-  };
+  }, [editItem, newNote, resetComposer]);
 
-  const toggleAnswered = async (note: PrayerNote) => {
+  const toggleAnswered = useCallback(async (note: PrayerNote) => {
     const { data: sessionData } = await supabase.auth.getSession();
     const userId = sessionData?.session?.user?.id;
     if (!userId) {
@@ -162,43 +167,71 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     }
 
     const result = await togglePrayerNoteAnswered({ userId, note });
-    if (!note.is_answered) {
-    }
     setNotes(result.data);
-  };
+  }, []);
 
-  const deleteNote = (note: PrayerNote) => {
-    showAlert(
-      strings.deleteTitle,
-      strings.deleteMessage,
-      [
-        { text: strings.cancel, style: 'cancel' },
-        {
-          text: strings.delete,
-          style: 'destructive',
-          onPress: async () => {
-            const { data: sessionData } = await supabase.auth.getSession();
-            const userId = sessionData?.session?.user?.id;
-            if (!userId) {
-              return;
-            }
+  const deleteNote = useCallback(
+    (note: PrayerNote) => {
+      showAlert(
+        strings.deleteTitle,
+        strings.deleteMessage,
+        [
+          { text: strings.cancel, style: 'cancel' },
+          {
+            text: strings.delete,
+            style: 'destructive',
+            onPress: async () => {
+              const { data: sessionData } = await supabase.auth.getSession();
+              const userId = sessionData?.session?.user?.id;
+              if (!userId) {
+                return;
+              }
 
-            const result = await deletePrayerNote({ userId, note });
-            setNotes(result.data);
+              const result = await deletePrayerNote({ userId, note });
+              setNotes(result.data);
+            },
           },
-        },
-      ],
-      'warning',
-    );
-  };
-
-  const filtered = notes.filter(n =>
-    n.content.toLowerCase().includes(query.trim().toLowerCase()),
+        ],
+        'warning',
+      );
+    },
+    [
+      showAlert,
+      strings.cancel,
+      strings.delete,
+      strings.deleteMessage,
+      strings.deleteTitle,
+    ],
   );
-  const answeredCount = notes.filter(note => note.is_answered).length;
+
+  const filtered = useMemo(
+    () =>
+      notes.filter(n =>
+        n.content.toLowerCase().includes(query.trim().toLowerCase()),
+      ),
+    [notes, query],
+  );
   const shouldShowHero = query.trim().length === 0 && !keyboardVisible;
   const isCompactWidth = windowWidth < 380;
   const isNarrowWidth = windowWidth < 360;
+  const listContentStyle = useMemo(
+    () => [styles.list, { paddingBottom: 32 }],
+    [],
+  );
+  const keyExtractor = useCallback((item: PrayerNote) => item.id, []);
+  const renderNote = useCallback(
+    ({ item }: { item: PrayerNote }) => (
+      <PrayerNoteCard
+        item={item}
+        isNarrowWidth={isNarrowWidth}
+        onToggleAnswered={toggleAnswered}
+        onOpenDetail={openDetail}
+        onOpenEdit={openEdit}
+        onDelete={deleteNote}
+      />
+    ),
+    [deleteNote, isNarrowWidth, openDetail, openEdit, toggleAnswered],
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
@@ -265,18 +298,15 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
       ) : (
         <FlatList
           data={filtered}
-          keyExtractor={i => i.id}
-          renderItem={({ item }) => (
-            <PrayerNoteCard
-              item={item}
-              isNarrowWidth={isNarrowWidth}
-              onToggleAnswered={toggleAnswered}
-              onOpenDetail={openDetail}
-              onOpenEdit={openEdit}
-              onDelete={deleteNote}
-            />
-          )}
-          contentContainerStyle={[styles.list, { paddingBottom: 32 }]}
+          keyExtractor={keyExtractor}
+          renderItem={renderNote}
+          contentContainerStyle={listContentStyle}
+          keyboardShouldPersistTaps="handled"
+          removeClippedSubviews={Platform.OS === 'android'}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          updateCellsBatchingPeriod={40}
+          windowSize={7}
           ListHeaderComponent={
             shouldShowHero ? (
               <View style={styles.heroCard}>

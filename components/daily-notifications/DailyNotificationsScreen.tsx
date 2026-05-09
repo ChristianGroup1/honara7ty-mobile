@@ -46,29 +46,28 @@ import {
   toggleChapterSelection,
 } from '../shared/chapterSelection';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
-import {
-  refreshProfileRecord,
-  saveProfileRecord,
-} from '../../lib/offlineSync';
+import { refreshProfileRecord, saveProfileRecord } from '../../lib/offlineSync';
 
 const DailyNotificationsScreen = ({ navigation }: any) => {
   const strings = getStrings().dailyNotifications;
   const insets = useSafeAreaInsets();
-  const tips = [
-    { icon: 'weather-sunset-up', text: strings.tips[0] },
-    { icon: 'map-marker-outline', text: strings.tips[1] },
-    { icon: 'book-open-outline', text: strings.tips[2] },
-    { icon: 'cellphone-off', text: strings.tips[3] },
-    { icon: 'timer-outline', text: strings.tips[4] },
-  ];
+  const tips = useMemo(
+    () => [
+      { icon: 'weather-sunset-up', text: strings.tips[0] },
+      { icon: 'map-marker-outline', text: strings.tips[1] },
+      { icon: 'book-open-outline', text: strings.tips[2] },
+      { icon: 'cellphone-off', text: strings.tips[3] },
+      { icon: 'timer-outline', text: strings.tips[4] },
+    ],
+    [strings.tips],
+  );
   const [devotionTime, setDevotionTime] = useState<Date>(() => {
     const d = new Date();
     d.setHours(7, 0, 0, 0);
     return d;
   });
-  const [pendingDevotionTime, setPendingDevotionTime] = useState<Date>(
-    devotionTime,
-  );
+  const [pendingDevotionTime, setPendingDevotionTime] =
+    useState<Date>(devotionTime);
   const [showPicker, setShowPicker] = useState(false);
   const [readingBook, setReadingBook] = useState('');
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
@@ -105,14 +104,21 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
   }, []);
 
   useEffect(() => {
+    let isActive = true;
+
     const load = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id;
       if (!userId) {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
         return;
       }
       const { data } = await refreshProfileRecord(userId);
+      if (!isActive) {
+        return;
+      }
       if (data?.devotion_time) {
         const [h, m] = (data.devotion_time as string).split(':').map(Number);
         const d = new Date();
@@ -149,9 +155,16 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
               ),
         );
       }
-      setLoading(false);
+      if (isActive) {
+        setLoading(false);
+      }
     };
+
     load();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   useFocusEffect(

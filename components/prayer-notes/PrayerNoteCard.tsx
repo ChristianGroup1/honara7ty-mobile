@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { DANGER, GOLD, MUTED, NAVY, PREVIEW_CHARS } from './constants';
+import { DANGER, MUTED, NAVY, PREVIEW_CHARS } from './constants';
 import { prayerNotesStyles as styles } from './styles';
 import { PrayerNote } from './types';
 
@@ -109,4 +109,4 @@ const PrayerNoteCard = ({
   );
 };
 
-export default PrayerNoteCard;
+export default React.memo(PrayerNoteCard);

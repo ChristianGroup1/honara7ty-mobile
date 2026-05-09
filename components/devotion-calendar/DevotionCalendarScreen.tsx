@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StatusBar,
-  View,
-} from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { ActivityIndicator, ScrollView, StatusBar, View } from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -39,6 +40,7 @@ import { refreshDevotionLogs, saveDevotionLog } from '../../lib/offlineSync';
 const DevotionCalendarScreen = ({ navigation }: any) => {
   const strings = getStrings().devotionCalendar;
   const insets = useSafeAreaInsets();
+  const hasLoadedCalendarRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editorVisible, setEditorVisible] = useState(false);
@@ -74,8 +76,10 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
     [strings.newTestament, strings.oldTestament],
   );
 
-  const loadDevotionDays = useCallback(async () => {
-    setLoading(true);
+  const loadDevotionDays = useCallback(async (showLoader = false) => {
+    if (showLoader) {
+      setLoading(true);
+    }
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id;
@@ -89,11 +93,13 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
     } finally {
       setLoading(false);
     }
-  }, [strings.errorTitle]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadDevotionDays();
+      const shouldShowLoader = !hasLoadedCalendarRef.current;
+      hasLoadedCalendarRef.current = true;
+      loadDevotionDays(shouldShowLoader);
     }, [loadDevotionDays]),
   );
 

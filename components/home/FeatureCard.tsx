@@ -31,4 +31,4 @@ const FeatureCard = ({ title, subtitle, icon, onPress }: FeatureCardProps) => {
   );
 };
 
-export default FeatureCard;
+export default React.memo(FeatureCard);

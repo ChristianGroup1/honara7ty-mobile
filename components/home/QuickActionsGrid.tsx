@@ -51,4 +51,4 @@ const QuickActionsGrid = ({ navigation }: QuickActionsGridProps) => {
   );
 };
 
-export default QuickActionsGrid;
+export default React.memo(QuickActionsGrid);

@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   StatusBar,
   Text,
   TextInput,
@@ -52,20 +53,29 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
   const [query, setQuery] = useState('');
   const isCompactWidth = windowWidth < 380;
   const isNarrowWidth = windowWidth < 360;
-  const latestReflection = reflections[0] ?? null;
-  const filteredReflections = reflections.filter(reflection =>
-    reflection.content.toLowerCase().includes(query.trim().toLowerCase()),
+  const filteredReflections = useMemo(
+    () =>
+      reflections.filter(reflection =>
+        reflection.content.toLowerCase().includes(query.trim().toLowerCase()),
+      ),
+    [query, reflections],
   );
   const shouldShowHero = query.trim().length === 0 && !keyboardVisible;
 
-  const showAlert = (
-    title: string,
-    message?: string,
-    buttons?: AlertButton[],
-    type: 'error' | 'warning' | 'success' | 'info' = 'error',
-  ) => setAlertConfig({ visible: true, title, message, buttons, type });
+  const showAlert = useCallback(
+    (
+      title: string,
+      message?: string,
+      buttons?: AlertButton[],
+      type: 'error' | 'warning' | 'success' | 'info' = 'error',
+    ) => setAlertConfig({ visible: true, title, message, buttons, type }),
+    [],
+  );
 
-  const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
+  const hideAlert = useCallback(
+    () => setAlertConfig(prev => ({ ...prev, visible: false })),
+    [],
+  );
 
   const fetchReflections = useCallback(async () => {
     setLoading(true);
@@ -98,29 +108,29 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
     };
   }, []);
 
-  const openNew = () => {
+  const openNew = useCallback(() => {
     setEditItem(null);
     setText('');
     setShowModal(true);
-  };
+  }, []);
 
-  const openEdit = (item: Reflection) => {
+  const openEdit = useCallback((item: Reflection) => {
     setEditItem(item);
     setText(item.content);
     setShowModal(true);
-  };
+  }, []);
 
-  const openDetail = (item: Reflection) => {
+  const openDetail = useCallback((item: Reflection) => {
     setDetailItem(item);
     setShowDetail(true);
-  };
+  }, []);
 
-  const closeDetail = () => {
+  const closeDetail = useCallback(() => {
     setShowDetail(false);
     setDetailItem(null);
-  };
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const trimmed = text.trim();
     if (!trimmed) {
       return;
@@ -143,32 +153,58 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
     setSaving(false);
     setShowModal(false);
     setReflections(result.data);
-  };
+  }, [editItem, text]);
 
-  const deleteReflection = (item: Reflection) => {
-    showAlert(
-      strings.deleteTitle,
-      strings.deleteMessage,
-      [
-        { text: strings.cancel, style: 'cancel' },
-        {
-          text: strings.delete,
-          style: 'destructive',
-          onPress: async () => {
-            const { data: sessionData } = await supabase.auth.getSession();
-            const userId = sessionData?.session?.user?.id;
-            if (!userId) {
-              return;
-            }
+  const deleteReflection = useCallback(
+    (item: Reflection) => {
+      showAlert(
+        strings.deleteTitle,
+        strings.deleteMessage,
+        [
+          { text: strings.cancel, style: 'cancel' },
+          {
+            text: strings.delete,
+            style: 'destructive',
+            onPress: async () => {
+              const { data: sessionData } = await supabase.auth.getSession();
+              const userId = sessionData?.session?.user?.id;
+              if (!userId) {
+                return;
+              }
 
-            const result = await removeReflection({ userId, reflection: item });
-            setReflections(result.data);
+              const result = await removeReflection({
+                userId,
+                reflection: item,
+              });
+              setReflections(result.data);
+            },
           },
-        },
-      ],
-      'warning',
-    );
-  };
+        ],
+        'warning',
+      );
+    },
+    [
+      showAlert,
+      strings.cancel,
+      strings.delete,
+      strings.deleteMessage,
+      strings.deleteTitle,
+    ],
+  );
+
+  const keyExtractor = useCallback((item: Reflection) => item.id, []);
+  const renderReflection = useCallback(
+    ({ item }: { item: Reflection }) => (
+      <ReflectionCard
+        item={item}
+        isNarrowWidth={isNarrowWidth}
+        onOpenDetail={openDetail}
+        onOpenEdit={openEdit}
+        onDelete={deleteReflection}
+      />
+    ),
+    [deleteReflection, isNarrowWidth, openDetail, openEdit],
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
@@ -195,17 +231,15 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
       ) : (
         <FlatList
           data={filteredReflections}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <ReflectionCard
-              item={item}
-              isNarrowWidth={isNarrowWidth}
-              onOpenDetail={openDetail}
-              onOpenEdit={openEdit}
-              onDelete={deleteReflection}
-            />
-          )}
+          keyExtractor={keyExtractor}
+          renderItem={renderReflection}
           contentContainerStyle={styles.list}
+          keyboardShouldPersistTaps="handled"
+          removeClippedSubviews={Platform.OS === 'android'}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          updateCellsBatchingPeriod={40}
+          windowSize={7}
           ListHeaderComponent={
             shouldShowHero ? (
               <View style={styles.heroCard}>

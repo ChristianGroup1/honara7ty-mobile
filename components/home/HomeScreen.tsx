@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   AppState,
@@ -77,23 +83,29 @@ const HomeScreen = ({ route, navigation }: any) => {
     dismissOnBackdrop?: boolean;
   }>({ visible: false, title: '' });
 
-  const showAlert = (
-    title: string,
-    message?: string,
-    buttons?: AlertButton[],
-    type: 'error' | 'warning' | 'success' | 'info' = 'info',
-    dismissOnBackdrop = false,
-  ) =>
-    setAlertConfig({
-      visible: true,
-      title,
-      message,
-      buttons,
-      type,
-      dismissOnBackdrop,
-    });
+  const showAlert = useCallback(
+    (
+      title: string,
+      message?: string,
+      buttons?: AlertButton[],
+      type: 'error' | 'warning' | 'success' | 'info' = 'info',
+      dismissOnBackdrop = false,
+    ) =>
+      setAlertConfig({
+        visible: true,
+        title,
+        message,
+        buttons,
+        type,
+        dismissOnBackdrop,
+      }),
+    [],
+  );
 
-  const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
+  const hideAlert = useCallback(
+    () => setAlertConfig(prev => ({ ...prev, visible: false })),
+    [],
+  );
 
   const clearDevotionState = useCallback(() => {
     setDevotionAnswer(null);
@@ -177,7 +189,7 @@ const HomeScreen = ({ route, navigation }: any) => {
             }
           }
 
-          void syncDevotionReminderSchedule(userId, {
+          syncDevotionReminderSchedule(userId, {
             startTomorrow: Boolean(data),
           }).catch(error => {
             if (__DEV__) {
@@ -192,8 +204,8 @@ const HomeScreen = ({ route, navigation }: any) => {
         }
       };
 
-      void checkDevotion();
-      void refreshNotificationPermission();
+      checkDevotion();
+      refreshNotificationPermission();
 
       return () => {
         isActive = false;
@@ -210,6 +222,21 @@ const HomeScreen = ({ route, navigation }: any) => {
 
     return () => subscription.remove();
   }, [refreshNotificationPermission]);
+
+  const selectedBook = useMemo(
+    () => BIBLE_BOOKS.find(book => book.bookName === readingBook),
+    [readingBook],
+  );
+  const selectedTestamentBooks = useMemo(
+    () =>
+      selectedTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS,
+    [selectedTestament],
+  );
+  const chapterOptions = useMemo(
+    () =>
+      Array.from({ length: selectedBook?.chapters ?? 0 }, (_, idx) => idx + 1),
+    [selectedBook],
+  );
 
   const handleNotificationPermissionAction = async () => {
     setPermissionLoading(true);
@@ -238,64 +265,67 @@ const HomeScreen = ({ route, navigation }: any) => {
   };
 
   /* ── Save devotion answer + show smart response ── */
-  const handleDevotionAnswer = async (completed: boolean) => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData?.session?.user?.id;
-    if (!userId) {
-      return;
-    }
+  const handleDevotionAnswer = useCallback(
+    async (completed: boolean) => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      if (!userId) {
+        return;
+      }
 
-    const normalizedChapters = normalizeSelectedChapters(
-      selectedChapters,
-      selectedBook?.chapters ?? 0,
-    );
-
-    if (completed && (!readingBook || normalizedChapters.length === 0)) {
-      showAlert(
-        strings.readingSelectionRequiredTitle,
-        strings.readingSelectionRequiredMessage,
-        undefined,
-        'warning',
+      const normalizedChapters = normalizeSelectedChapters(
+        selectedChapters,
+        selectedBook?.chapters ?? 0,
       );
-      return;
-    }
 
-    const payload = {
-      completed,
-      reading_book: completed ? readingBook : null,
-      reading_chapter: completed
-        ? firstSelectedChapter(normalizedChapters)
-        : null,
-      chapters_read: completed ? normalizedChapters.length || null : null,
-      selected_chapters: completed ? normalizedChapters : null,
-    };
+      if (completed && (!readingBook || normalizedChapters.length === 0)) {
+        showAlert(
+          strings.readingSelectionRequiredTitle,
+          strings.readingSelectionRequiredMessage,
+          undefined,
+          'warning',
+        );
+        return;
+      }
 
-    const { offline } = await saveDevotionLog({
-      userId,
-      date: getTodayDate(),
-      payload,
-    });
+      const payload = {
+        completed,
+        reading_book: completed ? readingBook : null,
+        reading_chapter: completed
+          ? firstSelectedChapter(normalizedChapters)
+          : null,
+        chapters_read: completed ? normalizedChapters.length || null : null,
+        selected_chapters: completed ? normalizedChapters : null,
+      };
 
-    await syncDevotionReminderSchedule(userId, { startTomorrow: true });
+      const { offline } = await saveDevotionLog({
+        userId,
+        date: getTodayDate(),
+        payload,
+      });
 
-    setDevotionAnswer(completed);
-    if (completed) {
-      showAlert(
-        strings.correctStreakTitle,
-        offline ? strings.savedOfflineMessage : YES_MESSAGE,
-        undefined,
-        'success',
-      );
-    } else {
-      showAlert(
-        strings.startNowTitle,
-        offline ? strings.savedOfflineMessage : NO_MESSAGE,
-        [{ text: strings.later, style: 'cancel' }],
-        'info',
-        true,
-      );
-    }
-  };
+      await syncDevotionReminderSchedule(userId, { startTomorrow: true });
+
+      setDevotionAnswer(completed);
+      if (completed) {
+        showAlert(
+          strings.correctStreakTitle,
+          offline ? strings.savedOfflineMessage : YES_MESSAGE,
+          undefined,
+          'success',
+        );
+      } else {
+        showAlert(
+          strings.startNowTitle,
+          offline ? strings.savedOfflineMessage : NO_MESSAGE,
+          [{ text: strings.later, style: 'cancel' }],
+          'info',
+          true,
+        );
+      }
+    },
+    [readingBook, selectedBook, selectedChapters, showAlert, strings],
+  );
 
   /* ── Logout ── */
   const handleLogout = () => {
@@ -332,29 +362,30 @@ const HomeScreen = ({ route, navigation }: any) => {
   };
 
   /* ── Show question dialog ── */
-  const handleAnswerNow = () => {
+  const handleAnswerNow = useCallback(() => {
     setPendingCompleted(devotionAnswer ?? true);
     const matchedBook = BIBLE_BOOKS.find(book => book.bookName === readingBook);
     if (matchedBook) {
       setSelectedTestament(matchedBook.testament);
     }
     setAnswerSheetVisible(true);
-  };
+  }, [devotionAnswer, readingBook]);
 
-  const selectedBook = useMemo(
-    () => BIBLE_BOOKS.find(book => book.bookName === readingBook),
-    [readingBook],
-  );
-  const selectedTestamentBooks = useMemo(
-    () =>
-      selectedTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS,
-    [selectedTestament],
-  );
-  const chapterOptions = useMemo(
-    () =>
-      Array.from({ length: selectedBook?.chapters ?? 0 }, (_, idx) => idx + 1),
-    [selectedBook],
-  );
+  const closeAnswerSheet = useCallback(() => {
+    setAnswerSheetVisible(false);
+  }, []);
+
+  const navigateDevotionCalendar = useCallback(() => {
+    navigation.navigate('DevotionCalendar');
+  }, [navigation]);
+
+  const navigatePrayerNotes = useCallback(() => {
+    navigation.navigate('PrayerNotes');
+  }, [navigation]);
+
+  const navigateSpiritualReflection = useCallback(() => {
+    navigation.navigate('SpiritualReflection');
+  }, [navigation]);
 
   useEffect(() => {
     const normalized = normalizeSelectedChapters(
@@ -372,10 +403,24 @@ const HomeScreen = ({ route, navigation }: any) => {
   const canSaveReading =
     !pendingCompleted || (!!readingBook && selectedChapters.length > 0);
 
-  const saveDevotionSheet = async () => {
+  const saveDevotionSheet = useCallback(async () => {
     setAnswerSheetVisible(false);
     await handleDevotionAnswer(pendingCompleted);
-  };
+  }, [handleDevotionAnswer, pendingCompleted]);
+
+  const handleSetAnswerSheetTestament = useCallback((value: Testament) => {
+    setSelectedTestament(value);
+    setReadingBook('');
+    setSelectedChapters([]);
+  }, []);
+
+  const handleToggleAnswerSheetChapter = useCallback(
+    (chapter: number) =>
+      setSelectedChapters(current =>
+        toggleChapterSelection(current, chapter, selectedBook?.chapters ?? 0),
+      ),
+    [selectedBook],
+  );
 
   if (loading) {
     return (
@@ -403,7 +448,7 @@ const HomeScreen = ({ route, navigation }: any) => {
       />
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 28 }]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <QuickActionsGrid navigation={navigation} />
@@ -430,19 +475,19 @@ const HomeScreen = ({ route, navigation }: any) => {
           title={strings.featureCalendarTitle}
           subtitle={strings.featureCalendarSubtitle}
           icon="calendar-check-outline"
-          onPress={() => navigation.navigate('DevotionCalendar')}
+          onPress={navigateDevotionCalendar}
         />
         <FeatureCard
           title={strings.featurePrayerNotesTitle}
           subtitle={strings.featurePrayerNotesSubtitle}
           icon="hands-pray"
-          onPress={() => navigation.navigate('PrayerNotes')}
+          onPress={navigatePrayerNotes}
         />
         <FeatureCard
           title={strings.featureReflectionTitle}
           subtitle={strings.featureReflectionSubtitle}
           icon="notebook-outline"
-          onPress={() => navigation.navigate('SpiritualReflection')}
+          onPress={navigateSpiritualReflection}
         />
       </ScrollView>
 
@@ -457,29 +502,11 @@ const HomeScreen = ({ route, navigation }: any) => {
         chapterOptions={chapterOptions}
         selectedChapters={selectedChapters}
         canSaveReading={canSaveReading}
-        onClose={() => setAnswerSheetVisible(false)}
+        onClose={closeAnswerSheet}
         onSetPendingCompleted={setPendingCompleted}
-        onSetSelectedTestament={value => {
-          setSelectedTestament(value);
-          const nextBooks =
-            value === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS;
-          const nextBook = nextBooks[0];
-          if (!nextBook) {
-            return;
-          }
-          setReadingBook('');
-          setSelectedChapters([]);
-        }}
+        onSetSelectedTestament={handleSetAnswerSheetTestament}
         onSetReadingBook={setReadingBook}
-        onToggleChapter={chapter =>
-          setSelectedChapters(current =>
-            toggleChapterSelection(
-              current,
-              chapter,
-              selectedBook?.chapters ?? 0,
-            ),
-          )
-        }
+        onToggleChapter={handleToggleAnswerSheetChapter}
         onSave={saveDevotionSheet}
       />
     </SafeAreaView>

@@ -6,13 +6,14 @@
  * Awards weekly (7 days), monthly (30 days), and yearly (365 days) badges.
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Platform,
   ScrollView,
   Share,
   StatusBar,
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -37,11 +38,14 @@ declare const navigator: any;
 const BadgesScreen = ({ navigation }: any) => {
   const strings = getStrings().badges;
   const insets = useSafeAreaInsets();
+  const hasLoadedStreakRef = useRef(false);
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const fetchStreak = useCallback(async () => {
-    setLoading(true);
+  const fetchStreak = useCallback(async (showLoader = false) => {
+    if (showLoader) {
+      setLoading(true);
+    }
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id;
@@ -63,53 +67,105 @@ const BadgesScreen = ({ navigation }: any) => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchStreak();
+      const shouldShowLoader = !hasLoadedStreakRef.current;
+      hasLoadedStreakRef.current = true;
+      fetchStreak(shouldShowLoader);
     }, [fetchStreak]),
   );
 
-  const handleShare = async (badge: BadgeConfig) => {
-    try {
-      const webLink = `${WEB_URL}/badges/${badge.key}`;
+  const handleShare = useCallback(
+    async (badge: BadgeConfig) => {
+      try {
+        const webLink = `${WEB_URL}/badges/${badge.key}`;
 
-      const message = `${badge.shareText}\n\n${strings.shareLinkPrefix}${webLink}`;
+        const message = `${badge.shareText}\n\n${strings.shareLinkPrefix}${webLink}`;
 
-      if (Platform.OS === 'web') {
-        if (navigator.share) {
-          await navigator.share({
+        if (Platform.OS === 'web') {
+          if (navigator.share) {
+            await navigator.share({
+              title: strings.screen.shareTitle,
+              text: message,
+              url: webLink,
+            });
+          } else {
+            Alert.alert(
+              strings.screen.sharePromptTitle,
+              strings.screen.copyMessagePrefix + message,
+            );
+          }
+        } else {
+          await Share.share({
+            message,
             title: strings.screen.shareTitle,
-            text: message,
             url: webLink,
           });
-        } else {
-          Alert.alert(
-            strings.screen.sharePromptTitle,
-            strings.screen.copyMessagePrefix + message,
-          );
         }
-      } else {
-        await Share.share({
-          message,
-          title: strings.screen.shareTitle,
-          url: webLink,
-        });
+      } catch (error: any) {
+        Alert.alert(
+          strings.screen.shareErrorTitle,
+          strings.screen.shareErrorMessage(error.message),
+        );
       }
-    } catch (error: any) {
-      Alert.alert(
-        strings.screen.shareErrorTitle,
-        strings.screen.shareErrorMessage(error.message),
-      );
-    }
-  };
+    },
+    [strings],
+  );
 
-  const earnedCount = BADGE_CONFIGS.filter(b => streak >= b.days).length;
-  const earnedBadges = BADGE_CONFIGS.filter(badge => streak >= badge.days);
-  const lockedBadges = BADGE_CONFIGS.filter(badge => streak < badge.days);
+  const earnedBadges = useMemo(
+    () => BADGE_CONFIGS.filter(badge => streak >= badge.days),
+    [streak],
+  );
+  const lockedBadges = useMemo(
+    () => BADGE_CONFIGS.filter(badge => streak < badge.days),
+    [streak],
+  );
+  const earnedCount = earnedBadges.length;
   const spotlightBadge =
     lockedBadges[0] ??
     earnedBadges[earnedBadges.length - 1] ??
     BADGE_CONFIGS[0];
   const spotlightEarned = streak >= spotlightBadge.days;
   const spotlightDaysLeft = Math.max(spotlightBadge.days - streak, 0);
+  const spotlightGlowStyle = useMemo(
+    () =>
+      StyleSheet.compose(styles.spotlightGlow, {
+        backgroundColor: `${spotlightBadge.color}22`,
+      }),
+    [spotlightBadge.color],
+  );
+  const spotlightPillStyle = useMemo(
+    () =>
+      StyleSheet.compose(styles.spotlightPill, {
+        backgroundColor: spotlightEarned
+          ? `${spotlightBadge.color}18`
+          : '#EEF2F6',
+      }),
+    [spotlightBadge.color, spotlightEarned],
+  );
+  const spotlightPillTextStyle = useMemo(
+    () =>
+      StyleSheet.compose(
+        styles.spotlightPillText,
+        spotlightEarned
+          ? { color: spotlightBadge.color }
+          : styles.spotlightPillTextMuted,
+      ),
+    [spotlightBadge.color, spotlightEarned],
+  );
+  const spotlightIconStyle = useMemo(
+    () =>
+      StyleSheet.compose(styles.spotlightIconWrap, {
+        backgroundColor: `${spotlightBadge.color}18`,
+      }),
+    [spotlightBadge.color],
+  );
+  const spotlightProgressStyle = useMemo(
+    () =>
+      StyleSheet.compose(styles.spotlightProgressFill, {
+        width: `${Math.min(streak / spotlightBadge.days, 1) * 100}%`,
+        backgroundColor: spotlightBadge.color,
+      }),
+    [spotlightBadge.color, spotlightBadge.days, streak],
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
@@ -132,42 +188,16 @@ const BadgesScreen = ({ navigation }: any) => {
         />
 
         <View style={styles.spotlightCard}>
-          <View
-            style={[
-              styles.spotlightGlow,
-              { backgroundColor: `${spotlightBadge.color}22` },
-            ]}
-          />
+          <View style={spotlightGlowStyle} />
           <View style={styles.spotlightTopRow}>
-            <View
-              style={[
-                styles.spotlightPill,
-                {
-                  backgroundColor: spotlightEarned
-                    ? `${spotlightBadge.color}18`
-                    : '#EEF2F6',
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.spotlightPillText,
-                  spotlightEarned
-                    ? { color: spotlightBadge.color }
-                    : styles.spotlightPillTextMuted,
-                ]}
-              >
+            <View style={spotlightPillStyle}>
+              <Text style={spotlightPillTextStyle}>
                 {spotlightEarned
                   ? strings.screen.spotlightReady
                   : strings.screen.spotlightNext}
               </Text>
             </View>
-            <View
-              style={[
-                styles.spotlightIconWrap,
-                { backgroundColor: `${spotlightBadge.color}18` },
-              ]}
-            >
+            <View style={spotlightIconStyle}>
               <Text style={styles.spotlightEmoji}>{spotlightBadge.emoji}</Text>
             </View>
           </View>
@@ -183,15 +213,7 @@ const BadgesScreen = ({ navigation }: any) => {
           </Text>
 
           <View style={styles.spotlightProgressTrack}>
-            <View
-              style={[
-                styles.spotlightProgressFill,
-                {
-                  width: `${Math.min(streak / spotlightBadge.days, 1) * 100}%`,
-                  backgroundColor: spotlightBadge.color,
-                },
-              ]}
-            />
+            <View style={spotlightProgressStyle} />
           </View>
         </View>
 

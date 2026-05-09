@@ -34,7 +34,11 @@ const DailyQuestionCard = ({
       ) : devotionAnswer ? (
         <View style={styles.answeredBlock}>
           <View style={styles.answeredYesCard}>
-            <MaterialCommunityIcons name="check-circle" size={22} color="#fff" />
+            <MaterialCommunityIcons
+              name="check-circle"
+              size={22}
+              color="#fff"
+            />
             <Text style={styles.answeredYesText}>{strings.answeredYes}</Text>
           </View>
           <TouchableOpacity style={styles.editAnswerBtn} onPress={onEditAnswer}>
@@ -60,4 +64,4 @@ const DailyQuestionCard = ({
   );
 };
 
-export default DailyQuestionCard;
+export default React.memo(DailyQuestionCard);

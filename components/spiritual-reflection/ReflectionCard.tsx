@@ -77,4 +77,4 @@ const ReflectionCard = ({
   );
 };
 
-export default ReflectionCard;
+export default React.memo(ReflectionCard);
