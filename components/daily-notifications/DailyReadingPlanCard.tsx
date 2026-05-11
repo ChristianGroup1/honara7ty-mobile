@@ -199,4 +199,4 @@ const DailyReadingPlanCard = ({
   </View>
 );
 
-export default DailyReadingPlanCard;
+export default React.memo(DailyReadingPlanCard);

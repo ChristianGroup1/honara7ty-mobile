@@ -9,10 +9,10 @@ export const heroCardBase = {
   marginBottom: 18,
   overflow: 'hidden' as const,
   shadowColor: HERO_NAVY,
-  shadowOffset: { width: 0, height: 12 },
-  shadowOpacity: 0.18,
-  shadowRadius: 22,
-  elevation: 6,
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.12,
+  shadowRadius: 10,
+  elevation: 8,
 };
 
 export const heroGlowBase = {

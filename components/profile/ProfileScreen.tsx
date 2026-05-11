@@ -379,7 +379,7 @@ const ProfileScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <AppHeader topInsetHeight={insets.top} title={strings.title} />
+      <AppHeader topInsetHeight={insets?.top ?? 0} title={strings.title} />
 
       <ScrollView
         contentContainerStyle={styles.content}

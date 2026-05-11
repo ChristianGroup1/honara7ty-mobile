@@ -18,4 +18,4 @@ const BadgesHeader = ({ topInsetHeight, onBack }: BadgesHeaderProps) => {
   );
 };
 
-export default BadgesHeader;
+export default React.memo(BadgesHeader);

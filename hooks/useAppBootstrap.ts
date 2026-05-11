@@ -52,6 +52,8 @@ export function useAppBootstrap() {
       });
     };
 
+    let bootstrapFinished = false;
+
     const checkSession = async () => {
       try {
         const initialUrl = await withTimeout<string | null>(
@@ -88,6 +90,7 @@ export function useAppBootstrap() {
               email: data.session.user.email ?? null,
             });
           }
+          bootstrapFinished = true;
           hideSplashAfter(800);
           return;
         }
@@ -103,6 +106,7 @@ export function useAppBootstrap() {
             setIsRecoveryMode(true);
             setRecoveryLinkValid(isValid);
           }
+          bootstrapFinished = true;
           hideSplashAfter(800);
           return;
         }
@@ -113,6 +117,14 @@ export function useAppBootstrap() {
           { data: { session: null }, error: null },
           'supabase.auth.getSession',
         );
+
+        // If we have a session but it might be expired, try to refresh it
+        if (data?.session && data.session.expires_at) {
+          const expiresAt = data.session.expires_at * 1000;
+          if (Date.now() > expiresAt - 60000) { // 1 minute buffer
+            await supabase.auth.refreshSession();
+          }
+        }
 
         applySessionState(data?.session ?? null);
 
@@ -135,13 +147,19 @@ export function useAppBootstrap() {
         clearSentryUser();
         clearFirebaseUser();
       } finally {
+        bootstrapFinished = true;
         hideSplashAfter(1200);
       }
     };
 
     const {
       data: { subscription: authSubscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Ignore SIGNED_OUT events during initial bootstrap to prevent race conditions
+      if (event === 'SIGNED_OUT' && !bootstrapFinished) {
+        return;
+      }
+
       applySessionState(session);
       syncReminderScheduleSafely(session?.user?.id);
       if (session?.user?.id) {
@@ -154,7 +172,7 @@ export function useAppBootstrap() {
           id: session.user.id,
           email: session.user.email ?? null,
         });
-      } else {
+      } else if (bootstrapFinished) {
         clearClarityUser();
         clearSentryUser();
         clearFirebaseUser();

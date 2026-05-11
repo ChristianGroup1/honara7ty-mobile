@@ -315,14 +315,14 @@ async function dropMutation(mutationId: string) {
   await setQueue(queue.filter(mutation => mutation.id !== mutationId));
 }
 
-async function rewriteMutationEntityId(
+function rewriteMutationEntityIdInQueue(
+  queue: OfflineMutation[],
   userId: string,
   kind: 'prayer-note-upsert' | 'prayer-note-delete' | 'reflection-upsert' | 'reflection-delete',
   oldId: string,
   newId: string,
-) {
-  const queue = await getQueue();
-  const nextQueue = queue.map(mutation => {
+): OfflineMutation[] {
+  return queue.map(mutation => {
     if (mutation.userId !== userId) {
       return mutation;
     }
@@ -356,7 +356,16 @@ async function rewriteMutationEntityId(
 
     return mutation;
   });
+}
 
+async function rewriteMutationEntityId(
+  userId: string,
+  kind: 'prayer-note-upsert' | 'prayer-note-delete' | 'reflection-upsert' | 'reflection-delete',
+  oldId: string,
+  newId: string,
+) {
+  const queue = await getQueue();
+  const nextQueue = rewriteMutationEntityIdInQueue(queue, userId, kind, oldId, newId);
   await setQueue(nextQueue);
 }
 
@@ -619,32 +628,191 @@ export async function flushOfflineQueue(): Promise<SyncResult> {
       return { synced: false };
     }
 
-    const queue = await getQueue();
+    let queue = await getQueue();
+    if (queue.length === 0) {
+      return { synced: true };
+    }
 
-    for (const mutation of queue) {
-      let handled = false;
-
-      if (mutation.kind === 'prayer-note-upsert') {
-        handled = await flushPrayerNoteUpsert(mutation);
-      } else if (mutation.kind === 'prayer-note-delete') {
-        handled = await flushPrayerNoteDelete(mutation);
-      } else if (mutation.kind === 'reflection-upsert') {
-        handled = await flushReflectionUpsert(mutation);
-      } else if (mutation.kind === 'reflection-delete') {
-        handled = await flushReflectionDelete(mutation);
-      } else if (mutation.kind === 'devotion-log-upsert') {
-        handled = await flushDevotionLogUpsert(mutation);
-      } else if (mutation.kind === 'profile-upsert') {
-        handled = await flushProfileUpsert(mutation);
-      } else if (mutation.kind === 'auth-metadata-update') {
-        handled = await flushAuthMetadataUpdate(mutation);
+    // Process mutations one by one.
+    // We update the queue in memory and save it back to AsyncStorage only once
+    // at the end of the batch (or if we hit a terminal error) to minimize I/O.
+    let index = 0;
+    while (index < queue.length) {
+      // Yield to the event loop every few mutations to prevent blocking the main thread/ANRs
+      if (index > 0 && index % 3 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
 
-      if (!handled) {
+      const mutation = queue[index];
+      let success = false;
+
+      try {
+        if (mutation.kind === 'prayer-note-upsert') {
+          if (isLocalId(mutation.note.id)) {
+            const { data, error } = await supabase
+              .from('prayer_notes')
+              .insert({
+                user_id: mutation.userId,
+                content: mutation.note.content,
+                is_answered: mutation.note.is_answered,
+              })
+              .select('*')
+              .single();
+
+            if (!error && data) {
+              const serverNote = data as PrayerNote;
+              const notes = await getPrayerNotesCache(mutation.userId);
+              await setPrayerNotesCache(
+                mutation.userId,
+                replacePrayerNoteId(notes, mutation.note.id, serverNote),
+              );
+              // Rewrite IDs in the remaining queue items
+              queue = rewriteMutationEntityIdInQueue(
+                queue,
+                mutation.userId,
+                'prayer-note-upsert',
+                mutation.note.id,
+                serverNote.id,
+              );
+              queue = rewriteMutationEntityIdInQueue(
+                queue,
+                mutation.userId,
+                'prayer-note-delete',
+                mutation.note.id,
+                serverNote.id,
+              );
+              success = true;
+            }
+          } else {
+            const { error } = await supabase
+              .from('prayer_notes')
+              .update({
+                content: mutation.note.content,
+                is_answered: mutation.note.is_answered,
+              })
+              .eq('id', mutation.note.id);
+            if (!error) success = true;
+          }
+        } else if (mutation.kind === 'prayer-note-delete') {
+          const { error } = await supabase
+            .from('prayer_notes')
+            .delete()
+            .eq('id', mutation.noteId);
+          if (!error) success = true;
+        } else if (mutation.kind === 'reflection-upsert') {
+          if (isLocalId(mutation.reflection.id)) {
+            const { data, error } = await supabase
+              .from('reflections')
+              .insert({
+                user_id: mutation.userId,
+                content: mutation.reflection.content,
+                date: mutation.reflection.date,
+              })
+              .select('*')
+              .single();
+
+            if (!error && data) {
+              const serverRef = data as Reflection;
+              const reflections = await getReflectionsCache(mutation.userId);
+              await setReflectionsCache(
+                mutation.userId,
+                replaceReflectionId(reflections, mutation.reflection.id, serverRef),
+              );
+              queue = rewriteMutationEntityIdInQueue(
+                queue,
+                mutation.userId,
+                'reflection-upsert',
+                mutation.reflection.id,
+                serverRef.id,
+              );
+              queue = rewriteMutationEntityIdInQueue(
+                queue,
+                mutation.userId,
+                'reflection-delete',
+                mutation.reflection.id,
+                serverRef.id,
+              );
+              success = true;
+            }
+          } else {
+            const { error } = await supabase
+              .from('reflections')
+              .update({
+                content: mutation.reflection.content,
+                date: mutation.reflection.date,
+              })
+              .eq('id', mutation.reflection.id);
+            if (!error) success = true;
+          }
+        } else if (mutation.kind === 'reflection-delete') {
+          const { error } = await supabase
+            .from('reflections')
+            .delete()
+            .eq('id', mutation.reflectionId);
+          if (!error) success = true;
+        } else if (mutation.kind === 'devotion-log-upsert') {
+          const payload = {
+            user_id: mutation.userId,
+            date: mutation.date,
+            completed: mutation.payload.completed,
+            reading_book: mutation.payload.completed
+              ? mutation.payload.reading_book ?? null
+              : null,
+            reading_chapter: mutation.payload.completed
+              ? mutation.payload.reading_chapter ?? null
+              : null,
+            chapters_read: mutation.payload.completed
+              ? mutation.payload.chapters_read ?? null
+              : null,
+            selected_chapters: mutation.payload.completed
+              ? mutation.payload.selected_chapters ?? null
+              : null,
+          };
+          const { error } = await supabase
+            .from('devotion_log')
+            .upsert(payload, { onConflict: 'user_id,date' });
+
+          if (!error) {
+            const { error: rle } = await syncReadingLogForDate({
+              userId: mutation.userId,
+              date: mutation.date,
+              completed: mutation.payload.completed,
+              readingBook: mutation.payload.completed
+                ? mutation.payload.reading_book ?? null
+                : null,
+              selectedChapters: mutation.payload.completed
+                ? mutation.payload.selected_chapters ?? []
+                : [],
+            });
+            if (!rle) success = true;
+          }
+        } else if (mutation.kind === 'profile-upsert') {
+          const { error } = await supabase.from('profiles').upsert(
+            { id: mutation.userId, ...mutation.profile },
+            { onConflict: 'id' },
+          );
+          if (!error) success = true;
+        } else if (mutation.kind === 'auth-metadata-update') {
+          const { error } = await supabase.auth.updateUser({
+            data: mutation.metadata,
+          });
+          if (!error) success = true;
+        }
+      } catch (e) {
+        success = false;
+      }
+
+      if (success) {
+        // Mutation handled, remove it from local queue and continue
+        queue.splice(index, 1);
+      } else {
+        // Stop flushing on first error to preserve order
+        await setQueue(queue);
         return { synced: false };
       }
     }
 
+    await setQueue(queue);
     return { synced: true };
   })();
 

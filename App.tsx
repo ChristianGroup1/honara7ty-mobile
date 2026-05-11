@@ -6,7 +6,8 @@
  */
 
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { InteractionManager } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SplashScreen } from './screens';
 import RootNavigator from './navigation/RootNavigator';
@@ -21,13 +22,18 @@ import {
   registerFirebaseGlobalErrorHandler,
 } from './lib/firebase';
 
-initializeSentry();
-initializeClarity();
-initializeFirebase();
-registerFirebaseGlobalErrorHandler();
-
 function App() {
   useOfflineSync();
+
+  useEffect(() => {
+    // Defer heavy initializations until after initial rendering to prevent ANRs
+    InteractionManager.runAfterInteractions(() => {
+      initializeSentry();
+      initializeClarity();
+      initializeFirebase();
+      registerFirebaseGlobalErrorHandler();
+    });
+  }, []);
   const {
     showSplash,
     isLoggedIn,

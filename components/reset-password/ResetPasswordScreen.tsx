@@ -159,7 +159,7 @@ const ResetPasswordUI: React.FC<Props> = ({ navigation, route }) => {
     return strings.resetPassword.newPasswordTitle;
   };
 
-  const bottomButtonSpacing = Math.max(insets.bottom + 12, 24);
+  const bottomButtonSpacing = Math.max((insets?.bottom ?? 0) + 12, 24);
 
   return (
     <PaperProvider theme={authPaperTheme}>

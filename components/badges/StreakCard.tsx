@@ -78,4 +78,4 @@ const StreakCard = ({
   );
 };
 
-export default StreakCard;
+export default React.memo(StreakCard);

@@ -245,4 +245,4 @@ const HomeAnswerSheet = ({
   );
 };
 
-export default HomeAnswerSheet;
+export default React.memo(HomeAnswerSheet);

@@ -28,4 +28,4 @@ const DailyTipsList = ({ strings, tips }: Props) => (
   </>
 );
 
-export default DailyTipsList;
+export default React.memo(DailyTipsList);

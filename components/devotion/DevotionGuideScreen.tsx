@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
+  FlatList,
   Platform,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -26,11 +26,56 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
   const strings = getStrings().devotion;
   const insets = useSafeAreaInsets();
 
+
+  const renderItem = useCallback(({ item, index }: { item: any; index: number }) => {
+    const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
+    return (
+      <TouchableOpacity
+        key={item.id}
+        style={[styles.articleCard, { borderRightColor: accent }]}
+        activeOpacity={0.82}
+        onPress={() =>
+          navigation.navigate('DevotionDetail', { articleId: item.id })
+        }
+      >
+        {/* Icon circle */}
+        <View
+          style={[
+            styles.articleIconCircle,
+            { backgroundColor: `${accent}1F` },
+          ]}
+        >
+          <MaterialCommunityIcons
+            name={item.icon}
+            size={26}
+            color={accent}
+          />
+        </View>
+
+        {/* Text */}
+        <View style={styles.articleCardBody}>
+          <Text style={[styles.articleCardTitle, { color: NAVY }]}>
+            {item.title}
+          </Text>
+          <Text style={styles.articleCardSummary} numberOfLines={2}>
+            {item.summary}
+          </Text>
+        </View>
+
+        <MaterialCommunityIcons
+          name="chevron-left"
+          size={20}
+          color="#BCC0C8"
+        />
+      </TouchableOpacity>
+    );
+  }, [navigation]);
+
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
       <AppHeader
-        topInsetHeight={insets.top}
+        topInsetHeight={insets?.top ?? 0}
         title={strings.guide.title}
         leading={
           <AppHeaderAction
@@ -41,54 +86,17 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
         }
       />
 
-      <ScrollView
+      <FlatList
+        data={ARTICLES}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-      >
-        {ARTICLES.map((article, idx) => {
-          const accent = CARD_ACCENTS[idx % CARD_ACCENTS.length];
-          return (
-            <TouchableOpacity
-              key={article.id}
-              style={[styles.articleCard, { borderRightColor: accent }]}
-              activeOpacity={0.82}
-              onPress={() =>
-                navigation.navigate('DevotionDetail', { articleId: article.id })
-              }
-            >
-              {/* Icon circle */}
-              <View
-                style={[
-                  styles.articleIconCircle,
-                  { backgroundColor: `${accent}1F` },
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name={article.icon}
-                  size={26}
-                  color={accent}
-                />
-              </View>
-
-              {/* Text */}
-              <View style={styles.articleCardBody}>
-                <Text style={[styles.articleCardTitle, { color: NAVY }]}>
-                  {article.title}
-                </Text>
-                <Text style={styles.articleCardSummary} numberOfLines={2}>
-                  {article.summary}
-                </Text>
-              </View>
-
-              <MaterialCommunityIcons
-                name="chevron-left"
-                size={20}
-                color="#BCC0C8"
-              />
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+        initialNumToRender={5}
+        maxToRenderPerBatch={5}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === 'android'}
+      />
     </SafeAreaView>
   );
 };

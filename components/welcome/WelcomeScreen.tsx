@@ -35,7 +35,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
   const horizontalPadding = Math.max(20, Math.min(width * 0.06, 32));
   const contentTopPadding = Math.max(20, Math.min(height * 0.05, 40));
   const contentBottomPadding = Math.max(
-    insets.bottom + 38,
+    (insets?.bottom ?? 0) + 38,
     isShortScreen ? 20 : 32,
   );
   const heroSpacerHeight = Math.max(48, Math.min(height * 0.22, 180));
@@ -53,7 +53,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigation }) => {
   const handleCreateAccount = () => {
     navigation.navigate('SignupStep1');
   };
-  const topInsetStyle = { height: insets.top, backgroundColor: NAVY };
+  const topInsetStyle = { height: insets?.top ?? 0, backgroundColor: NAVY };
 
   return (
     <>

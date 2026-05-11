@@ -218,7 +218,7 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
           style={[
             styles.topArea,
             {
-              paddingTop: insets.top + 10,
+              paddingTop: (insets?.top ?? 0) + 10,
               paddingBottom: SHEET_HEIGHT - 26,
             },
           ]}
@@ -306,7 +306,7 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   const backButtonWrapStyle = React.useMemo(
     () =>
       StyleSheet.compose(styles.backButtonWrap, {
-        top: insets.top + 18,
+        top: (insets?.top ?? 0) + 18,
       }),
     [insets.top],
   );

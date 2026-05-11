@@ -369,7 +369,7 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
       <AppHeader
-        topInsetHeight={insets.top}
+        topInsetHeight={insets?.top ?? 0}
         title={strings.title}
         leading={
           <AppHeaderAction

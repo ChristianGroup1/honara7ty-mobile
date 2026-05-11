@@ -287,7 +287,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
       <AppHeader
-        topInsetHeight={insets.top}
+        topInsetHeight={insets?.top ?? 0}
         title={strings.title}
         leading={
           <AppHeaderAction
@@ -298,8 +298,8 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         }
       />
 
-      {loading ? (
-        <View style={styles.loadingWrap}>
+      {loading && Object.keys(devotionLogsByDate).length === 0 ? (
+        <View style={[styles.loadingWrap, { backgroundColor: '#F8F9FB' }]}>
           <ActivityIndicator size="large" color={NAVY} />
         </View>
       ) : (

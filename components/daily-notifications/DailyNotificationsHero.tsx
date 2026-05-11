@@ -34,4 +34,4 @@ const DailyNotificationsHero = ({
   </View>
 );
 
-export default DailyNotificationsHero;
+export default React.memo(DailyNotificationsHero);

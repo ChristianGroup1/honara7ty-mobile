@@ -8,9 +8,10 @@
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
+  FlatList,
   Platform,
-  ScrollView,
   Share,
   StatusBar,
   StyleSheet,
@@ -167,84 +168,94 @@ const BadgesScreen = ({ navigation }: any) => {
     [spotlightBadge.color, spotlightBadge.days, streak],
   );
 
-  return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <BadgesHeader
-        topInsetHeight={insets.top}
-        onBack={() => navigation.goBack()}
-      />
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Streak Hero - Minimal & Clean */}
-        <StreakCard
-          loading={loading}
-          streak={streak}
-          earnedCount={earnedCount}
-          totalCount={BADGE_CONFIGS.length}
-        />
+  const listData = useMemo(() => {
+    const data: any[] = [
+      { type: 'hero' },
+      { type: 'spotlight' },
+    ];
 
-        <View style={styles.spotlightCard}>
-          <View style={spotlightGlowStyle} />
-          <View style={styles.spotlightTopRow}>
-            <View style={spotlightPillStyle}>
-              <Text style={spotlightPillTextStyle}>
-                {spotlightEarned
-                  ? strings.screen.spotlightReady
-                  : strings.screen.spotlightNext}
+    if (earnedBadges.length) {
+      data.push({ type: 'sectionHeader', title: strings.screen.earnedSection });
+      // Group badges into pairs for 2-column layout since FlatList numColumns
+      // doesn't support spanning multiple columns for headers.
+      const reversedEarned = [...earnedBadges].reverse();
+      for (let i = 0; i < reversedEarned.length; i += 2) {
+        data.push({
+          type: 'badgeRow',
+          badges: [reversedEarned[i], reversedEarned[i + 1]].filter(Boolean),
+        });
+      }
+    }
+
+    if (lockedBadges.length) {
+      data.push({ type: 'sectionHeader', title: strings.screen.lockedSection });
+      for (let i = 0; i < lockedBadges.length; i += 2) {
+        data.push({
+          type: 'badgeRow',
+          badges: [lockedBadges[i], lockedBadges[i + 1]].filter(Boolean),
+        });
+      }
+    }
+
+    data.push({ type: 'footer' });
+    return data;
+  }, [earnedBadges, lockedBadges, strings]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: any }) => {
+      switch (item.type) {
+        case 'hero':
+          return (
+            <StreakCard
+              loading={loading}
+              streak={streak}
+              earnedCount={earnedCount}
+              totalCount={BADGE_CONFIGS.length}
+            />
+          );
+        case 'spotlight':
+          return (
+            <View style={styles.spotlightCard}>
+              <View style={spotlightGlowStyle} />
+              <View style={styles.spotlightTopRow}>
+                <View style={spotlightPillStyle}>
+                  <Text style={spotlightPillTextStyle}>
+                    {spotlightEarned
+                      ? strings.screen.spotlightReady
+                      : strings.screen.spotlightNext}
+                  </Text>
+                </View>
+                <View style={spotlightIconStyle}>
+                  <Text style={styles.spotlightEmoji}>
+                    {spotlightBadge.emoji}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.spotlightTitle}>{spotlightBadge.title}</Text>
+              <Text style={styles.spotlightDays}>
+                {strings.card.days(spotlightBadge.days)}
               </Text>
+              <Text style={styles.spotlightText}>
+                {spotlightEarned
+                  ? strings.screen.spotlightEarnedText
+                  : strings.screen.spotlightNextText(spotlightDaysLeft)}
+              </Text>
+
+              <View style={styles.spotlightProgressTrack}>
+                <View style={spotlightProgressStyle} />
+              </View>
             </View>
-            <View style={spotlightIconStyle}>
-              <Text style={styles.spotlightEmoji}>{spotlightBadge.emoji}</Text>
-            </View>
-          </View>
-
-          <Text style={styles.spotlightTitle}>{spotlightBadge.title}</Text>
-          <Text style={styles.spotlightDays}>
-            {strings.card.days(spotlightBadge.days)}
-          </Text>
-          <Text style={styles.spotlightText}>
-            {spotlightEarned
-              ? strings.screen.spotlightEarnedText
-              : strings.screen.spotlightNextText(spotlightDaysLeft)}
-          </Text>
-
-          <View style={styles.spotlightProgressTrack}>
-            <View style={spotlightProgressStyle} />
-          </View>
-        </View>
-
-        {earnedBadges.length ? (
-          <>
-            <Text style={styles.gallerySectionTitle}>
-              {strings.screen.earnedSection}
-            </Text>
+          );
+        case 'sectionHeader':
+          return (
+            <Text style={styles.gallerySectionTitle}>{item.title}</Text>
+          );
+        case 'badgeRow':
+          return (
             <View style={styles.badgesContainer}>
-              {earnedBadges
-                .slice()
-                .reverse()
-                .map(badge => (
-                  <BadgeCard
-                    key={badge.key}
-                    badge={badge}
-                    streak={streak}
-                    onShare={handleShare}
-                  />
-                ))}
-            </View>
-          </>
-        ) : null}
-
-        {lockedBadges.length ? (
-          <>
-            <Text style={styles.gallerySectionTitle}>
-              {strings.screen.lockedSection}
-            </Text>
-            <View style={styles.badgesContainer}>
-              {lockedBadges.map(badge => (
+              {item.badges.map((badge: any) => (
                 <BadgeCard
                   key={badge.key}
                   badge={badge}
@@ -252,22 +263,63 @@ const BadgesScreen = ({ navigation }: any) => {
                   onShare={handleShare}
                 />
               ))}
+              {/* Spacer for odd number of items in a row */}
+              {item.badges.length === 1 && <View style={{ width: '48%' }} />}
             </View>
-          </>
-        ) : null}
+          );
+        case 'footer':
+          return (
+            <View style={styles.motivationalCard}>
+              <MaterialCommunityIcons name="lightbulb" size={28} color={GOLD} />
+              <View style={styles.motivationalBody}>
+                <Text style={styles.motivationalTitle}>
+                  {strings.screen.motivationalTitle}
+                </Text>
+                <Text style={styles.motivationalText}>
+                  {strings.screen.motivationalText}
+                </Text>
+              </View>
+            </View>
+          );
+        default:
+          return null;
+      }
+    },
+    [
+      loading,
+      streak,
+      earnedCount,
+      strings,
+      spotlightGlowStyle,
+      spotlightPillStyle,
+      spotlightPillTextStyle,
+      spotlightEarned,
+      spotlightBadge,
+      spotlightDaysLeft,
+      spotlightProgressStyle,
+      handleShare,
+    ],
+  );
 
-        <View style={styles.motivationalCard}>
-          <MaterialCommunityIcons name="lightbulb" size={28} color={GOLD} />
-          <View style={styles.motivationalBody}>
-            <Text style={styles.motivationalTitle}>
-              {strings.screen.motivationalTitle}
-            </Text>
-            <Text style={styles.motivationalText}>
-              {strings.screen.motivationalText}
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
+  return (
+    <SafeAreaView style={styles.container} edges={[]}>
+      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+      <BadgesHeader
+        topInsetHeight={insets?.top ?? 0}
+        onBack={() => navigation.goBack()}
+      />
+
+      <FlatList
+        data={listData}
+        renderItem={renderItem}
+        keyExtractor={(_item, index) => String(index)}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={Platform.OS === 'android'}
+        initialNumToRender={6}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+      />
     </SafeAreaView>
   );
 };

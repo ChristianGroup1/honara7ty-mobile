@@ -237,7 +237,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
       <PrayerNotesHeader
-        topInsetHeight={insets.top}
+        topInsetHeight={insets?.top ?? 0}
         onBack={() => navigation.goBack()}
         onAdd={openNew}
       />
@@ -253,8 +253,10 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         />
       </View>
 
-      {loading ? (
-        <ActivityIndicator style={styles.loader} size="large" color={NAVY} />
+      {loading && notes.length === 0 ? (
+        <View style={[styles.loader, { backgroundColor: '#F8F9FB', flex: 1, justifyContent: 'center' }]}>
+          <ActivityIndicator size="large" color={NAVY} />
+        </View>
       ) : filtered.length === 0 ? (
         <>
           {shouldShowHero ? (
@@ -338,7 +340,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
       <PrayerEditorModal
         visible={showModal}
         keyboardVisible={keyboardVisible}
-        topInset={insets.top}
+        topInset={insets?.top ?? 0}
         editMode={Boolean(editItem)}
         text={newNote}
         saving={saving}

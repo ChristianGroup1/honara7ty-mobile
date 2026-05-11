@@ -126,4 +126,4 @@ const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
   );
 };
 
-export default BadgeCard;
+export default React.memo(BadgeCard);

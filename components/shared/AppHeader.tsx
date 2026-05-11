@@ -23,7 +23,7 @@ interface AppHeaderActionProps {
   size?: number;
 }
 
-export const AppHeaderAction = ({
+export const AppHeaderAction = React.memo(({
   icon,
   onPress,
   backgroundColor = 'rgba(255,255,255,0.08)',
@@ -36,7 +36,7 @@ export const AppHeaderAction = ({
   >
     <MaterialCommunityIcons name={icon} size={size} color="#FFF" />
   </TouchableOpacity>
-);
+));
 
 const AppHeader = ({
   topInsetHeight,
@@ -48,10 +48,20 @@ const AppHeader = ({
   titleNumberOfLines = 1,
 }: AppHeaderProps) => {
   const netInfo = useNetInfo();
-  const isOffline = !(
-    netInfo.isConnected &&
-    netInfo.isInternetReachable !== false
-  );
+  const [isOffline, setIsOffline] = React.useState(false);
+
+  React.useEffect(() => {
+    const nextOffline =
+      netInfo.isConnected === false || netInfo.isInternetReachable === false;
+
+    // If we're going offline, wait a bit before showing the banner to avoid flickering
+    // If we're coming back online, show it immediately (or vice versa)
+    const timeout = setTimeout(() => {
+      setIsOffline(nextOffline);
+    }, nextOffline ? 1500 : 500);
+
+    return () => clearTimeout(timeout);
+  }, [netInfo.isConnected, netInfo.isInternetReachable]);
 
   return (
     <>
@@ -138,4 +148,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AppHeader;
+export default React.memo(AppHeader);

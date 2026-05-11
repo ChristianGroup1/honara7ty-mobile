@@ -210,7 +210,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
       <SpiritualReflectionHeader
-        topInsetHeight={insets.top}
+        topInsetHeight={insets?.top ?? 0}
         onBack={() => navigation.goBack()}
         onAdd={openNew}
       />

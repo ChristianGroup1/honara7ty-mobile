@@ -3,7 +3,7 @@ import { BG, GOLD, NAVY } from './constants';
 
 export const homeStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: BG },
   topInset: { backgroundColor: NAVY },
   headerShell: {
     backgroundColor: NAVY,

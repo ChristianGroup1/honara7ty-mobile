@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
@@ -12,16 +12,32 @@ type Props = {
 const OfflineBanner = ({ visible, inline = false }: Props) => {
   const insets = useSafeAreaInsets();
   const strings = getStrings().shared.offline;
+  const animation = React.useRef(new Animated.Value(0)).current;
 
-  if (!visible) {
-    return null;
-  }
+  React.useEffect(() => {
+    Animated.timing(animation, {
+      toValue: visible ? 1 : 0,
+      duration: 300,
+      useNativeDriver: false, // height/opacity don't support native driver well for layout
+    }).start();
+  }, [visible, animation]);
+
+  const height = animation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, inline ? 68 : 80 + insets.top],
+  });
+
+  const opacity = animation.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0, 1],
+  });
 
   return (
-    <View
+    <Animated.View
       style={[
         styles.shell,
         inline ? styles.shellInline : { paddingTop: insets.top + 8 },
+        { height, opacity, overflow: 'hidden' },
       ]}
     >
       <View style={styles.banner}>
@@ -36,7 +52,7 @@ const OfflineBanner = ({ visible, inline = false }: Props) => {
           <Text style={styles.statusText}>Offline</Text>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 

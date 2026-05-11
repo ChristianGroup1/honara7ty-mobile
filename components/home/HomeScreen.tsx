@@ -19,7 +19,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import supabase from '../../lib/supbase';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
-import { NAVY, NO_MESSAGE, YES_MESSAGE } from './constants';
+import { BG, NAVY, NO_MESSAGE, YES_MESSAGE } from './constants';
 import DailyQuestionCard from './DailyQuestionCard';
 import FeatureCard from './FeatureCard';
 import HomeHeader from './HomeHeader';
@@ -177,14 +177,14 @@ const HomeScreen = ({ route, navigation }: any) => {
                 (data as any).selected_chapters,
               )
                 ? normalizeSelectedChapters(
-                    (data as any).selected_chapters.map(Number),
-                    matchedBook.chapters,
-                  )
+                  (data as any).selected_chapters.map(Number),
+                  matchedBook.chapters,
+                )
                 : chaptersFromLegacy(
-                    (data as any).reading_chapter,
-                    (data as any).chapters_read,
-                    matchedBook.chapters,
-                  );
+                  (data as any).reading_chapter,
+                  (data as any).chapters_read,
+                  matchedBook.chapters,
+                );
               setSelectedChapters(nextSelectedChapters);
             }
           }
@@ -422,9 +422,9 @@ const HomeScreen = ({ route, navigation }: any) => {
     [selectedBook],
   );
 
-  if (loading) {
+  if (loading && !user) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: BG }]}>
         <ActivityIndicator size="large" color={NAVY} />
       </View>
     );

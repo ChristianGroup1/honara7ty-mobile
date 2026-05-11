@@ -35,7 +35,14 @@ const ENC_PREFIX = 'enc:';
  * Same userId always produces the same key so that keys never need to be
  * stored anywhere.
  */
+const keyCache = new Map<string, Uint8Array>();
+
 export function deriveKey(userId: string): Uint8Array {
+  const cached = keyCache.get(userId);
+  if (cached) {
+    return cached;
+  }
+
   const masterBytes: number[] = aes.utils.hex.toBytes(APP_ENCRYPTION_SECRET);
 
   // Encode userId as UTF-8 then take the first 16 bytes, zero-padding if needed.
@@ -55,6 +62,8 @@ export function deriveKey(userId: string): Uint8Array {
   const key = new Uint8Array(32);
   key.set(half1, 0);
   key.set(half2, 16);
+
+  keyCache.set(userId, key);
   return key;
 }
 

@@ -50,7 +50,7 @@ const AuthScreenShell: React.FC<AuthScreenShellProps> = ({
   const authChrome = getAuthChromeMetrics({
     height,
     width,
-    topInset: insets.top,
+    topInset: insets?.top ?? 0,
   });
 
   const {

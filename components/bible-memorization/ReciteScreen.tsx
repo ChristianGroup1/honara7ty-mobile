@@ -23,6 +23,32 @@ import { getStrings } from '../../localization';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Recite'>;
 
+interface WordInputProps {
+  index: number;
+  slot: WordSlot;
+  onFocus: (index: number) => void;
+  onChangeText: (index: number, value: string) => void;
+  inputRef: (ref: TextInput | null) => void;
+  placeholder: string;
+}
+
+const WordInput = React.memo(({ index, slot, onFocus, onChangeText, inputRef, placeholder }: WordInputProps) => {
+  return (
+    <TextInput
+      ref={inputRef}
+      style={styles.blankInput}
+      value={slot.userInput}
+      onFocus={() => onFocus(index)}
+      onChangeText={val => onChangeText(index, val)}
+      placeholder={placeholder}
+      placeholderTextColor="#AAA"
+      textAlign="center"
+      textAlignVertical="center"
+      returnKeyType="next"
+    />
+  );
+});
+
 const ReciteScreen = ({ navigation, route }: Props) => {
   const strings = getStrings().bibleMemorization.recite;
   const selection = route.params;
@@ -34,7 +60,7 @@ const ReciteScreen = ({ navigation, route }: Props) => {
   );
   const isFullTextMode = selection.difficulty === 'fullText';
 
-  const scrollToFocusedInput = (index: number) => {
+  const scrollToFocusedInput = useCallback((index: number) => {
     const target = inputRefs.current[index];
     const targetHandle = target ? findNodeHandle(target) : null;
 
@@ -47,7 +73,19 @@ const ReciteScreen = ({ navigation, route }: Props) => {
       Platform.OS === 'android' ? 90 : 70,
       true,
     );
-  };
+  }, []);
+
+  const handleInputChange = useCallback((index: number, val: string) => {
+    setSlots(prev =>
+      prev.map((current, i) =>
+        i === index ? { ...current, userInput: val } : current,
+      ),
+    );
+  }, []);
+
+  const setInputRef = useCallback((index: number) => (ref: TextInput | null) => {
+    inputRefs.current[index] = ref;
+  }, []);
 
   const checkAnswers = () => {
     if (isFullTextMode) {
@@ -176,28 +214,14 @@ const ReciteScreen = ({ navigation, route }: Props) => {
               <View style={styles.wordsWrap}>
                 {slots.map((slot, i) =>
                   slot.hidden ? (
-                    <TextInput
+                    <WordInput
                       key={i}
-                      ref={ref => {
-                        inputRefs.current[i] = ref;
-                      }}
-                      style={styles.blankInput}
-                      value={slot.userInput}
-                      onFocus={() => scrollToFocusedInput(i)}
-                      onChangeText={val =>
-                        setSlots(prev =>
-                          prev.map((current, index) =>
-                            index === i
-                              ? { ...current, userInput: val }
-                              : current,
-                          ),
-                        )
-                      }
+                      index={i}
+                      slot={slot}
+                      onFocus={scrollToFocusedInput}
+                      onChangeText={handleInputChange}
+                      inputRef={setInputRef(i)}
                       placeholder={strings.blankPlaceholder}
-                      placeholderTextColor="#AAA"
-                      textAlign="center"
-                      textAlignVertical="center"
-                      returnKeyType="next"
                     />
                   ) : (
                     <Text key={i} style={styles.wordText}>
