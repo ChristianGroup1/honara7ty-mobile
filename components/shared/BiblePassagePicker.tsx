@@ -23,6 +23,9 @@ type Labels = {
   newTestament: string;
   bookCountSuffix?: string;
   selectAllChapters?: string;
+  verseTitle?: string;
+  fromVerseTitle?: string;
+  toVerseTitle?: string;
 };
 
 type PassageBook = {
@@ -42,6 +45,16 @@ type Props = {
   onToggleChapter: (value: number) => void;
   onSelectAllChapters?: () => void;
   onClearChapters?: () => void;
+  // New props for memorization/verses
+  multiSelectChapters?: boolean;
+  verseMode?: 'single' | 'multi' | 'none';
+  verseOptions?: number[];
+  selectedVerseStart?: number;
+  selectedVerseEnd?: number;
+  selectedVerses?: number[];
+  onSetVerseStart?: (v: number) => void;
+  onSetVerseEnd?: (v: number) => void;
+  onToggleVerse?: (v: number) => void;
 };
 
 const BiblePassagePicker = ({
@@ -56,12 +69,26 @@ const BiblePassagePicker = ({
   onToggleChapter,
   onSelectAllChapters,
   onClearChapters,
+  multiSelectChapters = true,
+  verseMode = 'none',
+  verseOptions = [],
+  selectedVerseStart = 1,
+  selectedVerseEnd = 1,
+  selectedVerses = [],
+  onSetVerseStart,
+  onSetVerseEnd,
+  onToggleVerse,
 }: Props) => {
   const [bookPickerVisible, setBookPickerVisible] = useState(false);
   const [chapterPickerVisible, setChapterPickerVisible] = useState(false);
+  const [verseStartPickerVisible, setVerseStartPickerVisible] = useState(false);
+  const [verseEndPickerVisible, setVerseEndPickerVisible] = useState(false);
   const selectedChaptersLabel = useMemo(() => {
     if (!selectedChapters.length) {
       return labels.selectBookFirst;
+    }
+    if (!multiSelectChapters) {
+      return `${labels.chapterTitle} ${selectedChapters[0]}`;
     }
     if (selectedChapters.length === chapterOptions.length && chapterOptions.length > 0) {
       const chapters = selectedChapters.join(', ');
@@ -70,7 +97,7 @@ const BiblePassagePicker = ({
         : `${selectedChapters.length} إصحاح (${chapters})`;
     }
     return selectedChapters.join(', ');
-  }, [chapterOptions.length, labels.selectAllChapters, labels.selectBookFirst, selectedChapters]);
+  }, [chapterOptions.length, labels.selectAllChapters, labels.selectBookFirst, selectedChapters, multiSelectChapters, labels.chapterTitle]);
   const allChaptersSelected =
     chapterOptions.length > 0 && selectedChapters.length === chapterOptions.length;
 
@@ -133,6 +160,49 @@ const BiblePassagePicker = ({
         </View>
         <MaterialCommunityIcons name="chevron-left" size={22} color="#9AA3AE" />
       </TouchableOpacity>
+
+      {verseMode !== 'none' && selectedBook && selectedChapters.length > 0 && (
+        <>
+          {verseMode === 'single' && (
+            <TouchableOpacity
+              style={styles.selectorRow}
+              activeOpacity={0.82}
+              onPress={() => setVerseStartPickerVisible(true)}
+            >
+              <View style={styles.selectorIcon}>
+                <MaterialCommunityIcons name="numeric-1-box-outline" size={19} color={GOLD} />
+              </View>
+              <View style={styles.selectorBody}>
+                <Text style={styles.selectorLabel}>{labels.verseTitle}</Text>
+                <Text style={styles.selectorValue}>
+                  {selectedVerseStart}
+                </Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-left" size={22} color="#9AA3AE" />
+            </TouchableOpacity>
+          )}
+
+          {verseMode === 'multi' && (
+            <TouchableOpacity
+              style={styles.selectorRow}
+              activeOpacity={0.82}
+              onPress={() => setVerseStartPickerVisible(true)}
+            >
+              <View style={styles.selectorIcon}>
+                <MaterialCommunityIcons name="numeric-1-box-multiple-outline" size={19} color={GOLD} />
+              </View>
+              <View style={styles.selectorBody}>
+                <Text style={styles.selectorLabel}>{labels.verseTitle}</Text>
+                <Text style={styles.selectorValue}>
+                  {selectedVerses.length > 0 ? selectedVerses.sort((a, b) => a - b).join(', ') : labels.selectBookFirst}
+                </Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-left" size={22} color="#9AA3AE" />
+            </TouchableOpacity>
+          )}
+        </>
+      )}
+
       <Text style={styles.hint}>
         {selectedBook ? labels.chapterHint : labels.selectBookFirst}
       </Text>
@@ -198,7 +268,12 @@ const BiblePassagePicker = ({
                 styles.chapterOption,
                 selectedChapters.includes(chapter) && styles.optionSelected,
               ]}
-              onPress={() => onToggleChapter(chapter)}
+              onPress={() => {
+                onToggleChapter(chapter);
+                if (!multiSelectChapters) {
+                  setChapterPickerVisible(false);
+                }
+              }}
             >
               <Text
                 style={[
@@ -210,6 +285,74 @@ const BiblePassagePicker = ({
               </Text>
             </TouchableOpacity>
           ))}
+        </View>
+      </PickerModal>
+
+      <PickerModal
+        visible={verseStartPickerVisible}
+        title={labels.verseTitle || ''}
+        onClose={() => setVerseStartPickerVisible(false)}
+      >
+        <View style={styles.chapterGrid}>
+          {verseOptions.map(verse => (
+            <TouchableOpacity
+              key={`verse-select-${verse}`}
+              style={[
+                styles.chapterOption,
+                (verseMode === 'multi' ? selectedVerses.includes(verse) : selectedVerseStart === verse) && styles.optionSelected,
+              ]}
+              onPress={() => {
+                if (verseMode === 'multi') {
+                  onToggleVerse?.(verse);
+                } else {
+                  onSetVerseStart?.(verse);
+                  setVerseStartPickerVisible(false);
+                }
+              }}
+            >
+              <Text
+                style={[
+                  styles.chapterOptionText,
+                  (verseMode === 'multi' ? selectedVerses.includes(verse) : selectedVerseStart === verse) && styles.optionTextSelected,
+                ]}
+              >
+                {verse}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </PickerModal>
+
+      <PickerModal
+        visible={verseEndPickerVisible}
+        title={labels.toVerseTitle || ''}
+        onClose={() => setVerseEndPickerVisible(false)}
+      >
+        <View style={styles.chapterGrid}>
+          {verseOptions
+            .filter(v => v >= selectedVerseStart)
+            .map(verse => (
+              <TouchableOpacity
+                key={`verse-end-${verse}`}
+                style={[
+                  styles.chapterOption,
+                  selectedVerseEnd === verse && styles.optionSelected,
+                ]}
+                onPress={() => {
+                  onSetVerseEnd?.(verse);
+                  setVerseEndPickerVisible(false);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.chapterOptionText,
+                    selectedVerseEnd === verse && styles.optionTextSelected,
+                  ]}
+                >
+                  {verse}
+                </Text>
+              </TouchableOpacity>
+            ))}
         </View>
       </PickerModal>
     </>

@@ -1,13 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  FlatList,
-  Modal,
-  Platform,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import BiblePassagePicker from '../shared/BiblePassagePicker';
 import { useWindowDimensions } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -30,7 +28,6 @@ import { DIFFICULTY_LEVELS } from './utils';
 import { getStrings } from '../../localization';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Pick'>;
-type PickerType = 'chapter' | 'verseStart' | 'verseEnd' | null;
 
 interface VerseOption {
   value: number;
@@ -45,14 +42,11 @@ const PickScreen = ({ navigation }: Props) => {
     BIBLE_BOOKS[0] ?? null,
   );
   const [selectedChapter, setSelectedChapter] = useState(1);
-  const [verseMode, setVerseMode] = useState<VerseSelectionMode>('single');
-  const [selectedVerseStart, setSelectedVerseStart] = useState(1);
-  const [selectedVerseEnd, setSelectedVerseEnd] = useState(1);
+  const [selectedVerses, setSelectedVerses] = useState<number[]>([1]);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [activeTestament, setActiveTestament] = useState<Testament>(
     BIBLE_BOOKS[0]?.testament ?? 'old',
   );
-  const [activePicker, setActivePicker] = useState<PickerType>(null);
   const [alertConfig, setAlertConfig] = useState<AlertConfig>({
     visible: false,
     title: '',
@@ -93,10 +87,7 @@ const PickScreen = ({ navigation }: Props) => {
     [selectedChapterData],
   );
 
-  const verseEndOptions = useMemo<VerseOption[]>(
-    () => verseOptions.filter(option => option.value >= selectedVerseStart),
-    [selectedVerseStart, verseOptions],
-  );
+
 
   const visibleBooks = useMemo(
     () =>
@@ -104,120 +95,33 @@ const PickScreen = ({ navigation }: Props) => {
     [activeTestament],
   );
 
-  const pickerTitle = useMemo(() => {
-    switch (activePicker) {
-      case 'chapter':
-        return strings.pickerTitles.chapter;
-      case 'verseStart':
-        return verseMode === 'single'
-          ? strings.pickerTitles.singleVerse
-          : strings.pickerTitles.fromVerse;
-      case 'verseEnd':
-        return strings.pickerTitles.toVerse;
-      default:
-        return '';
-    }
-  }, [
-    activePicker,
-    strings.pickerTitles.chapter,
-    strings.pickerTitles.fromVerse,
-    strings.pickerTitles.singleVerse,
-    strings.pickerTitles.toVerse,
-    verseMode,
-  ]);
 
-  const pickerOptions = useMemo(() => {
-    switch (activePicker) {
-      case 'chapter':
-        return chapterOptions;
-      case 'verseStart':
-        return verseOptions;
-      case 'verseEnd':
-        return verseEndOptions;
-      default:
-        return [];
-    }
-  }, [activePicker, chapterOptions, verseEndOptions, verseOptions]);
+  const verseValues = useMemo(() => verseOptions.map(o => o.value), [verseOptions]);
+
+  const handleTestamentChange = useCallback((testament: Testament) => {
+    setActiveTestament(testament);
+    setSelectedBook(null);
+    setSelectedChapter(1);
+    setSelectedVerses([]);
+  }, []);
 
   const handleBookSelect = useCallback((book: BibleBook) => {
     const firstVerse = book.chaptersData[0]?.verses[0]?.verse ?? 1;
     setActiveTestament(book.testament);
     setSelectedBook(book);
     setSelectedChapter(1);
-    setSelectedVerseStart(firstVerse);
-    setSelectedVerseEnd(firstVerse);
+    setSelectedVerses([firstVerse]);
   }, []);
 
-  const keyExtractor = useCallback((item: BibleBook) => item.bookID, []);
-
-  const renderBook = useCallback(
-    ({ item }: { item: BibleBook }) => (
-      <TouchableOpacity
-        style={[
-          styles.bookCard,
-          isCompactWidth ? styles.bookCardCompact : null,
-          selectedBook?.bookID === item.bookID && styles.bookCardActive,
-        ]}
-        onPress={() => handleBookSelect(item)}
-      >
-        <View style={styles.bookCardTop}>
-          {selectedBook?.bookID === item.bookID ? (
-            <MaterialCommunityIcons
-              name="check-circle"
-              size={16}
-              color="#C9A84C"
-            />
-          ) : null}
-        </View>
-        <Text
-          style={[
-            styles.bookCardTitle,
-            isCompactWidth ? styles.bookCardTitleCompact : null,
-            selectedBook?.bookID === item.bookID && styles.bookCardTitleActive,
-          ]}
-        >
-          {item.shortName}
-        </Text>
-      </TouchableOpacity>
-    ),
-    [handleBookSelect, isCompactWidth, selectedBook],
-  );
-
-  const handleModeChange = (mode: VerseSelectionMode) => {
-    setVerseMode(mode);
-    if (mode === 'single') {
-      setSelectedVerseEnd(selectedVerseStart);
-    } else if (selectedVerseEnd < selectedVerseStart) {
-      setSelectedVerseEnd(selectedVerseStart);
+  const handleBookSelectByName = useCallback((bookName: string) => {
+    const book = BIBLE_BOOKS.find(b => b.bookName === bookName);
+    if (book) {
+      handleBookSelect(book);
     }
-  };
+  }, [handleBookSelect]);
 
-  const handlePickerSelect = (value: number) => {
-    if (!selectedBook) {
-      return;
-    }
 
-    if (activePicker === 'chapter') {
-      const chapterData = selectedBook.chaptersData[value - 1];
-      const firstVerse = chapterData?.verses[0]?.verse ?? 1;
-      setSelectedChapter(value);
-      setSelectedVerseStart(firstVerse);
-      setSelectedVerseEnd(firstVerse);
-    }
 
-    if (activePicker === 'verseStart') {
-      setSelectedVerseStart(value);
-      if (verseMode === 'single' || selectedVerseEnd < value) {
-        setSelectedVerseEnd(value);
-      }
-    }
-
-    if (activePicker === 'verseEnd') {
-      setSelectedVerseEnd(value);
-    }
-
-    setActivePicker(null);
-  };
 
   const startMemorization = () => {
     if (!selectedBook || !selectedChapterData) {
@@ -230,21 +134,12 @@ const PickScreen = ({ navigation }: Props) => {
       return;
     }
 
-    const start = selectedVerseStart;
-    const end = verseMode === 'range' ? selectedVerseEnd : selectedVerseStart;
-
-    if (end < start) {
-      showAlert(
-        strings.alerts.title,
-        strings.alerts.invalidVerseRange,
-        undefined,
-        'warning',
-      );
-      return;
-    }
+    const sortedVerses = [...selectedVerses].sort((a, b) => a - b);
+    const start = sortedVerses[0];
+    const end = sortedVerses[sortedVerses.length - 1];
 
     const selectedTexts = selectedChapterData.verses
-      .filter(verse => verse.verse >= start && verse.verse <= end)
+      .filter(verse => selectedVerses.includes(verse.verse))
       .map(verse => verse.text.trim())
       .filter(Boolean);
 
@@ -261,48 +156,20 @@ const PickScreen = ({ navigation }: Props) => {
     navigation.navigate('Recite', {
       selectedBook,
       selectedChapter,
-      selectedVerseStart: start,
-      selectedVerseEnd: end,
-      verseMode,
+      selectedVerses: sortedVerses,
+      verseMode: sortedVerses.length === 1 ? 'single' : 'multi',
       difficulty,
       verseOriginal: selectedTexts.join(' '),
       bookLabel: selectedBook.bookName,
       chapterLabel:
-        start === end
+        sortedVerses.length === 1
           ? strings.chapterLabelSingle(selectedChapter, start)
-          : strings.chapterLabelRange(selectedChapter, start, end),
+          : sortedVerses.length === (end - start + 1)
+            ? strings.chapterLabelRange(selectedChapter, start, end)
+            : `${selectedBook.bookName} ${selectedChapter}:${sortedVerses.join(',')}`,
     });
   };
 
-  const renderPickerButton = (
-    label: string,
-    value: string,
-    picker: Exclude<PickerType, null>,
-    disabled = false,
-  ) => (
-    <View style={styles.fieldBlock}>
-      <Text style={styles.sectionLabel}>{label}</Text>
-      <TouchableOpacity
-        style={[styles.selectButton, disabled && styles.selectButtonDisabled]}
-        onPress={() => !disabled && setActivePicker(picker)}
-        disabled={disabled}
-      >
-        <MaterialCommunityIcons
-          name="chevron-down"
-          size={22}
-          color={disabled ? '#AAA' : '#0A1124'}
-        />
-        <Text
-          style={[
-            styles.selectButtonText,
-            disabled && styles.selectButtonTextDisabled,
-          ]}
-        >
-          {value}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
 
   return (
     <View style={styles.container}>
@@ -332,164 +199,49 @@ const PickScreen = ({ navigation }: Props) => {
         </View>
 
         <View style={styles.sectionCard}>
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionIconWrap}>
-              <MaterialCommunityIcons
-                name="library-shelves"
-                size={18}
-                color="#0A1124"
-              />
-            </View>
-            <View style={styles.sectionHeadingText}>
-              <Text style={styles.sectionLabel}>{strings.chooseBook}</Text>
-              <Text style={styles.sectionCaption}>
-                {strings.chooseBookCaption}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.testamentTabs}>
-            <TouchableOpacity
-              style={[
-                styles.testamentTab,
-                activeTestament === 'old' && styles.testamentTabActive,
-              ]}
-              onPress={() => setActiveTestament('old')}
-            >
-              <Text
-                style={[
-                  styles.testamentTabText,
-                  activeTestament === 'old' && styles.testamentTabTextActive,
-                ]}
-              >
-                {strings.oldTestament}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.testamentTab,
-                activeTestament === 'new' && styles.testamentTabActive,
-              ]}
-              onPress={() => setActiveTestament('new')}
-            >
-              <Text
-                style={[
-                  styles.testamentTabText,
-                  activeTestament === 'new' && styles.testamentTabTextActive,
-                ]}
-              >
-                {strings.newTestament}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.subSectionLabel}>
-            {activeTestament === 'old'
-              ? strings.oldTestamentBooks
-              : strings.newTestamentBooks}
-          </Text>
-          <FlatList
-            data={visibleBooks}
-            horizontal
-            nestedScrollEnabled
-            directionalLockEnabled
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={keyExtractor}
-            contentContainerStyle={styles.bookSliderContent}
-            snapToInterval={bookCardWidth + 10}
-            decelerationRate="fast"
-            renderItem={renderBook}
-            removeClippedSubviews={Platform.OS === 'android'}
-            initialNumToRender={8}
-            maxToRenderPerBatch={8}
-            windowSize={5}
+          <BiblePassagePicker
+            labels={{
+              bookTitle: strings.chooseBook,
+              chapterTitle: strings.chapter,
+              chapterHint: strings.choosePlaceCaption,
+              selectBookFirst: strings.chooseBookCaption,
+              oldTestament: strings.oldTestament,
+              newTestament: strings.newTestament,
+              verseTitle: strings.verse,
+              fromVerseTitle: strings.fromVerse,
+              toVerseTitle: strings.toVerse,
+            }}
+            selectedTestament={activeTestament}
+            books={visibleBooks}
+            selectedBook={selectedBook?.bookName || ''}
+            chapterOptions={chapterOptions.map(o => o.value)}
+            selectedChapters={[selectedChapter]}
+            selectedVerses={selectedVerses}
+            multiSelectChapters={false}
+            verseMode="multi"
+            verseOptions={verseValues}
+            onSetTestament={handleTestamentChange}
+            onSetBook={handleBookSelectByName}
+            onToggleChapter={chapter => {
+              const chapterData = selectedBook?.chaptersData[chapter - 1];
+              const firstVerse = chapterData?.verses[0]?.verse ?? 1;
+              setSelectedChapter(chapter);
+              setSelectedVerses([firstVerse]);
+            }}
+            onToggleVerse={verse => {
+              setSelectedVerses(current =>
+                current.includes(verse)
+                  ? current.length > 1 ? current.filter(v => v !== verse) : current
+                  : [...current, verse],
+              );
+            }}
           />
-          <Text style={styles.sliderHint}>{strings.sliderHint}</Text>
+
         </View>
 
         <View style={styles.sectionCard}>
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionIconWrap}>
-              <MaterialCommunityIcons
-                name="map-marker-radius-outline"
-                size={18}
-                color="#0A1124"
-              />
-            </View>
-            <View style={styles.sectionHeadingText}>
-              <Text style={styles.sectionLabel}>{strings.choosePlace}</Text>
-              <Text style={styles.sectionCaption}>
-                {strings.choosePlaceCaption}
-              </Text>
-            </View>
-          </View>
-
-          {renderPickerButton(
-            strings.chapter,
-            strings.chapterValue(selectedChapter),
-            'chapter',
-            !selectedBook,
-          )}
-
-          <Text style={styles.sectionLabel}>{strings.selectionType}</Text>
-          <View style={styles.modeRow}>
-            <TouchableOpacity
-              style={[
-                styles.modeChip,
-                isCompactWidth ? styles.modeChipCompact : null,
-                verseMode === 'single' && styles.modeChipActive,
-              ]}
-              onPress={() => handleModeChange('single')}
-            >
-              <Text
-                style={[
-                  styles.modeChipText,
-                  isCompactWidth ? styles.modeChipTextCompact : null,
-                  verseMode === 'single' && styles.modeChipTextActive,
-                ]}
-              >
-                {strings.singleVerse}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.modeChip,
-                isCompactWidth ? styles.modeChipCompact : null,
-                verseMode === 'range' && styles.modeChipActive,
-              ]}
-              onPress={() => handleModeChange('range')}
-            >
-              <Text
-                style={[
-                  styles.modeChipText,
-                  isCompactWidth ? styles.modeChipTextCompact : null,
-                  verseMode === 'range' && styles.modeChipTextActive,
-                ]}
-              >
-                {strings.rangeVerse}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {renderPickerButton(
-            verseMode === 'single' ? strings.verse : strings.fromVerse,
-            strings.verseValue(selectedVerseStart),
-            'verseStart',
-            !selectedChapterData,
-          )}
-
-          {verseMode === 'range'
-            ? renderPickerButton(
-              strings.toVerse,
-              strings.verseValue(selectedVerseEnd),
-              'verseEnd',
-              !selectedChapterData,
-            )
-            : null}
-        </View>
-
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionIconWrap}>
+          <View >
+            <View >
               <MaterialCommunityIcons name="brain" size={18} color="#0A1124" />
             </View>
             <View style={styles.sectionHeadingText}>
@@ -535,49 +287,6 @@ const PickScreen = ({ navigation }: Props) => {
           <Text style={styles.primaryBtnText}>{strings.start}</Text>
         </TouchableOpacity>
       </ScrollView>
-
-      <Modal
-        visible={activePicker !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setActivePicker(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity
-            style={styles.modalBackdrop}
-            activeOpacity={1}
-            onPress={() => setActivePicker(null)}
-          />
-          <View
-            style={[
-              styles.modalSheet,
-              isCompactWidth ? styles.modalSheetCompact : null,
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{pickerTitle}</Text>
-              <TouchableOpacity onPress={() => setActivePicker(null)}>
-                <MaterialCommunityIcons
-                  name="close"
-                  size={22}
-                  color="#0A1124"
-                />
-              </TouchableOpacity>
-            </View>
-            <ScrollView contentContainerStyle={styles.optionGrid}>
-              {pickerOptions.map(option => (
-                <TouchableOpacity
-                  key={`${activePicker}-${option.value}`}
-                  style={styles.optionChip}
-                  onPress={() => handlePickerSelect(option.value)}
-                >
-                  <Text style={styles.optionChipText}>{option.value}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </View>

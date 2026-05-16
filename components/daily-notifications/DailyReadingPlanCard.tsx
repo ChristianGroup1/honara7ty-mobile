@@ -1,19 +1,14 @@
 import React from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Testament } from '../data/bibleMetadata';
-import { dailyNotificationStyles as styles, GOLD } from './styles';
+import { dailyNotificationStyles as styles, GOLD, NAVY } from './styles';
+import BiblePassagePicker from '../shared/BiblePassagePicker';
 
-type TestamentOption = {
-  key: Testament;
-  label: string;
-  icon: string;
-};
 
 type Props = {
   strings: any;
   selectedTestament: Testament;
-  testamentOptions: TestamentOption[];
   booksForTestament: Array<{ bookID: string | number; bookName: string }>;
   readingBook: string;
   chapterOptions: number[];
@@ -25,45 +20,16 @@ type Props = {
   onSetTestament: (value: Testament) => void;
   onSetReadingBook: (value: string) => void;
   onToggleChapter: (value: number) => void;
+  onSelectAllChapters?: () => void;
+  onClearChapters?: () => void;
   onEditTime: () => void;
   onSave: () => void;
 };
 
-const renderChoiceChip = (
-  label: string,
-  selected: boolean,
-  onPress: () => void,
-  extraStyle?: object,
-  textStyle?: object,
-) => (
-  <TouchableOpacity
-    key={label}
-    style={[
-      styles.choiceChip,
-      extraStyle,
-      selected && styles.choiceChipSelected,
-    ]}
-    onPress={onPress}
-    activeOpacity={0.85}
-  >
-    <Text
-      style={[
-        styles.choiceChipText,
-        textStyle,
-        selected && styles.choiceChipTextSelected,
-      ]}
-      numberOfLines={1}
-      ellipsizeMode="tail"
-    >
-      {label}
-    </Text>
-  </TouchableOpacity>
-);
 
 const DailyReadingPlanCard = ({
   strings,
   selectedTestament,
-  testamentOptions,
   booksForTestament,
   readingBook,
   chapterOptions,
@@ -75,6 +41,8 @@ const DailyReadingPlanCard = ({
   onSetTestament,
   onSetReadingBook,
   onToggleChapter,
+  onSelectAllChapters,
+  onClearChapters,
   onEditTime,
   onSave,
 }: Props) => (
@@ -99,77 +67,30 @@ const DailyReadingPlanCard = ({
       <MaterialCommunityIcons name="pencil-outline" size={18} color={GOLD} />
     </TouchableOpacity>
 
-    <Text style={styles.fieldLabel}>{strings.selectBook}</Text>
 
-    <View style={styles.testamentTabs}>
-      {testamentOptions.map(option => {
-        const active = selectedTestament === option.key;
-        return (
-          <TouchableOpacity
-            key={option.key}
-            style={[styles.testamentTab, active && styles.testamentTabActive]}
-            onPress={() => onSetTestament(option.key)}
-          >
-            <Text
-              style={[
-                styles.testamentTabText,
-                active && styles.testamentTabTextActive,
-              ]}
-            >
-              {option.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+    <View style={cardStyles.pickerContainer}>
+      <BiblePassagePicker
+        labels={{
+          bookTitle: strings.selectBook,
+          chapterTitle: strings.selectChapter,
+          chapterHint: strings.chapterRangeHint,
+          selectBookFirst: strings.selectBookFirst,
+          oldTestament: strings.oldTestament,
+          newTestament: strings.newTestament,
+          selectAllChapters: strings.selectAllChapters || 'اختيار الكل',
+        }}
+        selectedTestament={selectedTestament}
+        books={booksForTestament}
+        selectedBook={readingBook}
+        chapterOptions={chapterOptions}
+        selectedChapters={selectedChapters}
+        onSetTestament={onSetTestament}
+        onSetBook={onSetReadingBook}
+        onToggleChapter={onToggleChapter}
+        onSelectAllChapters={onSelectAllChapters}
+        onClearChapters={onClearChapters}
+      />
     </View>
-
-    <View style={styles.bookPanel}>
-      <View style={styles.bookPanelHeader}>
-        <Text style={styles.bookPanelTitle}>
-          {selectedTestament === 'old'
-            ? strings.oldTestament
-            : strings.newTestament}
-        </Text>
-        <Text style={styles.bookPanelCount}>{booksForTestament.length} سفر</Text>
-      </View>
-
-      <ScrollView
-        horizontal
-        style={styles.bookListScroll}
-        contentContainerStyle={styles.bookListContent}
-        showsHorizontalScrollIndicator={false}
-      >
-        {booksForTestament.map(book =>
-          renderChoiceChip(
-            book.bookName,
-            readingBook === book.bookName,
-            () => onSetReadingBook(book.bookName),
-            styles.bookChoiceChip,
-            styles.bookChoiceChipText,
-          ),
-        )}
-      </ScrollView>
-    </View>
-
-    <Text style={styles.fieldLabel}>{strings.selectChapter}</Text>
-    <Text style={styles.rangeHint}>
-      {readingBook ? strings.chapterRangeHint : strings.selectBookFirst}
-    </Text>
-    {readingBook ? (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.choiceRow}
-      >
-        {chapterOptions.map(chapter =>
-          renderChoiceChip(
-            `اصحاح ${chapter}`,
-            selectedChapters.includes(chapter),
-            () => onToggleChapter(chapter),
-          ),
-        )}
-      </ScrollView>
-    ) : null}
 
     <TouchableOpacity
       style={[
@@ -198,5 +119,11 @@ const DailyReadingPlanCard = ({
     </TouchableOpacity>
   </View>
 );
+
+const cardStyles = StyleSheet.create({
+  pickerContainer: {
+    marginVertical: 12,
+  },
+});
 
 export default React.memo(DailyReadingPlanCard);

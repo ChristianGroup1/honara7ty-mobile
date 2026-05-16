@@ -1,7 +1,7 @@
 import { BibleBook } from '../data/bibleMetadata';
 
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'fullText';
-export type VerseSelectionMode = 'single' | 'range';
+export type VerseSelectionMode = 'single' | 'multi';
 
 export interface WordSlot {
   word: string;
@@ -13,8 +13,7 @@ export interface WordSlot {
 export interface MemorizationSelection {
   selectedBook: BibleBook;
   selectedChapter: number;
-  selectedVerseStart: number;
-  selectedVerseEnd: number;
+  selectedVerses: number[];
   verseMode: VerseSelectionMode;
   difficulty: Difficulty;
   verseOriginal: string;

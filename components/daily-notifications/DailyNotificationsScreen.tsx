@@ -415,7 +415,6 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
         <DailyReadingPlanCard
           strings={strings}
           selectedTestament={selectedTestament}
-          testamentOptions={testamentOptions}
           booksForTestament={booksForTestament}
           readingBook={readingBook}
           chapterOptions={chapterOptions}
@@ -435,6 +434,17 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
               ),
             )
           }
+          onSelectAllChapters={() => {
+            if (selectedBookMeta) {
+              setSelectedChapters(
+                Array.from(
+                  { length: selectedBookMeta.chapters },
+                  (_, i) => i + 1,
+                ),
+              );
+            }
+          } }
+          onClearChapters={() => setSelectedChapters([])}
           onEditTime={openTimePicker}
           onSave={handleSave}
         />

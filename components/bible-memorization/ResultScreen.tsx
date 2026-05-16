@@ -142,8 +142,7 @@ const ResultScreen = ({ navigation, route }: Props) => {
             navigation.replace('Recite', {
               selectedBook: result.selectedBook,
               selectedChapter: result.selectedChapter,
-              selectedVerseStart: result.selectedVerseStart,
-              selectedVerseEnd: result.selectedVerseEnd,
+              selectedVerses: result.selectedVerses,
               verseMode: result.verseMode,
               difficulty: result.difficulty,
               verseOriginal: result.verseOriginal,
