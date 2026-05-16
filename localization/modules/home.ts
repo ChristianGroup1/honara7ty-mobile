@@ -23,7 +23,7 @@ export const homeStrings = {
   headerEyebrow: 'وقت مع ربنا',
   headerSubGreeting: 'جاهز لوقتك مع الله النهاردة؟',
   headerCaption: 'ابدأ يومك مع ربنا وخليه أول حاجة في يومك',
-  dailyCardLabel: 'سؤال اليوم المتغير',
+  dailyCardLabel: 'سؤال اليوم ',
   answerNow: 'جاوب الآن',
   editAnswer: 'تعديل الإجابة',
   answeredYes: 'حلو جدًا 👏💪، وقتك مع ربنا غالي 🙏',
