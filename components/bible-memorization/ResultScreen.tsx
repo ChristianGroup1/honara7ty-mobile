@@ -19,18 +19,18 @@ const ResultScreen = ({ navigation, route }: Props) => {
   const statusIcon = isPerfect
     ? 'medal-outline'
     : isGood
-    ? 'star-outline'
-    : 'refresh';
+      ? 'star-outline'
+      : 'refresh';
   const statusText = isPerfect
     ? strings.perfect
     : isGood
-    ? strings.good
-    : strings.retry;
+      ? strings.good
+      : strings.retry;
   const statusBadge = isPerfect
     ? strings.perfectBadge
     : isGood
-    ? strings.goodBadge
-    : strings.retryBadge;
+      ? strings.goodBadge
+      : strings.retryBadge;
 
   return (
     <View style={styles.container}>
@@ -123,9 +123,8 @@ const ResultScreen = ({ navigation, route }: Props) => {
                   >
                     {slot.correct
                       ? slot.word
-                      : `${slot.userInput || strings.wrongAnswerFallback} ← ${
-                          slot.word
-                        }`}
+                      : `${slot.userInput || strings.wrongAnswerFallback} ← ${slot.word
+                      }`}
                   </Text>
                 </View>
               ) : isFullTextMode ? null : (

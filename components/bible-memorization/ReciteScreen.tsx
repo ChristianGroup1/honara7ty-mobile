@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   findNodeHandle,
   KeyboardAvoidingView,
@@ -32,22 +32,31 @@ interface WordInputProps {
   placeholder: string;
 }
 
-const WordInput = React.memo(({ index, slot, onFocus, onChangeText, inputRef, placeholder }: WordInputProps) => {
-  return (
-    <TextInput
-      ref={inputRef}
-      style={styles.blankInput}
-      value={slot.userInput}
-      onFocus={() => onFocus(index)}
-      onChangeText={val => onChangeText(index, val)}
-      placeholder={placeholder}
-      placeholderTextColor="#AAA"
-      textAlign="center"
-      textAlignVertical="center"
-      returnKeyType="next"
-    />
-  );
-});
+const WordInput = React.memo(
+  ({
+    index,
+    slot,
+    onFocus,
+    onChangeText,
+    inputRef,
+    placeholder,
+  }: WordInputProps) => {
+    return (
+      <TextInput
+        ref={inputRef}
+        style={styles.blankInput}
+        value={slot.userInput}
+        onFocus={() => onFocus(index)}
+        onChangeText={val => onChangeText(index, val)}
+        placeholder={placeholder}
+        placeholderTextColor="#AAA"
+        textAlign="center"
+        textAlignVertical="center"
+        returnKeyType="next"
+      />
+    );
+  },
+);
 
 const ReciteScreen = ({ navigation, route }: Props) => {
   const strings = getStrings().bibleMemorization.recite;
@@ -83,9 +92,12 @@ const ReciteScreen = ({ navigation, route }: Props) => {
     );
   }, []);
 
-  const setInputRef = useCallback((index: number) => (ref: TextInput | null) => {
-    inputRefs.current[index] = ref;
-  }, []);
+  const setInputRef = useCallback(
+    (index: number) => (ref: TextInput | null) => {
+      inputRefs.current[index] = ref;
+    },
+    [],
+  );
 
   const checkAnswers = () => {
     if (isFullTextMode) {

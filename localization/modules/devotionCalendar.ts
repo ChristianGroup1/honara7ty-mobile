@@ -25,6 +25,7 @@ export const devotionCalendarStrings = {
   newTestament: 'العهد الجديد',
   selectChapter: 'الإصحاحات',
   chapterRangeHint: 'اختار أي إصحاحات حابب تقراها، ومش لازم يكونوا ورا بعض.',
+  selectAllChapters: 'اختيار كل الإصحاحات',
   readingSelectionRequiredTitle: 'اختيار القراءة مطلوب',
   readingSelectionRequiredMessage: 'لازم تختار سفر وإصحاح واحد على الأقل قبل الحفظ.',
   chapterRangeSummarySingle: 'الإصحاح المختار',

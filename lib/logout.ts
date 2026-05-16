@@ -5,6 +5,7 @@ import { cancelDevotionReminder } from './notifications';
 import { clearClarityUser } from './clarity';
 import { clearSentryUser } from './sentry';
 import { clearFirebaseUser } from './firebase';
+import { unregisterCurrentPushToken } from './pushTokens';
 
 export async function logoutCurrentUser() {
   configureGoogleSignIn();
@@ -13,6 +14,11 @@ export async function logoutCurrentUser() {
   clearClarityUser();
   clearSentryUser();
   clearFirebaseUser();
+  try {
+    await unregisterCurrentPushToken();
+  } catch {
+    // Token cleanup is best-effort; sign out must still complete.
+  }
   await supabase.auth.signOut();
 
   try {

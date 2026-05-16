@@ -23,7 +23,6 @@ import { RootStackParamList } from './types';
 import { trackClarityScreen } from '../lib/clarity';
 import {
   registerSentryNavigationContainer,
-  Sentry,
   trackSentryScreen,
 } from '../lib/sentry';
 import { trackFirebaseScreen } from '../lib/firebase';
@@ -37,11 +36,13 @@ interface RootNavigatorProps {
   isRecoveryMode: boolean;
   recoveryLinkValid: boolean;
   needsOnboarding: boolean;
+  needsProfileCompletion: boolean;
 }
 
 function getInitialRouteName({
   isLoggedIn,
   isRecoveryMode,
+  needsProfileCompletion,
   needsOnboarding,
 }: Omit<RootNavigatorProps, 'recoveryLinkValid'>): keyof RootStackParamList {
   if (isRecoveryMode) {
@@ -49,6 +50,9 @@ function getInitialRouteName({
   }
 
   if (isLoggedIn) {
+    if (needsProfileCompletion) {
+      return 'ProfileCompletion';
+    }
     return needsOnboarding ? 'Onboarding' : 'MainTabs';
   }
 
@@ -97,6 +101,7 @@ const RootNavigator = ({
   isLoggedIn,
   isRecoveryMode,
   recoveryLinkValid,
+  needsProfileCompletion,
   needsOnboarding,
 }: RootNavigatorProps) => {
   const routeNameRef = useRef<string | undefined>(undefined);
@@ -105,6 +110,7 @@ const RootNavigator = ({
   const initialRouteName = getInitialRouteName({
     isLoggedIn,
     isRecoveryMode,
+    needsProfileCompletion,
     needsOnboarding,
   });
 
@@ -130,13 +136,15 @@ const RootNavigator = ({
     }
 
     if (isLoggedIn) {
+      const nextLoggedInRoute = needsProfileCompletion
+        ? 'ProfileCompletion'
+        : needsOnboarding
+        ? 'Onboarding'
+        : 'MainTabs';
+
       navigationRef.reset({
         index: 0,
-        routes: [
-          {
-            name: needsOnboarding ? 'Onboarding' : 'MainTabs',
-          },
-        ],
+        routes: [{ name: nextLoggedInRoute }],
       });
       return;
     }
@@ -149,6 +157,7 @@ const RootNavigator = ({
     initialRouteName,
     isLoggedIn,
     isRecoveryMode,
+    needsProfileCompletion,
     recoveryLinkValid,
     needsOnboarding,
   ]);

@@ -131,6 +131,8 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           data: {
             full_name: trimmedName,
             phone: trimmedPhone,
+            profile_completed: false,
+            onboarding_completed: false,
           },
         },
       });

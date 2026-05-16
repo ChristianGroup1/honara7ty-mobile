@@ -150,3 +150,65 @@ jest.mock('@notifee/react-native', () => {
     },
   };
 });
+
+jest.mock('@react-native-firebase/analytics', () => {
+  const analytics = jest.fn(() => ({
+    setAnalyticsCollectionEnabled: jest.fn().mockResolvedValue(undefined),
+    setUserId: jest.fn().mockResolvedValue(undefined),
+    logScreenView: jest.fn().mockResolvedValue(undefined),
+    logEvent: jest.fn().mockResolvedValue(undefined),
+  }));
+
+  return {
+    __esModule: true,
+    default: analytics,
+  };
+});
+
+jest.mock('@react-native-firebase/crashlytics', () => {
+  const crashlytics = jest.fn(() => ({
+    setCrashlyticsCollectionEnabled: jest.fn().mockResolvedValue(undefined),
+    setUserId: jest.fn().mockResolvedValue(undefined),
+    setAttribute: jest.fn().mockResolvedValue(undefined),
+    recordError: jest.fn(),
+    log: jest.fn(),
+    crash: jest.fn(),
+  }));
+
+  return {
+    __esModule: true,
+    default: crashlytics,
+  };
+});
+
+jest.mock('@react-native-firebase/perf', () => {
+  const perf = jest.fn(() => ({
+    setPerformanceCollectionEnabled: jest.fn().mockResolvedValue(undefined),
+  }));
+
+  return {
+    __esModule: true,
+    default: perf,
+  };
+});
+
+jest.mock('@react-native-firebase/messaging', () => {
+  const messaging = jest.fn(() => ({
+    requestPermission: jest.fn().mockResolvedValue(1),
+    registerDeviceForRemoteMessages: jest.fn().mockResolvedValue(undefined),
+    getToken: jest.fn().mockResolvedValue('test-fcm-token'),
+    onTokenRefresh: jest.fn(() => jest.fn()),
+  }));
+
+  messaging.AuthorizationStatus = {
+    NOT_DETERMINED: -1,
+    AUTHORIZED: 1,
+    DENIED: 0,
+    PROVISIONAL: 2,
+  };
+
+  return {
+    __esModule: true,
+    default: messaging,
+  };
+});

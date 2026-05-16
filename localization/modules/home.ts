@@ -36,6 +36,7 @@ export const homeStrings = {
   newTestament: 'العهد الجديد',
   answerChapter: 'الإصحاحات',
   answerRangeHint: 'اختار أي إصحاحات حابب تقراها، ومش لازم يكونوا ورا بعض.',
+  selectAllChapters: 'اختيار كل الإصحاحات',
   readingSelectionRequiredTitle: 'اختيار القراءة مطلوب',
   readingSelectionRequiredMessage: 'لازم تختار سفر وإصحاح واحد على الأقل قبل الحفظ.',
   permissionNoticeTitle: 'فعّل التذكير اليومي',
@@ -46,7 +47,9 @@ export const homeStrings = {
   saveAnswer: 'حفظ الإجابة',
   savedOfflineMessage:
     'تم حفظ التغيير على الجهاز، وسيتم إرساله تلقائياً عند عودة الإنترنت.',
+  quickActionsTitle: 'اختصارات سريعة',
   quickActions: {
+    devotionGroups: 'جروبات الخلوة',
     devotionGuide: 'شرح الخلوة',
     settings: 'اعدادات الخلوة',
     calendar: 'متابعة وقتك مع الله',

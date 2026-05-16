@@ -65,11 +65,15 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   /** Navigate to Onboarding for first-time users, otherwise to HomeScreen. */
   const navigateAfterLogin = async (user: any) => {
     await ensureDefaultDevotionTime(user?.id);
+    const profileDone = user?.user_metadata?.profile_completed !== false;
     const onboardingDone = user?.user_metadata?.onboarding_completed === true;
     const seenPermissionPrompt = await hasSeenNotificationPermissionPrompt(
       user?.id,
     );
-    if (onboardingDone) {
+
+    if (!profileDone) {
+      navigation.reset({ index: 0, routes: [{ name: 'ProfileCompletion' }] });
+    } else if (onboardingDone) {
       if (seenPermissionPrompt) {
         navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
       } else {

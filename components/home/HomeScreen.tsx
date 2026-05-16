@@ -375,10 +375,6 @@ const HomeScreen = ({ route, navigation }: any) => {
     setAnswerSheetVisible(false);
   }, []);
 
-  const navigateDevotionCalendar = useCallback(() => {
-    navigation.navigate('DevotionCalendar');
-  }, [navigation]);
-
   const navigatePrayerNotes = useCallback(() => {
     navigation.navigate('PrayerNotes');
   }, [navigation]);
@@ -451,7 +447,6 @@ const HomeScreen = ({ route, navigation }: any) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <QuickActionsGrid navigation={navigation} />
         <DailyQuestionCard
           devotionAnswer={devotionAnswer}
           onAnswerNow={handleAnswerNow}
@@ -471,12 +466,7 @@ const HomeScreen = ({ route, navigation }: any) => {
             loading={permissionLoading}
           />
         )}
-        <FeatureCard
-          title={strings.featureCalendarTitle}
-          subtitle={strings.featureCalendarSubtitle}
-          icon="calendar-check-outline"
-          onPress={navigateDevotionCalendar}
-        />
+        <QuickActionsGrid navigation={navigation} />
         <FeatureCard
           title={strings.featurePrayerNotesTitle}
           subtitle={strings.featurePrayerNotesSubtitle}

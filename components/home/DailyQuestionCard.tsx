@@ -21,6 +21,16 @@ const DailyQuestionCard = ({
   return (
     <View style={styles.questionCard}>
       <View style={styles.questionDecor} />
+      <View style={styles.questionTopRow}>
+        <View style={styles.questionIconWrap}>
+          <MaterialCommunityIcons
+            name="book-open-page-variant-outline"
+            size={21}
+            color="#C9A84C"
+          />
+        </View>
+        <Text style={styles.questionCardLabel}>{strings.dailyCardLabel}</Text>
+      </View>
       <Text style={styles.questionText}>{DAILY_QUESTION}</Text>
 
       {devotionAnswer === null ? (

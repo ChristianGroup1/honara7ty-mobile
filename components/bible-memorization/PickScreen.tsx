@@ -77,8 +77,8 @@ const PickScreen = ({ navigation }: Props) => {
     () =>
       selectedBook
         ? Array.from({ length: selectedBook.chapters }, (_, index) => ({
-            value: index + 1,
-          }))
+          value: index + 1,
+        }))
         : [],
     [selectedBook],
   );
@@ -87,8 +87,8 @@ const PickScreen = ({ navigation }: Props) => {
     () =>
       selectedChapterData
         ? selectedChapterData.verses.map(verse => ({
-            value: verse.verse,
-          }))
+          value: verse.verse,
+        }))
         : [],
     [selectedChapterData],
   );
@@ -479,11 +479,11 @@ const PickScreen = ({ navigation }: Props) => {
 
           {verseMode === 'range'
             ? renderPickerButton(
-                strings.toVerse,
-                strings.verseValue(selectedVerseEnd),
-                'verseEnd',
-                !selectedChapterData,
-              )
+              strings.toVerse,
+              strings.verseValue(selectedVerseEnd),
+              'verseEnd',
+              !selectedChapterData,
+            )
             : null}
         </View>
 
@@ -523,10 +523,10 @@ const PickScreen = ({ navigation }: Props) => {
             {difficulty === 'easy'
               ? strings.easyHint
               : difficulty === 'medium'
-              ? strings.mediumHint
-              : difficulty === 'hard'
-              ? strings.hardHint
-              : strings.fullTextHint}
+                ? strings.mediumHint
+                : difficulty === 'hard'
+                  ? strings.hardHint
+                  : strings.fullTextHint}
           </Text>
         </View>
 

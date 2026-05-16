@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Testament } from '../data/bibleMetadata';
 import { homeStyles as styles } from './styles';
+import BiblePassagePicker from '../shared/BiblePassagePicker';
 
 type Props = {
   visible: boolean;
@@ -101,138 +102,47 @@ const HomeAnswerSheet = ({
             </View>
 
             {pendingCompleted ? (
-              <>
-                <Text style={styles.answerFieldTitle}>
-                  {strings.answerBook}
-                </Text>
-                <View style={styles.answerTestamentTabs}>
-                  <TouchableOpacity
-                    style={[
-                      styles.answerTestamentTab,
-                      selectedTestament === 'old' &&
-                        styles.answerTestamentTabActive,
-                    ]}
-                    onPress={() => onSetSelectedTestament('old')}
-                  >
-                    <Text
-                      style={[
-                        styles.answerTestamentTabText,
-                        selectedTestament === 'old' &&
-                          styles.answerTestamentTabTextActive,
-                      ]}
-                    >
-                      {strings.oldTestament}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.answerTestamentTab,
-                      selectedTestament === 'new' &&
-                        styles.answerTestamentTabActive,
-                    ]}
-                    onPress={() => onSetSelectedTestament('new')}
-                  >
-                    <Text
-                      style={[
-                        styles.answerTestamentTabText,
-                        selectedTestament === 'new' &&
-                          styles.answerTestamentTabTextActive,
-                      ]}
-                    >
-                      {strings.newTestament}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.answerBookPanel}>
-                  <View style={styles.answerBookPanelHeader}>
-                    <Text style={styles.answerBookPanelTitle}>
-                      {selectedTestament === 'old'
-                        ? strings.oldTestament
-                        : strings.newTestament}
-                    </Text>
-                    <Text style={styles.answerBookPanelCount}>
-                      {books.length} سفر
-                    </Text>
-                  </View>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.answerChoiceRow}
-                  >
-                    {books.map(book => (
-                      <TouchableOpacity
-                        key={book.bookID}
-                        style={[
-                          styles.answerChoiceChip,
-                          styles.answerBookChoiceChip,
-                          readingBook === book.bookName &&
-                            styles.answerChoiceChipSelected,
-                        ]}
-                        onPress={() => onSetReadingBook(book.bookName)}
-                      >
-                        <Text
-                          style={[
-                            styles.answerChoiceText,
-                            styles.answerBookChoiceText,
-                            readingBook === book.bookName &&
-                              styles.answerChoiceTextSelected,
-                          ]}
-                          numberOfLines={1}
-                          ellipsizeMode="tail"
-                        >
-                          {book.bookName}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-
-                <Text style={styles.answerFieldTitle}>
-                  {strings.answerChapter}
-                </Text>
-                <Text style={styles.answerRangeHint}>
-                  {readingBook ? strings.answerRangeHint : strings.selectBookFirst}
-                </Text>
-                {readingBook ? (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.answerChoiceRow}
-                  >
-                    {chapterOptions.map(chapter => {
-                      return (
-                        <TouchableOpacity
-                          key={`chapter-${chapter}`}
-                          style={[
-                            styles.answerChoiceChip,
-                            selectedChapters.includes(chapter) &&
-                              styles.answerChoiceChipSelected,
-                          ]}
-                          onPress={() => onToggleChapter(chapter)}
-                        >
-                          <Text
-                            style={[
-                              styles.answerChoiceText,
-                              selectedChapters.includes(chapter) &&
-                                styles.answerChoiceTextSelected,
-                            ]}
-                          >
-                            {chapter}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                ) : null}
-              </>
+              <BiblePassagePicker
+                labels={{
+                  bookTitle: strings.answerBook,
+                  chapterTitle: strings.answerChapter,
+                  chapterHint: strings.answerRangeHint,
+                  selectBookFirst: strings.selectBookFirst,
+                  oldTestament: strings.oldTestament,
+                  newTestament: strings.newTestament,
+                  selectAllChapters: strings.selectAllChapters,
+                }}
+                selectedTestament={selectedTestament}
+                books={books.map(book => ({
+                  ...book,
+                  bookID: String(book.bookID),
+                }))}
+                selectedBook={readingBook}
+                chapterOptions={chapterOptions}
+                selectedChapters={selectedChapters}
+                onSetTestament={onSetSelectedTestament}
+                onSetBook={onSetReadingBook}
+                onToggleChapter={onToggleChapter}
+                onSelectAllChapters={() =>
+                  chapterOptions.forEach(chapter => {
+                    if (!selectedChapters.includes(chapter)) {
+                      onToggleChapter(chapter);
+                    }
+                  })
+                }
+                onClearChapters={() =>
+                  selectedChapters.forEach(chapter => onToggleChapter(chapter))
+                }
+              />
             ) : null}
           </ScrollView>
 
           <TouchableOpacity
             style={[
               styles.saveAnswerBtn,
-              pendingCompleted && !canSaveReading && styles.saveAnswerBtnDisabled,
+              pendingCompleted &&
+                !canSaveReading &&
+                styles.saveAnswerBtnDisabled,
             ]}
             onPress={onSave}
             disabled={pendingCompleted && !canSaveReading}

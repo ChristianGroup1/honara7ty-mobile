@@ -357,3 +357,534 @@ CREATE POLICY "devotion_log: delete own rows only"
   ON public.devotion_log
   FOR DELETE
   USING (auth.uid() = user_id);
+
+
+-- ──────────────────────────────────────────────────────────────
+-- 7. DEVOTION GROUPS
+--    Small accountability groups. Leaders can see member devotion
+--    completion and send in-app reminder records.
+-- ──────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.devotion_groups (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id    UUID        NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  name        TEXT        NOT NULL,
+  invite_code TEXT        NOT NULL UNIQUE DEFAULT upper(substr(replace(gen_random_uuid()::TEXT, '-', ''), 1, 8)),
+  shared_reading_book TEXT,
+  shared_selected_chapters INT[],
+  shared_target_days INT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.devotion_groups
+  ADD COLUMN IF NOT EXISTS shared_reading_book TEXT;
+
+ALTER TABLE public.devotion_groups
+  ADD COLUMN IF NOT EXISTS shared_selected_chapters INT[];
+
+ALTER TABLE public.devotion_groups
+  ADD COLUMN IF NOT EXISTS shared_target_days INT;
+
+CREATE TABLE IF NOT EXISTS public.devotion_group_members (
+  group_id         UUID        NOT NULL REFERENCES public.devotion_groups (id) ON DELETE CASCADE,
+  user_id          UUID        NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  role             TEXT        NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'leader', 'member')),
+  display_name     TEXT        NOT NULL DEFAULT 'مستخدم',
+  joined_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_reminded_at TIMESTAMPTZ,
+
+  PRIMARY KEY (group_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.devotion_group_reminders (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id     UUID        NOT NULL REFERENCES public.devotion_groups (id) ON DELETE CASCADE,
+  sender_id    UUID        NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  recipient_id UUID        NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  message      TEXT        NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  read_at      TIMESTAMPTZ
+);
+
+ALTER TABLE public.devotion_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.devotion_group_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.devotion_group_reminders ENABLE ROW LEVEL SECURITY;
+
+CREATE INDEX IF NOT EXISTS devotion_group_members_user_idx
+  ON public.devotion_group_members (user_id);
+
+CREATE INDEX IF NOT EXISTS devotion_group_reminders_recipient_idx
+  ON public.devotion_group_reminders (recipient_id, created_at DESC);
+
+CREATE OR REPLACE FUNCTION public.is_devotion_group_member(target_group_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.devotion_group_members
+    WHERE group_id = target_group_id
+      AND user_id = auth.uid()
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_devotion_group_leader(target_group_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.devotion_group_members
+    WHERE group_id = target_group_id
+      AND user_id = auth.uid()
+      AND role IN ('owner', 'leader')
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.can_view_group_devotion(target_user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT auth.uid() = target_user_id
+    OR public.is_admin()
+    OR EXISTS (
+      SELECT 1
+      FROM public.devotion_group_members viewer
+      JOIN public.devotion_group_members target
+        ON target.group_id = viewer.group_id
+      WHERE viewer.user_id = auth.uid()
+        AND target.user_id = target_user_id
+    );
+$$;
+
+CREATE OR REPLACE FUNCTION public.add_owner_to_devotion_group()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.devotion_group_members (group_id, user_id, role, display_name)
+  VALUES (NEW.id, NEW.owner_id, 'owner', 'قائد الجروب')
+  ON CONFLICT (group_id, user_id) DO NOTHING;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS devotion_groups_add_owner_member
+  ON public.devotion_groups;
+
+CREATE TRIGGER devotion_groups_add_owner_member
+AFTER INSERT ON public.devotion_groups
+FOR EACH ROW
+EXECUTE FUNCTION public.add_owner_to_devotion_group();
+
+CREATE OR REPLACE FUNCTION public.join_devotion_group_by_code(
+  code TEXT,
+  member_display_name TEXT DEFAULT 'مستخدم'
+)
+RETURNS TABLE (group_id UUID)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  matched_group_id UUID;
+BEGIN
+  SELECT id INTO matched_group_id
+  FROM public.devotion_groups
+  WHERE invite_code = upper(trim(code));
+
+  IF matched_group_id IS NULL THEN
+    RAISE EXCEPTION 'INVALID_INVITE_CODE';
+  END IF;
+
+  INSERT INTO public.devotion_group_members (
+    group_id,
+    user_id,
+    role,
+    display_name
+  )
+  VALUES (
+    matched_group_id,
+    auth.uid(),
+    'member',
+    COALESCE(NULLIF(trim(member_display_name), ''), 'مستخدم')
+  )
+  ON CONFLICT (group_id, user_id) DO UPDATE
+    SET display_name = EXCLUDED.display_name;
+
+  RETURN QUERY SELECT matched_group_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.create_devotion_group(
+  group_name TEXT,
+  owner_display_name TEXT DEFAULT 'قائد الجروب'
+)
+RETURNS TABLE (
+  id UUID,
+  owner_id UUID,
+  name TEXT,
+  invite_code TEXT,
+  shared_reading_book TEXT,
+  shared_selected_chapters INT[],
+  shared_target_days INT,
+  created_at TIMESTAMPTZ
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  inserted_group public.devotion_groups%ROWTYPE;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'AUTH_REQUIRED';
+  END IF;
+
+  IF NULLIF(trim(group_name), '') IS NULL THEN
+    RAISE EXCEPTION 'GROUP_NAME_REQUIRED';
+  END IF;
+
+  INSERT INTO public.devotion_groups (owner_id, name)
+  VALUES (auth.uid(), trim(group_name))
+  RETURNING * INTO inserted_group;
+
+  INSERT INTO public.devotion_group_members (
+    group_id,
+    user_id,
+    role,
+    display_name
+  )
+  VALUES (
+    inserted_group.id,
+    auth.uid(),
+    'owner',
+    COALESCE(NULLIF(trim(owner_display_name), ''), 'قائد الجروب')
+  )
+  ON CONFLICT (group_id, user_id) DO UPDATE
+    SET role = 'owner',
+        display_name = EXCLUDED.display_name;
+
+  RETURN QUERY
+  SELECT
+    inserted_group.id,
+    inserted_group.owner_id,
+    inserted_group.name,
+    inserted_group.invite_code,
+    inserted_group.shared_reading_book,
+    inserted_group.shared_selected_chapters,
+    inserted_group.shared_target_days,
+    inserted_group.created_at;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.join_devotion_group(
+  invite_code_input TEXT,
+  member_display_name TEXT DEFAULT 'مستخدم'
+)
+RETURNS TABLE (
+  id UUID,
+  owner_id UUID,
+  name TEXT,
+  invite_code TEXT,
+  shared_reading_book TEXT,
+  shared_selected_chapters INT[],
+  shared_target_days INT,
+  created_at TIMESTAMPTZ
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  matched_group public.devotion_groups%ROWTYPE;
+  normalized_invite_code TEXT;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'AUTH_REQUIRED';
+  END IF;
+
+  normalized_invite_code := upper(regexp_replace(trim(invite_code_input), '\s+', '', 'g'));
+
+  IF normalized_invite_code = '' THEN
+    RAISE EXCEPTION 'INVALID_INVITE_CODE';
+  END IF;
+
+  SELECT *
+  INTO matched_group
+  FROM public.devotion_groups
+  WHERE devotion_groups.invite_code = normalized_invite_code;
+
+  IF matched_group.id IS NULL THEN
+    RAISE EXCEPTION 'INVALID_INVITE_CODE';
+  END IF;
+
+  INSERT INTO public.devotion_group_members (
+    group_id,
+    user_id,
+    role,
+    display_name
+  )
+  VALUES (
+    matched_group.id,
+    auth.uid(),
+    'member',
+    COALESCE(NULLIF(trim(member_display_name), ''), 'مستخدم')
+  )
+  ON CONFLICT (group_id, user_id) DO UPDATE
+    SET display_name = EXCLUDED.display_name;
+
+  RETURN QUERY
+  SELECT
+    matched_group.id,
+    matched_group.owner_id,
+    matched_group.name,
+    matched_group.invite_code,
+    matched_group.shared_reading_book,
+    matched_group.shared_selected_chapters,
+    matched_group.shared_target_days,
+    matched_group.created_at;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.my_devotion_groups()
+RETURNS TABLE (
+  id UUID,
+  owner_id UUID,
+  name TEXT,
+  invite_code TEXT,
+  shared_reading_book TEXT,
+  shared_selected_chapters INT[],
+  shared_target_days INT,
+  created_at TIMESTAMPTZ
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT
+    devotion_groups.id,
+    devotion_groups.owner_id,
+    devotion_groups.name,
+    devotion_groups.invite_code,
+    devotion_groups.shared_reading_book,
+    devotion_groups.shared_selected_chapters,
+    devotion_groups.shared_target_days,
+    devotion_groups.created_at
+  FROM public.devotion_group_members
+  JOIN public.devotion_groups
+    ON devotion_groups.id = devotion_group_members.group_id
+  WHERE devotion_group_members.user_id = auth.uid()
+  ORDER BY devotion_groups.created_at DESC;
+$$;
+
+CREATE OR REPLACE FUNCTION public.set_devotion_group_shared_reading(
+  target_group_id UUID,
+  reading_book_input TEXT DEFAULT NULL,
+  selected_chapters_input INT[] DEFAULT NULL,
+  target_days_input INT DEFAULT NULL
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'AUTH_REQUIRED';
+  END IF;
+
+  IF NOT public.is_devotion_group_leader(target_group_id) THEN
+    RAISE EXCEPTION 'NOT_GROUP_LEADER';
+  END IF;
+
+  UPDATE public.devotion_groups
+  SET
+    shared_reading_book = NULLIF(trim(reading_book_input), ''),
+    shared_selected_chapters = selected_chapters_input,
+    shared_target_days = target_days_input
+  WHERE id = target_group_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.is_devotion_group_member(UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.is_devotion_group_leader(UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.can_view_group_devotion(UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.my_devotion_groups() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.create_devotion_group(TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.set_devotion_group_shared_reading(UUID, TEXT, INT[], INT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.join_devotion_group(TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.join_devotion_group_by_code(TEXT, TEXT) FROM PUBLIC;
+
+GRANT EXECUTE ON FUNCTION public.is_devotion_group_member(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_devotion_group_leader(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_view_group_devotion(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.my_devotion_groups() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_devotion_group(TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.set_devotion_group_shared_reading(UUID, TEXT, INT[], INT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.join_devotion_group(TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.join_devotion_group_by_code(TEXT, TEXT) TO authenticated;
+
+DROP POLICY IF EXISTS "devotion_groups: select members only"
+  ON public.devotion_groups;
+DROP POLICY IF EXISTS "devotion_groups: insert own groups"
+  ON public.devotion_groups;
+DROP POLICY IF EXISTS "devotion_groups: update owner only"
+  ON public.devotion_groups;
+DROP POLICY IF EXISTS "devotion_groups: delete owner only"
+  ON public.devotion_groups;
+
+CREATE POLICY "devotion_groups: select members only"
+  ON public.devotion_groups
+  FOR SELECT
+  USING (public.is_devotion_group_member(id));
+
+CREATE POLICY "devotion_groups: insert own groups"
+  ON public.devotion_groups
+  FOR INSERT
+  WITH CHECK (auth.uid() = owner_id);
+
+CREATE POLICY "devotion_groups: update owner only"
+  ON public.devotion_groups
+  FOR UPDATE
+  USING (auth.uid() = owner_id)
+  WITH CHECK (auth.uid() = owner_id);
+
+CREATE POLICY "devotion_groups: delete owner only"
+  ON public.devotion_groups
+  FOR DELETE
+  USING (auth.uid() = owner_id);
+
+DROP POLICY IF EXISTS "devotion_group_members: select group members"
+  ON public.devotion_group_members;
+DROP POLICY IF EXISTS "devotion_group_members: update self or leader"
+  ON public.devotion_group_members;
+DROP POLICY IF EXISTS "devotion_group_members: update leader only"
+  ON public.devotion_group_members;
+DROP POLICY IF EXISTS "devotion_group_members: delete self or leader"
+  ON public.devotion_group_members;
+
+CREATE POLICY "devotion_group_members: select group members"
+  ON public.devotion_group_members
+  FOR SELECT
+  USING (public.is_devotion_group_member(group_id));
+
+CREATE POLICY "devotion_group_members: update leader only"
+  ON public.devotion_group_members
+  FOR UPDATE
+  USING (public.is_devotion_group_leader(group_id))
+  WITH CHECK (public.is_devotion_group_leader(group_id));
+
+CREATE POLICY "devotion_group_members: delete self or leader"
+  ON public.devotion_group_members
+  FOR DELETE
+  USING (auth.uid() = user_id OR public.is_devotion_group_leader(group_id));
+
+DROP POLICY IF EXISTS "devotion_group_reminders: select participants"
+  ON public.devotion_group_reminders;
+DROP POLICY IF EXISTS "devotion_group_reminders: insert leaders only"
+  ON public.devotion_group_reminders;
+DROP POLICY IF EXISTS "devotion_group_reminders: update recipient read state"
+  ON public.devotion_group_reminders;
+
+CREATE POLICY "devotion_group_reminders: select participants"
+  ON public.devotion_group_reminders
+  FOR SELECT
+  USING (
+    auth.uid() = sender_id
+    OR auth.uid() = recipient_id
+    OR public.is_devotion_group_leader(group_id)
+  );
+
+CREATE POLICY "devotion_group_reminders: insert leaders only"
+  ON public.devotion_group_reminders
+  FOR INSERT
+  WITH CHECK (
+    auth.uid() = sender_id
+    AND public.is_devotion_group_leader(group_id)
+    AND EXISTS (
+      SELECT 1
+      FROM public.devotion_group_members
+      WHERE group_id = devotion_group_reminders.group_id
+        AND user_id = devotion_group_reminders.recipient_id
+    )
+  );
+
+CREATE POLICY "devotion_group_reminders: update recipient read state"
+  ON public.devotion_group_reminders
+  FOR UPDATE
+  USING (auth.uid() = recipient_id)
+  WITH CHECK (auth.uid() = recipient_id);
+
+DROP POLICY IF EXISTS "devotion_log: read own rows, group leader, or admin"
+  ON public.devotion_log;
+DROP POLICY IF EXISTS "devotion_log: read own rows or admin read all"
+  ON public.devotion_log;
+
+CREATE POLICY "devotion_log: read own rows, group leader, or admin"
+  ON public.devotion_log
+  FOR SELECT
+  USING (public.can_view_group_devotion(user_id));
+
+
+-- ──────────────────────────────────────────────────────────────
+-- 8. USER PUSH TOKENS
+--    Device tokens used by Supabase Edge Functions to send real
+--    push notifications through FCM/APNs.
+-- ──────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.user_push_tokens (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID        NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  token      TEXT        NOT NULL UNIQUE,
+  platform   TEXT        NOT NULL CHECK (platform IN ('ios', 'android')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.user_push_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE INDEX IF NOT EXISTS user_push_tokens_user_idx
+  ON public.user_push_tokens (user_id);
+
+DROP POLICY IF EXISTS "user_push_tokens: own rows only"
+  ON public.user_push_tokens;
+DROP POLICY IF EXISTS "user_push_tokens: select own rows"
+  ON public.user_push_tokens;
+DROP POLICY IF EXISTS "user_push_tokens: insert own rows"
+  ON public.user_push_tokens;
+DROP POLICY IF EXISTS "user_push_tokens: update own rows"
+  ON public.user_push_tokens;
+DROP POLICY IF EXISTS "user_push_tokens: delete own rows"
+  ON public.user_push_tokens;
+
+CREATE POLICY "user_push_tokens: select own rows"
+  ON public.user_push_tokens
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "user_push_tokens: insert own rows"
+  ON public.user_push_tokens
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "user_push_tokens: update own rows"
+  ON public.user_push_tokens
+  FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "user_push_tokens: delete own rows"
+  ON public.user_push_tokens
+  FOR DELETE
+  USING (auth.uid() = user_id);

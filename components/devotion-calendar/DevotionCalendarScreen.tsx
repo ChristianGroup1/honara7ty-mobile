@@ -25,7 +25,7 @@ import DevotionCalendarSummary from './DevotionCalendarSummary';
 import DevotionCalendarGrid from './DevotionCalendarGrid';
 import DevotionDayEditor from './DevotionDayEditor';
 import { devotionCalendarStyles as styles, NAVY } from './styles';
-import { DevotionDayLog, TestamentOption } from './types';
+import { DevotionDayLog } from './types';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import { buildMonthCells, getMonthKey, startOfMonth, toIsoDate } from './utils';
 import {
@@ -63,18 +63,6 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   });
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
-
-  const testamentOptions: TestamentOption[] = useMemo(
-    () => [
-      {
-        key: 'old',
-        label: strings.oldTestament,
-        icon: 'book-open-page-variant-outline',
-      },
-      { key: 'new', label: strings.newTestament, icon: 'cross' },
-    ],
-    [strings.newTestament, strings.oldTestament],
-  );
 
   const loadDevotionDays = useCallback(async (showLoader = false) => {
     if (showLoader) {
@@ -347,7 +335,6 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         saving={saving}
         books={booksForTestament}
         chapterOptions={chapterOptions}
-        testamentOptions={testamentOptions}
         canSaveReading={!!selectedBook && selectedChapters.length > 0}
         onClose={() => setEditorVisible(false)}
         onSetCompleted={setSelectedCompleted}

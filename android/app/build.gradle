@@ -95,8 +95,8 @@ android {
         applicationId "com.honara7ty.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 13
-        versionName "13.0"
+        versionCode 15
+        versionName "15.0"
     }
     signingConfigs {
         debug {
@@ -141,5 +141,24 @@ dependencies {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
+    }
+}
+
+// React Native 0.82+ sometimes doesn't create the sourcemaps output directory
+// before running compose-source-maps.js. Ensure it exists to avoid release builds failing.
+afterEvaluate {
+    tasks.matching { task ->
+        task.name.startsWith("createBundle") && task.name.endsWith("JsAndAssets")
+    }.configureEach { task ->
+        task.doFirst {
+            def variant = task.name
+                .replaceFirst(/^createBundle/, "")
+                .replaceFirst(/JsAndAssets$/, "")
+                .toLowerCase()
+            def outDir = file("$buildDir/generated/sourcemaps/react/${variant}")
+            if (!outDir.exists()) {
+                outDir.mkdirs()
+            }
+        }
     }
 }

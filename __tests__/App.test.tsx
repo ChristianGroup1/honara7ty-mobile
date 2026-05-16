@@ -36,6 +36,7 @@ test('renders splash while bootstrap is pending', async () => {
     isLoggedIn: false,
     isRecoveryMode: false,
     recoveryLinkValid: true,
+    needsProfileCompletion: false,
     needsOnboarding: false,
   });
 
@@ -50,6 +51,7 @@ test('renders root navigator after bootstrap', async () => {
     isLoggedIn: true,
     isRecoveryMode: false,
     recoveryLinkValid: true,
+    needsProfileCompletion: false,
     needsOnboarding: false,
   });
 

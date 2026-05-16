@@ -50,6 +50,13 @@ const MoreScreen = ({ navigation }: any) => {
       subtitle: strings.items.devotionCalendar.subtitle,
       color: '#2E8B57',
     },
+    {
+      key: 'DevotionGroups',
+      icon: 'account-group-outline',
+      title: strings.items.devotionGroups.title,
+      subtitle: strings.items.devotionGroups.subtitle,
+      color: '#6D5BD0',
+    },
   ];
 
   return (

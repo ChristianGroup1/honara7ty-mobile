@@ -2,7 +2,13 @@ export type RootStackParamList = {
   MainTabs: undefined;
   Welcome: undefined;
   SignupStep1: undefined;
-  ProfileCompletion: undefined;
+  ProfileCompletion:
+    | {
+        userId?: string;
+        email?: string;
+        requires_login_before_submit?: boolean;
+      }
+    | undefined;
   Login: undefined;
   ForgotPassword: undefined;
   ResetPassword: { linkValid?: boolean };
@@ -19,4 +25,11 @@ export type RootStackParamList = {
   DevotionGuide: undefined;
   DevotionDetail: undefined;
   DevotionCalendar: undefined;
+  DevotionGroups: undefined;
+  DevotionGroupDetails: { groupId: string };
+  DevotionGroupMemberDetails: {
+    groupId: string;
+    userId: string;
+    displayName?: string;
+  };
 };

@@ -17,5 +17,9 @@ export const moreStrings = {
       title: 'متابعة وقتك مع الله',
       subtitle: 'راجع الأيام التي التزمت فيها',
     },
+    devotionGroups: {
+      title: 'جروبات الخلوة',
+      subtitle: 'تابع خلوة أعضاء الجروب',
+    },
   },
 } as const;

@@ -40,6 +40,7 @@ function App() {
     isRecoveryMode,
     recoveryLinkValid,
     needsOnboarding,
+    needsProfileCompletion,
   } = useAppBootstrap();
 
   return (
@@ -52,6 +53,7 @@ function App() {
           isRecoveryMode={isRecoveryMode}
           recoveryLinkValid={recoveryLinkValid}
           needsOnboarding={needsOnboarding}
+          needsProfileCompletion={needsProfileCompletion}
         />
       )}
     </SafeAreaProvider>

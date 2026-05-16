@@ -171,6 +171,16 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
 
     const { data } = await supabase.auth.getSession();
     const userId = data?.session?.user?.id;
+    if (userId) {
+      const { error } = await supabase.auth.updateUser({
+        data: { onboarding_completed: true },
+      });
+
+      if (__DEV__ && error) {
+        console.warn('[Onboarding] failed to save completion', error);
+      }
+    }
+
     const seenPermissionPrompt = await hasSeenNotificationPermissionPrompt(
       userId,
     );

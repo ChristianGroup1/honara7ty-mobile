@@ -97,7 +97,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
     return pendingEmail
       ? strings.profileCompletion.requiresLoginNotice(pendingEmail)
       : strings.profileCompletion.requiresLoginNotice();
-  }, [pendingEmail, requiresLoginBeforeSubmit]);
+  }, [pendingEmail, requiresLoginBeforeSubmit, strings.profileCompletion]);
 
   // ✅ دالة حفظ البروفايل في Supabase
   const handleCreateAccount = async () => {
@@ -133,6 +133,14 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
           updated_at: new Date().toISOString(),
         },
       });
+
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { profile_completed: true },
+      });
+
+      if (metadataError) {
+        throw metadataError;
+      }
 
       if (result.offline) {
         showAlert(

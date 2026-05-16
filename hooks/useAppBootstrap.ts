@@ -8,6 +8,7 @@ import { BOOTSTRAP_TIMEOUT_MS, withTimeout } from '../lib/withTimeout';
 import { clearClarityUser, setClarityUser } from '../lib/clarity';
 import { clearSentryUser, setSentryUser } from '../lib/sentry';
 import { clearFirebaseUser, setFirebaseUser } from '../lib/firebase';
+import { registerPushToken, subscribePushTokenRefresh } from '../lib/pushTokens';
 
 export function useAppBootstrap() {
   const [showSplash, setShowSplash] = useState(true);
@@ -15,10 +16,12 @@ export function useAppBootstrap() {
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [recoveryLinkValid, setRecoveryLinkValid] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     let splashTimeout: ReturnType<typeof setTimeout> | undefined;
+    let unsubscribePushTokenRefresh: (() => void) | undefined;
 
     const hideSplashAfter = (delayMs: number) => {
       if (splashTimeout) {
@@ -33,6 +36,8 @@ export function useAppBootstrap() {
     };
 
     const applySessionState = (session: any) => {
+      const profileDone =
+        session?.user?.user_metadata?.profile_completed !== false;
       const onboardingDone =
         session?.user?.user_metadata?.onboarding_completed === true;
 
@@ -41,15 +46,36 @@ export function useAppBootstrap() {
       }
 
       setIsLoggedIn(Boolean(session));
-      setNeedsOnboarding(Boolean(session) && !onboardingDone);
+      setNeedsProfileCompletion(Boolean(session) && !profileDone);
+      setNeedsOnboarding(Boolean(session) && profileDone && !onboardingDone);
       setIsRecoveryMode(false);
       setRecoveryLinkValid(true);
     };
 
     const syncReminderScheduleSafely = (userId?: string | null) => {
-      void syncDevotionReminderSchedule(userId).catch(error => {
+      syncDevotionReminderSchedule(userId).catch(error => {
         console.warn('Failed to sync devotion reminder schedule', error);
       });
+    };
+
+    const syncPushTokenSafely = (userId?: string | null) => {
+      unsubscribePushTokenRefresh?.();
+      unsubscribePushTokenRefresh = undefined;
+
+      if (!userId) {
+        return;
+      }
+
+      registerPushToken(userId).then(result => {
+        if (__DEV__ && !result.registered) {
+          console.warn('Push token was not registered', result);
+        }
+      }).catch(error => {
+        if (__DEV__) {
+          console.warn('Failed to register push token', error);
+        }
+      });
+      unsubscribePushTokenRefresh = subscribePushTokenRefresh(userId);
     };
 
     let bootstrapFinished = false;
@@ -80,6 +106,7 @@ export function useAppBootstrap() {
 
           if (data?.session) {
             syncReminderScheduleSafely(data.session.user?.id);
+            syncPushTokenSafely(data.session.user?.id);
             setClarityUser(data.session.user.id);
             setSentryUser({
               id: data.session.user.id,
@@ -111,7 +138,7 @@ export function useAppBootstrap() {
           return;
         }
 
-        const { data } = await withTimeout(
+        let { data } = await withTimeout(
           supabase.auth.getSession(),
           BOOTSTRAP_TIMEOUT_MS,
           { data: { session: null }, error: null },
@@ -122,7 +149,10 @@ export function useAppBootstrap() {
         if (data?.session && data.session.expires_at) {
           const expiresAt = data.session.expires_at * 1000;
           if (Date.now() > expiresAt - 60000) { // 1 minute buffer
-            await supabase.auth.refreshSession();
+            const refreshed = await supabase.auth.refreshSession();
+            if (refreshed.data?.session) {
+              data = refreshed.data;
+            }
           }
         }
 
@@ -130,6 +160,7 @@ export function useAppBootstrap() {
 
         if (data?.session) {
           syncReminderScheduleSafely(data.session.user?.id);
+          syncPushTokenSafely(data.session.user?.id);
           setClarityUser(data.session.user.id);
           setSentryUser({
             id: data.session.user.id,
@@ -162,6 +193,7 @@ export function useAppBootstrap() {
 
       applySessionState(session);
       syncReminderScheduleSafely(session?.user?.id);
+      syncPushTokenSafely(session?.user?.id);
       if (session?.user?.id) {
         setClarityUser(session.user.id);
         setSentryUser({
@@ -200,6 +232,7 @@ export function useAppBootstrap() {
       }
       sub.remove();
       authSubscription.unsubscribe();
+      unsubscribePushTokenRefresh?.();
     };
   }, []);
 
@@ -209,5 +242,6 @@ export function useAppBootstrap() {
     isRecoveryMode,
     recoveryLinkValid,
     needsOnboarding,
+    needsProfileCompletion,
   };
 }

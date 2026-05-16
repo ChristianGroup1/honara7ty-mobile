@@ -1,6 +1,7 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
- import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState } from 'react-native';
 
 
 // EXPO_PUBLIC_SUPABASE_URL=https://pphbwecwwotrfqjyrsai.supabase.co
@@ -12,9 +13,18 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
-    persistSession: true,    // ← ده ا��لي بيحفظ السيشن
+    persistSession: true,
     detectSessionInUrl: false,
     flowType: 'pkce',
   },
-}); 
+});
+
+AppState.addEventListener('change', state => {
+  if (state === 'active') {
+    supabase.auth.startAutoRefresh();
+  } else {
+    supabase.auth.stopAutoRefresh();
+  }
+});
+
 export default supabase;
