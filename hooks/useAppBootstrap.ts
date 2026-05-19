@@ -10,6 +10,9 @@ import { clearSentryUser, setSentryUser } from '../lib/sentry';
 import { clearFirebaseUser, setFirebaseUser } from '../lib/firebase';
 import { registerPushToken, subscribePushTokenRefresh } from '../lib/pushTokens';
 
+const SESSION_FETCH_TIMEOUT_MS = BOOTSTRAP_TIMEOUT_MS * 3;
+const SESSION_FETCH_RETRY_TIMEOUT_MS = BOOTSTRAP_TIMEOUT_MS * 5;
+
 export function useAppBootstrap() {
   const [showSplash, setShowSplash] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -78,6 +81,36 @@ export function useAppBootstrap() {
       unsubscribePushTokenRefresh = subscribePushTokenRefresh(userId);
     };
 
+    const getSessionSafely = async () => {
+      const sessionResult = await withTimeout<
+        Awaited<ReturnType<typeof supabase.auth.getSession>> | null
+      >(
+        supabase.auth.getSession(),
+        SESSION_FETCH_TIMEOUT_MS,
+        null,
+        'supabase.auth.getSession',
+      );
+
+      if (sessionResult) {
+        return sessionResult;
+      }
+
+      console.warn(
+        `supabase.auth.getSession timed out after ${SESSION_FETCH_TIMEOUT_MS}ms; retrying with extended timeout`,
+      );
+
+      const retryResult = await withTimeout<
+        Awaited<ReturnType<typeof supabase.auth.getSession>> | null
+      >(
+        supabase.auth.getSession(),
+        SESSION_FETCH_RETRY_TIMEOUT_MS,
+        null,
+        'supabase.auth.getSession retry',
+      );
+
+      return retryResult ?? { data: { session: null }, error: null };
+    };
+
     let bootstrapFinished = false;
 
     const checkSession = async () => {
@@ -95,12 +128,7 @@ export function useAppBootstrap() {
           'handleOAuthCallbackUrl',
         );
         if (didHandleOAuthCallback) {
-          const { data } = await withTimeout(
-            supabase.auth.getSession(),
-            BOOTSTRAP_TIMEOUT_MS,
-            { data: { session: null }, error: null },
-            'supabase.auth.getSession',
-          );
+          const { data } = await getSessionSafely();
 
           applySessionState(data?.session ?? null);
 
@@ -138,12 +166,7 @@ export function useAppBootstrap() {
           return;
         }
 
-        let { data } = await withTimeout(
-          supabase.auth.getSession(),
-          BOOTSTRAP_TIMEOUT_MS,
-          { data: { session: null }, error: null },
-          'supabase.auth.getSession',
-        );
+        let { data } = await getSessionSafely();
 
         // If we have a session but it might be expired, try to refresh it
         if (data?.session && data.session.expires_at) {
