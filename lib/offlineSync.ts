@@ -91,6 +91,18 @@ type OfflineMutation =
       kind: 'auth-metadata-update';
       userId: string;
       metadata: Record<string, any>;
+    }
+  | {
+      id: string;
+      kind: 'memorization-log-upsert';
+      userId: string;
+      payload: any;
+    }
+  | {
+      id: string;
+      kind: 'memorization-goal-upsert';
+      userId: string;
+      target: number;
     };
 
 type SyncResult = {
@@ -290,6 +302,19 @@ async function enqueueMutation(nextMutation: OfflineMutation) {
       mutation =>
         !(
           mutation.kind === 'auth-metadata-update' &&
+          mutation.userId === nextMutation.userId
+        ),
+    );
+    filtered.push(nextMutation);
+    await setQueue(filtered);
+    return;
+  }
+
+  if (nextMutation.kind === 'memorization-goal-upsert') {
+    const filtered = queue.filter(
+      mutation =>
+        !(
+          mutation.kind === 'memorization-goal-upsert' &&
           mutation.userId === nextMutation.userId
         ),
     );
@@ -795,6 +820,25 @@ export async function flushOfflineQueue(): Promise<SyncResult> {
         } else if (mutation.kind === 'auth-metadata-update') {
           const { error } = await supabase.auth.updateUser({
             data: mutation.metadata,
+          });
+          if (!error) success = true;
+        } else if (mutation.kind === 'memorization-log-upsert') {
+          const { error } = await supabase.from('memorization_log').insert({
+            user_id: mutation.userId,
+            book_id: mutation.payload.selectedBook.bookID.toString(),
+            chapter: mutation.payload.selectedChapter,
+            verses: mutation.payload.selectedVerses,
+            score: mutation.payload.score,
+            total: mutation.payload.total,
+            time_seconds: mutation.payload.timeSeconds || 0,
+            difficulty: mutation.payload.difficulty,
+          });
+          if (!error) success = true;
+        } else if (mutation.kind === 'memorization-goal-upsert') {
+          const { error } = await supabase.from('memorization_goals').upsert({
+            user_id: mutation.userId,
+            target_per_week: mutation.target,
+            updated_at: new Date().toISOString(),
           });
           if (!error) success = true;
         }

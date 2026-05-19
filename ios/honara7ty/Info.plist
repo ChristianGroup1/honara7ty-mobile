@@ -98,6 +98,18 @@
 				<string>honara7ty</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.1027705052109-0bhuc5flfi433qc1k1bttj01ih7bafko</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.496533823141-45ea5o2ud652e9gk3dmbfirtrt3t7f5l</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

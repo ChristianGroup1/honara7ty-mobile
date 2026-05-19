@@ -7,6 +7,8 @@ import { memorizationStyles as styles } from './styles';
 import { MemorizationStackParamList } from './types';
 import { GOLD } from './utils';
 import { getStrings } from '../../localization';
+import { saveMemorizationAttempt } from '../../lib/memorization';
+import { useEffect } from 'react';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Result'>;
 
@@ -19,18 +21,22 @@ const ResultScreen = ({ navigation, route }: Props) => {
   const statusIcon = isPerfect
     ? 'medal-outline'
     : isGood
-      ? 'star-outline'
-      : 'refresh';
+    ? 'star-outline'
+    : 'refresh';
   const statusText = isPerfect
     ? strings.perfect
     : isGood
-      ? strings.good
-      : strings.retry;
+    ? strings.good
+    : strings.retry;
   const statusBadge = isPerfect
     ? strings.perfectBadge
     : isGood
-      ? strings.goodBadge
-      : strings.retryBadge;
+    ? strings.goodBadge
+    : strings.retryBadge;
+
+  useEffect(() => {
+    saveMemorizationAttempt(result);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -75,6 +81,14 @@ const ResultScreen = ({ navigation, route }: Props) => {
               <Text style={styles.resultStatNumber}>{result.score}</Text>
               <Text style={styles.resultStatLabel}>
                 {strings.correctWordsLabel}
+              </Text>
+            </View>
+            <View style={styles.resultStatCard}>
+              <Text style={styles.resultStatNumber}>
+                {result.timeSeconds || 0}
+              </Text>
+              <Text style={styles.resultStatLabel}>
+                {strings.timeTaken(result.timeSeconds || 0).split(': ')[1]}
               </Text>
             </View>
           </View>
@@ -123,8 +137,9 @@ const ResultScreen = ({ navigation, route }: Props) => {
                   >
                     {slot.correct
                       ? slot.word
-                      : `${slot.userInput || strings.wrongAnswerFallback} ← ${slot.word
-                      }`}
+                      : `${slot.userInput || strings.wrongAnswerFallback} ← ${
+                          slot.word
+                        }`}
                   </Text>
                 </View>
               ) : isFullTextMode ? null : (
@@ -155,14 +170,34 @@ const ResultScreen = ({ navigation, route }: Props) => {
           <Text style={styles.primaryBtnText}>{strings.retryAction}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.ghostBtn}
-          onPress={() => navigation.navigate('Pick')}
-        >
-          <Text style={styles.ghostBtnText}>
-            {strings.chooseAnotherReference}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.resultActionsRow}>
+          <TouchableOpacity
+            style={styles.resultSecondaryBtn}
+            onPress={() =>
+              navigation.reset({ index: 0, routes: [{ name: 'Pick' }] })
+            }
+          >
+            <MaterialCommunityIcons
+              name="book-search-outline"
+              size={19}
+              color="#0A1124"
+            />
+            <Text style={styles.resultSecondaryBtnText}>
+              {strings.chooseAnotherReference}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.resultHomeBtn}
+            onPress={() => {
+              navigation.reset({ index: 0, routes: [{ name: 'Pick' }] });
+              navigation.getParent()?.navigate('Home');
+            }}
+          >
+            <MaterialCommunityIcons name="home" size={19} color="#FFF" />
+            <Text style={styles.resultHomeBtnText}>{strings.backToHome}</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );

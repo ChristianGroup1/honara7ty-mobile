@@ -6,6 +6,7 @@ import { clearClarityUser } from './clarity';
 import { clearSentryUser } from './sentry';
 import { clearFirebaseUser } from './firebase';
 import { unregisterCurrentPushToken } from './pushTokens';
+import { clearCachedAuthSession } from './authSessionCache';
 
 export async function logoutCurrentUser() {
   configureGoogleSignIn();
@@ -19,6 +20,7 @@ export async function logoutCurrentUser() {
   } catch {
     // Token cleanup is best-effort; sign out must still complete.
   }
+  await clearCachedAuthSession();
   await supabase.auth.signOut();
 
   try {

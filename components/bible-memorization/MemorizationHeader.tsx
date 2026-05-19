@@ -7,9 +7,10 @@ import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 interface MemorizationHeaderProps {
   title: string;
   onBack: () => void;
+  trailing?: React.ReactNode;
 }
 
-const MemorizationHeader = ({ title, onBack }: MemorizationHeaderProps) => {
+const MemorizationHeader = ({ title, onBack, trailing }: MemorizationHeaderProps) => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -19,6 +20,7 @@ const MemorizationHeader = ({ title, onBack }: MemorizationHeaderProps) => {
         topInsetHeight={insets.top}
         title={title}
         leading={<AppHeaderAction icon="arrow-right" onPress={onBack} size={24} />}
+        trailing={trailing}
       />
     </>
   );

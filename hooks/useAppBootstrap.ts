@@ -9,6 +9,12 @@ import { clearClarityUser, setClarityUser } from '../lib/clarity';
 import { clearSentryUser, setSentryUser } from '../lib/sentry';
 import { clearFirebaseUser, setFirebaseUser } from '../lib/firebase';
 import { registerPushToken, subscribePushTokenRefresh } from '../lib/pushTokens';
+import { restoreSupabaseSessionFromGoogle } from '../lib/restoreGoogleSession';
+import {
+  cacheAuthSession,
+  clearCachedAuthSession,
+  restoreCachedAuthSession,
+} from '../lib/authSessionCache';
 
 export function useAppBootstrap() {
   const [showSplash, setShowSplash] = useState(true);
@@ -156,19 +162,38 @@ export function useAppBootstrap() {
           }
         }
 
-        applySessionState(data?.session ?? null);
+        let session = data?.session ?? null;
+        if (!session) {
+          session = await withTimeout(
+            restoreCachedAuthSession(),
+            BOOTSTRAP_TIMEOUT_MS,
+            null,
+            'restoreCachedAuthSession',
+          );
+        }
+        if (!session) {
+          session = await withTimeout(
+            restoreSupabaseSessionFromGoogle(),
+            BOOTSTRAP_TIMEOUT_MS,
+            null,
+            'restoreSupabaseSessionFromGoogle',
+          );
+        }
 
-        if (data?.session) {
-          syncReminderScheduleSafely(data.session.user?.id);
-          syncPushTokenSafely(data.session.user?.id);
-          setClarityUser(data.session.user.id);
+        applySessionState(session);
+
+        if (session) {
+          cacheAuthSession(session).catch(() => {});
+          syncReminderScheduleSafely(session.user?.id);
+          syncPushTokenSafely(session.user?.id);
+          setClarityUser(session.user.id);
           setSentryUser({
-            id: data.session.user.id,
-            email: data.session.user.email ?? null,
+            id: session.user.id,
+            email: session.user.email ?? null,
           });
           setFirebaseUser({
-            id: data.session.user.id,
-            email: data.session.user.email ?? null,
+            id: session.user.id,
+            email: session.user.email ?? null,
           });
         }
       } catch (error) {
@@ -186,8 +211,19 @@ export function useAppBootstrap() {
     const {
       data: { subscription: authSubscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Bootstrap does the initial session resolution, including fallback
+      // storage. A late INITIAL_SESSION(null) can otherwise reset navigation
+      // back to Welcome after a valid cached session was restored.
+      if (event === 'INITIAL_SESSION') {
+        return;
+      }
+
       // Ignore SIGNED_OUT events during initial bootstrap to prevent race conditions
       if (event === 'SIGNED_OUT' && !bootstrapFinished) {
+        return;
+      }
+
+      if (!session && event !== 'SIGNED_OUT') {
         return;
       }
 
@@ -195,6 +231,7 @@ export function useAppBootstrap() {
       syncReminderScheduleSafely(session?.user?.id);
       syncPushTokenSafely(session?.user?.id);
       if (session?.user?.id) {
+        cacheAuthSession(session).catch(() => {});
         setClarityUser(session.user.id);
         setSentryUser({
           id: session.user.id,
@@ -205,6 +242,7 @@ export function useAppBootstrap() {
           email: session.user.email ?? null,
         });
       } else if (bootstrapFinished) {
+        clearCachedAuthSession().catch(() => {});
         clearClarityUser();
         clearSentryUser();
         clearFirebaseUser();

@@ -19,6 +19,7 @@ export interface MemorizationSelection {
   verseOriginal: string;
   bookLabel: string;
   chapterLabel: string;
+  timeSeconds?: number;
 }
 
 export interface MemorizationResult extends MemorizationSelection {
@@ -31,4 +32,5 @@ export type MemorizationStackParamList = {
   Pick: undefined;
   Recite: MemorizationSelection;
   Result: MemorizationResult;
+  Stats: undefined;
 };

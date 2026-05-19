@@ -13,6 +13,8 @@ import {
 import supabase from '../../lib/supbase';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
 import { configureGoogleSignIn } from '../../lib/googleSignInConfig';
+import { createGoogleNonce } from '../../lib/googleNonce';
+import { cacheAuthSession } from '../../lib/authSessionCache';
 import {
   localizeAuthError,
   MIN_PASSWORD_LENGTH,
@@ -143,6 +145,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           localizeAuthError(error.message),
         );
       } else {
+        await cacheAuthSession(data.session);
         const signedInUserId = data.session?.user?.id ?? data.user?.id;
         navigation.navigate('ProfileCompletion', {
           userId: signedInUserId,
@@ -163,14 +166,20 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
   const handleGoogleSignUp = async () => {
     try {
       configureGoogleSignIn();
-      await GoogleSignin.hasPlayServices();
-      const userInfo: any = await GoogleSignin.signIn();
+      if (Platform.OS === 'android') {
+        await GoogleSignin.hasPlayServices();
+      }
+      const { rawNonce, nonceDigest } = createGoogleNonce();
+      const userInfo: any = await GoogleSignin.signIn({
+        nonce: nonceDigest,
+      } as any);
       const idToken = userInfo?.data?.idToken ?? userInfo?.idToken;
 
       if (idToken) {
         const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
           token: idToken,
+          nonce: rawNonce,
         });
 
         if (error) {
@@ -179,6 +188,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
             localizeAuthError(error.message),
           );
         } else {
+          await cacheAuthSession(data.session);
           await ensureDefaultDevotionTime(data?.user?.id);
           navigation.replace('Onboarding');
         }

@@ -1,12 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import BiblePassagePicker from '../shared/BiblePassagePicker';
-import { useWindowDimensions } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import CustomAlert, { AlertButton, AlertConfig } from '../shared/CustomAlert';
@@ -19,13 +13,10 @@ import {
 } from '../data/bibleMetadata';
 import MemorizationHeader from './MemorizationHeader';
 import { memorizationStyles as styles } from './styles';
-import {
-  Difficulty,
-  MemorizationStackParamList,
-  VerseSelectionMode,
-} from './types';
+import { Difficulty, MemorizationStackParamList } from './types';
 import { DIFFICULTY_LEVELS } from './utils';
 import { getStrings } from '../../localization';
+import MemorizationStatsPanel from './MemorizationStatsPanel';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Pick'>;
 
@@ -34,10 +25,9 @@ interface VerseOption {
 }
 
 const PickScreen = ({ navigation }: Props) => {
-  const strings = getStrings().bibleMemorization.pick;
-  const { width } = useWindowDimensions();
-  const isCompactWidth = width < 360;
-  const bookCardWidth = isCompactWidth ? width * 0.42 : width * 0.36;
+  const memorizationStrings = getStrings().bibleMemorization;
+  const strings = memorizationStrings.pick;
+  const [activeTab, setActiveTab] = useState<'pick' | 'stats'>('pick');
   const [selectedBook, setSelectedBook] = useState<BibleBook | null>(
     BIBLE_BOOKS[0] ?? null,
   );
@@ -71,8 +61,8 @@ const PickScreen = ({ navigation }: Props) => {
     () =>
       selectedBook
         ? Array.from({ length: selectedBook.chapters }, (_, index) => ({
-          value: index + 1,
-        }))
+            value: index + 1,
+          }))
         : [],
     [selectedBook],
   );
@@ -81,13 +71,11 @@ const PickScreen = ({ navigation }: Props) => {
     () =>
       selectedChapterData
         ? selectedChapterData.verses.map(verse => ({
-          value: verse.verse,
-        }))
+            value: verse.verse,
+          }))
         : [],
     [selectedChapterData],
   );
-
-
 
   const visibleBooks = useMemo(
     () =>
@@ -95,8 +83,10 @@ const PickScreen = ({ navigation }: Props) => {
     [activeTestament],
   );
 
-
-  const verseValues = useMemo(() => verseOptions.map(o => o.value), [verseOptions]);
+  const verseValues = useMemo(
+    () => verseOptions.map(o => o.value),
+    [verseOptions],
+  );
 
   const handleTestamentChange = useCallback((testament: Testament) => {
     setActiveTestament(testament);
@@ -113,15 +103,15 @@ const PickScreen = ({ navigation }: Props) => {
     setSelectedVerses([firstVerse]);
   }, []);
 
-  const handleBookSelectByName = useCallback((bookName: string) => {
-    const book = BIBLE_BOOKS.find(b => b.bookName === bookName);
-    if (book) {
-      handleBookSelect(book);
-    }
-  }, [handleBookSelect]);
-
-
-
+  const handleBookSelectByName = useCallback(
+    (bookName: string) => {
+      const book = BIBLE_BOOKS.find(b => b.bookName === bookName);
+      if (book) {
+        handleBookSelect(book);
+      }
+    },
+    [handleBookSelect],
+  );
 
   const startMemorization = () => {
     if (!selectedBook || !selectedChapterData) {
@@ -164,12 +154,13 @@ const PickScreen = ({ navigation }: Props) => {
       chapterLabel:
         sortedVerses.length === 1
           ? strings.chapterLabelSingle(selectedChapter, start)
-          : sortedVerses.length === (end - start + 1)
-            ? strings.chapterLabelRange(selectedChapter, start, end)
-            : `${selectedBook.bookName} ${selectedChapter}:${sortedVerses.join(',')}`,
+          : sortedVerses.length === end - start + 1
+          ? strings.chapterLabelRange(selectedChapter, start, end)
+          : `${selectedBook.bookName} ${selectedChapter}:${sortedVerses.join(
+              ',',
+            )}`,
     });
   };
-
 
   return (
     <View style={styles.container}>
@@ -178,115 +169,169 @@ const PickScreen = ({ navigation }: Props) => {
         onBack={() => navigation.getParent()?.goBack()}
       />
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.heroCard}>
-          <View style={styles.heroGlow} />
-          <View style={styles.heroTopRow}>
-            <View style={styles.heroIconWrap}>
-              <MaterialCommunityIcons
-                name="book-open-page-variant"
-                size={24}
-                color="#FFF"
-              />
+      <View style={styles.segmentedWrap}>
+        <TouchableOpacity
+          style={[
+            styles.segmentedOption,
+            activeTab === 'pick' && styles.segmentedOptionActive,
+          ]}
+          onPress={() => setActiveTab('pick')}
+        >
+          <Text
+            style={[
+              styles.segmentedOptionText,
+              activeTab === 'pick' && styles.segmentedOptionTextActive,
+            ]}
+          >
+            {memorizationStrings.tabs.pick}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.segmentedOption,
+            activeTab === 'stats' && styles.segmentedOptionActive,
+          ]}
+          onPress={() => setActiveTab('stats')}
+        >
+          <Text
+            style={[
+              styles.segmentedOptionText,
+              activeTab === 'stats' && styles.segmentedOptionTextActive,
+            ]}
+          >
+            {memorizationStrings.tabs.stats}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {activeTab === 'stats' ? (
+        <MemorizationStatsPanel
+          contentContainerStyle={styles.tabPanelContent}
+        />
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.heroCard}>
+            <View style={styles.heroGlow} />
+            <View style={styles.heroTopRow}>
+              <View style={styles.heroIconWrap}>
+                <MaterialCommunityIcons
+                  name="book-open-page-variant"
+                  size={24}
+                  color="#FFF"
+                />
+              </View>
+              <View style={styles.heroBadge}>
+                <Text style={styles.heroBadgeText}>{strings.heroBadge}</Text>
+              </View>
             </View>
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>{strings.heroBadge}</Text>
-            </View>
+            <Text style={styles.heroEyebrow}>{strings.heroEyebrow}</Text>
+            <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
+            <Text style={styles.heroText}>{strings.heroText}</Text>
           </View>
-          <Text style={styles.heroEyebrow}>{strings.heroEyebrow}</Text>
-          <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
-          <Text style={styles.heroText}>{strings.heroText}</Text>
-        </View>
 
-        <View style={styles.sectionCard}>
-          <BiblePassagePicker
-            labels={{
-              bookTitle: strings.chooseBook,
-              chapterTitle: strings.chapter,
-              chapterHint: strings.choosePlaceCaption,
-              selectBookFirst: strings.chooseBookCaption,
-              oldTestament: strings.oldTestament,
-              newTestament: strings.newTestament,
-              verseTitle: strings.verse,
-              fromVerseTitle: strings.fromVerse,
-              toVerseTitle: strings.toVerse,
-            }}
-            selectedTestament={activeTestament}
-            books={visibleBooks}
-            selectedBook={selectedBook?.bookName || ''}
-            chapterOptions={chapterOptions.map(o => o.value)}
-            selectedChapters={[selectedChapter]}
-            selectedVerses={selectedVerses}
-            multiSelectChapters={false}
-            verseMode="multi"
-            verseOptions={verseValues}
-            onSetTestament={handleTestamentChange}
-            onSetBook={handleBookSelectByName}
-            onToggleChapter={chapter => {
-              const chapterData = selectedBook?.chaptersData[chapter - 1];
-              const firstVerse = chapterData?.verses[0]?.verse ?? 1;
-              setSelectedChapter(chapter);
-              setSelectedVerses([firstVerse]);
-            }}
-            onToggleVerse={verse => {
-              setSelectedVerses(current =>
-                current.includes(verse)
-                  ? current.length > 1 ? current.filter(v => v !== verse) : current
-                  : [...current, verse],
-              );
-            }}
-          />
-
-        </View>
-
-        <View style={styles.sectionCard}>
-          <View >
-            <View >
-              <MaterialCommunityIcons name="brain" size={18} color="#0A1124" />
-            </View>
-            <View style={styles.sectionHeadingText}>
-              <Text style={styles.sectionLabel}>{strings.levelTitle}</Text>
-              <Text style={styles.sectionCaption}>{strings.levelCaption}</Text>
-            </View>
+          <View style={styles.sectionCard}>
+            <BiblePassagePicker
+              labels={{
+                bookTitle: strings.chooseBook,
+                chapterTitle: strings.chapter,
+                chapterHint: strings.choosePlaceCaption,
+                selectBookFirst: strings.chooseBookCaption,
+                oldTestament: strings.oldTestament,
+                newTestament: strings.newTestament,
+                verseTitle: strings.verse,
+                fromVerseTitle: strings.fromVerse,
+                toVerseTitle: strings.toVerse,
+              }}
+              selectedTestament={activeTestament}
+              books={visibleBooks}
+              selectedBook={selectedBook?.bookName || ''}
+              chapterOptions={chapterOptions.map(o => o.value)}
+              selectedChapters={[selectedChapter]}
+              selectedVerses={selectedVerses}
+              multiSelectChapters={false}
+              verseMode="multi"
+              verseOptions={verseValues}
+              onSetTestament={handleTestamentChange}
+              onSetBook={handleBookSelectByName}
+              onToggleChapter={chapter => {
+                const chapterData = selectedBook?.chaptersData[chapter - 1];
+                const firstVerse = chapterData?.verses[0]?.verse ?? 1;
+                setSelectedChapter(chapter);
+                setSelectedVerses([firstVerse]);
+              }}
+              onToggleVerse={verse => {
+                setSelectedVerses(current =>
+                  current.includes(verse)
+                    ? current.length > 1
+                      ? current.filter(v => v !== verse)
+                      : current
+                    : [...current, verse],
+                );
+              }}
+            />
           </View>
-          <View style={styles.levelRow}>
-            {(Object.keys(DIFFICULTY_LEVELS) as Difficulty[]).map(level => (
-              <TouchableOpacity
-                key={level}
-                style={[
-                  styles.levelChip,
-                  difficulty === level && styles.levelChipActive,
-                ]}
-                onPress={() => setDifficulty(level)}
-              >
-                <Text
-                  style={[
-                    styles.levelChipText,
-                    difficulty === level && styles.levelChipTextActive,
-                  ]}
-                >
-                  {DIFFICULTY_LEVELS[level].label}
+
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeading}>
+              <View style={styles.sectionIconWrap}>
+                <MaterialCommunityIcons
+                  name="brain"
+                  size={18}
+                  color="#0A1124"
+                />
+              </View>
+              <View style={styles.sectionHeadingText}>
+                <Text style={styles.sectionLabel}>{strings.levelTitle}</Text>
+                <Text style={styles.sectionCaption}>
+                  {strings.levelCaption}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+              </View>
+            </View>
+            <View style={styles.levelRow}>
+              {(Object.keys(DIFFICULTY_LEVELS) as Difficulty[]).map(level => (
+                <TouchableOpacity
+                  key={level}
+                  style={[
+                    styles.levelChip,
+                    difficulty === level && styles.levelChipActive,
+                  ]}
+                  onPress={() => setDifficulty(level)}
+                >
+                  <Text
+                    style={[
+                      styles.levelChipText,
+                      difficulty === level && styles.levelChipTextActive,
+                    ]}
+                  >
+                    {DIFFICULTY_LEVELS[level].label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-          <Text style={styles.helperText}>
-            {difficulty === 'easy'
-              ? strings.easyHint
-              : difficulty === 'medium'
+            <Text style={styles.helperText}>
+              {difficulty === 'easy'
+                ? strings.easyHint
+                : difficulty === 'medium'
                 ? strings.mediumHint
                 : difficulty === 'hard'
-                  ? strings.hardHint
-                  : strings.fullTextHint}
-          </Text>
-        </View>
+                ? strings.hardHint
+                : strings.fullTextHint}
+            </Text>
+          </View>
 
-        <TouchableOpacity style={styles.primaryBtn} onPress={startMemorization}>
-          <MaterialCommunityIcons name="brain" size={20} color="#FFF" />
-          <Text style={styles.primaryBtnText}>{strings.start}</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity
+            style={styles.primaryBtn}
+            onPress={startMemorization}
+          >
+            <MaterialCommunityIcons name="brain" size={20} color="#FFF" />
+            <Text style={styles.primaryBtnText}>{strings.start}</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      )}
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </View>

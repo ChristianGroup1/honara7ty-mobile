@@ -3,6 +3,7 @@ import {
   StyleSheet,
   View,
   Text,
+  Platform,
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
@@ -16,6 +17,8 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import supabase from '../../lib/supbase';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
 import { configureGoogleSignIn } from '../../lib/googleSignInConfig';
+import { createGoogleNonce } from '../../lib/googleNonce';
+import { cacheAuthSession } from '../../lib/authSessionCache';
 import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermissionFlow';
 import { localizeAuthError, EMAIL_REGEX } from '../../lib/authErrors';
 import {
@@ -137,6 +140,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           localizeAuthError(error.message),
         );
       } else {
+        await cacheAuthSession(data.session);
         await navigateAfterLogin(data.user);
       }
     } catch (err: any) {
@@ -151,8 +155,13 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
 
   const handleGoogleSignIn = async () => {
     try {
-      await GoogleSignin.hasPlayServices();
-      const userInfo: any = await GoogleSignin.signIn();
+      if (Platform.OS === 'android') {
+        await GoogleSignin.hasPlayServices();
+      }
+      const { rawNonce, nonceDigest } = createGoogleNonce();
+      const userInfo: any = await GoogleSignin.signIn({
+        nonce: nonceDigest,
+      } as any);
       const idToken = userInfo?.data?.idToken ?? userInfo?.idToken;
       const googleUser = userInfo?.data?.user ?? userInfo?.user;
 
@@ -160,6 +169,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
         const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
           token: idToken,
+          nonce: rawNonce,
         });
 
         if (error) {
@@ -168,6 +178,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
             localizeAuthError(error.message),
           );
         } else {
+          await cacheAuthSession(data.session);
           const loggedInUser = data?.user ?? googleUser;
           if (loggedInUser?.id) {
           }

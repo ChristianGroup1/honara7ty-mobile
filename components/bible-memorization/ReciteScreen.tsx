@@ -64,6 +64,7 @@ const ReciteScreen = ({ navigation, route }: Props) => {
   const scrollRef = useRef<ScrollView | null>(null);
   const inputRefs = useRef<Array<TextInput | null>>([]);
   const [fullVerseAnswer, setFullVerseAnswer] = useState('');
+  const [startTime] = useState(Date.now());
   const [slots, setSlots] = useState<WordSlot[]>(
     buildSlots(selection.verseOriginal, selection.difficulty),
   );
@@ -107,11 +108,13 @@ const ReciteScreen = ({ navigation, route }: Props) => {
       );
       const correct = updated.filter(slot => slot.correct).length;
 
+      const duration = Math.floor((Date.now() - startTime) / 1000);
       navigation.navigate('Result', {
         ...selection,
         slots: updated,
         score: correct,
         total: updated.length,
+        timeSeconds: duration,
       });
       return;
     }
@@ -133,11 +136,13 @@ const ReciteScreen = ({ navigation, route }: Props) => {
       return { ...slot, correct: isOk };
     });
 
+    const duration = Math.floor((Date.now() - startTime) / 1000);
     navigation.navigate('Result', {
       ...selection,
       slots: updated,
       score: correct,
       total: updated.filter(slot => slot.hidden).length,
+      timeSeconds: duration,
     });
   };
 
