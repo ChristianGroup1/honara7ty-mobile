@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
@@ -15,20 +15,39 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import supabase from '../../lib/supbase';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import CustomAlert, { AlertConfig } from '../shared/CustomAlert';
 import { getStrings } from '../../localization';
+import HomeAnswerSheet from '../home/HomeAnswerSheet';
 import {
   DevotionGroupMember,
   fetchGroupMemberDevotionHistory,
   GroupMemberDevotionHistoryItem,
 } from '../../lib/devotionGroups';
 import {
+  mergeReadingDraft,
+  ReadingEntry,
+  formatReadingEntries,
+  readingEntriesFromLegacy,
+} from '../../lib/readingEntries';
+import {
+  BIBLE_BOOKS,
+  NEW_TESTAMENT_BOOKS,
+  OLD_TESTAMENT_BOOKS,
+  Testament,
+} from '../data/bibleMetadata';
+import {
   buildMonthCells,
   getMonthLabel,
   startOfMonth,
   toIsoDate,
 } from '../devotion-calendar/utils';
+import {
+  normalizeSelectedChapters,
+  toggleChapterSelection,
+} from '../shared/chapterSelection';
+import { saveDevotionLog } from '../../lib/offlineSync';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -65,6 +84,20 @@ const formatReading = (log: GroupMemberDevotionHistoryItem) => {
     return strings.notCompleted;
   }
 
+  const entriesText = formatReadingEntries(
+    log.reading_entries ??
+      readingEntriesFromLegacy({
+        readingBook: log.reading_book,
+        readingChapter: log.reading_chapter,
+        chaptersRead: log.chapters_read,
+        selectedChapters: log.selected_chapters,
+      }),
+  );
+
+  if (entriesText) {
+    return entriesText;
+  }
+
   if (!log.reading_book) {
     return strings.noReadingDetails;
   }
@@ -91,17 +124,29 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().devotionGroups;
   const insets = useSafeAreaInsets();
   const { groupId, userId, displayName } = route?.params ?? {};
+  const homeStrings = getStrings().home;
   const [member, setMember] = useState<DevotionGroupMember | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [logs, setLogs] = useState<GroupMemberDevotionHistoryItem[]>([]);
   const [visibleMonth, setVisibleMonth] = useState<Date>(
     startOfMonth(new Date()),
   );
   const [selectedDate, setSelectedDate] = useState(toIsoDate(new Date()));
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [answerSheetVisible, setAnswerSheetVisible] = useState(false);
+  const [pendingCompleted, setPendingCompleted] = useState(true);
+  const [answerTestament, setAnswerTestament] = useState<Testament>('old');
+  const [answerBook, setAnswerBook] = useState('');
+  const [answerChapters, setAnswerChapters] = useState<number[]>([]);
+  const [answerReadingEntries, setAnswerReadingEntries] = useState<
+    ReadingEntry[]
+  >([]);
   const [alertConfig, setAlertConfig] = useState<AlertConfig>({
     visible: false,
     title: '',
   });
+  const requestIdRef = useRef(0);
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
@@ -112,11 +157,20 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
         return;
       }
 
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
       if (showLoader) {
         setLoading(true);
+        setMember(null);
+        setLogs([]);
+        setSelectedDate(toIsoDate(new Date()));
+        setVisibleMonth(startOfMonth(new Date()));
       }
 
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        setCurrentUserId(sessionData?.session?.user?.id ?? null);
+
         const { data, error } = await fetchGroupMemberDevotionHistory({
           groupId,
           userId,
@@ -126,13 +180,13 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
           throw error;
         }
 
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
         setMember(data.member);
         setLogs(data.logs);
-        if (data.logs[0]) {
-          const latestDate = data.logs[0].date;
-          setSelectedDate(latestDate);
-          setVisibleMonth(startOfMonth(new Date(`${latestDate}T12:00:00`)));
-        }
+        setSelectedDate(toIsoDate(new Date()));
+        setVisibleMonth(startOfMonth(new Date()));
       } catch (error) {
         if (__DEV__) {
           console.warn('[devotion-groups] failed to load member history', error);
@@ -144,7 +198,9 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
           type: 'error',
         });
       } finally {
-        setLoading(false);
+        if (requestId === requestIdRef.current) {
+          setLoading(false);
+        }
       }
     },
     [
@@ -163,6 +219,8 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
   );
 
   const completedCount = logs.filter(log => log.completed).length;
+  const latestLog = logs[0] ?? null;
+  const latestCompletedLog = logs.find(log => log.completed) ?? null;
   const title = member?.display_name ?? displayName ?? strings.memberDetailsTitle;
   const logsByDate = useMemo(
     () => new Map(logs.map(log => [log.date, log])),
@@ -187,6 +245,30 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
   }, [monthCells]);
   const selectedLog = logsByDate.get(selectedDate);
   const calendarStrings = getStrings().devotionCalendar;
+  const canEditSelectedMember = Boolean(currentUserId && currentUserId === userId);
+  const canEditSelectedDate =
+    canEditSelectedMember && selectedDate <= toIsoDate(new Date());
+  const shouldShowCalendar = logs.length > 0 || canEditSelectedMember;
+  const answerBookMeta = useMemo(
+    () => BIBLE_BOOKS.find(book => book.bookName === answerBook),
+    [answerBook],
+  );
+  const answerBooks = useMemo(
+    () => (answerTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS),
+    [answerTestament],
+  );
+  const answerChapterOptions = useMemo(
+    () =>
+      Array.from(
+        { length: answerBookMeta?.chapters ?? 0 },
+        (_, index) => index + 1,
+      ),
+    [answerBookMeta],
+  );
+  const canSaveAnswer =
+    !pendingCompleted ||
+    answerReadingEntries.length > 0 ||
+    Boolean(answerBook && answerChapters.length > 0);
 
   const goToPrevMonth = () => {
     setVisibleMonth(
@@ -198,6 +280,140 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
     setVisibleMonth(
       current => new Date(current.getFullYear(), current.getMonth() + 1, 1),
     );
+  };
+
+  const openSelectedDayEditor = () => {
+    if (!canEditSelectedMember || selectedDate > toIsoDate(new Date())) {
+      return;
+    }
+
+    const entries = selectedLog
+      ? selectedLog.reading_entries ??
+        readingEntriesFromLegacy({
+          readingBook: selectedLog.reading_book,
+          readingChapter: selectedLog.reading_chapter,
+          chaptersRead: selectedLog.chapters_read,
+          selectedChapters: selectedLog.selected_chapters,
+        })
+      : [];
+    const firstEntry = entries[0];
+    const nextBookMeta = BIBLE_BOOKS.find(
+      book => book.bookName === firstEntry?.reading_book,
+    );
+
+    setPendingCompleted(selectedLog ? Boolean(selectedLog.completed) : true);
+    setAnswerReadingEntries(entries);
+    setAnswerBook(firstEntry?.reading_book ?? '');
+    setAnswerChapters(firstEntry?.selected_chapters ?? []);
+    setAnswerTestament(nextBookMeta?.testament ?? 'old');
+    setAnswerSheetVisible(true);
+  };
+
+  const handleSetAnswerTestament = (value: Testament) => {
+    const normalizedChapters = normalizeSelectedChapters(
+      answerChapters,
+      answerBookMeta?.chapters ?? 0,
+    );
+    if (answerBook && normalizedChapters.length > 0) {
+      setAnswerReadingEntries(current =>
+        mergeReadingDraft(current, answerBook, normalizedChapters),
+      );
+    }
+    setAnswerTestament(value);
+    setAnswerBook('');
+    setAnswerChapters([]);
+  };
+
+  const handleSetAnswerBook = (nextBook: string) => {
+    const normalizedChapters = normalizeSelectedChapters(
+      answerChapters,
+      answerBookMeta?.chapters ?? 0,
+    );
+    if (answerBook && normalizedChapters.length > 0) {
+      setAnswerReadingEntries(current =>
+        mergeReadingDraft(current, answerBook, normalizedChapters),
+      );
+    }
+    const existingEntry = answerReadingEntries.find(
+      entry => entry.reading_book === nextBook,
+    );
+    setAnswerBook(nextBook);
+    setAnswerChapters(existingEntry?.selected_chapters ?? []);
+  };
+
+  const handleAddAnswerReading = () => {
+    const normalizedChapters = normalizeSelectedChapters(
+      answerChapters,
+      answerBookMeta?.chapters ?? 0,
+    );
+    if (!answerBook || normalizedChapters.length === 0) {
+      return;
+    }
+    setAnswerReadingEntries(current =>
+      mergeReadingDraft(current, answerBook, normalizedChapters),
+    );
+    setAnswerBook('');
+    setAnswerChapters([]);
+  };
+
+  const handleRemoveAnswerReading = (index: number) => {
+    setAnswerReadingEntries(current => {
+      const removed = current[index];
+      if (removed?.reading_book === answerBook) {
+        setAnswerBook('');
+        setAnswerChapters([]);
+      }
+      return current.filter((_, itemIndex) => itemIndex !== index);
+    });
+  };
+
+  const handleSaveSelectedDay = async () => {
+    if (!canEditSelectedMember || !currentUserId) {
+      return;
+    }
+
+    const normalizedChapters = normalizeSelectedChapters(
+      answerChapters,
+      answerBookMeta?.chapters ?? 0,
+    );
+    const nextEntries = pendingCompleted
+      ? mergeReadingDraft(answerReadingEntries, answerBook, normalizedChapters)
+      : [];
+    const firstEntry = pendingCompleted ? nextEntries[0] : null;
+
+    setSaving(true);
+    try {
+      const { offline } = await saveDevotionLog({
+        userId: currentUserId,
+        date: selectedDate,
+        payload: {
+          completed: pendingCompleted,
+          reading_book: firstEntry?.reading_book ?? null,
+          reading_chapter: pendingCompleted
+            ? firstEntry?.selected_chapters[0] ?? null
+            : null,
+          chapters_read: pendingCompleted
+            ? firstEntry?.selected_chapters.length || null
+            : null,
+          selected_chapters: pendingCompleted
+            ? firstEntry?.selected_chapters ?? null
+            : null,
+          reading_entries: pendingCompleted ? nextEntries : null,
+        },
+      });
+      setAnswerSheetVisible(false);
+      await loadHistory(false);
+      setAlertConfig({
+        visible: true,
+        title: calendarStrings.saveSuccessTitle,
+        message: offline
+          ? calendarStrings.savedOfflineMessage
+          : calendarStrings.saveSuccessMessage,
+        type: 'success',
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -219,7 +435,7 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
-            refreshing={loading}
+            refreshing={loading && Boolean(member)}
             onRefresh={() => loadHistory(false)}
           />
         }
@@ -250,11 +466,58 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
           </View>
         </View>
 
+        {latestLog ? (
+          <View style={styles.latestCard}>
+            <View style={styles.latestHeader}>
+              <View>
+                <Text style={styles.latestTitle}>{strings.latestDevotionTitle}</Text>
+                <Text style={styles.latestDate}>{formatDate(latestLog.date)}</Text>
+              </View>
+              <View
+                style={[
+                  styles.statusPill,
+                  latestLog.completed
+                    ? styles.statusPillDone
+                    : styles.statusPillPending,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusPillText,
+                    latestLog.completed
+                      ? styles.statusPillTextDone
+                      : styles.statusPillTextPending,
+                  ]}
+                >
+                  {latestLog.completed ? strings.completed : strings.notCompleted}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.latestMeta}>
+              {strings.recordedAt} {formatTime(latestLog.created_at)}
+            </Text>
+            <View style={styles.readingRow}>
+              <MaterialCommunityIcons
+                name="book-open-page-variant-outline"
+                size={18}
+                color={GOLD}
+              />
+              <Text style={styles.readingText}>{formatReading(latestLog)}</Text>
+            </View>
+            {latestCompletedLog && latestCompletedLog.date !== latestLog.date ? (
+              <Text style={styles.latestMeta}>
+                {strings.latestCompletedDevotionPrefix}{' '}
+                {formatDate(latestCompletedLog.date)} - {formatTime(latestCompletedLog.created_at)}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+
         {loading && logs.length === 0 ? (
           <View style={styles.loadingBlock}>
             <ActivityIndicator color={GOLD} />
           </View>
-        ) : logs.length > 0 ? (
+        ) : shouldShowCalendar ? (
           <>
             <View style={styles.calendarCard}>
               <View style={styles.sectionHeader}>
@@ -348,7 +611,11 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
                           key={cell.key}
                           activeOpacity={0.82}
                           disabled={cell.empty || !cell.isoDate}
-                          onPress={() => cell.isoDate && setSelectedDate(cell.isoDate)}
+                          onPress={() => {
+                            if (cell.isoDate) {
+                              setSelectedDate(cell.isoDate);
+                            }
+                          }}
                           style={[
                             styles.dayCell,
                             cellLog?.completed && styles.dayCellCompleted,
@@ -445,8 +712,32 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
                   </View>
                 </>
               ) : (
-                <Text style={styles.emptyText}>{strings.noRecordForDay}</Text>
+                <>
+                  <Text style={styles.emptyText}>{strings.noRecordForDay}</Text>
+                  {canEditSelectedDate ? (
+                    <TouchableOpacity
+                      style={styles.editDayButton}
+                      onPress={openSelectedDayEditor}
+                      disabled={saving}
+                    >
+                      <Text style={styles.editDayButtonText}>
+                        {strings.recordDevotion}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </>
               )}
+              {selectedLog && canEditSelectedDate ? (
+                <TouchableOpacity
+                  style={styles.editDayButton}
+                  onPress={openSelectedDayEditor}
+                  disabled={saving}
+                >
+                  <Text style={styles.editDayButtonText}>
+                    {strings.recordDevotion}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           </>
         ) : (
@@ -462,6 +753,34 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
         buttons={alertConfig.buttons}
         dismissOnBackdrop={alertConfig.dismissOnBackdrop}
         onDismiss={hideAlert}
+      />
+      <HomeAnswerSheet
+        visible={answerSheetVisible}
+        strings={homeStrings}
+        pendingCompleted={pendingCompleted}
+        selectedTestament={answerTestament}
+        books={answerBooks}
+        readingBook={answerBook}
+        chapterOptions={answerChapterOptions}
+        selectedChapters={answerChapters}
+        readingEntries={answerReadingEntries}
+        canSaveReading={canSaveAnswer}
+        onClose={() => setAnswerSheetVisible(false)}
+        onSetPendingCompleted={setPendingCompleted}
+        onSetSelectedTestament={handleSetAnswerTestament}
+        onSetReadingBook={handleSetAnswerBook}
+        onToggleChapter={chapter =>
+          setAnswerChapters(current =>
+            toggleChapterSelection(
+              current,
+              chapter,
+              answerBookMeta?.chapters ?? 0,
+            ),
+          )
+        }
+        onAddReadingEntry={handleAddAnswerReading}
+        onRemoveReadingEntry={handleRemoveAnswerReading}
+        onSave={handleSaveSelectedDay}
       />
     </SafeAreaView>
   );
@@ -505,6 +824,39 @@ const styles = StyleSheet.create({
   },
   statNumber: { color: NAVY, fontSize: 26, fontWeight: '900' },
   statLabel: { color: '#7A818B', fontSize: 12, fontWeight: '700' },
+  latestCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(10,17,36,0.06)',
+  },
+  latestHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  latestTitle: {
+    color: NAVY,
+    fontSize: 15,
+    fontWeight: '900',
+    textAlign: 'left',
+  },
+  latestDate: {
+    color: '#7A818B',
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'left',
+  },
+  latestMeta: {
+    color: '#7A818B',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 8,
+    textAlign: 'left',
+  },
   sectionTitle: {
     color: NAVY,
     fontSize: 18,
@@ -723,6 +1075,21 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: 'center',
     marginVertical: 20,
+  },
+  editDayButton: {
+    minHeight: 42,
+    borderRadius: 12,
+    backgroundColor: GOLD,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingHorizontal: 14,
+  },
+  editDayButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '900',
+    textAlign: 'center',
   },
 });
 

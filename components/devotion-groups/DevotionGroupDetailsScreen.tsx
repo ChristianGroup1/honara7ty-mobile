@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
@@ -18,7 +18,10 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import CustomAlert from '../shared/CustomAlert';
 import { getStrings } from '../../localization';
-import { toggleChapterSelection } from '../shared/chapterSelection';
+import {
+  normalizeSelectedChapters,
+  toggleChapterSelection,
+} from '../shared/chapterSelection';
 import { CUSTOM_TARGET_VALUE, GOLD, NAVY } from './details/constants';
 import {
   InviteCodeCard,
@@ -26,18 +29,62 @@ import {
   PushRegistrationCard,
   SharedReadingCard,
   SummaryCards,
+  TodayDevotionCard,
 } from './details/GroupCards';
 import MembersList from './details/MembersList';
 import SharedReadingEditorModal from './details/SharedReadingEditorModal';
 import { styles } from './details/styles';
 import { useDevotionGroupDetails } from './details/useDevotionGroupDetails';
+import { GroupMemberStatus } from '../../lib/devotionGroups';
+import HomeAnswerSheet from '../home/HomeAnswerSheet';
+import {
+  BIBLE_BOOKS,
+  NEW_TESTAMENT_BOOKS,
+  OLD_TESTAMENT_BOOKS,
+  Testament,
+} from '../data/bibleMetadata';
+import {
+  mergeReadingDraft,
+  ReadingEntry,
+  readingEntriesFromLegacy,
+} from '../../lib/readingEntries';
 
 const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().devotionGroups;
+  const homeStrings = getStrings().home;
   const insets = useSafeAreaInsets();
   const groupId = route?.params?.groupId as string | undefined;
   const { state, actions } = useDevotionGroupDetails(navigation, groupId);
   const { loadDetails } = actions;
+  const [answerSheetVisible, setAnswerSheetVisible] = useState(false);
+  const [pendingCompleted, setPendingCompleted] = useState(true);
+  const [answerTestament, setAnswerTestament] = useState<Testament>('old');
+  const [answerBook, setAnswerBook] = useState('');
+  const [answerChapters, setAnswerChapters] = useState<number[]>([]);
+  const [answerReadingEntries, setAnswerReadingEntries] = useState<
+    ReadingEntry[]
+  >([]);
+
+  const answerBookMeta = useMemo(
+    () => BIBLE_BOOKS.find(book => book.bookName === answerBook),
+    [answerBook],
+  );
+  const answerBooks = useMemo(
+    () => (answerTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS),
+    [answerTestament],
+  );
+  const answerChapterOptions = useMemo(
+    () =>
+      Array.from(
+        { length: answerBookMeta?.chapters ?? 0 },
+        (_, index) => index + 1,
+      ),
+    [answerBookMeta],
+  );
+  const canSaveAnswer =
+    !pendingCompleted ||
+    answerReadingEntries.length > 0 ||
+    Boolean(answerBook && answerChapters.length > 0);
 
   useFocusEffect(
     useCallback(() => {
@@ -52,14 +99,167 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
       message: strings.deleteGroupMessage,
       type: 'warning',
       buttons: [
-        { text: strings.cancel, style: 'cancel' },
         {
           text: strings.deleteGroup,
           style: 'destructive',
           onPress: actions.handleDeleteGroup,
         },
+        { text: strings.cancel, style: 'cancel' },
       ],
     });
+  };
+
+  const confirmRemoveMember = (member: GroupMemberStatus) => {
+    actions.setAlertConfig({
+      visible: true,
+      title: strings.removeMemberTitle,
+      message: strings.removeMemberMessage(member.display_name),
+      type: 'warning',
+      buttons: [
+        {
+          text: strings.removeMember,
+          style: 'destructive',
+          onPress: () => actions.handleRemoveMember(member.user_id),
+        },
+        { text: strings.cancel, style: 'cancel' },
+      ],
+    });
+  };
+
+  const confirmSetMemberAdmin = (member: GroupMemberStatus) => {
+    actions.setAlertConfig({
+      visible: true,
+      title: strings.makeMemberAdminTitle,
+      message: strings.makeMemberAdminMessage(member.display_name),
+      type: 'info',
+      buttons: [
+        {
+          text: strings.makeMemberAdmin,
+          onPress: () => actions.handleSetMemberAdmin(member.user_id),
+        },
+        { text: strings.cancel, style: 'cancel' },
+      ],
+    });
+  };
+
+  const confirmUnsetMemberAdmin = (member: GroupMemberStatus) => {
+    actions.setAlertConfig({
+      visible: true,
+      title: strings.removeMemberAdminTitle,
+      message: strings.removeMemberAdminMessage(member.display_name),
+      type: 'warning',
+      buttons: [
+        {
+          text: strings.removeMemberAdmin,
+          onPress: () => actions.handleUnsetMemberAdmin(member.user_id),
+        },
+        { text: strings.cancel, style: 'cancel' },
+      ],
+    });
+  };
+
+  const openTodayDevotionSheet = () => {
+    const log = state.currentMembership?.devotionLog;
+    const existingEntries = log
+      ? log.reading_entries ??
+        readingEntriesFromLegacy({
+          readingBook: log.reading_book,
+          readingChapter: log.reading_chapter,
+          chaptersRead: log.chapters_read,
+          selectedChapters: log.selected_chapters,
+        })
+      : [];
+    const firstEntry = existingEntries[0];
+    const fallbackBook = state.group?.shared_reading_book ?? '';
+    const fallbackBookMeta = BIBLE_BOOKS.find(
+      book => book.bookName === fallbackBook,
+    );
+    const fallbackChapters =
+      fallbackBookMeta && Array.isArray(state.group?.shared_selected_chapters)
+        ? normalizeSelectedChapters(
+            state.group.shared_selected_chapters.map(Number),
+            fallbackBookMeta.chapters,
+          )
+        : [];
+    const nextBook = firstEntry?.reading_book ?? fallbackBook;
+    const nextBookMeta = BIBLE_BOOKS.find(book => book.bookName === nextBook);
+
+    setPendingCompleted(log ? Boolean(log.completed) : true);
+    setAnswerReadingEntries(existingEntries);
+    setAnswerBook(nextBook);
+    setAnswerChapters(firstEntry?.selected_chapters ?? fallbackChapters);
+    setAnswerTestament(nextBookMeta?.testament ?? 'old');
+    setAnswerSheetVisible(true);
+  };
+
+  const handleSetAnswerTestament = (value: Testament) => {
+    const normalizedChapters = normalizeSelectedChapters(
+      answerChapters,
+      answerBookMeta?.chapters ?? 0,
+    );
+    if (answerBook && normalizedChapters.length > 0) {
+      setAnswerReadingEntries(current =>
+        mergeReadingDraft(current, answerBook, normalizedChapters),
+      );
+    }
+    setAnswerTestament(value);
+    setAnswerBook('');
+    setAnswerChapters([]);
+  };
+
+  const handleSetAnswerBook = (nextBook: string) => {
+    const normalizedChapters = normalizeSelectedChapters(
+      answerChapters,
+      answerBookMeta?.chapters ?? 0,
+    );
+    if (answerBook && normalizedChapters.length > 0) {
+      setAnswerReadingEntries(current =>
+        mergeReadingDraft(current, answerBook, normalizedChapters),
+      );
+    }
+    const existingEntry = answerReadingEntries.find(
+      entry => entry.reading_book === nextBook,
+    );
+    setAnswerBook(nextBook);
+    setAnswerChapters(existingEntry?.selected_chapters ?? []);
+  };
+
+  const handleAddAnswerReading = () => {
+    const normalizedChapters = normalizeSelectedChapters(
+      answerChapters,
+      answerBookMeta?.chapters ?? 0,
+    );
+    if (!answerBook || normalizedChapters.length === 0) {
+      return;
+    }
+    setAnswerReadingEntries(current =>
+      mergeReadingDraft(current, answerBook, normalizedChapters),
+    );
+    setAnswerBook('');
+    setAnswerChapters([]);
+  };
+
+  const handleRemoveAnswerReading = (index: number) => {
+    setAnswerReadingEntries(current => {
+      const removed = current[index];
+      if (removed?.reading_book === answerBook) {
+        setAnswerBook('');
+        setAnswerChapters([]);
+      }
+      return current.filter((_, itemIndex) => itemIndex !== index);
+    });
+  };
+
+  const handleSaveTodayDevotion = async () => {
+    const normalizedChapters = normalizeSelectedChapters(
+      answerChapters,
+      answerBookMeta?.chapters ?? 0,
+    );
+    const nextEntries = pendingCompleted
+      ? mergeReadingDraft(answerReadingEntries, answerBook, normalizedChapters)
+      : [];
+    setAnswerSheetVisible(false);
+    await actions.handleSetTodayDevotion(pendingCompleted, nextEntries);
   };
 
   return (
@@ -68,7 +268,12 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
       <AppHeader
         topInsetHeight={insets.top}
         title={state.group?.name ?? strings.groupDetailsTitle}
-        leading={<AppHeaderAction icon="chevron-right" onPress={() => navigation.goBack()} />}
+        leading={
+          <AppHeaderAction
+            icon="chevron-right"
+            onPress={() => navigation.goBack()}
+          />
+        }
         trailing={
           state.isOwner ? (
             <AppHeaderAction
@@ -85,13 +290,17 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
-            refreshing={state.loading}
+            refreshing={state.loading && Boolean(state.group)}
             onRefresh={() => actions.loadDetails(false, false)}
           />
         }
         showsVerticalScrollIndicator={false}
       >
-        {state.group ? (
+        {state.loading && !state.group ? (
+          <View style={styles.loadingBlock}>
+            <ActivityIndicator color={GOLD} />
+          </View>
+        ) : state.group ? (
           <>
             {(state.notificationPermissionState !== 'allowed' ||
               !state.pushTokenRegistered) && (
@@ -111,6 +320,12 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
               completedCount={state.completedCount}
               strings={strings}
             />
+            <TodayDevotionCard
+              member={state.currentMembership}
+              strings={strings}
+              saving={state.saving}
+              onOpen={openTodayDevotionSheet}
+            />
             <PersonalStatsCard stats={state.personalStats} strings={strings} />
             <SharedReadingCard
               group={state.group}
@@ -125,7 +340,11 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
                 onPress={actions.handleSendPendingReminders}
                 disabled={state.saving}
               >
-                <MaterialCommunityIcons name="bell-ring" size={19} color="#FFF" />
+                <MaterialCommunityIcons
+                  name="bell-ring"
+                  size={19}
+                  color="#FFF"
+                />
                 <Text style={styles.pendingReminderButtonText}>
                   {strings.sendPendingReminders}
                 </Text>
@@ -137,6 +356,11 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
               groupId={groupId}
               strings={strings}
               navigation={navigation}
+              canManageMembers={state.canManageMembers}
+              saving={state.saving}
+              onConfirmRemoveMember={confirmRemoveMember}
+              onConfirmSetMemberAdmin={confirmSetMemberAdmin}
+              onConfirmUnsetMemberAdmin={confirmUnsetMemberAdmin}
             />
           </>
         ) : null}
@@ -148,6 +372,34 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
         </View>
       ) : null}
       <CustomAlert {...state.alertConfig} onDismiss={actions.hideAlert} />
+      <HomeAnswerSheet
+        visible={answerSheetVisible}
+        strings={homeStrings}
+        pendingCompleted={pendingCompleted}
+        selectedTestament={answerTestament}
+        books={answerBooks}
+        readingBook={answerBook}
+        chapterOptions={answerChapterOptions}
+        selectedChapters={answerChapters}
+        readingEntries={answerReadingEntries}
+        canSaveReading={canSaveAnswer}
+        onClose={() => setAnswerSheetVisible(false)}
+        onSetPendingCompleted={setPendingCompleted}
+        onSetSelectedTestament={handleSetAnswerTestament}
+        onSetReadingBook={handleSetAnswerBook}
+        onToggleChapter={chapter =>
+          setAnswerChapters(current =>
+            toggleChapterSelection(
+              current,
+              chapter,
+              answerBookMeta?.chapters ?? 0,
+            ),
+          )
+        }
+        onAddReadingEntry={handleAddAnswerReading}
+        onRemoveReadingEntry={handleRemoveAnswerReading}
+        onSave={handleSaveTodayDevotion}
+      />
       <SharedReadingEditorModal
         visible={state.sharedReadingEditorVisible}
         strings={strings}

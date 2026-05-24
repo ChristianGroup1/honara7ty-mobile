@@ -40,7 +40,7 @@ const DevotionGroupsScreen = ({ navigation }: any) => {
   const [groups, setGroups] = useState<DevotionGroup[]>([]);
   const [groupName, setGroupName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
-  const [actionMode, setActionMode] = useState<ActionMode>('create');
+  const [actionMode, setActionMode] = useState<ActionMode>('join');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [alertConfig, setAlertConfig] = useState<AlertConfig>({
@@ -232,28 +232,6 @@ const DevotionGroupsScreen = ({ navigation }: any) => {
             <TouchableOpacity
               style={[
                 styles.segmentButton,
-                actionMode === 'create' && styles.segmentButtonActive,
-              ]}
-              activeOpacity={0.84}
-              onPress={() => setActionMode('create')}
-            >
-              <MaterialCommunityIcons
-                name="plus-circle-outline"
-                size={18}
-                color={actionMode === 'create' ? '#FFF' : NAVY}
-              />
-              <Text
-                style={[
-                  styles.segmentButtonText,
-                  actionMode === 'create' && styles.segmentButtonTextActive,
-                ]}
-              >
-                {strings.createTitle}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.segmentButton,
                 actionMode === 'join' && styles.segmentButtonActive,
               ]}
               activeOpacity={0.84}
@@ -273,17 +251,40 @@ const DevotionGroupsScreen = ({ navigation }: any) => {
                 {strings.joinTitle}
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.segmentButton,
+                actionMode === 'create' && styles.segmentButtonActive,
+              ]}
+              activeOpacity={0.84}
+              onPress={() => setActionMode('create')}
+            >
+              <MaterialCommunityIcons
+                name="plus-circle-outline"
+                size={18}
+                color={actionMode === 'create' ? '#FFF' : NAVY}
+              />
+              <Text
+                style={[
+                  styles.segmentButtonText,
+                  actionMode === 'create' && styles.segmentButtonTextActive,
+                ]}
+              >
+                {strings.createTitle}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {actionMode === 'create' ? (
             <>
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.inviteInput]}
                 value={groupName}
                 onChangeText={setGroupName}
                 placeholder={strings.groupNamePlaceholder}
                 placeholderTextColor="#98A2B3"
-                textAlign="right"
+                autoCapitalize="characters"
+                textAlign="center"
               />
               <TouchableOpacity
                 style={styles.primaryButton}

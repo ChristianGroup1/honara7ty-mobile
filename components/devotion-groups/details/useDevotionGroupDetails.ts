@@ -7,10 +7,12 @@ import {
   fetchDevotionGroupById,
   fetchGroupMembersWithDevotion,
   GroupMemberStatus,
+  removeDevotionGroupMember,
   sendGroupRemindersToPending,
   updateDevotionGroupSharedReading,
+  updateDevotionGroupMemberRole,
 } from '../../../lib/devotionGroups';
-import { refreshDevotionLogs } from '../../../lib/offlineSync';
+import { refreshDevotionLogs, saveDevotionLog } from '../../../lib/offlineSync';
 import { registerPushToken } from '../../../lib/pushTokens';
 import {
   getNotificationPermissionState,
@@ -28,6 +30,7 @@ import {
   normalizeSelectedChapters,
 } from '../../shared/chapterSelection';
 import { AlertConfig } from '../../shared/CustomAlert';
+import { ReadingEntry } from '../../../lib/readingEntries';
 import { CUSTOM_TARGET_VALUE } from './constants';
 import {
   buildPersonalGroupStats,
@@ -61,6 +64,7 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
     title: '',
   });
   const hasGroupRef = useRef(false);
+  const requestIdRef = useRef(0);
 
   const currentMembership = useMemo(
     () => members.find(member => member.user_id === user?.id) ?? null,
@@ -69,6 +73,7 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
   const isOwner = currentMembership?.role === 'owner';
   const canSendReminders =
     currentMembership?.role === 'owner' || currentMembership?.role === 'leader';
+  const canManageMembers = canSendReminders;
   const completedCount = members.filter(
     member => member.devotionLog?.completed,
   ).length;
@@ -116,15 +121,21 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
     const { data: currentUserLogs } = await refreshDevotionLogs(userId);
     const membership = nextMembers.find(member => member.user_id === userId);
     const todayLog = currentUserLogs[today];
-    setPersonalStats(buildPersonalGroupStats(currentUserLogs, membership?.joined_at));
-    if (!todayLog) {
-      return nextMembers;
-    }
-    return nextMembers.map(member =>
-      member.user_id === userId
-        ? { ...member, devotionLog: { user_id: userId, date: today, ...todayLog } }
-        : member,
+    const nextPersonalStats = buildPersonalGroupStats(
+      currentUserLogs,
+      membership?.joined_at,
     );
+    if (!todayLog) {
+      return { members: nextMembers, personalStats: nextPersonalStats };
+    }
+    return {
+      members: nextMembers.map(member =>
+        member.user_id === userId
+          ? { ...member, devotionLog: { user_id: userId, date: today, ...todayLog } }
+          : member,
+      ),
+      personalStats: nextPersonalStats,
+    };
   };
 
   const loadDetails = useCallback(
@@ -133,12 +144,21 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
         navigation.goBack();
         return;
       }
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
       if (showLoader) {
         setLoading(true);
+        setGroup(null);
+        setMembers([]);
+        setPersonalStats(null);
+        setSharedReadingEditorVisible(false);
       }
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const sessionUser = sessionData?.session?.user;
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
         setUser(sessionUser ?? null);
         refreshPushState(sessionUser?.id);
 
@@ -153,12 +173,20 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
             ? groupResult.reason
             : groupResult.value.error;
         }
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
         if (membersResult.status === 'rejected' || membersResult.value.error) {
           setPersonalStats(null);
         } else {
           let nextMembers = membersResult.value.data ?? [];
           if (sessionUser?.id) {
-            nextMembers = await mergeCurrentUserLog(nextMembers, sessionUser.id, today);
+            const merged = await mergeCurrentUserLog(nextMembers, sessionUser.id, today);
+            if (requestId !== requestIdRef.current) {
+              return;
+            }
+            nextMembers = merged.members;
+            setPersonalStats(merged.personalStats);
           } else {
             setPersonalStats(null);
           }
@@ -174,7 +202,9 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
           showError(strings.genericErrorTitle, strings.genericErrorMessage);
         }
       } finally {
-        setLoading(false);
+        if (requestId === requestIdRef.current) {
+          setLoading(false);
+        }
       }
     },
     [groupId, navigation, showError, strings.genericErrorMessage, strings.genericErrorTitle],
@@ -365,21 +395,123 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
     }
   };
 
+  const handleSetTodayDevotion = async (
+    completed: boolean,
+    readingEntries: ReadingEntry[] = [],
+  ) => {
+    if (!user?.id) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const firstEntry = completed ? readingEntries[0] : null;
+
+      const { offline } = await saveDevotionLog({
+        userId: user.id,
+        date: getTodayDate(),
+        payload: {
+          completed,
+          reading_book: firstEntry?.reading_book ?? null,
+          reading_chapter: completed
+            ? firstEntry?.selected_chapters[0] ?? null
+            : null,
+          chapters_read: completed
+            ? firstEntry?.selected_chapters.length || null
+            : null,
+          selected_chapters: completed
+            ? firstEntry?.selected_chapters ?? null
+            : null,
+          reading_entries: completed ? readingEntries : null,
+        },
+      });
+
+      await loadDetails(false, false);
+      setAlertConfig({
+        visible: true,
+        title: strings.todayDevotionSavedTitle,
+        message: offline
+          ? strings.todayDevotionSavedOffline
+          : strings.todayDevotionSavedMessage,
+        type: 'success',
+      });
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('[devotion-groups] failed to save today devotion', error);
+      }
+      showError(strings.genericErrorTitle, strings.genericErrorMessage);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemoveMember = async (userId: string) => {
+    if (!groupId || !canManageMembers || userId === user?.id) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await removeDevotionGroupMember({ groupId, userId });
+      if (error) {
+        throw error;
+      }
+      await loadDetails(false, false);
+    } catch {
+      showError(strings.genericErrorTitle, strings.genericErrorMessage);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSetMemberRole = async (
+    userId: string,
+    role: 'leader' | 'member',
+  ) => {
+    if (!groupId || !canManageMembers || userId === user?.id) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await updateDevotionGroupMemberRole({
+        groupId,
+        userId,
+        role,
+      });
+      if (error) {
+        throw error;
+      }
+      await loadDetails(false, false);
+    } catch {
+      showError(strings.genericErrorTitle, strings.genericErrorMessage);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSetMemberAdmin = (userId: string) =>
+    handleSetMemberRole(userId, 'leader');
+
+  const handleUnsetMemberAdmin = (userId: string) =>
+    handleSetMemberRole(userId, 'member');
+
   return {
     state: {
       user, group, members, personalStats, loading, saving, alertConfig,
       sharedReadingEditorVisible, selectedTestament, selectedBook,
       selectedChapters, selectedTargetDays, customTargetDays,
       notificationPermissionState, pushTokenRegistered, isOwner,
-      canSendReminders, completedCount, hasSharedReading, booksForTestament,
+      currentMembership, canSendReminders, canManageMembers, completedCount,
+      hasSharedReading, booksForTestament,
       chapterOptions, canSaveSharedReading, selectedBookMeta,
     },
     actions: {
       loadDetails, hideAlert, handleEnableNotifications, handleSendPendingReminders,
-      handleDeleteGroup, setAlertConfig, setSharedReadingEditorVisible,
+      handleDeleteGroup, handleSetTodayDevotion, setAlertConfig,
+      setSharedReadingEditorVisible,
       setSelectedTestament, setSelectedBook, setSelectedChapters,
       setSelectedTargetDays, setCustomTargetDays, handleSaveSharedReading,
-      saveSharedReading,
+      saveSharedReading, handleRemoveMember, handleSetMemberAdmin,
+      handleUnsetMemberAdmin,
     },
   };
 };

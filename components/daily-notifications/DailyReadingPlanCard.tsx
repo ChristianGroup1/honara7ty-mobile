@@ -1,9 +1,10 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Testament } from '../data/bibleMetadata';
-import { dailyNotificationStyles as styles, GOLD, NAVY } from './styles';
+import { dailyNotificationStyles as styles, GOLD } from './styles';
 import BiblePassagePicker from '../shared/BiblePassagePicker';
+import { ReadingEntry, formatReadingEntries } from '../../lib/readingEntries';
 
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
   readingBook: string;
   chapterOptions: number[];
   selectedChapters: number[];
+  readingEntries: ReadingEntry[];
   timeDisplay: string;
   saving: boolean;
   saved: boolean;
@@ -22,6 +24,8 @@ type Props = {
   onToggleChapter: (value: number) => void;
   onSelectAllChapters?: () => void;
   onClearChapters?: () => void;
+  onAddReadingEntry: () => void;
+  onRemoveReadingEntry: (index: number) => void;
   onEditTime: () => void;
   onSave: () => void;
 };
@@ -34,6 +38,7 @@ const DailyReadingPlanCard = ({
   readingBook,
   chapterOptions,
   selectedChapters,
+  readingEntries,
   timeDisplay,
   saving,
   saved,
@@ -43,9 +48,14 @@ const DailyReadingPlanCard = ({
   onToggleChapter,
   onSelectAllChapters,
   onClearChapters,
+  onAddReadingEntry,
+  onRemoveReadingEntry,
   onEditTime,
   onSave,
-}: Props) => (
+}: Props) => {
+  const canAddReading = Boolean(readingBook && selectedChapters.length > 0);
+
+  return (
   <View style={styles.pickerCard}>
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{strings.readingPlanTitle}</Text>
@@ -69,6 +79,9 @@ const DailyReadingPlanCard = ({
 
 
     <View style={cardStyles.pickerContainer}>
+      <Text style={styles.multiReadingHint}>
+        {strings.multipleReadingsHint}
+      </Text>
       <BiblePassagePicker
         labels={{
           bookTitle: strings.selectBook,
@@ -90,6 +103,40 @@ const DailyReadingPlanCard = ({
         onSelectAllChapters={onSelectAllChapters}
         onClearChapters={onClearChapters}
       />
+      <TouchableOpacity
+        style={[
+          styles.addReadingEntryBtn,
+          !canAddReading && styles.addReadingEntryBtnDisabled,
+        ]}
+        disabled={!canAddReading}
+        onPress={onAddReadingEntry}
+      >
+        <Text style={styles.addReadingEntryText}>
+          {strings.addReadingEntry}
+        </Text>
+      </TouchableOpacity>
+      {readingEntries.length > 0 ? (
+        <View style={styles.readingEntriesBox}>
+          {readingEntries.map((entry, index) => (
+            <View
+              key={`${entry.reading_book}-${index}`}
+              style={styles.readingEntryRow}
+            >
+              <Text style={styles.readingEntryText}>
+                {formatReadingEntries([entry])}
+              </Text>
+              <TouchableOpacity
+                style={styles.readingEntryRemove}
+                onPress={() => onRemoveReadingEntry(index)}
+              >
+                <Text style={styles.readingEntryRemoveText}>
+                  {strings.removeReadingEntry}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </View>
 
     <TouchableOpacity
@@ -118,7 +165,8 @@ const DailyReadingPlanCard = ({
       )}
     </TouchableOpacity>
   </View>
-);
+  );
+};
 
 const cardStyles = StyleSheet.create({
   pickerContainer: {

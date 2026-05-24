@@ -40,7 +40,6 @@ import {
   Testament,
 } from '../data/bibleMetadata';
 import {
-  chaptersFromLegacy,
   firstSelectedChapter,
   normalizeSelectedChapters,
   toggleChapterSelection,
@@ -56,6 +55,11 @@ import {
   refreshDevotionLogs,
   saveDevotionLog,
 } from '../../lib/offlineSync';
+import {
+  mergeReadingDraft,
+  ReadingEntry,
+  readingEntriesFromLegacy,
+} from '../../lib/readingEntries';
 
 const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
@@ -71,6 +75,7 @@ const HomeScreen = ({ route, navigation }: any) => {
   const [selectedTestament, setSelectedTestament] = useState<Testament>('old');
   const [readingBook, setReadingBook] = useState('');
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
+  const [readingEntries, setReadingEntries] = useState<ReadingEntry[]>([]);
   const [permissionLoading, setPermissionLoading] = useState(false);
   const [notificationPermissionState, setNotificationPermissionState] =
     useState<'allowed' | 'denied' | 'not_determined'>('not_determined');
@@ -111,6 +116,7 @@ const HomeScreen = ({ route, navigation }: any) => {
     setDevotionAnswer(null);
     setReadingBook('');
     setSelectedChapters([]);
+    setReadingEntries([]);
     setSelectedTestament('old');
   }, []);
 
@@ -166,26 +172,24 @@ const HomeScreen = ({ route, navigation }: any) => {
           const data = devotionLogs[getTodayDate()];
 
           setDevotionAnswer(data ? (data.completed as boolean) : null);
-          if (data?.reading_book) {
-            setReadingBook(data.reading_book);
+          if (data?.reading_book || data?.reading_entries) {
+            const nextEntries = Array.isArray(data.reading_entries)
+              ? data.reading_entries
+              : readingEntriesFromLegacy({
+                  readingBook: data.reading_book,
+                  readingChapter: (data as any).reading_chapter,
+                  chaptersRead: (data as any).chapters_read,
+                  selectedChapters: (data as any).selected_chapters,
+                });
+            setReadingEntries(nextEntries);
+            const firstEntry = nextEntries[0];
+            setReadingBook(firstEntry?.reading_book ?? data.reading_book ?? '');
             const matchedBook = BIBLE_BOOKS.find(
-              book => book.bookName === data.reading_book,
+              book => book.bookName === firstEntry?.reading_book,
             );
             if (matchedBook) {
               setSelectedTestament(matchedBook.testament);
-              const nextSelectedChapters = Array.isArray(
-                (data as any).selected_chapters,
-              )
-                ? normalizeSelectedChapters(
-                  (data as any).selected_chapters.map(Number),
-                  matchedBook.chapters,
-                )
-                : chaptersFromLegacy(
-                  (data as any).reading_chapter,
-                  (data as any).chapters_read,
-                  matchedBook.chapters,
-                );
-              setSelectedChapters(nextSelectedChapters);
+              setSelectedChapters(firstEntry?.selected_chapters ?? []);
             }
           }
 
@@ -277,8 +281,12 @@ const HomeScreen = ({ route, navigation }: any) => {
         selectedChapters,
         selectedBook?.chapters ?? 0,
       );
+      const nextReadingEntries = completed
+        ? mergeReadingDraft(readingEntries, readingBook, normalizedChapters)
+        : [];
+      const firstEntry = nextReadingEntries[0];
 
-      if (completed && (!readingBook || normalizedChapters.length === 0)) {
+      if (completed && nextReadingEntries.length === 0) {
         showAlert(
           strings.readingSelectionRequiredTitle,
           strings.readingSelectionRequiredMessage,
@@ -290,12 +298,15 @@ const HomeScreen = ({ route, navigation }: any) => {
 
       const payload = {
         completed,
-        reading_book: completed ? readingBook : null,
+        reading_book: completed ? firstEntry?.reading_book ?? null : null,
         reading_chapter: completed
-          ? firstSelectedChapter(normalizedChapters)
+          ? firstSelectedChapter(firstEntry?.selected_chapters ?? [])
           : null,
-        chapters_read: completed ? normalizedChapters.length || null : null,
-        selected_chapters: completed ? normalizedChapters : null,
+        chapters_read: completed
+          ? firstEntry?.selected_chapters.length || null
+          : null,
+        selected_chapters: completed ? firstEntry?.selected_chapters ?? null : null,
+        reading_entries: completed ? nextReadingEntries : null,
       };
 
       const { offline } = await saveDevotionLog({
@@ -324,7 +335,7 @@ const HomeScreen = ({ route, navigation }: any) => {
         );
       }
     },
-    [readingBook, selectedBook, selectedChapters, showAlert, strings],
+    [readingBook, readingEntries, selectedBook, selectedChapters, showAlert, strings],
   );
 
   /* ── Logout ── */
@@ -397,7 +408,7 @@ const HomeScreen = ({ route, navigation }: any) => {
   }, [selectedBook, selectedChapters]);
 
   const canSaveReading =
-    !pendingCompleted || (!!readingBook && selectedChapters.length > 0);
+    !pendingCompleted || readingEntries.length > 0 || (!!readingBook && selectedChapters.length > 0);
 
   const saveDevotionSheet = useCallback(async () => {
     setAnswerSheetVisible(false);
@@ -417,6 +428,32 @@ const HomeScreen = ({ route, navigation }: any) => {
       ),
     [selectedBook],
   );
+
+  const handleAddAnswerSheetReading = useCallback(() => {
+    const normalizedChapters = normalizeSelectedChapters(
+      selectedChapters,
+      selectedBook?.chapters ?? 0,
+    );
+    if (!readingBook || normalizedChapters.length === 0) {
+      return;
+    }
+    setReadingEntries(current =>
+      mergeReadingDraft(current, readingBook, normalizedChapters),
+    );
+    setReadingBook('');
+    setSelectedChapters([]);
+  }, [readingBook, selectedBook, selectedChapters]);
+
+  const handleRemoveAnswerSheetReading = useCallback((index: number) => {
+    setReadingEntries(current => {
+      const removed = current[index];
+      if (removed?.reading_book === readingBook) {
+        setReadingBook('');
+        setSelectedChapters([]);
+      }
+      return current.filter((_, itemIndex) => itemIndex !== index);
+    });
+  }, [readingBook]);
 
   if (loading && !user) {
     return (
@@ -491,12 +528,15 @@ const HomeScreen = ({ route, navigation }: any) => {
         readingBook={readingBook}
         chapterOptions={chapterOptions}
         selectedChapters={selectedChapters}
+        readingEntries={readingEntries}
         canSaveReading={canSaveReading}
         onClose={closeAnswerSheet}
         onSetPendingCompleted={setPendingCompleted}
         onSetSelectedTestament={handleSetAnswerSheetTestament}
         onSetReadingBook={setReadingBook}
         onToggleChapter={handleToggleAnswerSheetChapter}
+        onAddReadingEntry={handleAddAnswerSheetReading}
+        onRemoveReadingEntry={handleRemoveAnswerSheetReading}
         onSave={saveDevotionSheet}
       />
     </SafeAreaView>

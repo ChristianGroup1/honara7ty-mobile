@@ -10,6 +10,7 @@ import {
 import { Testament } from '../data/bibleMetadata';
 import { homeStyles as styles } from './styles';
 import BiblePassagePicker from '../shared/BiblePassagePicker';
+import { ReadingEntry, formatReadingEntries } from '../../lib/readingEntries';
 
 type Props = {
   visible: boolean;
@@ -20,12 +21,15 @@ type Props = {
   readingBook: string;
   chapterOptions: number[];
   selectedChapters: number[];
+  readingEntries: ReadingEntry[];
   canSaveReading: boolean;
   onClose: () => void;
   onSetPendingCompleted: (value: boolean) => void;
   onSetSelectedTestament: (value: Testament) => void;
   onSetReadingBook: (value: string) => void;
   onToggleChapter: (value: number) => void;
+  onAddReadingEntry: () => void;
+  onRemoveReadingEntry: (index: number) => void;
   onSave: () => void;
 };
 
@@ -38,14 +42,19 @@ const HomeAnswerSheet = ({
   readingBook,
   chapterOptions,
   selectedChapters,
+  readingEntries,
   canSaveReading,
   onClose,
   onSetPendingCompleted,
   onSetSelectedTestament,
   onSetReadingBook,
   onToggleChapter,
+  onAddReadingEntry,
+  onRemoveReadingEntry,
   onSave,
 }: Props) => {
+  const canAddReading = Boolean(readingBook && selectedChapters.length > 0);
+
   return (
     <Modal
       visible={visible}
@@ -102,38 +111,77 @@ const HomeAnswerSheet = ({
             </View>
 
             {pendingCompleted ? (
-              <BiblePassagePicker
-                labels={{
-                  bookTitle: strings.answerBook,
-                  chapterTitle: strings.answerChapter,
-                  chapterHint: strings.answerRangeHint,
-                  selectBookFirst: strings.selectBookFirst,
-                  oldTestament: strings.oldTestament,
-                  newTestament: strings.newTestament,
-                  selectAllChapters: strings.selectAllChapters,
-                }}
-                selectedTestament={selectedTestament}
-                books={books.map(book => ({
-                  ...book,
-                  bookID: String(book.bookID),
-                }))}
-                selectedBook={readingBook}
-                chapterOptions={chapterOptions}
-                selectedChapters={selectedChapters}
-                onSetTestament={onSetSelectedTestament}
-                onSetBook={onSetReadingBook}
-                onToggleChapter={onToggleChapter}
-                onSelectAllChapters={() =>
-                  chapterOptions.forEach(chapter => {
-                    if (!selectedChapters.includes(chapter)) {
-                      onToggleChapter(chapter);
-                    }
-                  })
-                }
-                onClearChapters={() =>
-                  selectedChapters.forEach(chapter => onToggleChapter(chapter))
-                }
-              />
+              <>
+                <Text style={styles.answerSheetHint}>
+                  {strings.multipleReadingsHint}
+                </Text>
+                <BiblePassagePicker
+                  labels={{
+                    bookTitle: strings.answerBook,
+                    chapterTitle: strings.answerChapter,
+                    chapterHint: strings.answerRangeHint,
+                    selectBookFirst: strings.selectBookFirst,
+                    oldTestament: strings.oldTestament,
+                    newTestament: strings.newTestament,
+                    selectAllChapters: strings.selectAllChapters,
+                  }}
+                  selectedTestament={selectedTestament}
+                  books={books.map(book => ({
+                    ...book,
+                    bookID: String(book.bookID),
+                  }))}
+                  selectedBook={readingBook}
+                  chapterOptions={chapterOptions}
+                  selectedChapters={selectedChapters}
+                  onSetTestament={onSetSelectedTestament}
+                  onSetBook={onSetReadingBook}
+                  onToggleChapter={onToggleChapter}
+                  onSelectAllChapters={() =>
+                    chapterOptions.forEach(chapter => {
+                      if (!selectedChapters.includes(chapter)) {
+                        onToggleChapter(chapter);
+                      }
+                    })
+                  }
+                  onClearChapters={() =>
+                    selectedChapters.forEach(chapter => onToggleChapter(chapter))
+                  }
+                />
+                <TouchableOpacity
+                  style={[
+                    styles.addReadingEntryBtn,
+                    !canAddReading && styles.addReadingEntryBtnDisabled,
+                  ]}
+                  disabled={!canAddReading}
+                  onPress={onAddReadingEntry}
+                >
+                  <Text style={styles.addReadingEntryText}>
+                    {strings.addReadingEntry}
+                  </Text>
+                </TouchableOpacity>
+                {readingEntries.length > 0 ? (
+                  <View style={styles.readingEntriesBox}>
+                    {readingEntries.map((entry, index) => (
+                      <View
+                        key={`${entry.reading_book}-${index}`}
+                        style={styles.readingEntryRow}
+                      >
+                        <Text style={styles.readingEntryText}>
+                          {formatReadingEntries([entry])}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.readingEntryRemove}
+                          onPress={() => onRemoveReadingEntry(index)}
+                        >
+                          <Text style={styles.readingEntryRemoveText}>
+                            {strings.removeReadingEntry}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+              </>
             ) : null}
           </ScrollView>
 

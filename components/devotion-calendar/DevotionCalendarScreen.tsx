@@ -5,7 +5,14 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { ActivityIndicator, ScrollView, StatusBar, View } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -29,13 +36,18 @@ import { DevotionDayLog } from './types';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import { buildMonthCells, getMonthKey, startOfMonth, toIsoDate } from './utils';
 import {
-  chaptersFromLegacy,
   firstSelectedChapter,
   normalizeSelectedChapters,
   toggleChapterSelection,
 } from '../shared/chapterSelection';
 import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
 import { refreshDevotionLogs, saveDevotionLog } from '../../lib/offlineSync';
+import {
+  formatReadingEntries,
+  mergeReadingDraft,
+  ReadingEntry,
+  readingEntriesFromLegacy,
+} from '../../lib/readingEntries';
 
 const DevotionCalendarScreen = ({ navigation }: any) => {
   const strings = getStrings().devotionCalendar;
@@ -54,6 +66,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   const [selectedTestament, setSelectedTestament] = useState<Testament>('old');
   const [selectedBook, setSelectedBook] = useState('');
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
+  const [readingEntries, setReadingEntries] = useState<ReadingEntry[]>([]);
   const [devotionLogsByDate, setDevotionLogsByDate] = useState<
     Record<string, DevotionDayLog>
   >({});
@@ -99,9 +112,17 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
     [devotionLogsByDate],
   );
   const completedSet = useMemo(() => new Set(completedDates), [completedDates]);
+  const missedDates = useMemo(
+    () =>
+      Object.entries(devotionLogsByDate)
+        .filter(([, value]) => !value.completed)
+        .map(([date]) => date),
+    [devotionLogsByDate],
+  );
+  const missedSet = useMemo(() => new Set(missedDates), [missedDates]);
   const monthCells = useMemo(
-    () => buildMonthCells(visibleMonth, completedSet),
-    [completedSet, visibleMonth],
+    () => buildMonthCells(visibleMonth, completedSet, missedSet),
+    [completedSet, missedSet, visibleMonth],
   );
   const currentStreak = useMemo(
     () => computeStreak(completedDates),
@@ -113,6 +134,21 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   }, [completedDates, visibleMonth]);
   const totalCompleted = completedDates.length;
   const todayIso = toIsoDate(new Date());
+  const selectedLog = devotionLogsByDate[selectedDate];
+  const canRecordSelectedDate = selectedDate <= todayIso;
+  const selectedReadingText = selectedLog
+    ? selectedLog.completed
+      ? formatReadingEntries(
+          selectedLog.reading_entries ??
+            readingEntriesFromLegacy({
+              readingBook: selectedLog.reading_book,
+              readingChapter: selectedLog.reading_chapter,
+              chaptersRead: selectedLog.chapters_read,
+              selectedChapters: selectedLog.selected_chapters,
+            }),
+        ) || strings.noReadingDetails
+      : strings.notCompleted
+    : strings.noRecordForDay;
 
   const selectedBookMeta = useMemo(
     () => BIBLE_BOOKS.find(book => book.bookName === selectedBook),
@@ -155,25 +191,22 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
     (isoDate: string) => {
       const log = devotionLogsByDate[isoDate];
       if (log) {
-        const nextBook = log.reading_book || '';
+        const nextEntries = Array.isArray(log.reading_entries)
+          ? log.reading_entries
+          : readingEntriesFromLegacy({
+              readingBook: log.reading_book,
+              readingChapter: log.reading_chapter,
+              chaptersRead: log.chapters_read,
+              selectedChapters: log.selected_chapters,
+            });
+        const firstEntry = nextEntries[0];
+        const nextBook = firstEntry?.reading_book || log.reading_book || '';
         const nextMeta = BIBLE_BOOKS.find(book => book.bookName === nextBook);
         setSelectedCompleted(log.completed);
         setSelectedTestament(nextMeta?.testament ?? 'old');
         setSelectedBook(nextBook);
-        setSelectedChapters(
-          nextMeta && Array.isArray(log.selected_chapters)
-            ? normalizeSelectedChapters(
-                log.selected_chapters.map(Number),
-                nextMeta.chapters,
-              )
-            : nextMeta
-            ? chaptersFromLegacy(
-                log.reading_chapter,
-                log.chapters_read,
-                nextMeta.chapters,
-              )
-            : [],
-        );
+        setSelectedChapters(firstEntry?.selected_chapters ?? []);
+        setReadingEntries(nextEntries);
         return;
       }
 
@@ -181,23 +214,20 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
       setSelectedTestament('old');
       setSelectedBook('');
       setSelectedChapters([]);
+      setReadingEntries([]);
     },
     [devotionLogsByDate],
   );
 
   const handlePickDay = (isoDate: string) => {
-    if (isoDate > todayIso) {
-      setAlertConfig({
-        visible: true,
-        title: strings.futureDateTitle,
-        message: strings.futureDateMessage,
-        type: 'warning',
-      });
+    setSelectedDate(isoDate);
+  };
+
+  const openSelectedDayEditor = () => {
+    if (selectedDate > todayIso) {
       return;
     }
-
-    setSelectedDate(isoDate);
-    hydrateDayForm(isoDate);
+    hydrateDayForm(selectedDate);
     setEditorVisible(true);
   };
 
@@ -205,6 +235,32 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
     setSelectedTestament(value);
     setSelectedBook('');
     setSelectedChapters([]);
+  };
+
+  const handleAddReadingEntry = () => {
+    const normalizedChapters = normalizeSelectedChapters(
+      selectedChapters,
+      selectedBookMeta?.chapters ?? 0,
+    );
+    if (!selectedBook || normalizedChapters.length === 0) {
+      return;
+    }
+    setReadingEntries(current =>
+      mergeReadingDraft(current, selectedBook, normalizedChapters),
+    );
+    setSelectedBook('');
+    setSelectedChapters([]);
+  };
+
+  const handleRemoveReadingEntry = (index: number) => {
+    setReadingEntries(current => {
+      const removed = current[index];
+      if (removed?.reading_book === selectedBook) {
+        setSelectedBook('');
+        setSelectedChapters([]);
+      }
+      return current.filter((_, itemIndex) => itemIndex !== index);
+    });
   };
 
   const handleSaveDay = async () => {
@@ -220,11 +276,12 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         selectedChapters,
         selectedBookMeta?.chapters ?? 0,
       );
+      const nextReadingEntries = selectedCompleted
+        ? mergeReadingDraft(readingEntries, selectedBook, normalizedChapters)
+        : [];
+      const firstEntry = nextReadingEntries[0];
 
-      if (
-        selectedCompleted &&
-        (!selectedBook || normalizedChapters.length === 0)
-      ) {
+      if (selectedCompleted && nextReadingEntries.length === 0) {
         setAlertConfig({
           visible: true,
           title: strings.readingSelectionRequiredTitle,
@@ -236,14 +293,15 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
 
       const payload = {
         completed: selectedCompleted,
-        reading_book: selectedCompleted ? selectedBook : null,
+        reading_book: selectedCompleted ? firstEntry?.reading_book ?? null : null,
         reading_chapter: selectedCompleted
-          ? firstSelectedChapter(normalizedChapters)
+          ? firstSelectedChapter(firstEntry?.selected_chapters ?? [])
           : null,
         chapters_read: selectedCompleted
-          ? normalizedChapters.length || null
+          ? firstEntry?.selected_chapters.length || null
           : null,
-        selected_chapters: selectedCompleted ? normalizedChapters : null,
+        selected_chapters: selectedCompleted ? firstEntry?.selected_chapters ?? null : null,
+        reading_entries: selectedCompleted ? nextReadingEntries : null,
       };
 
       const result = await saveDevotionLog({
@@ -287,7 +345,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
       />
 
       {loading && Object.keys(devotionLogsByDate).length === 0 ? (
-        <View style={[styles.loadingWrap, { backgroundColor: '#F8F9FB' }]}>
+        <View style={[styles.loadingWrap, styles.loadingWrapMuted]}>
           <ActivityIndicator size="large" color={NAVY} />
         </View>
       ) : (
@@ -321,6 +379,52 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
             }
             onPickDay={handlePickDay}
           />
+
+          <View style={styles.selectedDayCard}>
+            <View style={styles.selectedDayHeader}>
+              <View>
+                <Text style={styles.selectedDayTitle}>
+                  {strings.selectedDayTitle}
+                </Text>
+                <Text style={styles.selectedDayDate}>{selectedDate}</Text>
+              </View>
+              <View
+                style={[
+                  styles.selectedDayStatus,
+                  selectedLog?.completed
+                    ? styles.selectedDayStatusDone
+                    : styles.selectedDayStatusPending,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.selectedDayStatusText,
+                    selectedLog?.completed
+                      ? styles.selectedDayStatusTextDone
+                      : styles.selectedDayStatusTextPending,
+                  ]}
+                >
+                  {selectedLog
+                    ? selectedLog.completed
+                      ? strings.completed
+                      : strings.notCompleted
+                    : strings.noRecordStatus}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.selectedDayReading}>{selectedReadingText}</Text>
+            {canRecordSelectedDate ? (
+              <TouchableOpacity
+                style={styles.recordDevotionButton}
+                onPress={openSelectedDayEditor}
+                disabled={saving}
+              >
+                <Text style={styles.recordDevotionButtonText}>
+                  {strings.recordDevotion}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </ScrollView>
       )}
 
@@ -331,11 +435,12 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         selectedCompleted={selectedCompleted}
         selectedBook={selectedBook}
         selectedChapters={selectedChapters}
+        readingEntries={readingEntries}
         selectedTestament={selectedTestament}
         saving={saving}
         books={booksForTestament}
         chapterOptions={chapterOptions}
-        canSaveReading={!!selectedBook && selectedChapters.length > 0}
+        canSaveReading={readingEntries.length > 0 || (!!selectedBook && selectedChapters.length > 0)}
         onClose={() => setEditorVisible(false)}
         onSetCompleted={setSelectedCompleted}
         onSetTestament={handleChangeTestament}
@@ -349,6 +454,8 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
             ),
           )
         }
+        onAddReadingEntry={handleAddReadingEntry}
+        onRemoveReadingEntry={handleRemoveReadingEntry}
         onSave={handleSaveDay}
       />
 

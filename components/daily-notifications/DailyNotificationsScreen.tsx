@@ -40,13 +40,21 @@ import { dailyNotificationStyles as styles, NAVY } from './styles';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import NotificationPermissionCard from '../shared/NotificationPermissionCard';
 import {
-  chaptersFromLegacy,
   firstSelectedChapter,
   normalizeSelectedChapters,
   toggleChapterSelection,
 } from '../shared/chapterSelection';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
-import { refreshProfileRecord, saveProfileRecord } from '../../lib/offlineSync';
+import {
+  refreshDevotionLogs,
+  refreshProfileRecord,
+  saveProfileRecord,
+} from '../../lib/offlineSync';
+import {
+  mergeReadingDraft,
+  ReadingEntry,
+  readingEntriesFromLegacy,
+} from '../../lib/readingEntries';
 
 const DailyNotificationsScreen = ({ navigation }: any) => {
   const strings = getStrings().dailyNotifications;
@@ -71,6 +79,7 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
   const [showPicker, setShowPicker] = useState(false);
   const [readingBook, setReadingBook] = useState('');
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
+  const [readingEntries, setReadingEntries] = useState<ReadingEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -115,7 +124,10 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
         }
         return;
       }
-      const { data } = await refreshProfileRecord(userId);
+      const [{ data }, { data: devotionLogs }] = await Promise.all([
+        refreshProfileRecord(userId),
+        refreshDevotionLogs(userId),
+      ]);
       if (!isActive) {
         return;
       }
@@ -137,23 +149,51 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
           },
         });
       }
-      if (data?.reading_book) {
-        setReadingBook(data.reading_book);
-        const matchedBook =
-          BIBLE_BOOKS.find(book => book.bookName === data.reading_book) ??
-          BIBLE_BOOKS[0];
-        setSelectedChapters(
-          Array.isArray((data as any).selected_chapters)
-            ? normalizeSelectedChapters(
-                (data as any).selected_chapters.map(Number),
-                matchedBook.chapters,
-              )
-            : chaptersFromLegacy(
-                (data as any).reading_chapter,
-                (data as any).daily_chapters_target,
-                matchedBook.chapters,
-              ),
-        );
+      const latestCompletedLog = Object.entries(devotionLogs)
+        .filter(([, log]) => log.completed)
+        .sort(([leftDate], [rightDate]) => rightDate.localeCompare(leftDate))[0]?.[1];
+      const latestEntries =
+        latestCompletedLog?.reading_book || latestCompletedLog?.reading_entries
+          ? Array.isArray(latestCompletedLog.reading_entries)
+            ? latestCompletedLog.reading_entries
+            : readingEntriesFromLegacy({
+                readingBook: latestCompletedLog.reading_book,
+                readingChapter: latestCompletedLog.reading_chapter,
+                chaptersRead: latestCompletedLog.chapters_read,
+                selectedChapters: latestCompletedLog.selected_chapters,
+              })
+          : [];
+      const profileEntries =
+        data?.reading_book || data?.reading_entries
+          ? Array.isArray(data.reading_entries)
+            ? data.reading_entries
+            : readingEntriesFromLegacy({
+                readingBook: data.reading_book,
+                readingChapter: (data as any).reading_chapter,
+                chaptersRead: (data as any).daily_chapters_target,
+                selectedChapters: (data as any).selected_chapters,
+              })
+          : [];
+      const nextEntries = latestEntries.length ? latestEntries : profileEntries;
+
+      if (nextEntries.length > 0) {
+        const firstEntry = nextEntries[0];
+        setReadingEntries(nextEntries);
+        setReadingBook(firstEntry?.reading_book ?? '');
+        setSelectedChapters(firstEntry?.selected_chapters ?? []);
+      } else if (data?.reading_book || data?.reading_entries) {
+        const fallbackEntries = Array.isArray(data.reading_entries)
+          ? data.reading_entries
+          : readingEntriesFromLegacy({
+              readingBook: data.reading_book,
+              readingChapter: (data as any).reading_chapter,
+              chaptersRead: (data as any).daily_chapters_target,
+              selectedChapters: (data as any).selected_chapters,
+            });
+        const firstEntry = fallbackEntries[0];
+        setReadingEntries(fallbackEntries);
+        setReadingBook(firstEntry?.reading_book ?? data.reading_book ?? '');
+        setSelectedChapters(firstEntry?.selected_chapters ?? []);
       }
       if (isActive) {
         setLoading(false);
@@ -257,17 +297,31 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
     [selectedBookMeta],
   );
 
-  const testamentOptions = useMemo(
-    () => [
-      {
-        key: 'old' as const,
-        label: strings.oldTestament,
-        icon: 'book-open-page-variant-outline',
-      },
-      { key: 'new' as const, label: strings.newTestament, icon: 'cross' },
-    ],
-    [strings.newTestament, strings.oldTestament],
-  );
+  const handleAddReadingEntry = () => {
+    const normalizedChapters = normalizeSelectedChapters(
+      selectedChapters,
+      selectedBookMeta?.chapters ?? 0,
+    );
+    if (!readingBook || normalizedChapters.length === 0) {
+      return;
+    }
+    setReadingEntries(current =>
+      mergeReadingDraft(current, readingBook, normalizedChapters),
+    );
+    setReadingBook('');
+    setSelectedChapters([]);
+  };
+
+  const handleRemoveReadingEntry = (index: number) => {
+    setReadingEntries(current => {
+      const removed = current[index];
+      if (removed?.reading_book === readingBook) {
+        setReadingBook('');
+        setSelectedChapters([]);
+      }
+      return current.filter((_, itemIndex) => itemIndex !== index);
+    });
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -289,8 +343,14 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
       selectedChapters,
       selectedBookMeta?.chapters ?? 0,
     );
+    const nextReadingEntries = mergeReadingDraft(
+      readingEntries,
+      readingBook,
+      normalizedChapters,
+    );
+    const firstEntry = nextReadingEntries[0];
 
-    if (!readingBook || normalizedChapters.length === 0) {
+    if (nextReadingEntries.length === 0) {
       showAlert(
         strings.readingSelectionRequiredTitle,
         strings.readingSelectionRequiredMessage,
@@ -305,10 +365,11 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
       userId,
       profile: {
         devotion_time: timeString,
-        reading_book: readingBook,
-        reading_chapter: firstSelectedChapter(normalizedChapters),
-        daily_chapters_target: normalizedChapters.length || null,
-        selected_chapters: normalizedChapters,
+        reading_book: firstEntry?.reading_book ?? null,
+        reading_chapter: firstSelectedChapter(firstEntry?.selected_chapters ?? []),
+        daily_chapters_target: firstEntry?.selected_chapters.length || null,
+        selected_chapters: firstEntry?.selected_chapters ?? null,
+        reading_entries: nextReadingEntries,
       },
     });
 
@@ -419,10 +480,11 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
           readingBook={readingBook}
           chapterOptions={chapterOptions}
           selectedChapters={selectedChapters}
+          readingEntries={readingEntries}
           timeDisplay={timeDisplay}
           saving={saving}
           saved={saved}
-          canSaveReading={!!readingBook && selectedChapters.length > 0}
+          canSaveReading={readingEntries.length > 0 || (!!readingBook && selectedChapters.length > 0)}
           onSetTestament={setSelectedTestament}
           onSetReadingBook={setReadingBook}
           onToggleChapter={chapter =>
@@ -445,6 +507,8 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
             }
           } }
           onClearChapters={() => setSelectedChapters([])}
+          onAddReadingEntry={handleAddReadingEntry}
+          onRemoveReadingEntry={handleRemoveReadingEntry}
           onEditTime={openTimePicker}
           onSave={handleSave}
         />

@@ -11,9 +11,25 @@ type Props = {
   groupId?: string;
   strings: any;
   navigation: any;
+  canManageMembers?: boolean;
+  saving?: boolean;
+  onConfirmRemoveMember?: (member: GroupMemberStatus) => void;
+  onConfirmSetMemberAdmin?: (member: GroupMemberStatus) => void;
+  onConfirmUnsetMemberAdmin?: (member: GroupMemberStatus) => void;
 };
 
-const MembersList = ({ members, groupId, strings, navigation }: Props) => (
+const MembersList = ({
+  members,
+  userId,
+  groupId,
+  strings,
+  navigation,
+  canManageMembers = false,
+  saving = false,
+  onConfirmRemoveMember,
+  onConfirmSetMemberAdmin,
+  onConfirmUnsetMemberAdmin,
+}: Props) => (
   <>
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{strings.membersTitle}</Text>
@@ -23,56 +39,117 @@ const MembersList = ({ members, groupId, strings, navigation }: Props) => (
     {members.length > 0 ? (
       members.map(member => {
         const completed = Boolean(member.devotionLog?.completed);
+        const canManageMember =
+          canManageMembers && member.user_id !== userId && member.role !== 'owner';
+        const canSetAdmin = canManageMember && member.role !== 'leader';
+        const canUnsetAdmin = canManageMember && member.role === 'leader';
 
         return (
-          <TouchableOpacity
+          <View
             key={member.user_id}
             style={styles.memberCard}
-            activeOpacity={0.82}
-            onPress={() =>
-              navigation.navigate('DevotionGroupMemberDetails', {
-                groupId,
-                userId: member.user_id,
-                displayName: member.display_name,
-              })
-            }
           >
-            <View style={styles.memberTopRow}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {member.display_name.trim()[0] ?? 'م'}
-                </Text>
-              </View>
-              <View style={styles.memberBody}>
-                <Text style={styles.memberName}>{member.display_name}</Text>
-                <Text style={styles.memberRole}>{roleLabels(member.role)}</Text>
-              </View>
-              <View
-                style={[
-                  styles.statusPill,
-                  completed ? styles.statusPillDone : styles.statusPillPending,
-                ]}
-              >
-                <Text
+            <TouchableOpacity
+              activeOpacity={0.82}
+              onPress={() =>
+                navigation.navigate('DevotionGroupMemberDetails', {
+                  groupId,
+                  userId: member.user_id,
+                  displayName: member.display_name,
+                })
+              }
+            >
+              <View style={styles.memberTopRow}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {member.display_name.trim()[0] ?? 'م'}
+                  </Text>
+                </View>
+                <View style={styles.memberBody}>
+                  <Text style={styles.memberName}>{member.display_name}</Text>
+                  <Text style={styles.memberRole}>{roleLabels(member.role)}</Text>
+                </View>
+                <View
                   style={[
-                    styles.statusPillText,
-                    completed
-                      ? styles.statusPillTextDone
-                      : styles.statusPillTextPending,
+                    styles.statusPill,
+                    completed ? styles.statusPillDone : styles.statusPillPending,
                   ]}
                 >
-                  {completed ? strings.completed : strings.notCompleted}
-                </Text>
+                  <Text
+                    style={[
+                      styles.statusPillText,
+                      completed
+                        ? styles.statusPillTextDone
+                        : styles.statusPillTextPending,
+                    ]}
+                  >
+                    {completed ? strings.completed : strings.notCompleted}
+                  </Text>
+                </View>
+                <MaterialCommunityIcons
+                  name="chevron-left"
+                  size={22}
+                  color="#A0A7B2"
+                />
               </View>
-              <MaterialCommunityIcons
-                name="chevron-left"
-                size={22}
-                color="#A0A7B2"
-              />
-            </View>
 
-            <Text style={styles.readingText}>{formatMemberReading(member)}</Text>
-          </TouchableOpacity>
+              <Text style={styles.readingText}>{formatMemberReading(member)}</Text>
+            </TouchableOpacity>
+
+            {canManageMember ? (
+              <View style={styles.memberActionsRow}>
+                {canSetAdmin ? (
+                  <TouchableOpacity
+                    style={styles.memberAdminButton}
+                    activeOpacity={0.82}
+                    disabled={saving}
+                    onPress={() => onConfirmSetMemberAdmin?.(member)}
+                  >
+                    <MaterialCommunityIcons
+                      name="shield-account-outline"
+                      size={17}
+                      color="#0A1124"
+                    />
+                    <Text style={styles.memberAdminButtonText}>
+                      {strings.makeMemberAdmin}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+                {canUnsetAdmin ? (
+                  <TouchableOpacity
+                    style={styles.memberAdminButton}
+                    activeOpacity={0.82}
+                    disabled={saving}
+                    onPress={() => onConfirmUnsetMemberAdmin?.(member)}
+                  >
+                    <MaterialCommunityIcons
+                      name="shield-off-outline"
+                      size={17}
+                      color="#0A1124"
+                    />
+                    <Text style={styles.memberAdminButtonText}>
+                      {strings.removeMemberAdmin}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+                <TouchableOpacity
+                  style={styles.memberRemoveButton}
+                  activeOpacity={0.82}
+                  disabled={saving}
+                  onPress={() => onConfirmRemoveMember?.(member)}
+                >
+                  <MaterialCommunityIcons
+                    name="account-remove-outline"
+                    size={17}
+                    color="#B42318"
+                  />
+                  <Text style={styles.memberRemoveButtonText}>
+                    {strings.removeMember}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+          </View>
         );
       })
     ) : (

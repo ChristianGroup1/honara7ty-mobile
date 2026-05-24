@@ -1,4 +1,5 @@
 import supabase from './supbase';
+import { ReadingEntry } from './readingEntries';
 
 export type DevotionGroup = {
   id: string;
@@ -28,6 +29,7 @@ export type GroupDevotionLog = {
   reading_chapter?: number | null;
   chapters_read?: number | null;
   selected_chapters?: number[] | null;
+  reading_entries?: ReadingEntry[] | null;
 };
 
 export type GroupMemberStatus = DevotionGroupMember & {
@@ -161,7 +163,7 @@ export async function fetchGroupMembersWithDevotion(params: {
     supabase
       .from('devotion_log')
       .select(
-        'user_id, date, completed, reading_book, reading_chapter, chapters_read, selected_chapters',
+        'user_id, date, completed, reading_book, reading_chapter, chapters_read, selected_chapters, reading_entries',
       )
       .eq('date', params.date)
       .in('user_id', userIds),
@@ -199,6 +201,32 @@ export async function updateDevotionGroupSharedReading(params: {
   );
 }
 
+export async function removeDevotionGroupMember(params: {
+  groupId: string;
+  userId: string;
+}) {
+  return withExpiredJwtRetry(() =>
+    supabase.rpc('remove_devotion_group_member', {
+      target_group_id: params.groupId,
+      target_user_id: params.userId,
+    }),
+  );
+}
+
+export async function updateDevotionGroupMemberRole(params: {
+  groupId: string;
+  userId: string;
+  role: 'leader' | 'member';
+}) {
+  return withExpiredJwtRetry(() =>
+    supabase.rpc('set_devotion_group_member_role', {
+      target_group_id: params.groupId,
+      target_user_id: params.userId,
+      target_role: params.role,
+    }),
+  );
+}
+
 export async function fetchGroupMemberDevotionHistory(params: {
   groupId: string;
   userId: string;
@@ -223,7 +251,7 @@ export async function fetchGroupMemberDevotionHistory(params: {
     supabase
       .from('devotion_log')
       .select(
-        'user_id, date, completed, reading_book, reading_chapter, chapters_read, selected_chapters, created_at',
+        'user_id, date, completed, reading_book, reading_chapter, chapters_read, selected_chapters, reading_entries, created_at',
       )
       .eq('user_id', params.userId)
       .order('date', { ascending: false })

@@ -25,7 +25,11 @@ export const dailyNotificationsStrings = {
   editTime: 'تعديل الموعد',
   editTimeSubtitle: 'حرّك المؤشر لاختيار الوقت المناسب',
   readingPlanTitle: 'خطة القراءة اليومية',
-  readingPlanSubtitle: 'حدد المكان اللي هتبدأ منه وكمية القراءة كل يوم',
+  readingPlanSubtitle: 'حدد المكان اللي هتبدأ منه والقراءات اليومية',
+  multipleReadingsHint:
+    'تقدر تضيف أكتر من قراءة في خطتك. اختار السفر والإصحاحات، واضغط إضافة قراءة أخرى.',
+  addReadingEntry: 'إضافة قراءة أخرى',
+  removeReadingEntry: 'حذف',
   selectBook: 'اختار السفر',
   selectBookFirst: 'اختار السفر الأول',
   oldTestament: 'العهد القديم',

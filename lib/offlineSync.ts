@@ -45,6 +45,7 @@ export type ProfileRecord = {
   reading_chapter?: number | null;
   daily_chapters_target?: number | null;
   selected_chapters?: number[] | null;
+  reading_entries?: DevotionDayLog['reading_entries'];
   updated_at?: string | null;
 };
 
@@ -406,6 +407,7 @@ function mapDevotionRows(
       reading_chapter: item.reading_chapter ?? null,
       chapters_read: item.chapters_read ?? null,
       selected_chapters: item.selected_chapters ?? null,
+      reading_entries: item.reading_entries ?? null,
     };
   });
 
@@ -576,6 +578,9 @@ async function flushDevotionLogUpsert(
       : null,
     selected_chapters: mutation.payload.completed
       ? mutation.payload.selected_chapters ?? null
+      : null,
+    reading_entries: mutation.payload.completed
+      ? mutation.payload.reading_entries ?? null
       : null,
   };
 
@@ -791,6 +796,9 @@ export async function flushOfflineQueue(): Promise<SyncResult> {
               : null,
             selected_chapters: mutation.payload.completed
               ? mutation.payload.selected_chapters ?? null
+              : null,
+            reading_entries: mutation.payload.completed
+              ? mutation.payload.reading_entries ?? null
               : null,
           };
           const { error } = await supabase
@@ -1151,7 +1159,7 @@ export async function refreshDevotionLogs(userId: string) {
   const { data, error } = await supabase
     .from('devotion_log')
     .select(
-      'date, completed, reading_book, reading_chapter, chapters_read, selected_chapters',
+      'date, completed, reading_book, reading_chapter, chapters_read, selected_chapters, reading_entries',
     )
     .eq('user_id', userId)
     .order('date', { ascending: false });
@@ -1175,7 +1183,7 @@ export async function refreshProfileRecord(userId: string) {
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'church, sect, birth_date, gender, devotion_time, reading_book, reading_chapter, daily_chapters_target, selected_chapters, updated_at',
+      'church, sect, birth_date, gender, devotion_time, reading_book, reading_chapter, daily_chapters_target, selected_chapters, reading_entries, updated_at',
     )
     .eq('id', userId)
     .maybeSingle();

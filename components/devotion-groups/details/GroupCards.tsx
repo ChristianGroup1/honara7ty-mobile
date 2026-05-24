@@ -1,7 +1,10 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { DevotionGroup } from '../../../lib/devotionGroups';
+import {
+  DevotionGroup,
+  GroupMemberStatus,
+} from '../../../lib/devotionGroups';
 import { GOLD, NAVY, styles } from './styles';
 import {
   formatSharedReading,
@@ -114,6 +117,56 @@ const Stat = ({ value, label }: { value: number | string; label: string }) => (
     <Text style={styles.personalStatLabel}>{label}</Text>
   </View>
 );
+
+export const TodayDevotionCard = ({
+  member,
+  strings,
+  saving,
+  onOpen,
+}: {
+  member: GroupMemberStatus | null;
+  strings: Strings;
+  saving: boolean;
+  onOpen: () => void;
+}) => {
+  const completed = Boolean(member?.devotionLog?.completed);
+  const answered = Boolean(member?.devotionLog);
+
+  return (
+    <View style={styles.todayDevotionCard}>
+      <View style={styles.todayDevotionHeader}>
+        <View style={styles.todayDevotionIcon}>
+          <MaterialCommunityIcons
+            name={completed ? 'check-circle-outline' : 'calendar-check-outline'}
+            size={22}
+            color={GOLD}
+          />
+        </View>
+        <View style={styles.todayDevotionBody}>
+          <Text style={styles.todayDevotionTitle}>
+            {strings.todayDevotionTitle}
+          </Text>
+          <Text style={styles.todayDevotionText}>
+            {answered
+              ? completed
+                ? strings.todayDevotionCompleted
+                : strings.todayDevotionNotCompleted
+              : strings.todayDevotionNotAnswered}
+          </Text>
+        </View>
+      </View>
+      <TouchableOpacity
+        style={styles.todayDevotionButton}
+        disabled={saving}
+        onPress={onOpen}
+      >
+        <Text style={styles.todayDevotionButtonText}>
+          {answered ? strings.editTodayDevotion : strings.answerTodayDevotion}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 export const SharedReadingCard = ({
   group,

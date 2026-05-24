@@ -5,6 +5,10 @@ import {
 } from '../../../lib/devotionGroups';
 import { computeStreak } from '../../badges/utils';
 import { CUSTOM_TARGET_VALUE, TARGET_DAY_OPTIONS } from './constants';
+import {
+  formatReadingEntries,
+  readingEntriesFromLegacy,
+} from '../../../lib/readingEntries';
 
 export type PersonalGroupStats = {
   completedDays: number;
@@ -29,6 +33,20 @@ export const formatMemberReading = (member: GroupMemberStatus) => {
 
   if (!log?.completed) {
     return strings.notCompleted;
+  }
+
+  const entriesText = formatReadingEntries(
+    log.reading_entries ??
+      readingEntriesFromLegacy({
+        readingBook: log.reading_book,
+        readingChapter: log.reading_chapter,
+        chaptersRead: log.chapters_read,
+        selectedChapters: log.selected_chapters,
+      }),
+  );
+
+  if (entriesText) {
+    return entriesText;
   }
 
   if (!log.reading_book) {

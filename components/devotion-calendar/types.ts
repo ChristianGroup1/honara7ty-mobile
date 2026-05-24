@@ -1,4 +1,5 @@
 import { Testament } from '../data/bibleMetadata';
+import type { ReadingEntry } from '../../lib/readingEntries';
 
 export type DevotionDayLog = {
   completed: boolean;
@@ -6,6 +7,7 @@ export type DevotionDayLog = {
   reading_chapter?: number | null;
   chapters_read?: number | null;
   selected_chapters?: number[] | null;
+  reading_entries?: ReadingEntry[] | null;
   pendingSync?: boolean;
 };
 
@@ -14,6 +16,7 @@ export type CalendarCell = {
   dayNumber?: number;
   isoDate?: string;
   completed: boolean;
+  missed?: boolean;
   today: boolean;
   empty?: boolean;
 };

@@ -31,6 +31,7 @@ export const devotionCalendarStyles = StyleSheet.create({
   headerTitle: { color: '#FFF', fontSize: 18, fontWeight: '700' },
   headerSpacer: { width: 32 },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loadingWrapMuted: { backgroundColor: '#F8F9FB' },
   content: { padding: 16, paddingBottom: 36 },
   heroCard: {
     ...heroCardBase,
@@ -132,6 +133,69 @@ export const devotionCalendarStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 2,
   },
+  selectedDayCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 18,
+    padding: 14,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(10,17,36,0.06)',
+  },
+  selectedDayHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  selectedDayTitle: {
+    color: NAVY,
+    fontSize: 15,
+    fontWeight: '800',
+    textAlign: 'left',
+  },
+  selectedDayDate: {
+    color: '#7A818B',
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'left',
+  },
+  selectedDayStatus: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#EEF2F8',
+  },
+  selectedDayStatusDone: { backgroundColor: 'rgba(46,139,87,0.12)' },
+  selectedDayStatusPending: { backgroundColor: 'rgba(217,123,41,0.12)' },
+  selectedDayStatusText: {
+    color: '#667085',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  selectedDayStatusTextDone: { color: '#2E8B57' },
+  selectedDayStatusTextPending: { color: '#B45B12' },
+  selectedDayReading: {
+    color: '#5F6874',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 12,
+    textAlign: 'left',
+  },
+  recordDevotionButton: {
+    minHeight: 42,
+    borderRadius: 12,
+    backgroundColor: GOLD,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingHorizontal: 14,
+  },
+  recordDevotionButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -208,6 +272,11 @@ export const devotionCalendarStyles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: NAVY,
   },
+  legendSwatchMissed: {
+    backgroundColor: 'rgba(217,123,41,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(217,123,41,0.32)',
+  },
   legendSwatchDefault: {
     backgroundColor: '#F6F8FB',
     borderWidth: 1,
@@ -256,6 +325,10 @@ export const devotionCalendarStyles = StyleSheet.create({
     backgroundColor: '#FFF7E2',
     borderColor: 'rgba(201,168,76,0.42)',
   },
+  dayCellMissed: {
+    backgroundColor: '#FFF4EA',
+    borderColor: 'rgba(217,123,41,0.28)',
+  },
   dayCellToday: {
     backgroundColor: '#F2F6FF',
     borderColor: 'rgba(10,17,36,0.3)',
@@ -284,6 +357,9 @@ export const devotionCalendarStyles = StyleSheet.create({
   },
   dayTextCompleted: {
     color: NAVY,
+  },
+  dayTextMissed: {
+    color: '#B45B12',
   },
   dayTextToday: {
     fontWeight: '800',
@@ -382,6 +458,65 @@ export const devotionCalendarStyles = StyleSheet.create({
   },
   editorScrollContent: {
     paddingBottom: 8,
+  },
+  multiReadingHint: {
+    color: '#667085',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 12,
+    marginBottom: 8,
+    textAlign: 'left',
+  },
+  readingEntriesBox: {
+    gap: 8,
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  readingEntryRow: {
+    backgroundColor: '#F8FAFD',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E3E8F1',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  readingEntryText: {
+    flex: 1,
+    color: NAVY,
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 18,
+    textAlign: 'left',
+  },
+  readingEntryRemove: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,59,48,0.10)',
+  },
+  readingEntryRemoveText: {
+    color: '#B42318',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  addReadingEntryBtn: {
+    minHeight: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    backgroundColor: '#FFF4D6',
+  },
+  addReadingEntryBtnDisabled: {
+    opacity: 0.55,
+  },
+  addReadingEntryText: {
+    color: NAVY,
+    fontSize: 13,
+    fontWeight: '900',
   },
   testamentTabs: {
     flexDirection: 'row',

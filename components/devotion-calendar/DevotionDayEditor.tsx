@@ -11,6 +11,7 @@ import {
 import { BibleBook, Testament } from '../data/bibleMetadata';
 import { devotionCalendarStyles as styles } from './styles';
 import BiblePassagePicker from '../shared/BiblePassagePicker';
+import { ReadingEntry, formatReadingEntries } from '../../lib/readingEntries';
 
 type Strings = any;
 
@@ -21,6 +22,7 @@ type Props = {
   selectedCompleted: boolean;
   selectedBook: string;
   selectedChapters: number[];
+  readingEntries: ReadingEntry[];
   selectedTestament: Testament;
   saving: boolean;
   books: BibleBook[];
@@ -31,6 +33,8 @@ type Props = {
   onSetTestament: (value: Testament) => void;
   onSetBook: (value: string) => void;
   onToggleChapter: (value: number) => void;
+  onAddReadingEntry: () => void;
+  onRemoveReadingEntry: (index: number) => void;
   onSave: () => void;
 };
 
@@ -41,6 +45,7 @@ const DevotionDayEditor = ({
   selectedCompleted,
   selectedBook,
   selectedChapters,
+  readingEntries,
   selectedTestament,
   saving,
   books,
@@ -51,8 +56,13 @@ const DevotionDayEditor = ({
   onSetTestament,
   onSetBook,
   onToggleChapter,
+  onAddReadingEntry,
+  onRemoveReadingEntry,
   onSave,
-}: Props) => (
+}: Props) => {
+  const canAddReading = Boolean(selectedBook && selectedChapters.length > 0);
+
+  return (
   <Modal
     visible={visible}
     transparent
@@ -110,35 +120,74 @@ const DevotionDayEditor = ({
           </View>
 
           {selectedCompleted ? (
-            <BiblePassagePicker
-              labels={{
-                bookTitle: strings.selectBook,
-                chapterTitle: strings.selectChapter,
-                chapterHint: strings.chapterRangeHint,
-                selectBookFirst: strings.selectBookFirst,
-                oldTestament: strings.oldTestament,
-                newTestament: strings.newTestament,
-                selectAllChapters: strings.selectAllChapters,
-              }}
-              selectedTestament={selectedTestament}
-              books={books}
-              selectedBook={selectedBook}
-              chapterOptions={chapterOptions}
-              selectedChapters={selectedChapters}
-              onSetTestament={onSetTestament}
-              onSetBook={onSetBook}
-              onToggleChapter={onToggleChapter}
-              onSelectAllChapters={() =>
-                chapterOptions.forEach(chapter => {
-                  if (!selectedChapters.includes(chapter)) {
-                    onToggleChapter(chapter);
-                  }
-                })
-              }
-              onClearChapters={() =>
-                selectedChapters.forEach(chapter => onToggleChapter(chapter))
-              }
-            />
+            <>
+              <Text style={styles.multiReadingHint}>
+                {strings.multipleReadingsHint}
+              </Text>
+              <BiblePassagePicker
+                labels={{
+                  bookTitle: strings.selectBook,
+                  chapterTitle: strings.selectChapter,
+                  chapterHint: strings.chapterRangeHint,
+                  selectBookFirst: strings.selectBookFirst,
+                  oldTestament: strings.oldTestament,
+                  newTestament: strings.newTestament,
+                  selectAllChapters: strings.selectAllChapters,
+                }}
+                selectedTestament={selectedTestament}
+                books={books}
+                selectedBook={selectedBook}
+                chapterOptions={chapterOptions}
+                selectedChapters={selectedChapters}
+                onSetTestament={onSetTestament}
+                onSetBook={onSetBook}
+                onToggleChapter={onToggleChapter}
+                onSelectAllChapters={() =>
+                  chapterOptions.forEach(chapter => {
+                    if (!selectedChapters.includes(chapter)) {
+                      onToggleChapter(chapter);
+                    }
+                  })
+                }
+                onClearChapters={() =>
+                  selectedChapters.forEach(chapter => onToggleChapter(chapter))
+                }
+              />
+              <TouchableOpacity
+                style={[
+                  styles.addReadingEntryBtn,
+                  !canAddReading && styles.addReadingEntryBtnDisabled,
+                ]}
+                disabled={!canAddReading}
+                onPress={onAddReadingEntry}
+              >
+                <Text style={styles.addReadingEntryText}>
+                  {strings.addReadingEntry}
+                </Text>
+              </TouchableOpacity>
+              {readingEntries.length > 0 ? (
+                <View style={styles.readingEntriesBox}>
+                  {readingEntries.map((entry, index) => (
+                    <View
+                      key={`${entry.reading_book}-${index}`}
+                      style={styles.readingEntryRow}
+                    >
+                      <Text style={styles.readingEntryText}>
+                        {formatReadingEntries([entry])}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.readingEntryRemove}
+                        onPress={() => onRemoveReadingEntry(index)}
+                      >
+                        <Text style={styles.readingEntryRemoveText}>
+                          {strings.removeReadingEntry}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </>
           ) : null}
         </ScrollView>
 
@@ -165,6 +214,7 @@ const DevotionDayEditor = ({
       </View>
     </View>
   </Modal>
-);
+  );
+};
 
 export default DevotionDayEditor;

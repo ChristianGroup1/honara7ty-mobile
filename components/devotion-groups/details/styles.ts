@@ -58,6 +58,32 @@ export const styles = StyleSheet.create({
     color: '#7A818B', fontSize: 11, fontWeight: '800', marginTop: 4,
     textAlign: 'center',
   },
+  todayDevotionCard: {
+    backgroundColor: '#FFF', borderRadius: 16, padding: 14, marginBottom: 14,
+    borderWidth: 1, borderColor: 'rgba(10,17,36,0.06)',
+  },
+  todayDevotionHeader: { flexDirection: 'row', alignItems: 'center' },
+  todayDevotionIcon: {
+    width: 42, height: 42, borderRadius: 14, backgroundColor: '#FFF8E5',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  todayDevotionBody: { flex: 1, marginHorizontal: 10 },
+  todayDevotionTitle: {
+    color: NAVY, fontSize: 15, fontWeight: '900', textAlign: 'left',
+  },
+  todayDevotionText: {
+    color: '#5F6874', fontSize: 13, lineHeight: 20, marginTop: 4,
+    textAlign: 'left',
+  },
+  todayDevotionButton: {
+    minHeight: 42, borderRadius: 12, backgroundColor: '#FFF4D6',
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10,
+    marginTop: 12,
+  },
+  todayDevotionButtonText: {
+    color: NAVY, fontSize: 13, fontWeight: '900', lineHeight: 18,
+    textAlign: 'center',
+  },
   sharedReadingCard: {
     backgroundColor: '#FFF', borderRadius: 16, padding: 14, marginBottom: 14,
     borderWidth: 1, borderColor: 'rgba(10,17,36,0.06)',
@@ -123,10 +149,33 @@ export const styles = StyleSheet.create({
   readingText: {
     color: '#5F6874', fontSize: 13, lineHeight: 20, marginTop: 10, textAlign: 'left',
   },
+  memberActionsRow: {
+    flexDirection: 'row', gap: 8, marginTop: 12, paddingTop: 12,
+    borderTopWidth: 1, borderTopColor: 'rgba(10,17,36,0.08)',
+  },
+  memberAdminButton: {
+    flex: 1, minHeight: 38, borderRadius: 12, backgroundColor: '#FFF4D6',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, paddingHorizontal: 10,
+  },
+  memberAdminButtonText: {
+    flexShrink: 1, color: NAVY, fontSize: 12, fontWeight: '900',
+    lineHeight: 17, textAlign: 'center',
+  },
+  memberRemoveButton: {
+    flex: 1, minHeight: 38, borderRadius: 12, backgroundColor: 'rgba(255,59,48,0.10)',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, paddingHorizontal: 10,
+  },
+  memberRemoveButtonText: {
+    flexShrink: 1, color: '#B42318', fontSize: 12, fontWeight: '900',
+    lineHeight: 17, textAlign: 'center',
+  },
   emptyText: {
     color: '#7A818B', fontSize: 13, lineHeight: 20, textAlign: 'center',
     marginVertical: 12,
   },
+  loadingBlock: { paddingVertical: 36, alignItems: 'center' },
   savingOverlay: {
     ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,17,36,0.18)',
     alignItems: 'center', justifyContent: 'center',

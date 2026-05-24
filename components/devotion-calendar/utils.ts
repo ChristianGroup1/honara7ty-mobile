@@ -22,6 +22,7 @@ export const getMonthLabel = (date: Date) =>
 export const buildMonthCells = (
   monthDate: Date,
   completedDates: Set<string>,
+  missedDates = new Set<string>(),
 ): CalendarCell[] => {
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
@@ -50,6 +51,7 @@ export const buildMonthCells = (
       dayNumber: day,
       isoDate,
       completed: completedDates.has(isoDate),
+      missed: missedDates.has(isoDate),
       today: isoDate === todayIso,
     });
   }

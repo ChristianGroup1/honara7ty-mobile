@@ -65,6 +65,10 @@ const DevotionCalendarGrid = ({
           <Text style={styles.legendText}>{strings.completed}</Text>
         </View>
         <View style={styles.legendItem}>
+          <View style={[styles.legendSwatch, styles.legendSwatchMissed]} />
+          <Text style={styles.legendText}>{strings.notCompleted}</Text>
+        </View>
+        <View style={styles.legendItem}>
           <View style={[styles.legendSwatch, styles.legendSwatchToday]} />
           <Text style={styles.legendText}>{strings.today}</Text>
         </View>
@@ -94,6 +98,7 @@ const DevotionCalendarGrid = ({
                 style={[
                   styles.dayCell,
                   cell.completed && styles.dayCellCompleted,
+                  cell.missed && styles.dayCellMissed,
                   cell.today && styles.dayCellToday,
                   cell.isoDate === selectedDate && styles.dayCellSelected,
                   cell.empty && styles.dayCellEmpty,
@@ -105,6 +110,7 @@ const DevotionCalendarGrid = ({
                       style={[
                         styles.dayText,
                         cell.completed && styles.dayTextCompleted,
+                        cell.missed && styles.dayTextMissed,
                         cell.today && styles.dayTextToday,
                       ]}
                     >
@@ -113,6 +119,14 @@ const DevotionCalendarGrid = ({
                     {cell.completed ? (
                       <View style={styles.dayMetaWrap}>
                         <View style={styles.dot} />
+                      </View>
+                    ) : cell.missed ? (
+                      <View style={styles.dayMetaWrap}>
+                        <MaterialCommunityIcons
+                          name="close"
+                          size={13}
+                          color="#B45B12"
+                        />
                       </View>
                     ) : cell.today ? (
                       <View style={styles.dayMetaWrap}>

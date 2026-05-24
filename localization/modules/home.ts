@@ -29,7 +29,11 @@ export const homeStrings = {
   answeredYes: 'حلو جدًا 👏💪، وقتك مع ربنا غالي 🙏',
   answeredNo: 'لم تأخذ خلوتك بعد — لا يزال الوقت أمامك 💙',
   answerSheetTitle: 'سجل خلوتك اليوم',
-  answerSheetSubtitle: 'اختار الإجابة وسجّل الجزء اللي قريته.',
+  answerSheetSubtitle: 'اختار الإجابة وسجّل الجزء أو الأجزاء اللي قريتها.',
+  multipleReadingsHint:
+    'تقدر تسجل أكتر من قراءة في نفس اليوم، مثل: متى ٥، ٦ والمزامير ١، ٢.',
+  addReadingEntry: 'إضافة قراءة أخرى',
+  removeReadingEntry: 'حذف',
   answerBook: 'السفر',
   selectBookFirst: 'اختار السفر الأول',
   oldTestament: 'العهد القديم',
