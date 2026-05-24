@@ -147,7 +147,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
               selectedChapters: selectedLog.selected_chapters,
             }),
         ) || strings.noReadingDetails
-      : strings.notCompleted
+      : strings.notCompletedDetail
     : strings.noRecordForDay;
 
   const selectedBookMeta = useMemo(
