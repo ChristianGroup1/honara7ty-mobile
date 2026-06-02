@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
@@ -33,7 +33,7 @@ const GOLD = '#C9A84C';
 const BG = '#F2F4F8';
 type ActionMode = 'create' | 'join';
 
-const DevotionGroupsScreen = ({ navigation }: any) => {
+const DevotionGroupsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().devotionGroups;
   const insets = useSafeAreaInsets();
   const [user, setUser] = useState<any>(null);
@@ -98,6 +98,25 @@ const DevotionGroupsScreen = ({ navigation }: any) => {
       loadGroups(true, true);
     }, [loadGroups]),
   );
+
+  useEffect(() => {
+    if (!route?.params?.joinSuccess) {
+      return;
+    }
+
+    setAlertConfig({
+      visible: true,
+      title: strings.joinSuccessTitle,
+      message: strings.joinSuccessMessage,
+      type: 'success',
+    });
+    navigation.setParams({ joinSuccess: undefined });
+  }, [
+    navigation,
+    route?.params?.joinSuccess,
+    strings.joinSuccessMessage,
+    strings.joinSuccessTitle,
+  ]);
 
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {

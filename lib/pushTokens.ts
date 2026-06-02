@@ -61,24 +61,33 @@ async function ensurePushChannel() {
   });
 }
 
-export async function registerPushToken(userId?: string | null) {
+export async function registerPushToken(
+  userId?: string | null,
+  options?: { requestPermission?: boolean },
+) {
   if (!userId || (Platform.OS !== 'ios' && Platform.OS !== 'android')) {
     return { registered: false, reason: 'missing_user_or_platform' };
   }
 
-  const notifeeSettings = await notifee.requestPermission({
-    alert: true,
-    badge: true,
-    sound: true,
-  });
+  const shouldRequestPermission = options?.requestPermission !== false;
+  const notifeeSettings = shouldRequestPermission
+    ? await notifee.requestPermission({
+        alert: true,
+        badge: true,
+        sound: true,
+      })
+    : await notifee.getNotificationSettings();
   const notifeeAllowed =
     notifeeSettings.authorizationStatus === AuthorizationStatus.AUTHORIZED ||
     notifeeSettings.authorizationStatus === AuthorizationStatus.PROVISIONAL;
 
-  const firebasePermissionStatus = await messaging().requestPermission();
-  const firebaseAllowed =
-    firebasePermissionStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-    firebasePermissionStatus === messaging.AuthorizationStatus.PROVISIONAL;
+  let firebaseAllowed = notifeeAllowed;
+  if (shouldRequestPermission) {
+    const firebasePermissionStatus = await messaging().requestPermission();
+    firebaseAllowed =
+      firebasePermissionStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      firebasePermissionStatus === messaging.AuthorizationStatus.PROVISIONAL;
+  }
 
   if (!notifeeAllowed && !firebaseAllowed) {
     return { registered: false, reason: 'permission_denied' };

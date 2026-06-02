@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Linking } from 'react-native';
-import { handleOAuthCallbackUrl, handleRecoveryUrl } from '../lib/deepLinking';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  getDevotionGroupInviteCodeFromUrl,
+  handleOAuthCallbackUrl,
+  handleRecoveryUrl,
+} from '../lib/deepLinking';
 import { navigationRef } from '../navigation/navigationRef';
 import supabase from '../lib/supbase';
 import { syncDevotionReminderSchedule } from '../lib/devotionReminder';
@@ -18,6 +23,8 @@ import {
 
 const SESSION_FETCH_TIMEOUT_MS = BOOTSTRAP_TIMEOUT_MS * 3;
 const SESSION_FETCH_RETRY_TIMEOUT_MS = BOOTSTRAP_TIMEOUT_MS * 5;
+const PENDING_DEVOTION_GROUP_INVITE_KEY =
+  'honara7ty.pending_devotion_group_invite.v1';
 
 export function useAppBootstrap() {
   const [showSplash, setShowSplash] = useState(true);
@@ -26,6 +33,8 @@ export function useAppBootstrap() {
   const [recoveryLinkValid, setRecoveryLinkValid] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
+  const [pendingDevotionGroupInviteCode, setPendingDevotionGroupInviteCode] =
+    useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -62,7 +71,9 @@ export function useAppBootstrap() {
     };
 
     const syncReminderScheduleSafely = (userId?: string | null) => {
-      syncDevotionReminderSchedule(userId).catch(error => {
+      syncDevotionReminderSchedule(userId, {
+        requestPermission: false,
+      }).catch(error => {
         console.warn('Failed to sync devotion reminder schedule', error);
       });
     };
@@ -75,7 +86,7 @@ export function useAppBootstrap() {
         return;
       }
 
-      registerPushToken(userId).then(result => {
+      registerPushToken(userId, { requestPermission: false }).then(result => {
         if (__DEV__ && !result.registered) {
           console.warn('Push token was not registered', result);
         }
@@ -85,6 +96,22 @@ export function useAppBootstrap() {
         }
       });
       unsubscribePushTokenRefresh = subscribePushTokenRefresh(userId);
+    };
+
+    const storePendingInviteCode = (inviteCode: string) => {
+      if (!isMounted) {
+        return;
+      }
+
+      setPendingDevotionGroupInviteCode(inviteCode);
+      AsyncStorage.setItem(
+        PENDING_DEVOTION_GROUP_INVITE_KEY,
+        inviteCode,
+      ).catch(error => {
+        if (__DEV__) {
+          console.warn('Failed to store pending group invite', error);
+        }
+      });
     };
 
     const getSessionSafely = async () => {
@@ -170,6 +197,23 @@ export function useAppBootstrap() {
           bootstrapFinished = true;
           hideSplashAfter(800);
           return;
+        }
+
+        const inviteCode = getDevotionGroupInviteCodeFromUrl(initialUrl);
+        if (inviteCode) {
+          storePendingInviteCode(inviteCode);
+        } else {
+          AsyncStorage.getItem(PENDING_DEVOTION_GROUP_INVITE_KEY)
+            .then(storedInviteCode => {
+              if (storedInviteCode && isMounted) {
+                setPendingDevotionGroupInviteCode(storedInviteCode);
+              }
+            })
+            .catch(error => {
+              if (__DEV__) {
+                console.warn('Failed to restore pending group invite', error);
+              }
+            });
         }
 
         let { data } = await getSessionSafely();
@@ -283,6 +327,12 @@ export function useAppBootstrap() {
       const { isRecovery, isValid } = await handleRecoveryUrl(url);
       if (isRecovery && navigationRef.isReady()) {
         navigationRef.navigate('ResetPassword', { linkValid: isValid });
+        return;
+      }
+
+      const inviteCode = getDevotionGroupInviteCodeFromUrl(url);
+      if (inviteCode) {
+        storePendingInviteCode(inviteCode);
       }
     });
 
@@ -304,5 +354,16 @@ export function useAppBootstrap() {
     recoveryLinkValid,
     needsOnboarding,
     needsProfileCompletion,
+    pendingDevotionGroupInviteCode,
+    clearPendingDevotionGroupInvite: () => {
+      setPendingDevotionGroupInviteCode(null);
+      AsyncStorage.removeItem(PENDING_DEVOTION_GROUP_INVITE_KEY).catch(
+        error => {
+          if (__DEV__) {
+            console.warn('Failed to clear pending group invite', error);
+          }
+        },
+      );
+    },
   };
 }

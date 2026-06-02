@@ -21,6 +21,7 @@ import {
   openAppNotificationSettings,
   requestNotificationPermission,
 } from '../../lib/notifications';
+import { registerPushToken } from '../../lib/pushTokens';
 
 const NAVY = '#0A1124';
 const GOLD = '#C9A84C';
@@ -49,6 +50,7 @@ const NotificationPermissionScreen = ({ navigation }: any) => {
       if (permissionState === 'allowed') {
         await markNotificationPermissionPromptSeen(userId);
         await ensureDefaultDevotionTime(userId, { scheduleReminder: true });
+        await registerPushToken(userId, { requestPermission: false });
         return;
       }
 
@@ -56,6 +58,7 @@ const NotificationPermissionScreen = ({ navigation }: any) => {
         await requestNotificationPermission();
         await markNotificationPermissionPromptSeen(userId);
         await ensureDefaultDevotionTime(userId, { scheduleReminder: true });
+        await registerPushToken(userId, { requestPermission: false });
         return;
       }
 
@@ -64,6 +67,7 @@ const NotificationPermissionScreen = ({ navigation }: any) => {
       }
       await markNotificationPermissionPromptSeen(userId);
       await ensureDefaultDevotionTime(userId, { scheduleReminder: true });
+      await registerPushToken(userId, { requestPermission: false });
     } finally {
       setLoading(false);
       goMain();

@@ -184,7 +184,11 @@ export async function openAppNotificationSettings(): Promise<void> {
 export async function scheduleDailyDevotionReminder(
   hours: number,
   minutes: number,
-  options?: { startTomorrow?: boolean; includeFollowUp?: boolean },
+  options?: {
+    startTomorrow?: boolean;
+    includeFollowUp?: boolean;
+    requestPermission?: boolean;
+  },
 ): Promise<void> {
   const strings = getStrings().notifications;
 
@@ -198,6 +202,10 @@ export async function scheduleDailyDevotionReminder(
   }
 
   if (permissionState === 'not_determined') {
+    if (options?.requestPermission === false) {
+      return;
+    }
+
     const allowed = await requestNotificationPermission();
     if (!allowed) {
       return;
@@ -238,7 +246,10 @@ export async function scheduleDailyDevotionReminder(
         channelId: CHANNEL_ID,
         smallIcon: 'ic_notification',
         color: '#C9A84C',
-        pressAction: { id: DEVOTION_PRESS_ACTION_ID },
+        pressAction: {
+          id: DEVOTION_PRESS_ACTION_ID,
+          launchActivity: 'default',
+        },
         visibility: AndroidVisibility.PUBLIC,
         category: AndroidCategory.REMINDER,
         vibrationPattern: [100, 300, 200, 300],
@@ -291,7 +302,10 @@ export async function scheduleDailyDevotionReminder(
         channelId: CHANNEL_ID,
         smallIcon: 'ic_notification',
         color: '#C9A84C',
-        pressAction: { id: DEVOTION_PRESS_ACTION_ID },
+        pressAction: {
+          id: DEVOTION_PRESS_ACTION_ID,
+          launchActivity: 'default',
+        },
         visibility: AndroidVisibility.PUBLIC,
         category: AndroidCategory.REMINDER,
         vibrationPattern: [100, 300, 200, 300],

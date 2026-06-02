@@ -21,6 +21,7 @@ import {
   initializeFirebase,
   registerFirebaseGlobalErrorHandler,
 } from './lib/firebase';
+import { navigationRef } from './navigation/navigationRef';
 
 function App() {
   useOfflineSync();
@@ -34,6 +35,22 @@ function App() {
       registerFirebaseGlobalErrorHandler();
     });
   }, []);
+
+  useEffect(() => {
+    return notifee.onForegroundEvent(({ type, detail }) => {
+      if (type !== EventType.PRESS) {
+        return;
+      }
+      if (detail.pressAction?.id !== DEVOTION_PRESS_ACTION_ID) {
+        return;
+      }
+
+      if (navigationRef.isReady()) {
+        (navigationRef.navigate as any)('MainTabs', { screen: 'Home' });
+      }
+    });
+  }, []);
+
   const {
     showSplash,
     isLoggedIn,
@@ -41,6 +58,8 @@ function App() {
     recoveryLinkValid,
     needsOnboarding,
     needsProfileCompletion,
+    pendingDevotionGroupInviteCode,
+    clearPendingDevotionGroupInvite,
   } = useAppBootstrap();
 
   return (
@@ -54,6 +73,8 @@ function App() {
           recoveryLinkValid={recoveryLinkValid}
           needsOnboarding={needsOnboarding}
           needsProfileCompletion={needsProfileCompletion}
+          pendingDevotionGroupInviteCode={pendingDevotionGroupInviteCode}
+          onConsumeDevotionGroupInvite={clearPendingDevotionGroupInvite}
         />
       )}
     </SafeAreaProvider>

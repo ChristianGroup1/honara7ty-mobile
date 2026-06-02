@@ -7,6 +7,7 @@ import {
   fetchDevotionGroupById,
   fetchGroupMembersWithDevotion,
   GroupMemberStatus,
+  leaveDevotionGroup,
   removeDevotionGroupMember,
   sendGroupRemindersToPending,
   updateDevotionGroupSharedReading,
@@ -108,7 +109,7 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
     getNotificationPermissionState()
       .then(setNotificationPermissionState)
       .catch(() => setNotificationPermissionState('not_determined'));
-    registerPushToken(userId)
+    registerPushToken(userId, { requestPermission: false })
       .then(result => setPushTokenRegistered(Boolean(result.registered)))
       .catch(() => setPushTokenRegistered(false));
   };
@@ -352,7 +353,10 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
         nextState = await getNotificationPermissionState();
         setNotificationPermissionState(nextState);
       }
-      const result = nextState === 'allowed' ? await registerPushToken(user?.id) : null;
+      const result =
+        nextState === 'allowed'
+          ? await registerPushToken(user?.id, { requestPermission: false })
+          : null;
       setPushTokenRegistered(Boolean(result?.registered));
       setAlertConfig({
         visible: true,
@@ -388,6 +392,28 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
         throw error;
       }
       navigation.goBack();
+    } catch {
+      showError(strings.genericErrorTitle, strings.genericErrorMessage);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLeaveGroup = async () => {
+    if (!groupId || isOwner) {
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await leaveDevotionGroup({
+        groupId,
+        userId: user?.id,
+      });
+      if (error) {
+        throw error;
+      }
+      navigation.navigate('DevotionGroups');
     } catch {
       showError(strings.genericErrorTitle, strings.genericErrorMessage);
     } finally {
@@ -506,7 +532,7 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
     },
     actions: {
       loadDetails, hideAlert, handleEnableNotifications, handleSendPendingReminders,
-      handleDeleteGroup, handleSetTodayDevotion, setAlertConfig,
+      handleDeleteGroup, handleLeaveGroup, handleSetTodayDevotion, setAlertConfig,
       setSharedReadingEditorVisible,
       setSelectedTestament, setSelectedBook, setSelectedChapters,
       setSelectedTargetDays, setCustomTargetDays, handleSaveSharedReading,

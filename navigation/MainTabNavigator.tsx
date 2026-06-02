@@ -16,6 +16,7 @@ import DevotionGuideScreen from '../components/devotion/DevotionGuideScreen';
 import DevotionDetailScreen from '../components/devotion/DevotionDetailScreen';
 import DevotionCalendarScreen from '../components/devotion-calendar/DevotionCalendarScreen';
 import DevotionGroupsScreen from '../components/devotion-groups/DevotionGroupsScreen';
+import DevotionGroupInviteScreen from '../components/devotion-groups/DevotionGroupInviteScreen';
 import DevotionGroupDetailsScreen from '../components/devotion-groups/DevotionGroupDetailsScreen';
 import DevotionGroupMemberDetailsScreen from '../components/devotion-groups/DevotionGroupMemberDetailsScreen';
 import { getStrings } from '../localization';
@@ -152,6 +153,11 @@ const MainTabNavigator = () => {
       <Tab.Screen
         name="DevotionGroups"
         component={DevotionGroupsScreen}
+        options={hiddenTabScreenOptions}
+      />
+      <Tab.Screen
+        name="DevotionGroupInvite"
+        component={DevotionGroupInviteScreen}
         options={hiddenTabScreenOptions}
       />
       <Tab.Screen

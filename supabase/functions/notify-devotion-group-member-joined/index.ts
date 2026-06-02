@@ -138,7 +138,7 @@ async function sendFcmMessage(params: {
             body: params.body,
           },
           data: {
-            kind: 'devotion_group_reminder',
+            kind: 'devotion_group_member_joined',
             group_id: params.groupId,
           },
           android: {
@@ -150,9 +150,7 @@ async function sendFcmMessage(params: {
           },
           apns: {
             payload: {
-              aps: {
-                sound: 'default',
-              },
+              aps: { sound: 'default' },
             },
           },
         },
@@ -194,32 +192,26 @@ Deno.serve(async request => {
       return jsonResponse({ error: 'Unauthorized' }, 401);
     }
 
-    const { groupId, message } = await request.json();
+    const { groupId, displayName } = await request.json();
     if (!groupId || typeof groupId !== 'string') {
       return jsonResponse({ error: 'groupId is required' }, 400);
     }
 
-    const reminderMessage =
-      typeof message === 'string' && message.trim()
-        ? message.trim()
-        : 'فاكر خلوة النهارده؟ مستنيين نشوف قرأت في إيه.';
-
-    const { data: leaderRow, error: leaderError } = await adminClient
+    const { data: membership, error: membershipError } = await adminClient
       .from('devotion_group_members')
-      .select('role')
+      .select('joined_at')
       .eq('group_id', groupId)
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (
-      leaderError ||
-      !leaderRow ||
-      !['owner', 'leader'].includes(leaderRow.role)
-    ) {
+    if (membershipError || !membership) {
       return jsonResponse({ error: 'Forbidden' }, 403);
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const joinedAt = new Date(membership.joined_at).getTime();
+    if (!Number.isFinite(joinedAt) || Date.now() - joinedAt > 2 * 60 * 1000) {
+      return jsonResponse({ sent: 0, skipped: true });
+    }
 
     const { data: members, error: membersError } = await adminClient
       .from('devotion_group_members')
@@ -233,88 +225,49 @@ Deno.serve(async request => {
 
     const memberIds = (members ?? []).map(member => member.user_id as string);
     if (!memberIds.length) {
-      return jsonResponse({ sent: 0, skipped: 0 });
-    }
-
-    const { data: logs, error: logsError } = await adminClient
-      .from('devotion_log')
-      .select('user_id, completed')
-      .eq('date', today)
-      .in('user_id', memberIds);
-
-    if (logsError) {
-      throw logsError;
-    }
-
-    const completedUserIds = new Set(
-      (logs ?? [])
-        .filter(log => log.completed)
-        .map(log => log.user_id as string),
-    );
-    const pendingUserIds = memberIds.filter(
-      memberId => !completedUserIds.has(memberId),
-    );
-
-    if (!pendingUserIds.length) {
-      return jsonResponse({ sent: 0, skipped: memberIds.length });
+      return jsonResponse({ sent: 0, failed: 0, missingTokens: 0 });
     }
 
     const { data: tokens, error: tokensError } = await adminClient
       .from('user_push_tokens')
       .select('user_id, token')
-      .in('user_id', pendingUserIds);
+      .in('user_id', memberIds);
 
     if (tokensError) {
       throw tokensError;
     }
 
     const accessToken = await getFcmAccessToken();
-    let sent = 0;
-    let failed = 0;
     const tokenUserIds = new Set(
       (tokens ?? []).map(tokenRow => tokenRow.user_id as string),
     );
-    const missingTokens = pendingUserIds.filter(
-      pendingUserId => !tokenUserIds.has(pendingUserId),
+    const missingTokens = memberIds.filter(
+      memberId => !tokenUserIds.has(memberId),
     ).length;
+    const name =
+      typeof displayName === 'string' && displayName.trim()
+        ? displayName.trim()
+        : 'عضو جديد';
+    let sent = 0;
+    let failed = 0;
 
     for (const tokenRow of tokens ?? []) {
       try {
         await sendFcmMessage({
           accessToken,
           token: tokenRow.token as string,
-          title: 'تذكير مجموعة الخلوة',
-          body: reminderMessage,
+          title: 'عضو جديد في مجموعة الخلوة',
+          body: `${name} انضم إلى مجموعة الخلوة.`,
           groupId,
         });
         sent += 1;
       } catch (error) {
         failed += 1;
-        console.error('Failed to send FCM message', error);
+        console.error('Failed to send member joined FCM message', error);
       }
     }
 
-    const reminderRows = pendingUserIds.map(recipientId => ({
-      group_id: groupId,
-      sender_id: user.id,
-      recipient_id: recipientId,
-      message: reminderMessage,
-    }));
-
-    await adminClient.from('devotion_group_reminders').insert(reminderRows);
-    await adminClient
-      .from('devotion_group_members')
-      .update({ last_reminded_at: new Date().toISOString() })
-      .eq('group_id', groupId)
-      .in('user_id', pendingUserIds);
-
-    return jsonResponse({
-      sent,
-      failed,
-      pending: pendingUserIds.length,
-      missingTokens,
-      skipped: memberIds.length - pendingUserIds.length,
-    });
+    return jsonResponse({ sent, failed, missingTokens });
   } catch (error) {
     console.error(error);
     return jsonResponse({ error: 'Internal server error' }, 500);

@@ -20,10 +20,24 @@ export const styles = StyleSheet.create({
   },
   inviteCard: {
     backgroundColor: '#FFF', borderRadius: 16, padding: 14, marginBottom: 12,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    gap: 12,
   },
-  metaLabel: { color: '#7A818B', fontSize: 12, marginBottom: 4 },
-  inviteCode: { color: NAVY, fontSize: 20, fontWeight: '900' },
+  inviteContent: { gap: 8 },
+  metaLabel: { color: '#7A818B', fontSize: 14, marginBottom: 2 },
+  inviteCode: { color: NAVY, fontSize: 14, fontWeight: '900', flex: 1 },
+  inviteValueRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    gap: 8,
+  },
+  inviteLinkLabel: {
+    color: '#7A818B', fontSize: 14, marginTop: 8, marginBottom: 2,
+  },
+  inviteLinkPressable: { flex: 1, minWidth: 0 },
+  inviteLinkText: {
+    color: '#2563EB', fontSize: 14, lineHeight: 20, fontWeight: '800',
+    textDecorationLine: 'underline', textAlign: 'left',
+  },
+  inviteLinkActionsRow: { flexDirection: 'row', gap: 8 },
   iconButton: {
     width: 42, height: 42, borderRadius: 12, backgroundColor: '#F3F6FA',
     alignItems: 'center', justifyContent: 'center',
@@ -117,6 +131,16 @@ export const styles = StyleSheet.create({
   },
   pendingReminderButtonText: {
     flexShrink: 1, color: '#FFF', fontSize: 14, fontWeight: '900',
+    lineHeight: 20, textAlign: 'center',
+  },
+  leaveGroupButton: {
+    minHeight: 46, borderRadius: 14, backgroundColor: 'rgba(255,59,48,0.10)',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, marginBottom: 14, width: '100%', paddingHorizontal: 14,
+    borderWidth: 1, borderColor: 'rgba(255,59,48,0.16)',
+  },
+  leaveGroupButtonText: {
+    flexShrink: 1, color: '#B42318', fontSize: 14, fontWeight: '900',
     lineHeight: 20, textAlign: 'center',
   },
   sectionHeader: {

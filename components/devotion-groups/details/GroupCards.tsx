@@ -31,11 +31,11 @@ export const PushRegistrationCard = ({
       <Text style={styles.permissionTitle}>
         {notificationPermissionState === 'allowed'
           ? 'تسجيل جهازك للإشعارات'
-          : 'تفعيل إشعارات الجروب'}
+          : 'تفعيل إشعارات مجموعة الخلوة'}
       </Text>
       <Text style={styles.permissionText}>
         {notificationPermissionState === 'allowed'
-          ? 'الإذن مفعّل، لكن جهازك لسه مش متسجل لاستقبال تذكيرات الجروب. اضغط لإعادة التسجيل.'
+          ? 'الإذن مفعّل، لكن جهازك لسه مش متسجل لاستقبال تذكيرات مجموعة الخلوة. اضغط لإعادة التسجيل.'
           : 'فعّل الإشعارات عشان تستقبل تذكيرات الخلوة حتى لو التطبيق مقفول.'}
       </Text>
     </View>
@@ -45,20 +45,46 @@ export const PushRegistrationCard = ({
 export const InviteCodeCard = ({
   group,
   strings,
+  inviteLink,
   onCopy,
+  onCopyLink,
+  onShare,
 }: {
   group: DevotionGroup;
   strings: Strings;
+  inviteLink: string;
   onCopy: () => void;
+  onCopyLink: () => void;
+  onShare: () => void;
 }) => (
   <View style={styles.inviteCard}>
-    <View>
+    <View style={styles.inviteContent}>
       <Text style={styles.metaLabel}>{strings.inviteCode}</Text>
-      <Text style={styles.inviteCode}>{group.invite_code}</Text>
+      <View style={styles.inviteValueRow}>
+        <Text style={styles.inviteCode}>{group.invite_code}</Text>
+        <TouchableOpacity style={styles.iconButton} onPress={onCopy}>
+          <MaterialCommunityIcons name="content-copy" size={20} color={NAVY} />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.inviteLinkLabel}>{strings.inviteLink}</Text>
+      <View style={styles.inviteValueRow}>
+        <TouchableOpacity
+          style={styles.inviteLinkPressable}
+          onPress={onCopyLink}
+        >
+          <Text style={styles.inviteLinkText}>{inviteLink}</Text>
+        </TouchableOpacity>
+        <View style={styles.inviteLinkActionsRow}>
+          <TouchableOpacity style={styles.iconButton} onPress={onCopyLink}>
+            <MaterialCommunityIcons name="content-copy" size={20} color={NAVY} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton} onPress={onShare}>
+            <MaterialCommunityIcons name="share-variant" size={20} color={NAVY} />
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
-    <TouchableOpacity style={styles.iconButton} onPress={onCopy}>
-      <MaterialCommunityIcons name="content-copy" size={20} color={NAVY} />
-    </TouchableOpacity>
   </View>
 );
 

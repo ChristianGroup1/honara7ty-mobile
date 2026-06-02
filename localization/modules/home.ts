@@ -53,7 +53,7 @@ export const homeStrings = {
     'تم حفظ التغيير على الجهاز، وسيتم إرساله تلقائياً عند عودة الإنترنت.',
   quickActionsTitle: 'اختصارات سريعة',
   quickActions: {
-    devotionGroups: 'جروبات الخلوة',
+    devotionGroups: 'مجموعات الخلوة',
     devotionGuide: 'شرح الخلوة',
     settings: 'اعدادات الخلوة',
     calendar: 'متابعة وقتك مع الله',

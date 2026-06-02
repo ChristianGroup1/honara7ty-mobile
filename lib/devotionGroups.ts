@@ -50,6 +50,12 @@ export type DevotionGroupReminder = {
   read_at?: string | null;
 };
 
+export function buildDevotionGroupInviteLink(inviteCode: string) {
+  return `https://honara7ty.space/devotion-group-invite?code=${encodeURIComponent(
+    inviteCode.replace(/\s+/g, ''),
+  )}`;
+}
+
 function isExpiredJwtError(error: any) {
   return (
     error?.code === 'PGRST303' ||
@@ -96,7 +102,7 @@ export async function createDevotionGroup(params: {
     supabase
       .rpc('create_devotion_group', {
         group_name: params.name,
-        owner_display_name: params.displayName.trim() || 'قائد الجروب',
+        owner_display_name: params.displayName.trim() || 'قائد مجموعة الخلوة',
       })
       .single(),
   );
@@ -106,7 +112,7 @@ export async function joinDevotionGroupByCode(params: {
   code: string;
   displayName: string;
 }) {
-  return withExpiredJwtRetry(() =>
+  const result = await withExpiredJwtRetry(() =>
     supabase
       .rpc('join_devotion_group', {
         invite_code_input: params.code,
@@ -114,6 +120,20 @@ export async function joinDevotionGroupByCode(params: {
       })
       .single(),
   );
+
+  const joinedGroup = result.data as DevotionGroup | null;
+  if (!result.error && joinedGroup?.id) {
+    notifyDevotionGroupMemberJoined({
+      groupId: joinedGroup.id,
+      displayName: params.displayName.trim() || 'مستخدم',
+    }).catch(error => {
+      if (__DEV__) {
+        console.warn('[devotion-groups] failed to notify member joined', error);
+      }
+    });
+  }
+
+  return result;
 }
 
 export async function joinDevotionGroupByCodeLegacy(params: {
@@ -131,6 +151,23 @@ export async function joinDevotionGroupByCodeLegacy(params: {
 export async function deleteDevotionGroup(groupId: string) {
   return withExpiredJwtRetry(() =>
     supabase.from('devotion_groups').delete().eq('id', groupId),
+  );
+}
+
+export async function leaveDevotionGroup(params: {
+  groupId: string;
+  userId?: string | null;
+}) {
+  if (!params.userId) {
+    return { data: null, error: new Error('AUTH_REQUIRED') };
+  }
+
+  return withExpiredJwtRetry(() =>
+    supabase
+      .from('devotion_group_members')
+      .delete()
+      .eq('group_id', params.groupId)
+      .eq('user_id', params.userId),
   );
 }
 
@@ -316,6 +353,20 @@ export async function sendGroupRemindersToPending(params: {
       body: {
         groupId: params.groupId,
         message: params.message,
+      },
+    }),
+  );
+}
+
+export async function notifyDevotionGroupMemberJoined(params: {
+  groupId: string;
+  displayName: string;
+}) {
+  return withExpiredJwtRetry(() =>
+    supabase.functions.invoke('notify-devotion-group-member-joined', {
+      body: {
+        groupId: params.groupId,
+        displayName: params.displayName,
       },
     }),
   );

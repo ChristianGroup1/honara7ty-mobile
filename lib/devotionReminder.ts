@@ -1,4 +1,3 @@
-import supabase from './supbase';
 import {
   cancelDevotionReminder,
   scheduleDailyDevotionReminder,
@@ -9,7 +8,7 @@ const DEFAULT_DEVOTION_TIME = '07:00';
 
 export async function syncDevotionReminderSchedule(
   userId?: string | null,
-  options?: { startTomorrow?: boolean },
+  options?: { startTomorrow?: boolean; requestPermission?: boolean },
 ) {
   await cancelDevotionReminder();
 
@@ -24,6 +23,7 @@ export async function syncDevotionReminderSchedule(
 
   await scheduleDailyDevotionReminder(hours, minutes, {
     startTomorrow: options?.startTomorrow,
+    requestPermission: options?.requestPermission,
   });
 
   return { error: null };

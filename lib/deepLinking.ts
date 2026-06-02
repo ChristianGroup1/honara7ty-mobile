@@ -78,6 +78,39 @@ function isAuthCallbackUrl(url: string): boolean {
   }
 }
 
+export function getDevotionGroupInviteCodeFromUrl(
+  url: string | null,
+): string | null {
+  if (!url) {
+    return null;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    const isInviteUrl =
+      ((parsedUrl as any).protocol === 'honara7ty:' &&
+        ((parsedUrl as any).hostname === 'devotion-group-invite' ||
+          (parsedUrl as any).pathname === '/devotion-group-invite')) ||
+      (((parsedUrl as any).protocol === 'https:' ||
+        (parsedUrl as any).protocol === 'http:') &&
+        (parsedUrl as any).hostname === 'honara7ty.space' &&
+        ((parsedUrl as any).pathname === '/devotion-group-invite' ||
+          (parsedUrl as any).pathname === '/devotion-group-invite.html'));
+
+    if (!isInviteUrl) {
+      return null;
+    }
+
+    return parsedUrl.searchParams.get('code')?.replace(/\s+/g, '') || null;
+  } catch {
+    if (!url.startsWith('honara7ty://devotion-group-invite')) {
+      return null;
+    }
+
+    return parseQueryString(url).code?.replace(/\s+/g, '') || null;
+  }
+}
+
 export async function handleOAuthCallbackUrl(
   url: string | null,
 ): Promise<boolean> {

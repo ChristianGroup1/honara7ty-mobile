@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StatusBar } from 'react-native';
 import {
   NavigationContainer,
@@ -37,6 +37,8 @@ interface RootNavigatorProps {
   recoveryLinkValid: boolean;
   needsOnboarding: boolean;
   needsProfileCompletion: boolean;
+  pendingDevotionGroupInviteCode?: string | null;
+  onConsumeDevotionGroupInvite?: () => void;
 }
 
 function getInitialRouteName({
@@ -103,9 +105,12 @@ const RootNavigator = ({
   recoveryLinkValid,
   needsProfileCompletion,
   needsOnboarding,
+  pendingDevotionGroupInviteCode,
+  onConsumeDevotionGroupInvite,
 }: RootNavigatorProps) => {
   const routeNameRef = useRef<string | undefined>(undefined);
   const navigationReadyRef = useRef(false);
+  const [navigationReady, setNavigationReady] = useState(false);
 
   const initialRouteName = getInitialRouteName({
     isLoggedIn,
@@ -162,11 +167,51 @@ const RootNavigator = ({
     needsOnboarding,
   ]);
 
+  useEffect(() => {
+    if (
+      !pendingDevotionGroupInviteCode ||
+      !navigationReady ||
+      !navigationReadyRef.current ||
+      !navigationRef.isReady() ||
+      !isLoggedIn ||
+      needsProfileCompletion ||
+      needsOnboarding ||
+      isRecoveryMode
+    ) {
+      return;
+    }
+
+    (navigationRef.navigate as any)('MainTabs', { screen: 'Home' });
+
+    const inviteTimeout = setTimeout(() => {
+      if (!navigationRef.isReady()) {
+        return;
+      }
+
+      (navigationRef.navigate as any)('MainTabs', {
+        screen: 'DevotionGroupInvite',
+        params: { inviteCode: pendingDevotionGroupInviteCode },
+      });
+      onConsumeDevotionGroupInvite?.();
+    }, 700);
+
+    return () => clearTimeout(inviteTimeout);
+  }, [
+    isLoggedIn,
+    isRecoveryMode,
+    navigationReady,
+    needsOnboarding,
+    needsProfileCompletion,
+    onConsumeDevotionGroupInvite,
+    pendingDevotionGroupInviteCode,
+  ]);
+
   return (
     <NavigationContainer
       ref={navigationRef}
       onReady={() => {
         navigationReadyRef.current = true;
+        setNavigationReady(true);
         registerSentryNavigationContainer(navigationRef);
         const currentRoute = getActiveRoute(navigationRef.getRootState());
         const currentRouteName = currentRoute?.name;

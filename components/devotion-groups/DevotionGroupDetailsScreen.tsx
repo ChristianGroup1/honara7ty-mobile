@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
+  Share,
   StatusBar,
   Text,
   TouchableOpacity,
@@ -35,7 +36,10 @@ import MembersList from './details/MembersList';
 import SharedReadingEditorModal from './details/SharedReadingEditorModal';
 import { styles } from './details/styles';
 import { useDevotionGroupDetails } from './details/useDevotionGroupDetails';
-import { GroupMemberStatus } from '../../lib/devotionGroups';
+import {
+  buildDevotionGroupInviteLink,
+  GroupMemberStatus,
+} from '../../lib/devotionGroups';
 import HomeAnswerSheet from '../home/HomeAnswerSheet';
 import {
   BIBLE_BOOKS,
@@ -85,6 +89,13 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
     !pendingCompleted ||
     answerReadingEntries.length > 0 ||
     Boolean(answerBook && answerChapters.length > 0);
+  const inviteLink = useMemo(
+    () =>
+      state.group?.invite_code
+        ? buildDevotionGroupInviteLink(state.group.invite_code)
+        : '',
+    [state.group?.invite_code],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -103,6 +114,23 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
           text: strings.deleteGroup,
           style: 'destructive',
           onPress: actions.handleDeleteGroup,
+        },
+        { text: strings.cancel, style: 'cancel' },
+      ],
+    });
+  };
+
+  const confirmLeaveGroup = () => {
+    actions.setAlertConfig({
+      visible: true,
+      title: strings.leaveGroupTitle,
+      message: strings.leaveGroupMessage,
+      type: 'warning',
+      buttons: [
+        {
+          text: strings.leaveGroup,
+          style: 'destructive',
+          onPress: actions.handleLeaveGroup,
         },
         { text: strings.cancel, style: 'cancel' },
       ],
@@ -262,6 +290,18 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
     await actions.handleSetTodayDevotion(pendingCompleted, nextEntries);
   };
 
+  const shareInviteLink = async () => {
+    if (!inviteLink) {
+      return;
+    }
+
+    try {
+      await Share.share({ message: strings.inviteShareMessage(inviteLink) });
+    } catch {
+      Clipboard.setString(inviteLink);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={NAVY} />
@@ -279,6 +319,12 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
             <AppHeaderAction
               icon="trash-can-outline"
               onPress={confirmDeleteGroup}
+              backgroundColor="rgba(255,59,48,0.18)"
+            />
+          ) : state.currentMembership ? (
+            <AppHeaderAction
+              icon="logout"
+              onPress={confirmLeaveGroup}
               backgroundColor="rgba(255,59,48,0.18)"
             />
           ) : null
@@ -313,7 +359,10 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
             <InviteCodeCard
               group={state.group}
               strings={strings}
+              inviteLink={inviteLink}
               onCopy={() => Clipboard.setString(state.group?.invite_code ?? '')}
+              onCopyLink={() => Clipboard.setString(inviteLink)}
+              onShare={shareInviteLink}
             />
             <SummaryCards
               membersCount={state.members.length}
@@ -347,6 +396,22 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
                 />
                 <Text style={styles.pendingReminderButtonText}>
                   {strings.sendPendingReminders}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+            {!state.isOwner && state.currentMembership ? (
+              <TouchableOpacity
+                style={styles.leaveGroupButton}
+                onPress={confirmLeaveGroup}
+                disabled={state.saving}
+              >
+                <MaterialCommunityIcons
+                  name="logout"
+                  size={19}
+                  color="#B42318"
+                />
+                <Text style={styles.leaveGroupButtonText}>
+                  {strings.leaveGroup}
                 </Text>
               </TouchableOpacity>
             ) : null}

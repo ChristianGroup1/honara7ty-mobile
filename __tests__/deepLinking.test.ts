@@ -8,7 +8,11 @@ jest.mock('../lib/supbase', () => ({
   },
 }));
 
-import { handleRecoveryUrl, parseFragment } from '../lib/deepLinking';
+import {
+  getDevotionGroupInviteCodeFromUrl,
+  handleRecoveryUrl,
+  parseFragment,
+} from '../lib/deepLinking';
 import supabase from '../lib/supbase';
 import {
   __resetOAuthCallbackCacheForTests,
@@ -126,5 +130,21 @@ describe('deepLinking', () => {
     await expect(handleOAuthCallbackUrl(url)).resolves.toBe(true);
 
     expect(mockExchangeCodeForSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('parses custom scheme devotion group invite links', () => {
+    expect(
+      getDevotionGroupInviteCodeFromUrl(
+        'honara7ty://devotion-group-invite?code=ABC%20123',
+      ),
+    ).toBe('ABC123');
+  });
+
+  it('parses web devotion group invite links', () => {
+    expect(
+      getDevotionGroupInviteCodeFromUrl(
+        'https://honara7ty.space/devotion-group-invite?code=XYZ',
+      ),
+    ).toBe('XYZ');
   });
 });

@@ -18,8 +18,8 @@ export const moreStrings = {
       subtitle: 'راجع الأيام التي التزمت فيها',
     },
     devotionGroups: {
-      title: 'جروبات الخلوة',
-      subtitle: 'تابع خلوة أعضاء الجروب',
+      title: 'مجموعات الخلوة',
+      subtitle: 'تابع خلوة أعضاء مجموعة الخلوة',
     },
   },
 } as const;

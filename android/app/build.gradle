@@ -85,6 +85,14 @@ def enableProguardInReleaseBuilds = true
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
+
+// Sentry sourcemap uploads are network-bound and can fail local release builds
+// even after the Android bundle was generated. Enable them explicitly when
+// needed with SENTRY_UPLOAD_SOURCE_MAPS=true.
+project.ext.shouldSentryAutoUploadGeneral = { ->
+    return System.getenv('SENTRY_UPLOAD_SOURCE_MAPS') == 'true'
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
