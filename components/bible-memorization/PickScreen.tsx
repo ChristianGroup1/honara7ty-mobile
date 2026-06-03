@@ -244,6 +244,8 @@ const PickScreen = ({ navigation }: Props) => {
                 verseTitle: strings.verse,
                 fromVerseTitle: strings.fromVerse,
                 toVerseTitle: strings.toVerse,
+                selectAllVerses: strings.selectAllVerses,
+                clearVerses: strings.clearVerses,
               }}
               selectedTestament={activeTestament}
               books={visibleBooks}
@@ -271,6 +273,8 @@ const PickScreen = ({ navigation }: Props) => {
                     : [...current, verse],
                 );
               }}
+              onSelectAllVerses={() => setSelectedVerses(verseValues)}
+              onClearVerses={() => setSelectedVerses([])}
             />
           </View>
 

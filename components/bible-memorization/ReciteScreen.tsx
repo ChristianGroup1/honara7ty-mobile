@@ -68,6 +68,7 @@ const ReciteScreen = ({ navigation, route }: Props) => {
   const [slots, setSlots] = useState<WordSlot[]>(
     buildSlots(selection.verseOriginal, selection.difficulty),
   );
+  const [isReferenceBlurred, setIsReferenceBlurred] = useState(false);
   const isFullTextMode = selection.difficulty === 'fullText';
 
   const scrollToFocusedInput = useCallback((index: number) => {
@@ -202,11 +203,53 @@ const ReciteScreen = ({ navigation, route }: Props) => {
             </View>
           </View>
 
+          {isFullTextMode ? (
+            <View style={styles.referenceVerseBox}>
+              <View style={styles.referenceVerseHeader}>
+                <Text style={styles.verseBoxTitle}>
+                  {strings.referenceTextTitle}
+                </Text>
+                <TouchableOpacity
+                  style={styles.revealVerseButton}
+                  activeOpacity={0.82}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    isReferenceBlurred
+                      ? strings.showReferenceText
+                      : strings.hideReferenceText
+                  }
+                  onPress={() => setIsReferenceBlurred(current => !current)}
+                >
+                  <MaterialCommunityIcons
+                    name={
+                      isReferenceBlurred ? 'eye-off-outline' : 'eye-outline'
+                    }
+                    size={20}
+                    color="#C9A84C"
+                  />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.revealedVerseTextWrap}>
+                <Text
+                  style={[
+                    styles.revealedVerseText,
+                    isReferenceBlurred && styles.revealedVerseTextBlurred,
+                  ]}
+                >
+                  {selection.verseOriginal}
+                </Text>
+                {isReferenceBlurred ? (
+                  <View pointerEvents="none" style={styles.verseBlurOverlay} />
+                ) : null}
+              </View>
+            </View>
+          ) : null}
+
           <View style={styles.verseBox}>
             <View style={styles.verseBoxHeader}>
               <Text style={styles.verseBoxTitle}>{strings.verseTextTitle}</Text>
               <MaterialCommunityIcons
-                name="feather"
+                name={isFullTextMode ? 'form-textbox' : 'feather'}
                 size={18}
                 color="#C9A84C"
               />

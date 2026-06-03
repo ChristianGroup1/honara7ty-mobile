@@ -7,7 +7,6 @@
 
 import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
-import { InteractionManager } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SplashScreen } from './screens';
 import RootNavigator from './navigation/RootNavigator';
@@ -23,17 +22,34 @@ import {
 } from './lib/firebase';
 import { navigationRef } from './navigation/navigationRef';
 
+function runWhenIdle(task: () => void) {
+  const idleScheduler = (globalThis as any).requestIdleCallback;
+  if (typeof idleScheduler === 'function') {
+    const idleId = idleScheduler(task);
+    return () => {
+      const cancelIdleScheduler = (globalThis as any).cancelIdleCallback;
+      if (typeof cancelIdleScheduler === 'function') {
+        cancelIdleScheduler(idleId);
+      }
+    };
+  }
+
+  const timer = setTimeout(task, 0);
+  return () => clearTimeout(timer);
+}
+
 function App() {
   useOfflineSync();
 
   useEffect(() => {
-    // Defer heavy initializations until after initial rendering to prevent ANRs
-    InteractionManager.runAfterInteractions(() => {
+    const cancelIdleTask = runWhenIdle(() => {
       initializeSentry();
       initializeClarity();
       initializeFirebase();
       registerFirebaseGlobalErrorHandler();
     });
+
+    return cancelIdleTask;
   }, []);
 
   useEffect(() => {

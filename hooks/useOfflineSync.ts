@@ -2,7 +2,14 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { flushOfflineQueue } from '../lib/offlineSync';
-import supabase from '../lib/supbase';
+
+function flushQueueSafely() {
+  flushOfflineQueue().catch(error => {
+    if (__DEV__) {
+      console.warn('[offline-sync] failed to flush queue', error);
+    }
+  });
+}
 
 export function useOfflineSync() {
   useEffect(() => {
@@ -10,15 +17,21 @@ export function useOfflineSync() {
     const debouncedFlush = () => {
       if (flushTimeout) clearTimeout(flushTimeout);
       flushTimeout = setTimeout(() => {
-        void flushOfflineQueue();
+        flushQueueSafely();
       }, 2000);
     };
 
-    void NetInfo.fetch().then(state => {
-      if (state.isConnected && state.isInternetReachable !== false) {
-        debouncedFlush();
-      }
-    });
+    NetInfo.fetch()
+      .then(state => {
+        if (state.isConnected && state.isInternetReachable !== false) {
+          debouncedFlush();
+        }
+      })
+      .catch(error => {
+        if (__DEV__) {
+          console.warn('[offline-sync] failed to read network state', error);
+        }
+      });
 
     const unsubscribeNetInfo = NetInfo.addEventListener(state => {
       if (state.isConnected && state.isInternetReachable !== false) {
@@ -30,8 +43,7 @@ export function useOfflineSync() {
       'change',
       nextState => {
         if (nextState === 'active') {
-          void supabase.auth.getSession();
-          void flushOfflineQueue();
+          flushQueueSafely();
         }
       },
     );

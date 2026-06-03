@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
+  Platform,
   RefreshControl,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -48,6 +49,8 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
     title: '',
   });
   const hasGroupsRef = useRef(false);
+  const hasLoadedGroupsRef = useRef(false);
+  const sessionUserRef = useRef<any>(null);
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
@@ -62,8 +65,13 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
       }
 
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const sessionUser = sessionData?.session?.user;
+        let sessionUser = sessionUserRef.current;
+        if (!sessionUser) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          sessionUser = sessionData?.session?.user;
+        }
+
+        sessionUserRef.current = sessionUser ?? null;
         setUser(sessionUser ?? null);
 
         if (!sessionUser?.id) {
@@ -95,7 +103,9 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
 
   useFocusEffect(
     useCallback(() => {
-      loadGroups(true, true);
+      const shouldShowLoader = !hasLoadedGroupsRef.current;
+      hasLoadedGroupsRef.current = true;
+      loadGroups(shouldShowLoader, shouldShowLoader);
     }, [loadGroups]),
   );
 
@@ -118,7 +128,7 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
     strings.joinSuccessTitle,
   ]);
 
-  const handleCreateGroup = async () => {
+  const handleCreateGroup = useCallback(async () => {
     if (!groupName.trim()) {
       setAlertConfig({
         visible: true,
@@ -158,9 +168,19 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
     } finally {
       setSaving(false);
     }
-  };
+  }, [
+    groupName,
+    loadGroups,
+    navigation,
+    showError,
+    strings.genericErrorMessage,
+    strings.genericErrorTitle,
+    strings.missingGroupNameMessage,
+    strings.missingGroupNameTitle,
+    user,
+  ]);
 
-  const handleJoinGroup = async () => {
+  const handleJoinGroup = useCallback(async () => {
     if (!inviteCode.trim()) {
       setAlertConfig({
         visible: true,
@@ -200,32 +220,51 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
     } finally {
       setSaving(false);
     }
-  };
+  }, [
+    inviteCode,
+    loadGroups,
+    navigation,
+    showError,
+    strings.genericErrorMessage,
+    strings.genericErrorTitle,
+    strings.invalidInviteCodeTitle,
+    strings.missingInviteCodeMessage,
+    strings.missingInviteCodeTitle,
+    user,
+  ]);
 
-  return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
-      <AppHeader
-        topInsetHeight={insets.top}
-        title={strings.title}
-        leading={
-          <AppHeaderAction
-            icon="chevron-right"
-            onPress={() => navigation.goBack()}
-          />
+  const renderGroup = useCallback(
+    ({ item: group }: { item: DevotionGroup }) => (
+      <TouchableOpacity
+        style={styles.groupCard}
+        activeOpacity={0.82}
+        onPress={() =>
+          navigation.navigate('DevotionGroupDetails', {
+            groupId: group.id,
+          })
         }
-      />
-
-      <ScrollView
-        contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={() => loadGroups(false, false)}
-          />
-        }
-        showsVerticalScrollIndicator={false}
       >
+        <View style={styles.groupIcon}>
+          <MaterialCommunityIcons name="account-group" size={22} color={GOLD} />
+        </View>
+        <View style={styles.groupBody}>
+          <Text style={styles.groupName}>{group.name}</Text>
+          <View style={styles.invitePill}>
+            <MaterialCommunityIcons name="key-variant" size={13} color={GOLD} />
+            <Text style={styles.groupMeta}>
+              {strings.inviteCode}: {group.invite_code}
+            </Text>
+          </View>
+        </View>
+        <MaterialCommunityIcons name="chevron-left" size={22} color="#9AA3AE" />
+      </TouchableOpacity>
+    ),
+    [navigation, strings.inviteCode],
+  );
+
+  const renderHeader = useCallback(
+    () => (
+      <>
         <View style={styles.heroCard}>
           <View style={styles.heroGlow} />
           <View style={styles.heroTopRow}>
@@ -343,58 +382,69 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
             {groups.length} {strings.groupsCount}
           </Text>
         </View>
-        {groups.length > 0 ? (
-          groups.map(group => (
-            <TouchableOpacity
-              key={group.id}
-              style={styles.groupCard}
-              activeOpacity={0.82}
-              onPress={() =>
-                navigation.navigate('DevotionGroupDetails', {
-                  groupId: group.id,
-                })
-              }
-            >
-              <View style={styles.groupIcon}>
-                <MaterialCommunityIcons
-                  name="account-group"
-                  size={22}
-                  color={GOLD}
-                />
-              </View>
-              <View style={styles.groupBody}>
-                <Text style={styles.groupName}>{group.name}</Text>
-                <View style={styles.invitePill}>
-                  <MaterialCommunityIcons
-                    name="key-variant"
-                    size={13}
-                    color={GOLD}
-                  />
-                  <Text style={styles.groupMeta}>
-                    {strings.inviteCode}: {group.invite_code}
-                  </Text>
-                </View>
-              </View>
-              <MaterialCommunityIcons
-                name="chevron-left"
-                size={22}
-                color="#9AA3AE"
-              />
-            </TouchableOpacity>
-          ))
-        ) : (
-          <View style={styles.emptyCard}>
-            <View style={styles.emptyIcon}>
-              <MaterialCommunityIcons
-                name="account-group-outline"
-                size={24}
-                color={GOLD}
-              />
-            </View>
-            <Text style={styles.emptyText}>{strings.emptyGroups}</Text>
-          </View>
-        )}
-      </ScrollView>
+      </>
+    ),
+    [
+      actionMode,
+      groupName,
+      groups.length,
+      handleCreateGroup,
+      handleJoinGroup,
+      inviteCode,
+      saving,
+      strings,
+    ],
+  );
+
+  const renderEmpty = useCallback(
+    () => (
+      <View style={styles.emptyCard}>
+        <View style={styles.emptyIcon}>
+          <MaterialCommunityIcons
+            name="account-group-outline"
+            size={24}
+            color={GOLD}
+          />
+        </View>
+        <Text style={styles.emptyText}>{strings.emptyGroups}</Text>
+      </View>
+    ),
+    [strings.emptyGroups],
+  );
+
+  return (
+    <SafeAreaView style={styles.container} edges={[]}>
+      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+      <AppHeader
+        topInsetHeight={insets.top}
+        title={strings.title}
+        leading={
+          <AppHeaderAction
+            icon="chevron-right"
+            onPress={() => navigation.goBack()}
+          />
+        }
+      />
+
+      <FlatList
+        data={groups}
+        renderItem={renderGroup}
+        keyExtractor={group => group.id}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={() => loadGroups(false, false)}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={Platform.OS === 'android'}
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={7}
+      />
 
       {saving ? (
         <View style={styles.savingOverlay}>

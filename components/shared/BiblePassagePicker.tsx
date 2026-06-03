@@ -23,9 +23,12 @@ type Labels = {
   newTestament: string;
   bookCountSuffix?: string;
   selectAllChapters?: string;
+  clearChapters?: string;
   verseTitle?: string;
   fromVerseTitle?: string;
   toVerseTitle?: string;
+  selectAllVerses?: string;
+  clearVerses?: string;
 };
 
 type PassageBook = {
@@ -55,6 +58,8 @@ type Props = {
   onSetVerseStart?: (v: number) => void;
   onSetVerseEnd?: (v: number) => void;
   onToggleVerse?: (v: number) => void;
+  onSelectAllVerses?: () => void;
+  onClearVerses?: () => void;
 };
 
 const BiblePassagePicker = ({
@@ -78,6 +83,8 @@ const BiblePassagePicker = ({
   onSetVerseStart,
   onSetVerseEnd,
   onToggleVerse,
+  onSelectAllVerses,
+  onClearVerses,
 }: Props) => {
   const [bookPickerVisible, setBookPickerVisible] = useState(false);
   const [chapterPickerVisible, setChapterPickerVisible] = useState(false);
@@ -90,16 +97,30 @@ const BiblePassagePicker = ({
     if (!multiSelectChapters) {
       return `${labels.chapterTitle} ${selectedChapters[0]}`;
     }
-    if (selectedChapters.length === chapterOptions.length && chapterOptions.length > 0) {
+    if (
+      selectedChapters.length === chapterOptions.length &&
+      chapterOptions.length > 0
+    ) {
       const chapters = selectedChapters.join(', ');
       return labels.selectAllChapters
         ? `${labels.selectAllChapters} (${chapters})`
         : `${selectedChapters.length} إصحاح (${chapters})`;
     }
     return selectedChapters.join(', ');
-  }, [chapterOptions.length, labels.selectAllChapters, labels.selectBookFirst, selectedChapters, multiSelectChapters, labels.chapterTitle]);
+  }, [
+    chapterOptions.length,
+    labels.selectAllChapters,
+    labels.selectBookFirst,
+    selectedChapters,
+    multiSelectChapters,
+    labels.chapterTitle,
+  ]);
   const allChaptersSelected =
-    chapterOptions.length > 0 && selectedChapters.length === chapterOptions.length;
+    chapterOptions.length > 0 &&
+    selectedChapters.length === chapterOptions.length;
+  const allVersesSelected =
+    verseOptions.length > 0 &&
+    verseOptions.every(verse => selectedVerses.includes(verse));
 
   return (
     <>
@@ -119,7 +140,9 @@ const BiblePassagePicker = ({
                   active && styles.testamentTabTextActive,
                 ]}
               >
-                {testament === 'old' ? labels.oldTestament : labels.newTestament}
+                {testament === 'old'
+                  ? labels.oldTestament
+                  : labels.newTestament}
               </Text>
             </TouchableOpacity>
           );
@@ -132,7 +155,11 @@ const BiblePassagePicker = ({
         onPress={() => setBookPickerVisible(true)}
       >
         <View style={styles.selectorIcon}>
-          <MaterialCommunityIcons name="book-open-variant" size={19} color={GOLD} />
+          <MaterialCommunityIcons
+            name="book-open-variant"
+            size={19}
+            color={GOLD}
+          />
         </View>
         <View style={styles.selectorBody}>
           <Text style={styles.selectorLabel}>{labels.bookTitle}</Text>
@@ -144,13 +171,20 @@ const BiblePassagePicker = ({
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.selectorRow, !selectedBook && styles.selectorRowDisabled]}
+        style={[
+          styles.selectorRow,
+          !selectedBook && styles.selectorRowDisabled,
+        ]}
         activeOpacity={0.82}
         disabled={!selectedBook}
         onPress={() => setChapterPickerVisible(true)}
       >
         <View style={styles.selectorIcon}>
-          <MaterialCommunityIcons name="format-list-numbered" size={19} color={GOLD} />
+          <MaterialCommunityIcons
+            name="format-list-numbered"
+            size={19}
+            color={GOLD}
+          />
         </View>
         <View style={styles.selectorBody}>
           <Text style={styles.selectorLabel}>{labels.chapterTitle}</Text>
@@ -170,15 +204,21 @@ const BiblePassagePicker = ({
               onPress={() => setVerseStartPickerVisible(true)}
             >
               <View style={styles.selectorIcon}>
-                <MaterialCommunityIcons name="numeric-1-box-outline" size={19} color={GOLD} />
+                <MaterialCommunityIcons
+                  name="numeric-1-box-outline"
+                  size={19}
+                  color={GOLD}
+                />
               </View>
               <View style={styles.selectorBody}>
                 <Text style={styles.selectorLabel}>{labels.verseTitle}</Text>
-                <Text style={styles.selectorValue}>
-                  {selectedVerseStart}
-                </Text>
+                <Text style={styles.selectorValue}>{selectedVerseStart}</Text>
               </View>
-              <MaterialCommunityIcons name="chevron-left" size={22} color="#9AA3AE" />
+              <MaterialCommunityIcons
+                name="chevron-left"
+                size={22}
+                color="#9AA3AE"
+              />
             </TouchableOpacity>
           )}
 
@@ -189,15 +229,25 @@ const BiblePassagePicker = ({
               onPress={() => setVerseStartPickerVisible(true)}
             >
               <View style={styles.selectorIcon}>
-                <MaterialCommunityIcons name="numeric-1-box-multiple-outline" size={19} color={GOLD} />
+                <MaterialCommunityIcons
+                  name="numeric-1-box-multiple-outline"
+                  size={19}
+                  color={GOLD}
+                />
               </View>
               <View style={styles.selectorBody}>
                 <Text style={styles.selectorLabel}>{labels.verseTitle}</Text>
                 <Text style={styles.selectorValue}>
-                  {selectedVerses.length > 0 ? selectedVerses.sort((a, b) => a - b).join(', ') : labels.selectBookFirst}
+                  {selectedVerses.length > 0
+                    ? [...selectedVerses].sort((a, b) => a - b).join(', ')
+                    : labels.verseTitle ?? labels.selectBookFirst}
                 </Text>
               </View>
-              <MaterialCommunityIcons name="chevron-left" size={22} color="#9AA3AE" />
+              <MaterialCommunityIcons
+                name="chevron-left"
+                size={22}
+                color="#9AA3AE"
+              />
             </TouchableOpacity>
           )}
         </>
@@ -209,7 +259,11 @@ const BiblePassagePicker = ({
 
       <PickerModal
         visible={bookPickerVisible}
-        title={selectedTestament === 'old' ? labels.oldTestament : labels.newTestament}
+        title={
+          selectedTestament === 'old'
+            ? labels.oldTestament
+            : labels.newTestament
+        }
         onClose={() => setBookPickerVisible(false)}
       >
         <View style={styles.booksGrid}>
@@ -255,7 +309,7 @@ const BiblePassagePicker = ({
             <MaterialCommunityIcons name="select-all" size={17} color={NAVY} />
             <Text style={styles.selectAllButtonText}>
               {allChaptersSelected && onClearChapters
-                ? 'مسح الاختيار'
+                ? labels.clearChapters ?? 'مسح الاختيار'
                 : labels.selectAllChapters}
             </Text>
           </TouchableOpacity>
@@ -278,7 +332,8 @@ const BiblePassagePicker = ({
               <Text
                 style={[
                   styles.chapterOptionText,
-                  selectedChapters.includes(chapter) && styles.optionTextSelected,
+                  selectedChapters.includes(chapter) &&
+                    styles.optionTextSelected,
                 ]}
               >
                 {chapter}
@@ -293,13 +348,40 @@ const BiblePassagePicker = ({
         title={labels.verseTitle || ''}
         onClose={() => setVerseStartPickerVisible(false)}
       >
+        {verseMode === 'multi' &&
+        onSelectAllVerses &&
+        labels.selectAllVerses ? (
+          <TouchableOpacity
+            style={styles.selectAllButton}
+            onPress={
+              allVersesSelected && onClearVerses
+                ? onClearVerses
+                : onSelectAllVerses
+            }
+          >
+            <MaterialCommunityIcons
+              name={
+                allVersesSelected ? 'close-box-multiple-outline' : 'select-all'
+              }
+              size={17}
+              color={NAVY}
+            />
+            <Text style={styles.selectAllButtonText}>
+              {allVersesSelected && onClearVerses
+                ? labels.clearVerses ?? labels.selectAllVerses
+                : labels.selectAllVerses}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
         <View style={styles.chapterGrid}>
           {verseOptions.map(verse => (
             <TouchableOpacity
               key={`verse-select-${verse}`}
               style={[
                 styles.chapterOption,
-                (verseMode === 'multi' ? selectedVerses.includes(verse) : selectedVerseStart === verse) && styles.optionSelected,
+                (verseMode === 'multi'
+                  ? selectedVerses.includes(verse)
+                  : selectedVerseStart === verse) && styles.optionSelected,
               ]}
               onPress={() => {
                 if (verseMode === 'multi') {
@@ -313,7 +395,10 @@ const BiblePassagePicker = ({
               <Text
                 style={[
                   styles.chapterOptionText,
-                  (verseMode === 'multi' ? selectedVerses.includes(verse) : selectedVerseStart === verse) && styles.optionTextSelected,
+                  (verseMode === 'multi'
+                    ? selectedVerses.includes(verse)
+                    : selectedVerseStart === verse) &&
+                    styles.optionTextSelected,
                 ]}
               >
                 {verse}
@@ -370,7 +455,12 @@ const PickerModal = ({
   onClose: () => void;
   children: React.ReactNode;
 }) => (
-  <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+  <Modal
+    visible={visible}
+    transparent
+    animationType="slide"
+    onRequestClose={onClose}
+  >
     <View style={styles.modalOverlay}>
       <Pressable style={styles.modalBackdrop} onPress={onClose} />
       <View style={styles.modalCard}>

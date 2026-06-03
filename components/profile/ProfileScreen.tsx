@@ -28,6 +28,7 @@ import CustomInput from '../shared/CustomInput';
 import { getStrings } from '../../localization';
 import AppHeader from '../shared/AppHeader';
 import {
+  readCachedProfileRecord,
   refreshProfileRecord,
   saveAuthMetadata,
   saveProfileRecord,
@@ -79,6 +80,7 @@ const ProfileScreen = ({ navigation }: any) => {
   const { width } = useWindowDimensions();
   const isCompactWidth = width < 360;
   const hasLoadedProfileRef = useRef(false);
+  const sessionUserRef = useRef<any>(null);
 
   const [user, setUser] = useState<any>(null);
   const [form, setForm] = useState<EditableProfileForm>({
@@ -120,23 +122,8 @@ const ProfileScreen = ({ navigation }: any) => {
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
-  const loadProfile = React.useCallback(async (showLoader = false) => {
-    if (showLoader) {
-      setLoading(true);
-    }
-
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const currentUser = sessionData?.session?.user;
-      if (!currentUser) {
-        setUser(null);
-        return;
-      }
-
-      setUser(currentUser);
-
-      const { data: profile } = await refreshProfileRecord(currentUser.id);
-
+  const applyProfileForm = React.useCallback(
+    (currentUser: any, profile: any) => {
       const nextForm: EditableProfileForm = {
         fullName:
           currentUser.user_metadata?.full_name ||
@@ -153,16 +140,52 @@ const ProfileScreen = ({ navigation }: any) => {
       setForm(nextForm);
       setInitialForm(nextForm);
       setPickerDate(parseDateString(nextForm.birthDate));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
+
+  const loadProfile = React.useCallback(
+    async (showLoader = false) => {
+      if (showLoader) {
+        setLoading(true);
+      }
+
+      try {
+        let currentUser = sessionUserRef.current;
+        if (!currentUser) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          currentUser = sessionData?.session?.user;
+        }
+        if (!currentUser) {
+          setUser(null);
+          return;
+        }
+
+        sessionUserRef.current = currentUser;
+        setUser(currentUser);
+
+        const cachedProfile = await readCachedProfileRecord(currentUser.id);
+        applyProfileForm(currentUser, cachedProfile);
+        setLoading(false);
+
+        const { data: profile } = await refreshProfileRecord(currentUser.id);
+        applyProfileForm(currentUser, profile);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [applyProfileForm],
+  );
 
   useFocusEffect(
     React.useCallback(() => {
       const shouldShowLoader = !hasLoadedProfileRef.current;
       hasLoadedProfileRef.current = true;
-      void loadProfile(shouldShowLoader);
+      loadProfile(shouldShowLoader).catch(error => {
+        if (__DEV__) {
+          console.warn('[profile] failed to refresh profile', error);
+        }
+      });
     }, [loadProfile]),
   );
 
@@ -283,6 +306,7 @@ const ProfileScreen = ({ navigation }: any) => {
         },
       };
 
+      sessionUserRef.current = updatedUser;
       setUser(updatedUser);
 
       const normalizedForm: EditableProfileForm = {
@@ -327,6 +351,7 @@ const ProfileScreen = ({ navigation }: any) => {
           style: 'destructive',
           onPress: async () => {
             try {
+              sessionUserRef.current = null;
               await logoutCurrentUser();
               const parentNavigation = navigation.getParent?.();
               if (parentNavigation) {

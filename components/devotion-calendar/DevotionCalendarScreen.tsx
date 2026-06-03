@@ -41,7 +41,11 @@ import {
   toggleChapterSelection,
 } from '../shared/chapterSelection';
 import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
-import { refreshDevotionLogs, saveDevotionLog } from '../../lib/offlineSync';
+import {
+  readCachedDevotionLogs,
+  refreshDevotionLogs,
+  saveDevotionLog,
+} from '../../lib/offlineSync';
 import {
   formatReadingEntries,
   mergeReadingDraft,
@@ -53,6 +57,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   const strings = getStrings().devotionCalendar;
   const insets = useSafeAreaInsets();
   const hasLoadedCalendarRef = useRef(false);
+  const sessionUserRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editorVisible, setEditorVisible] = useState(false);
@@ -82,12 +87,21 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
       setLoading(true);
     }
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
+      let sessionUser = sessionUserRef.current;
+      if (!sessionUser) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        sessionUser = sessionData?.session?.user;
+      }
+      const userId = sessionUser?.id;
       if (!userId) {
         setDevotionLogsByDate({});
         return;
       }
+
+      sessionUserRef.current = sessionUser;
+      const cachedLogs = await readCachedDevotionLogs(userId);
+      setDevotionLogsByDate(cachedLogs);
+      setLoading(false);
 
       const { data: logsMap } = await refreshDevotionLogs(userId);
       setDevotionLogsByDate(logsMap);
@@ -266,8 +280,13 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
   const handleSaveDay = async () => {
     setSaving(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
+      let sessionUser = sessionUserRef.current;
+      if (!sessionUser) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        sessionUser = sessionData?.session?.user;
+        sessionUserRef.current = sessionUser;
+      }
+      const userId = sessionUser?.id;
       if (!userId) {
         return;
       }
@@ -293,14 +312,18 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
 
       const payload = {
         completed: selectedCompleted,
-        reading_book: selectedCompleted ? firstEntry?.reading_book ?? null : null,
+        reading_book: selectedCompleted
+          ? firstEntry?.reading_book ?? null
+          : null,
         reading_chapter: selectedCompleted
           ? firstSelectedChapter(firstEntry?.selected_chapters ?? [])
           : null,
         chapters_read: selectedCompleted
           ? firstEntry?.selected_chapters.length || null
           : null,
-        selected_chapters: selectedCompleted ? firstEntry?.selected_chapters ?? null : null,
+        selected_chapters: selectedCompleted
+          ? firstEntry?.selected_chapters ?? null
+          : null,
         reading_entries: selectedCompleted ? nextReadingEntries : null,
       };
 
@@ -440,7 +463,10 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
         saving={saving}
         books={booksForTestament}
         chapterOptions={chapterOptions}
-        canSaveReading={readingEntries.length > 0 || (!!selectedBook && selectedChapters.length > 0)}
+        canSaveReading={
+          readingEntries.length > 0 ||
+          (!!selectedBook && selectedChapters.length > 0)
+        }
         onClose={() => setEditorVisible(false)}
         onSetCompleted={setSelectedCompleted}
         onSetTestament={handleChangeTestament}

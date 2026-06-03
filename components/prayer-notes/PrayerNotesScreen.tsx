@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -28,6 +35,7 @@ import { getStrings } from '../../localization';
 
 import {
   deletePrayerNote,
+  readCachedPrayerNotes,
   refreshPrayerNotes,
   savePrayerNote,
   togglePrayerNoteAnswered,
@@ -37,6 +45,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const strings = getStrings().prayerNotes;
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const sessionUserRef = useRef<any>(null);
   const [notes, setNotes] = useState<PrayerNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,6 +60,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     title: '',
   });
   const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query);
 
   const showAlert = useCallback(
     (
@@ -66,18 +76,33 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     [],
   );
 
+  const getCurrentUserId = useCallback(async () => {
+    let sessionUser = sessionUserRef.current;
+    if (!sessionUser) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      sessionUser = sessionData?.session?.user;
+      sessionUserRef.current = sessionUser ?? null;
+    }
+
+    return sessionUser?.id as string | undefined;
+  }, []);
+
   const fetchNotes = useCallback(async () => {
     setLoading(true);
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData?.session?.user?.id;
+    const userId = await getCurrentUserId();
     if (!userId) {
       setLoading(false);
       return;
     }
+
+    const cached = await readCachedPrayerNotes(userId);
+    setNotes(cached);
+    setLoading(false);
+
     const { data } = await refreshPrayerNotes(userId);
     setNotes(data);
     setLoading(false);
-  }, []);
+  }, [getCurrentUserId]);
 
   useEffect(() => {
     fetchNotes();
@@ -133,8 +158,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     const trimmed = newNote.trim();
     if (!trimmed) return;
     setSaving(true);
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData?.session?.user?.id;
+    const userId = await getCurrentUserId();
     if (!userId) {
       setSaving(false);
       return;
@@ -157,18 +181,20 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
 
     setSaving(false);
     resetComposer();
-  }, [editItem, newNote, resetComposer]);
+  }, [editItem, getCurrentUserId, newNote, resetComposer]);
 
-  const toggleAnswered = useCallback(async (note: PrayerNote) => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData?.session?.user?.id;
-    if (!userId) {
-      return;
-    }
+  const toggleAnswered = useCallback(
+    async (note: PrayerNote) => {
+      const userId = await getCurrentUserId();
+      if (!userId) {
+        return;
+      }
 
-    const result = await togglePrayerNoteAnswered({ userId, note });
-    setNotes(result.data);
-  }, []);
+      const result = await togglePrayerNoteAnswered({ userId, note });
+      setNotes(result.data);
+    },
+    [getCurrentUserId],
+  );
 
   const deleteNote = useCallback(
     (note: PrayerNote) => {
@@ -181,8 +207,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
             text: strings.delete,
             style: 'destructive',
             onPress: async () => {
-              const { data: sessionData } = await supabase.auth.getSession();
-              const userId = sessionData?.session?.user?.id;
+              const userId = await getCurrentUserId();
               if (!userId) {
                 return;
               }
@@ -197,6 +222,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     },
     [
       showAlert,
+      getCurrentUserId,
       strings.cancel,
       strings.delete,
       strings.deleteMessage,
@@ -207,17 +233,13 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const filtered = useMemo(
     () =>
       notes.filter(n =>
-        n.content.toLowerCase().includes(query.trim().toLowerCase()),
+        n.content.toLowerCase().includes(deferredQuery.trim().toLowerCase()),
       ),
-    [notes, query],
+    [deferredQuery, notes],
   );
   const shouldShowHero = query.trim().length === 0 && !keyboardVisible;
   const isCompactWidth = windowWidth < 380;
   const isNarrowWidth = windowWidth < 360;
-  const listContentStyle = useMemo(
-    () => [styles.list, { paddingBottom: 32 }],
-    [],
-  );
   const keyExtractor = useCallback((item: PrayerNote) => item.id, []);
   const renderNote = useCallback(
     ({ item }: { item: PrayerNote }) => (
@@ -254,7 +276,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
       </View>
 
       {loading && notes.length === 0 ? (
-        <View style={[styles.loader, { backgroundColor: '#F8F9FB', flex: 1, justifyContent: 'center' }]}>
+        <View style={styles.fullScreenLoader}>
           <ActivityIndicator size="large" color={NAVY} />
         </View>
       ) : filtered.length === 0 ? (
@@ -302,7 +324,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
           data={filtered}
           keyExtractor={keyExtractor}
           renderItem={renderNote}
-          contentContainerStyle={listContentStyle}
+          contentContainerStyle={styles.listWithBottomPadding}
           keyboardShouldPersistTaps="handled"
           removeClippedSubviews={Platform.OS === 'android'}
           initialNumToRender={8}

@@ -27,11 +27,17 @@ function decryptNote(note: PrayerNote, key: Uint8Array): PrayerNote {
   return { ...note, content: decryptText(note.content, key) };
 }
 
-function encryptReflection(reflection: Reflection, key: Uint8Array): Reflection {
+function encryptReflection(
+  reflection: Reflection,
+  key: Uint8Array,
+): Reflection {
   return { ...reflection, content: encryptText(reflection.content, key) };
 }
 
-function decryptReflection(reflection: Reflection, key: Uint8Array): Reflection {
+function decryptReflection(
+  reflection: Reflection,
+  key: Uint8Array,
+): Reflection {
   return { ...reflection, content: decryptText(reflection.content, key) };
 }
 
@@ -159,14 +165,21 @@ function sortPrayerNotes(notes: PrayerNote[]) {
 }
 
 function sortReflections(reflections: Reflection[]) {
-  return [...reflections].sort((left, right) =>
-    right.date.localeCompare(left.date) ||
-    right.created_at.localeCompare(left.created_at),
+  return [...reflections].sort(
+    (left, right) =>
+      right.date.localeCompare(left.date) ||
+      right.created_at.localeCompare(left.created_at),
   );
 }
 
 async function getPrayerNotesCache(userId: string) {
   return readJson<PrayerNote[]>(prayerNotesKey(userId), []);
+}
+
+export async function readCachedPrayerNotes(userId: string) {
+  const key = deriveKey(userId);
+  const cached = await getPrayerNotesCache(userId);
+  return cached.map(note => decryptNote(note, key));
 }
 
 async function setPrayerNotesCache(userId: string, notes: PrayerNote[]) {
@@ -177,12 +190,22 @@ async function getReflectionsCache(userId: string) {
   return readJson<Reflection[]>(reflectionsKey(userId), []);
 }
 
+export async function readCachedReflections(userId: string) {
+  const key = deriveKey(userId);
+  const cached = await getReflectionsCache(userId);
+  return cached.map(reflection => decryptReflection(reflection, key));
+}
+
 async function setReflectionsCache(userId: string, reflections: Reflection[]) {
   await writeJson(reflectionsKey(userId), sortReflections(reflections));
 }
 
 async function getDevotionLogsCache(userId: string) {
   return readJson<Record<string, DevotionDayLog>>(devotionLogsKey(userId), {});
+}
+
+export async function readCachedDevotionLogs(userId: string) {
+  return getDevotionLogsCache(userId);
 }
 
 async function setDevotionLogsCache(
@@ -194,6 +217,10 @@ async function setDevotionLogsCache(
 
 async function getProfileRecordCache(userId: string) {
   return readJson<ProfileRecord>(profileRecordKey(userId), {});
+}
+
+export async function readCachedProfileRecord(userId: string) {
+  return getProfileRecordCache(userId);
 }
 
 async function setProfileRecordCache(userId: string, profile: ProfileRecord) {
@@ -324,27 +351,32 @@ async function enqueueMutation(nextMutation: OfflineMutation) {
     return;
   }
 
-  const filtered = queue.filter(
-    mutation =>
-      !(
-        mutation.kind === 'devotion-log-upsert' &&
-        mutation.userId === nextMutation.userId &&
-        mutation.date === nextMutation.date
-      ),
-  );
-  filtered.push(nextMutation);
-  await setQueue(filtered);
-}
+  if (nextMutation.kind === 'devotion-log-upsert') {
+    const filtered = queue.filter(
+      mutation =>
+        !(
+          mutation.kind === 'devotion-log-upsert' &&
+          mutation.userId === nextMutation.userId &&
+          mutation.date === nextMutation.date
+        ),
+    );
+    filtered.push(nextMutation);
+    await setQueue(filtered);
+    return;
+  }
 
-async function dropMutation(mutationId: string) {
-  const queue = await getQueue();
-  await setQueue(queue.filter(mutation => mutation.id !== mutationId));
+  queue.push(nextMutation);
+  await setQueue(queue);
 }
 
 function rewriteMutationEntityIdInQueue(
   queue: OfflineMutation[],
   userId: string,
-  kind: 'prayer-note-upsert' | 'prayer-note-delete' | 'reflection-upsert' | 'reflection-delete',
+  kind:
+    | 'prayer-note-upsert'
+    | 'prayer-note-delete'
+    | 'reflection-upsert'
+    | 'reflection-delete',
   oldId: string,
   newId: string,
 ): OfflineMutation[] {
@@ -353,13 +385,19 @@ function rewriteMutationEntityIdInQueue(
       return mutation;
     }
 
-    if (kind === 'prayer-note-upsert' && mutation.kind === 'prayer-note-upsert') {
+    if (
+      kind === 'prayer-note-upsert' &&
+      mutation.kind === 'prayer-note-upsert'
+    ) {
       return mutation.note.id === oldId
         ? { ...mutation, note: { ...mutation.note, id: newId } }
         : mutation;
     }
 
-    if (kind === 'prayer-note-delete' && mutation.kind === 'prayer-note-delete') {
+    if (
+      kind === 'prayer-note-delete' &&
+      mutation.kind === 'prayer-note-delete'
+    ) {
       return mutation.noteId === oldId
         ? { ...mutation, noteId: newId }
         : mutation;
@@ -384,17 +422,6 @@ function rewriteMutationEntityIdInQueue(
   });
 }
 
-async function rewriteMutationEntityId(
-  userId: string,
-  kind: 'prayer-note-upsert' | 'prayer-note-delete' | 'reflection-upsert' | 'reflection-delete',
-  oldId: string,
-  newId: string,
-) {
-  const queue = await getQueue();
-  const nextQueue = rewriteMutationEntityIdInQueue(queue, userId, kind, oldId, newId);
-  await setQueue(nextQueue);
-}
-
 function mapDevotionRows(
   rows: any[] | null | undefined,
 ): Record<string, DevotionDayLog> {
@@ -412,240 +439,6 @@ function mapDevotionRows(
   });
 
   return logsMap;
-}
-
-async function flushPrayerNoteUpsert(mutation: Extract<OfflineMutation, { kind: 'prayer-note-upsert' }>) {
-  if (isLocalId(mutation.note.id)) {
-    const { data, error } = await supabase
-      .from('prayer_notes')
-      .insert({
-        user_id: mutation.userId,
-        content: mutation.note.content,
-        is_answered: mutation.note.is_answered,
-      })
-      .select('*')
-      .single();
-
-    if (error || !data) {
-      return false;
-    }
-
-    const serverNote = data as PrayerNote;
-    const notes = await getPrayerNotesCache(mutation.userId);
-    await setPrayerNotesCache(
-      mutation.userId,
-      replacePrayerNoteId(notes, mutation.note.id, serverNote),
-    );
-    await rewriteMutationEntityId(
-      mutation.userId,
-      'prayer-note-upsert',
-      mutation.note.id,
-      serverNote.id,
-    );
-    await rewriteMutationEntityId(
-      mutation.userId,
-      'prayer-note-delete',
-      mutation.note.id,
-      serverNote.id,
-    );
-    await dropMutation(mutation.id);
-    return true;
-  }
-
-  const { error } = await supabase
-    .from('prayer_notes')
-    .update({
-      content: mutation.note.content,
-      is_answered: mutation.note.is_answered,
-    })
-    .eq('id', mutation.note.id);
-
-  if (error) {
-    return false;
-  }
-
-  await dropMutation(mutation.id);
-  return true;
-}
-
-async function flushPrayerNoteDelete(
-  mutation: Extract<OfflineMutation, { kind: 'prayer-note-delete' }>,
-) {
-  const { error } = await supabase
-    .from('prayer_notes')
-    .delete()
-    .eq('id', mutation.noteId);
-
-  if (error) {
-    return false;
-  }
-
-  await dropMutation(mutation.id);
-  return true;
-}
-
-async function flushReflectionUpsert(
-  mutation: Extract<OfflineMutation, { kind: 'reflection-upsert' }>,
-) {
-  if (isLocalId(mutation.reflection.id)) {
-    const { data, error } = await supabase
-      .from('reflections')
-      .insert({
-        user_id: mutation.userId,
-        content: mutation.reflection.content,
-        date: mutation.reflection.date,
-      })
-      .select('*')
-      .single();
-
-    if (error || !data) {
-      return false;
-    }
-
-    const serverReflection = data as Reflection;
-    const reflections = await getReflectionsCache(mutation.userId);
-    await setReflectionsCache(
-      mutation.userId,
-      replaceReflectionId(
-        reflections,
-        mutation.reflection.id,
-        serverReflection,
-      ),
-    );
-    await rewriteMutationEntityId(
-      mutation.userId,
-      'reflection-upsert',
-      mutation.reflection.id,
-      serverReflection.id,
-    );
-    await rewriteMutationEntityId(
-      mutation.userId,
-      'reflection-delete',
-      mutation.reflection.id,
-      serverReflection.id,
-    );
-    await dropMutation(mutation.id);
-    return true;
-  }
-
-  const { error } = await supabase
-    .from('reflections')
-    .update({
-      content: mutation.reflection.content,
-      date: mutation.reflection.date,
-    })
-    .eq('id', mutation.reflection.id);
-
-  if (error) {
-    return false;
-  }
-
-  await dropMutation(mutation.id);
-  return true;
-}
-
-async function flushReflectionDelete(
-  mutation: Extract<OfflineMutation, { kind: 'reflection-delete' }>,
-) {
-  const { error } = await supabase
-    .from('reflections')
-    .delete()
-    .eq('id', mutation.reflectionId);
-
-  if (error) {
-    return false;
-  }
-
-  await dropMutation(mutation.id);
-  return true;
-}
-
-async function flushDevotionLogUpsert(
-  mutation: Extract<OfflineMutation, { kind: 'devotion-log-upsert' }>,
-) {
-  const payload = {
-    user_id: mutation.userId,
-    date: mutation.date,
-    completed: mutation.payload.completed,
-    reading_book: mutation.payload.completed
-      ? mutation.payload.reading_book ?? null
-      : null,
-    reading_chapter: mutation.payload.completed
-      ? mutation.payload.reading_chapter ?? null
-      : null,
-    chapters_read: mutation.payload.completed
-      ? mutation.payload.chapters_read ?? null
-      : null,
-    selected_chapters: mutation.payload.completed
-      ? mutation.payload.selected_chapters ?? null
-      : null,
-    reading_entries: mutation.payload.completed
-      ? mutation.payload.reading_entries ?? null
-      : null,
-  };
-
-  const { error } = await supabase
-    .from('devotion_log')
-    .upsert(payload, { onConflict: 'user_id,date' });
-
-  if (error) {
-    return false;
-  }
-
-  const { error: readingLogError } = await syncReadingLogForDate({
-    userId: mutation.userId,
-    date: mutation.date,
-    completed: mutation.payload.completed,
-    readingBook: mutation.payload.completed
-      ? mutation.payload.reading_book ?? null
-      : null,
-    selectedChapters: mutation.payload.completed
-      ? mutation.payload.selected_chapters ?? []
-      : [],
-  });
-
-  if (readingLogError) {
-    return false;
-  }
-
-  await dropMutation(mutation.id);
-  return true;
-}
-
-async function flushProfileUpsert(
-  mutation: Extract<OfflineMutation, { kind: 'profile-upsert' }>,
-) {
-  const { error } = await supabase
-    .from('profiles')
-    .upsert(
-      {
-        id: mutation.userId,
-        ...mutation.profile,
-      },
-      { onConflict: 'id' },
-    );
-
-  if (error) {
-    return false;
-  }
-
-  await dropMutation(mutation.id);
-  return true;
-}
-
-async function flushAuthMetadataUpdate(
-  mutation: Extract<OfflineMutation, { kind: 'auth-metadata-update' }>,
-) {
-  const { error } = await supabase.auth.updateUser({
-    data: mutation.metadata,
-  });
-
-  if (error) {
-    return false;
-  }
-
-  await dropMutation(mutation.id);
-  return true;
 }
 
 export async function flushOfflineQueue(): Promise<SyncResult> {
@@ -746,7 +539,11 @@ export async function flushOfflineQueue(): Promise<SyncResult> {
               const reflections = await getReflectionsCache(mutation.userId);
               await setReflectionsCache(
                 mutation.userId,
-                replaceReflectionId(reflections, mutation.reflection.id, serverRef),
+                replaceReflectionId(
+                  reflections,
+                  mutation.reflection.id,
+                  serverRef,
+                ),
               );
               queue = rewriteMutationEntityIdInQueue(
                 queue,
@@ -820,10 +617,12 @@ export async function flushOfflineQueue(): Promise<SyncResult> {
             if (!rle) success = true;
           }
         } else if (mutation.kind === 'profile-upsert') {
-          const { error } = await supabase.from('profiles').upsert(
-            { id: mutation.userId, ...mutation.profile },
-            { onConflict: 'id' },
-          );
+          const { error } = await supabase
+            .from('profiles')
+            .upsert(
+              { id: mutation.userId, ...mutation.profile },
+              { onConflict: 'id' },
+            );
           if (!error) success = true;
         } else if (mutation.kind === 'auth-metadata-update') {
           const { error } = await supabase.auth.updateUser({
@@ -850,7 +649,7 @@ export async function flushOfflineQueue(): Promise<SyncResult> {
           });
           if (!error) success = true;
         }
-      } catch (e) {
+      } catch {
         success = false;
       }
 
@@ -969,7 +768,12 @@ export async function togglePrayerNoteAnswered(params: {
     ? decryptText(params.note.content, key)
     : params.note.content;
   const noteToStore = encryptNote(
-    { ...params.note, content: plainContent, is_answered: !params.note.is_answered, pendingSync: true },
+    {
+      ...params.note,
+      content: plainContent,
+      is_answered: !params.note.is_answered,
+      pendingSync: true,
+    },
     key,
   );
   const nextNotes = notes.map(note =>
@@ -1053,7 +857,10 @@ export async function refreshReflections(userId: string) {
 
   const reflections = sortReflections((data ?? []) as Reflection[]);
   await setReflectionsCache(userId, reflections);
-  return { data: reflections.map(r => decryptReflection(r, key)), offline: false };
+  return {
+    data: reflections.map(r => decryptReflection(r, key)),
+    offline: false,
+  };
 }
 
 export async function saveReflection(params: {

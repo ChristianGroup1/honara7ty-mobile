@@ -8,7 +8,6 @@
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Platform,
@@ -32,7 +31,10 @@ import { badgesStyles as styles } from './styles';
 import StreakCard from './StreakCard';
 import { computeStreak } from './utils';
 import { getStrings } from '../../localization';
-import { refreshDevotionLogs } from '../../lib/offlineSync';
+import {
+  readCachedDevotionLogs,
+  refreshDevotionLogs,
+} from '../../lib/offlineSync';
 
 declare const navigator: any;
 
@@ -40,6 +42,7 @@ const BadgesScreen = ({ navigation }: any) => {
   const strings = getStrings().badges;
   const insets = useSafeAreaInsets();
   const hasLoadedStreakRef = useRef(false);
+  const sessionUserRef = useRef<any>(null);
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -48,12 +51,25 @@ const BadgesScreen = ({ navigation }: any) => {
       setLoading(true);
     }
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
+      let sessionUser = sessionUserRef.current;
+      if (!sessionUser) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        sessionUser = sessionData?.session?.user;
+      }
+      const userId = sessionUser?.id;
       if (!userId) {
         setLoading(false);
         return;
       }
+
+      sessionUserRef.current = sessionUser;
+      const cachedData = await readCachedDevotionLogs(userId);
+      const cachedDates = Object.entries(cachedData)
+        .filter(([, value]) => value.completed)
+        .map(([date]) => date);
+      setStreak(computeStreak(cachedDates));
+      setLoading(false);
+
       const { data } = await refreshDevotionLogs(userId);
       const dates = Object.entries(data)
         .filter(([, value]) => value.completed)
@@ -168,12 +184,8 @@ const BadgesScreen = ({ navigation }: any) => {
     [spotlightBadge.color, spotlightBadge.days, streak],
   );
 
-
   const listData = useMemo(() => {
-    const data: any[] = [
-      { type: 'hero' },
-      { type: 'spotlight' },
-    ];
+    const data: any[] = [{ type: 'hero' }, { type: 'spotlight' }];
 
     if (earnedBadges.length) {
       data.push({ type: 'sectionHeader', title: strings.screen.earnedSection });
@@ -201,7 +213,6 @@ const BadgesScreen = ({ navigation }: any) => {
     data.push({ type: 'footer' });
     return data;
   }, [earnedBadges, lockedBadges, strings]);
-
   const renderItem = useCallback(
     ({ item }: { item: any }) => {
       switch (item.type) {
@@ -249,9 +260,7 @@ const BadgesScreen = ({ navigation }: any) => {
             </View>
           );
         case 'sectionHeader':
-          return (
-            <Text style={styles.gallerySectionTitle}>{item.title}</Text>
-          );
+          return <Text style={styles.gallerySectionTitle}>{item.title}</Text>;
         case 'badgeRow':
           return (
             <View style={styles.badgesContainer}>
@@ -264,7 +273,7 @@ const BadgesScreen = ({ navigation }: any) => {
                 />
               ))}
               {/* Spacer for odd number of items in a row */}
-              {item.badges.length === 1 && <View style={{ width: '48%' }} />}
+              {item.badges.length === 1 && <View style={styles.badgeSpacer} />}
             </View>
           );
         case 'footer':
@@ -293,6 +302,7 @@ const BadgesScreen = ({ navigation }: any) => {
       spotlightGlowStyle,
       spotlightPillStyle,
       spotlightPillTextStyle,
+      spotlightIconStyle,
       spotlightEarned,
       spotlightBadge,
       spotlightDaysLeft,

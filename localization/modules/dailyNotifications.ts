@@ -12,6 +12,9 @@ export const dailyNotificationsStrings = {
     `تم حفظ وقتك مع الله: ${timeString}\nهنبعتلك تذكير كل يوم عشان ماتفوتش وقتك مع الله 🙏`,
   saveOfflineMessage: (timeString: string) =>
     `تم حفظ الإعدادات محلياً: ${timeString}\nوسيتم رفعها إلى حسابك تلقائياً عند عودة الإنترنت.`,
+  scheduleErrorTitle: 'التذكير لم يتفعل',
+  scheduleErrorMessage:
+    'تم حفظ الإعدادات، لكن لم نقدر نجهز التذكير على الجهاز. جرّب تفعيل الإشعارات مرة أخرى.',
   saved: 'تم الحفظ',
   readyToSave: 'جاهز للحفظ',
   morning: 'بداية اليوم',
@@ -38,7 +41,8 @@ export const dailyNotificationsStrings = {
   chapterRangeHint: 'اختار أي إصحاحات حابب تقراها، ومش لازم يكونوا ورا بعض.',
   selectAllChapters: 'اختيار كل الإصحاحات',
   readingSelectionRequiredTitle: 'اختيار القراءة مطلوب',
-  readingSelectionRequiredMessage: 'لازم تختار سفر وإصحاح واحد على الأقل قبل الحفظ.',
+  readingSelectionRequiredMessage:
+    'لازم تختار سفر وإصحاح واحد على الأقل قبل الحفظ.',
   chapterRangeSummarySingle: 'الإصحاح المختار',
   chapterRangeSummary: 'الجزء اليومي المختار',
   saveTime: 'حفظ الوقت',

@@ -1,5 +1,5 @@
 import { Platform, StyleSheet } from 'react-native';
-import { BG, CARD, DANGER, MUTED, NAVY } from './constants';
+import { BG, CARD, DANGER, NAVY } from './constants';
 import {
   heroBadgeBase,
   heroBadgeTextBase,
@@ -48,7 +48,13 @@ export const prayerNotesStyles = StyleSheet.create({
   },
   searchInput: { flex: 1, marginRight: 8, fontSize: 14, color: '#222' },
   loader: { marginTop: 36 },
+  fullScreenLoader: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: '#F8F9FB',
+  },
   list: { paddingHorizontal: 16, paddingBottom: 0 },
+  listWithBottomPadding: { paddingHorizontal: 16, paddingBottom: 32 },
   heroCard: {
     ...heroCardBase,
     marginTop: 12,
@@ -202,7 +208,7 @@ export const prayerNotesStyles = StyleSheet.create({
     left: 16,
     right: 16,
     alignItems: 'center',
-    backgroundColor: CARD, 
+    backgroundColor: CARD,
     borderRadius: 14,
     padding: 8,
     elevation: 4,
@@ -334,15 +340,14 @@ export const prayerNotesStyles = StyleSheet.create({
   cancelBtn: {
     flex: 1,
     minWidth: 0,
-      marginHorizontal: 4,
+    marginHorizontal: 4,
     marginBottom: 8,
     backgroundColor: '#F0F0F0',
     borderRadius: 10,
-     paddingVertical: 12,
+    paddingVertical: 12,
     paddingHorizontal: 28,
     alignItems: 'center',
     justifyContent: 'center',
-
   },
   cancelBtnText: {
     color: '#555',

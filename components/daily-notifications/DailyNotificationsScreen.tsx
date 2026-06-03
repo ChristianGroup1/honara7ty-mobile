@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   AppState,
@@ -46,6 +52,8 @@ import {
 } from '../shared/chapterSelection';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
 import {
+  readCachedDevotionLogs,
+  readCachedProfileRecord,
   refreshDevotionLogs,
   refreshProfileRecord,
   saveProfileRecord,
@@ -93,6 +101,7 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
     type?: 'error' | 'warning' | 'success' | 'info';
     buttons?: AlertButton[];
   }>({ visible: false, title: '' });
+  const sessionUserRef = useRef<any>(null);
 
   const showAlert = (
     title: string,
@@ -112,27 +121,15 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
     }
   }, []);
 
-  useEffect(() => {
-    let isActive = true;
-
-    const load = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-      if (!userId) {
-        if (isActive) {
-          setLoading(false);
-        }
-        return;
-      }
-      const [{ data }, { data: devotionLogs }] = await Promise.all([
-        refreshProfileRecord(userId),
-        refreshDevotionLogs(userId),
-      ]);
-      if (!isActive) {
-        return;
-      }
-      if (data?.devotion_time) {
-        const [h, m] = (data.devotion_time as string).split(':').map(Number);
+  const applyReminderData = useCallback(
+    async (
+      userId: string,
+      profile: any,
+      devotionLogs: Record<string, any> | null | undefined,
+      shouldPersistDefaultTime = false,
+    ) => {
+      if (profile?.devotion_time) {
+        const [h, m] = (profile.devotion_time as string).split(':').map(Number);
         const d = new Date();
         d.setHours(h, m, 0, 0);
         setDevotionTime(d);
@@ -141,17 +138,22 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
         d.setHours(7, 0, 0, 0);
         setDevotionTime(d);
 
-        await saveProfileRecord({
-          userId,
-          profile: {
-            devotion_time: '07:00',
-            updated_at: new Date().toISOString(),
-          },
-        });
+        if (shouldPersistDefaultTime) {
+          await saveProfileRecord({
+            userId,
+            profile: {
+              devotion_time: '07:00',
+              updated_at: new Date().toISOString(),
+            },
+          });
+        }
       }
-      const latestCompletedLog = Object.entries(devotionLogs)
+
+      const latestCompletedLog = Object.entries(devotionLogs ?? {})
         .filter(([, log]) => log.completed)
-        .sort(([leftDate], [rightDate]) => rightDate.localeCompare(leftDate))[0]?.[1];
+        .sort(([leftDate], [rightDate]) =>
+          rightDate.localeCompare(leftDate),
+        )[0]?.[1];
       const latestEntries =
         latestCompletedLog?.reading_book || latestCompletedLog?.reading_entries
           ? Array.isArray(latestCompletedLog.reading_entries)
@@ -164,14 +166,14 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
               })
           : [];
       const profileEntries =
-        data?.reading_book || data?.reading_entries
-          ? Array.isArray(data.reading_entries)
-            ? data.reading_entries
+        profile?.reading_book || profile?.reading_entries
+          ? Array.isArray(profile.reading_entries)
+            ? profile.reading_entries
             : readingEntriesFromLegacy({
-                readingBook: data.reading_book,
-                readingChapter: (data as any).reading_chapter,
-                chaptersRead: (data as any).daily_chapters_target,
-                selectedChapters: (data as any).selected_chapters,
+                readingBook: profile.reading_book,
+                readingChapter: profile.reading_chapter,
+                chaptersRead: profile.daily_chapters_target,
+                selectedChapters: profile.selected_chapters,
               })
           : [];
       const nextEntries = latestEntries.length ? latestEntries : profileEntries;
@@ -181,23 +183,62 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
         setReadingEntries(nextEntries);
         setReadingBook(firstEntry?.reading_book ?? '');
         setSelectedChapters(firstEntry?.selected_chapters ?? []);
-      } else if (data?.reading_book || data?.reading_entries) {
-        const fallbackEntries = Array.isArray(data.reading_entries)
-          ? data.reading_entries
+      } else if (profile?.reading_book || profile?.reading_entries) {
+        const fallbackEntries = Array.isArray(profile.reading_entries)
+          ? profile.reading_entries
           : readingEntriesFromLegacy({
-              readingBook: data.reading_book,
-              readingChapter: (data as any).reading_chapter,
-              chaptersRead: (data as any).daily_chapters_target,
-              selectedChapters: (data as any).selected_chapters,
+              readingBook: profile.reading_book,
+              readingChapter: profile.reading_chapter,
+              chaptersRead: profile.daily_chapters_target,
+              selectedChapters: profile.selected_chapters,
             });
         const firstEntry = fallbackEntries[0];
         setReadingEntries(fallbackEntries);
-        setReadingBook(firstEntry?.reading_book ?? data.reading_book ?? '');
+        setReadingBook(firstEntry?.reading_book ?? profile.reading_book ?? '');
         setSelectedChapters(firstEntry?.selected_chapters ?? []);
       }
-      if (isActive) {
-        setLoading(false);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    let isActive = true;
+
+    const load = async () => {
+      let sessionUser = sessionUserRef.current;
+      if (!sessionUser) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        sessionUser = sessionData?.session?.user;
       }
+      const userId = sessionUser?.id;
+      if (!userId) {
+        if (isActive) {
+          setLoading(false);
+        }
+        return;
+      }
+
+      sessionUserRef.current = sessionUser;
+
+      const [cachedProfile, cachedDevotionLogs] = await Promise.all([
+        readCachedProfileRecord(userId),
+        readCachedDevotionLogs(userId),
+      ]);
+      if (!isActive) {
+        return;
+      }
+      await applyReminderData(userId, cachedProfile, cachedDevotionLogs);
+      setLoading(false);
+
+      const [{ data: profile }, { data: devotionLogs }] = await Promise.all([
+        refreshProfileRecord(userId),
+        refreshDevotionLogs(userId),
+      ]);
+      if (!isActive) {
+        return;
+      }
+      await applyReminderData(userId, profile, devotionLogs, true);
+      setLoading(false);
     };
 
     load();
@@ -205,7 +246,7 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [applyReminderData]);
 
   useFocusEffect(
     useCallback(() => {
@@ -326,8 +367,13 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData?.session?.user?.id;
+    let sessionUser = sessionUserRef.current;
+    if (!sessionUser) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      sessionUser = sessionData?.session?.user;
+      sessionUserRef.current = sessionUser;
+    }
+    const userId = sessionUser?.id;
     if (!userId) {
       setSaving(false);
       return;
@@ -366,7 +412,9 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
       profile: {
         devotion_time: timeString,
         reading_book: firstEntry?.reading_book ?? null,
-        reading_chapter: firstSelectedChapter(firstEntry?.selected_chapters ?? []),
+        reading_chapter: firstSelectedChapter(
+          firstEntry?.selected_chapters ?? [],
+        ),
         daily_chapters_target: firstEntry?.selected_chapters.length || null,
         selected_chapters: firstEntry?.selected_chapters ?? null,
         reading_entries: nextReadingEntries,
@@ -375,7 +423,16 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
 
     try {
       await scheduleDailyDevotionReminder(hours, minutes);
-    } catch {}
+    } catch {
+      showAlert(
+        strings.scheduleErrorTitle,
+        strings.scheduleErrorMessage,
+        undefined,
+        'warning',
+      );
+      setSaving(false);
+      return;
+    }
 
     setSaved(true);
     showAlert(
@@ -402,8 +459,13 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
         return;
       }
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      await ensureDefaultDevotionTime(sessionData?.session?.user?.id, {
+      let sessionUser = sessionUserRef.current;
+      if (!sessionUser) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        sessionUser = sessionData?.session?.user;
+        sessionUserRef.current = sessionUser;
+      }
+      await ensureDefaultDevotionTime(sessionUser?.id, {
         scheduleReminder: true,
       });
     } finally {
@@ -484,7 +546,10 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
           timeDisplay={timeDisplay}
           saving={saving}
           saved={saved}
-          canSaveReading={readingEntries.length > 0 || (!!readingBook && selectedChapters.length > 0)}
+          canSaveReading={
+            readingEntries.length > 0 ||
+            (!!readingBook && selectedChapters.length > 0)
+          }
           onSetTestament={setSelectedTestament}
           onSetReadingBook={setReadingBook}
           onToggleChapter={chapter =>
@@ -505,7 +570,7 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
                 ),
               );
             }
-          } }
+          }}
           onClearChapters={() => setSelectedChapters([])}
           onAddReadingEntry={handleAddReadingEntry}
           onRemoveReadingEntry={handleRemoveReadingEntry}

@@ -13,7 +13,10 @@ import { BOOTSTRAP_TIMEOUT_MS, withTimeout } from '../lib/withTimeout';
 import { clearClarityUser, setClarityUser } from '../lib/clarity';
 import { clearSentryUser, setSentryUser } from '../lib/sentry';
 import { clearFirebaseUser, setFirebaseUser } from '../lib/firebase';
-import { registerPushToken, subscribePushTokenRefresh } from '../lib/pushTokens';
+import {
+  registerPushToken,
+  subscribePushTokenRefresh,
+} from '../lib/pushTokens';
 import { restoreSupabaseSessionFromGoogle } from '../lib/restoreGoogleSession';
 import {
   cacheAuthSession,
@@ -86,16 +89,33 @@ export function useAppBootstrap() {
         return;
       }
 
-      registerPushToken(userId, { requestPermission: false }).then(result => {
-        if (__DEV__ && !result.registered) {
-          console.warn('Push token was not registered', result);
-        }
-      }).catch(error => {
-        if (__DEV__) {
-          console.warn('Failed to register push token', error);
-        }
-      });
+      registerPushToken(userId, { requestPermission: false })
+        .then(result => {
+          if (__DEV__ && !result.registered) {
+            console.warn('Push token was not registered', result);
+          }
+        })
+        .catch(error => {
+          if (__DEV__) {
+            console.warn('Failed to register push token', error);
+          }
+        });
       unsubscribePushTokenRefresh = subscribePushTokenRefresh(userId);
+    };
+
+    const prepareAuthenticatedSession = (session: any) => {
+      cacheAuthSession(session).catch(() => {});
+      syncReminderScheduleSafely(session.user?.id);
+      syncPushTokenSafely(session.user?.id);
+      setClarityUser(session.user.id);
+      setSentryUser({
+        id: session.user.id,
+        email: session.user.email ?? null,
+      });
+      setFirebaseUser({
+        id: session.user.id,
+        email: session.user.email ?? null,
+      });
     };
 
     const storePendingInviteCode = (inviteCode: string) => {
@@ -104,20 +124,19 @@ export function useAppBootstrap() {
       }
 
       setPendingDevotionGroupInviteCode(inviteCode);
-      AsyncStorage.setItem(
-        PENDING_DEVOTION_GROUP_INVITE_KEY,
-        inviteCode,
-      ).catch(error => {
-        if (__DEV__) {
-          console.warn('Failed to store pending group invite', error);
-        }
-      });
+      AsyncStorage.setItem(PENDING_DEVOTION_GROUP_INVITE_KEY, inviteCode).catch(
+        error => {
+          if (__DEV__) {
+            console.warn('Failed to store pending group invite', error);
+          }
+        },
+      );
     };
 
     const getSessionSafely = async () => {
-      const sessionResult = await withTimeout<
-        Awaited<ReturnType<typeof supabase.auth.getSession>> | null
-      >(
+      const sessionResult = await withTimeout<Awaited<
+        ReturnType<typeof supabase.auth.getSession>
+      > | null>(
         supabase.auth.getSession(),
         SESSION_FETCH_TIMEOUT_MS,
         null,
@@ -132,9 +151,9 @@ export function useAppBootstrap() {
         `supabase.auth.getSession timed out after ${SESSION_FETCH_TIMEOUT_MS}ms; retrying with extended timeout`,
       );
 
-      const retryResult = await withTimeout<
-        Awaited<ReturnType<typeof supabase.auth.getSession>> | null
-      >(
+      const retryResult = await withTimeout<Awaited<
+        ReturnType<typeof supabase.auth.getSession>
+      > | null>(
         supabase.auth.getSession(),
         SESSION_FETCH_RETRY_TIMEOUT_MS,
         null,
@@ -147,6 +166,9 @@ export function useAppBootstrap() {
     let bootstrapFinished = false;
 
     const checkSession = async () => {
+      let restoredCachedSession: any = null;
+      let renderedCachedSession = false;
+
       try {
         const initialUrl = await withTimeout<string | null>(
           Linking.getInitialURL(),
@@ -216,12 +238,27 @@ export function useAppBootstrap() {
             });
         }
 
+        restoredCachedSession = await withTimeout(
+          restoreCachedAuthSession(),
+          BOOTSTRAP_TIMEOUT_MS,
+          null,
+          'restoreCachedAuthSession',
+        );
+
+        if (restoredCachedSession) {
+          applySessionState(restoredCachedSession);
+          prepareAuthenticatedSession(restoredCachedSession);
+          renderedCachedSession = true;
+          hideSplashAfter(120);
+        }
+
         let { data } = await getSessionSafely();
 
         // If we have a session but it might be expired, try to refresh it
         if (data?.session && data.session.expires_at) {
           const expiresAt = data.session.expires_at * 1000;
-          if (Date.now() > expiresAt - 60000) { // 1 minute buffer
+          if (Date.now() > expiresAt - 60000) {
+            // 1 minute buffer
             const refreshed = await supabase.auth.refreshSession();
             if (refreshed.data?.session) {
               data = refreshed.data;
@@ -231,12 +268,7 @@ export function useAppBootstrap() {
 
         let session = data?.session ?? null;
         if (!session) {
-          session = await withTimeout(
-            restoreCachedAuthSession(),
-            BOOTSTRAP_TIMEOUT_MS,
-            null,
-            'restoreCachedAuthSession',
-          );
+          session = restoredCachedSession;
         }
         if (!session) {
           session = await withTimeout(
@@ -250,18 +282,7 @@ export function useAppBootstrap() {
         applySessionState(session);
 
         if (session) {
-          cacheAuthSession(session).catch(() => {});
-          syncReminderScheduleSafely(session.user?.id);
-          syncPushTokenSafely(session.user?.id);
-          setClarityUser(session.user.id);
-          setSentryUser({
-            id: session.user.id,
-            email: session.user.email ?? null,
-          });
-          setFirebaseUser({
-            id: session.user.id,
-            email: session.user.email ?? null,
-          });
+          prepareAuthenticatedSession(session);
         }
       } catch (error) {
         console.warn('Bootstrap session check failed', error);
@@ -271,7 +292,7 @@ export function useAppBootstrap() {
         clearFirebaseUser();
       } finally {
         bootstrapFinished = true;
-        hideSplashAfter(1200);
+        hideSplashAfter(renderedCachedSession ? 0 : 1200);
       }
     };
 

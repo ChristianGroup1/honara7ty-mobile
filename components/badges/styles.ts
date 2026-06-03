@@ -300,6 +300,9 @@ export const badgesStyles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
   },
+  badgeSpacer: {
+    width: '48%',
+  },
   badgeCardEarned: {
     elevation: 8,
     shadowColor: GOLD,
@@ -474,6 +477,5 @@ export const badgesStyles = StyleSheet.create({
     color: '#666',
     lineHeight: 18,
     textAlign: 'left',
-
   },
 });

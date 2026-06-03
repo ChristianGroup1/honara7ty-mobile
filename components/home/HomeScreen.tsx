@@ -52,6 +52,7 @@ import { logoutCurrentUser } from '../../lib/logout';
 import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermissionFlow';
 import {
   migrateContentEncryption,
+  readCachedDevotionLogs,
   refreshDevotionLogs,
   saveDevotionLog,
 } from '../../lib/offlineSync';
@@ -66,6 +67,8 @@ const HomeScreen = ({ route, navigation }: any) => {
   const insets = useSafeAreaInsets();
   const userFromParams = route?.params?.user;
   const hasLoadedRef = useRef(Boolean(userFromParams));
+  const sessionUserRef = useRef<any>(userFromParams || null);
+  const migratedUserIdsRef = useRef(new Set<string>());
   const [user, setUser] = useState<any>(userFromParams || null);
   const [loading, setLoading] = useState(!userFromParams);
   /** null = not yet answered today, true = answered yes, false = answered no */
@@ -129,6 +132,33 @@ const HomeScreen = ({ route, navigation }: any) => {
     }
   }, []);
 
+  const applyTodayDevotionLog = useCallback((data: any) => {
+    setDevotionAnswer(data ? (data.completed as boolean) : null);
+    if (data?.reading_book || data?.reading_entries) {
+      const nextEntries = Array.isArray(data.reading_entries)
+        ? data.reading_entries
+        : readingEntriesFromLegacy({
+            readingBook: data.reading_book,
+            readingChapter: (data as any).reading_chapter,
+            chaptersRead: (data as any).chapters_read,
+            selectedChapters: (data as any).selected_chapters,
+          });
+      setReadingEntries(nextEntries);
+      const firstEntry = nextEntries[0];
+      setReadingBook(firstEntry?.reading_book ?? data.reading_book ?? '');
+      const matchedBook = BIBLE_BOOKS.find(
+        book => book.bookName === firstEntry?.reading_book,
+      );
+      if (matchedBook) {
+        setSelectedTestament(matchedBook.testament);
+        setSelectedChapters(firstEntry?.selected_chapters ?? []);
+      }
+      return;
+    }
+
+    setReadingEntries([]);
+  }, []);
+
   /* ── Check today's devotion answer whenever screen is focused ── */
   useFocusEffect(
     useCallback(() => {
@@ -140,8 +170,11 @@ const HomeScreen = ({ route, navigation }: any) => {
         }
 
         try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          const sessionUser = sessionData?.session?.user;
+          let sessionUser = sessionUserRef.current;
+          if (!sessionUser) {
+            const { data: sessionData } = await supabase.auth.getSession();
+            sessionUser = sessionData?.session?.user;
+          }
           const userId = sessionUser?.id;
 
           if (!isActive) {
@@ -154,14 +187,25 @@ const HomeScreen = ({ route, navigation }: any) => {
             return;
           }
 
+          sessionUserRef.current = sessionUser;
           setUser(sessionUser);
 
           // One-time silent migration: encrypt any legacy plaintext content.
-          migrateContentEncryption(userId).catch(err => {
-            if (__DEV__) {
-              console.warn('[encryption] migration error:', err);
-            }
-          });
+          if (!migratedUserIdsRef.current.has(userId)) {
+            migratedUserIdsRef.current.add(userId);
+            migrateContentEncryption(userId).catch(err => {
+              if (__DEV__) {
+                console.warn('[encryption] migration error:', err);
+              }
+            });
+          }
+
+          const cachedDevotionLogs = await readCachedDevotionLogs(userId);
+          if (isActive) {
+            applyTodayDevotionLog(cachedDevotionLogs[getTodayDate()]);
+            hasLoadedRef.current = true;
+            setLoading(false);
+          }
 
           const { data: devotionLogs } = await refreshDevotionLogs(userId);
 
@@ -169,37 +213,7 @@ const HomeScreen = ({ route, navigation }: any) => {
             return;
           }
 
-          const data = devotionLogs[getTodayDate()];
-
-          setDevotionAnswer(data ? (data.completed as boolean) : null);
-          if (data?.reading_book || data?.reading_entries) {
-            const nextEntries = Array.isArray(data.reading_entries)
-              ? data.reading_entries
-              : readingEntriesFromLegacy({
-                  readingBook: data.reading_book,
-                  readingChapter: (data as any).reading_chapter,
-                  chaptersRead: (data as any).chapters_read,
-                  selectedChapters: (data as any).selected_chapters,
-                });
-            setReadingEntries(nextEntries);
-            const firstEntry = nextEntries[0];
-            setReadingBook(firstEntry?.reading_book ?? data.reading_book ?? '');
-            const matchedBook = BIBLE_BOOKS.find(
-              book => book.bookName === firstEntry?.reading_book,
-            );
-            if (matchedBook) {
-              setSelectedTestament(matchedBook.testament);
-              setSelectedChapters(firstEntry?.selected_chapters ?? []);
-            }
-          }
-
-          syncDevotionReminderSchedule(userId, {
-            startTomorrow: Boolean(data),
-          }).catch(error => {
-            if (__DEV__) {
-              console.warn('Failed to sync devotion reminder schedule', error);
-            }
-          });
+          applyTodayDevotionLog(devotionLogs[getTodayDate()]);
         } finally {
           if (isActive) {
             hasLoadedRef.current = true;
@@ -214,7 +228,12 @@ const HomeScreen = ({ route, navigation }: any) => {
       return () => {
         isActive = false;
       };
-    }, [clearDevotionState, refreshNotificationPermission, userFromParams]),
+    }, [
+      applyTodayDevotionLog,
+      clearDevotionState,
+      refreshNotificationPermission,
+      userFromParams,
+    ]),
   );
 
   useEffect(() => {
@@ -245,8 +264,13 @@ const HomeScreen = ({ route, navigation }: any) => {
   const handleNotificationPermissionAction = async () => {
     setPermissionLoading(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
+      let sessionUser = sessionUserRef.current;
+      if (!sessionUser) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        sessionUser = sessionData?.session?.user;
+        sessionUserRef.current = sessionUser;
+      }
+      const userId = sessionUser?.id;
       const seenPrompt = await hasSeenNotificationPermissionPrompt(userId);
 
       if (notificationPermissionState === 'denied' && seenPrompt) {
@@ -271,8 +295,13 @@ const HomeScreen = ({ route, navigation }: any) => {
   /* ── Save devotion answer + show smart response ── */
   const handleDevotionAnswer = useCallback(
     async (completed: boolean) => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
+      let sessionUser = sessionUserRef.current;
+      if (!sessionUser) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        sessionUser = sessionData?.session?.user;
+        sessionUserRef.current = sessionUser;
+      }
+      const userId = sessionUser?.id;
       if (!userId) {
         return;
       }
@@ -305,7 +334,9 @@ const HomeScreen = ({ route, navigation }: any) => {
         chapters_read: completed
           ? firstEntry?.selected_chapters.length || null
           : null,
-        selected_chapters: completed ? firstEntry?.selected_chapters ?? null : null,
+        selected_chapters: completed
+          ? firstEntry?.selected_chapters ?? null
+          : null,
         reading_entries: completed ? nextReadingEntries : null,
       };
 
@@ -335,7 +366,14 @@ const HomeScreen = ({ route, navigation }: any) => {
         );
       }
     },
-    [readingBook, readingEntries, selectedBook, selectedChapters, showAlert, strings],
+    [
+      readingBook,
+      readingEntries,
+      selectedBook,
+      selectedChapters,
+      showAlert,
+      strings,
+    ],
   );
 
   /* ── Logout ── */
@@ -351,6 +389,7 @@ const HomeScreen = ({ route, navigation }: any) => {
           onPress: async () => {
             try {
               clearDevotionState();
+              sessionUserRef.current = null;
               setUser(null);
               await logoutCurrentUser();
               const parentNavigation = navigation.getParent?.();
@@ -408,7 +447,9 @@ const HomeScreen = ({ route, navigation }: any) => {
   }, [selectedBook, selectedChapters]);
 
   const canSaveReading =
-    !pendingCompleted || readingEntries.length > 0 || (!!readingBook && selectedChapters.length > 0);
+    !pendingCompleted ||
+    readingEntries.length > 0 ||
+    (!!readingBook && selectedChapters.length > 0);
 
   const saveDevotionSheet = useCallback(async () => {
     setAnswerSheetVisible(false);
@@ -444,16 +485,19 @@ const HomeScreen = ({ route, navigation }: any) => {
     setSelectedChapters([]);
   }, [readingBook, selectedBook, selectedChapters]);
 
-  const handleRemoveAnswerSheetReading = useCallback((index: number) => {
-    setReadingEntries(current => {
-      const removed = current[index];
-      if (removed?.reading_book === readingBook) {
-        setReadingBook('');
-        setSelectedChapters([]);
-      }
-      return current.filter((_, itemIndex) => itemIndex !== index);
-    });
-  }, [readingBook]);
+  const handleRemoveAnswerSheetReading = useCallback(
+    (index: number) => {
+      setReadingEntries(current => {
+        const removed = current[index];
+        if (removed?.reading_book === readingBook) {
+          setReadingBook('');
+          setSelectedChapters([]);
+        }
+        return current.filter((_, itemIndex) => itemIndex !== index);
+      });
+    },
+    [readingBook],
+  );
 
   if (loading && !user) {
     return (

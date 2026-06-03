@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -26,6 +33,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { getStrings } from '../../localization';
 import {
   deleteReflection as removeReflection,
+  readCachedReflections,
   refreshReflections,
   saveReflection,
 } from '../../lib/offlineSync';
@@ -34,6 +42,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
   const strings = getStrings().spiritualReflection;
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const sessionUserRef = useRef<any>(null);
   const [reflections, setReflections] = useState<Reflection[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,14 +60,17 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
   const [detailItem, setDetailItem] = useState<Reflection | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query);
   const isCompactWidth = windowWidth < 380;
   const isNarrowWidth = windowWidth < 360;
   const filteredReflections = useMemo(
     () =>
       reflections.filter(reflection =>
-        reflection.content.toLowerCase().includes(query.trim().toLowerCase()),
+        reflection.content
+          .toLowerCase()
+          .includes(deferredQuery.trim().toLowerCase()),
       ),
-    [query, reflections],
+    [deferredQuery, reflections],
   );
   const shouldShowHero = query.trim().length === 0 && !keyboardVisible;
 
@@ -77,18 +89,33 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
     [],
   );
 
+  const getCurrentUserId = useCallback(async () => {
+    let sessionUser = sessionUserRef.current;
+    if (!sessionUser) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      sessionUser = sessionData?.session?.user;
+      sessionUserRef.current = sessionUser ?? null;
+    }
+
+    return sessionUser?.id as string | undefined;
+  }, []);
+
   const fetchReflections = useCallback(async () => {
     setLoading(true);
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData?.session?.user?.id;
+    const userId = await getCurrentUserId();
     if (!userId) {
       setLoading(false);
       return;
     }
+
+    const cached = await readCachedReflections(userId);
+    setReflections(cached);
+    setLoading(false);
+
     const { data } = await refreshReflections(userId);
     setReflections(data);
     setLoading(false);
-  }, []);
+  }, [getCurrentUserId]);
 
   useEffect(() => {
     fetchReflections();
@@ -136,8 +163,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
       return;
     }
     setSaving(true);
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData?.session?.user?.id;
+    const userId = await getCurrentUserId();
     if (!userId) {
       setSaving(false);
       return;
@@ -153,7 +179,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
     setSaving(false);
     setShowModal(false);
     setReflections(result.data);
-  }, [editItem, text]);
+  }, [editItem, getCurrentUserId, text]);
 
   const deleteReflection = useCallback(
     (item: Reflection) => {
@@ -166,8 +192,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
             text: strings.delete,
             style: 'destructive',
             onPress: async () => {
-              const { data: sessionData } = await supabase.auth.getSession();
-              const userId = sessionData?.session?.user?.id;
+              const userId = await getCurrentUserId();
               if (!userId) {
                 return;
               }
@@ -185,6 +210,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
     },
     [
       showAlert,
+      getCurrentUserId,
       strings.cancel,
       strings.delete,
       strings.deleteMessage,
@@ -226,7 +252,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
         />
       </View>
 
-      {loading ? (
+      {loading && reflections.length === 0 ? (
         <ActivityIndicator style={styles.loader} size="large" color={NAVY} />
       ) : (
         <FlatList
@@ -302,8 +328,7 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
         onClose={closeDetail}
         onEdit={openEdit}
         onDelete={async item => {
-          const { data: sessionData } = await supabase.auth.getSession();
-          const userId = sessionData?.session?.user?.id;
+          const userId = await getCurrentUserId();
           if (!userId) {
             return;
           }
