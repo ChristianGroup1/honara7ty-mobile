@@ -37,7 +37,7 @@ const VIEWABILITY_CONFIG = { viewAreaCoveragePercentThreshold: 60 };
 const THEMES = [
   {
     background: '#0C1121',
-    accent: '#C9A84C',
+    accent: '#78A1BD',
     secondary: 'rgba(255,255,255,0.16)',
     icon: 'book-open-page-variant',
     label: 'بداية هادئة',

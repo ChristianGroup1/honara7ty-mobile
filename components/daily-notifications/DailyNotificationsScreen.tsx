@@ -63,8 +63,12 @@ import {
   ReadingEntry,
   readingEntriesFromLegacy,
 } from '../../lib/readingEntries';
+import {
+  buildReadingPlanSuggestions,
+} from '../../lib/readingPlanSuggestions';
+import type { ReadingPlanSuggestion } from '../../lib/readingPlanSuggestions';
 
-const DailyNotificationsScreen = ({ navigation }: any) => {
+const DailyNotificationsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().dailyNotifications;
   const insets = useSafeAreaInsets();
   const tips = useMemo(
@@ -88,6 +92,9 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
   const [readingBook, setReadingBook] = useState('');
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
   const [readingEntries, setReadingEntries] = useState<ReadingEntry[]>([]);
+  const [devotionLogsForSuggestions, setDevotionLogsForSuggestions] = useState<
+    Record<string, any>
+  >({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -177,6 +184,7 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
               })
           : [];
       const nextEntries = latestEntries.length ? latestEntries : profileEntries;
+      setDevotionLogsForSuggestions(devotionLogs ?? {});
 
       if (nextEntries.length > 0) {
         const firstEntry = nextEntries[0];
@@ -363,6 +371,50 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
       return current.filter((_, itemIndex) => itemIndex !== index);
     });
   };
+
+  const readingPlanSuggestions = useMemo(
+    () =>
+      buildReadingPlanSuggestions(
+        strings.readingPlanSuggestions,
+        devotionLogsForSuggestions,
+      ),
+    [devotionLogsForSuggestions, strings.readingPlanSuggestions],
+  );
+
+  const handleApplySuggestion = useCallback(
+    (suggestion: ReadingPlanSuggestion) => {
+      const firstEntry = suggestion.entries[0];
+      setReadingEntries(suggestion.entries);
+      setReadingBook(firstEntry?.reading_book ?? '');
+      setSelectedChapters(firstEntry?.selected_chapters ?? []);
+      setSaved(false);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const selectedPlanKey = route?.params?.selectedReadingPlanKey;
+    if (!selectedPlanKey) {
+      return;
+    }
+
+    const suggestion = readingPlanSuggestions.find(
+      item => item.key === selectedPlanKey,
+    );
+    if (suggestion) {
+      handleApplySuggestion(suggestion);
+      navigation.setParams({ selectedReadingPlanKey: undefined });
+    }
+  }, [
+    handleApplySuggestion,
+    navigation,
+    readingPlanSuggestions,
+    route?.params?.selectedReadingPlanKey,
+  ]);
+
+  const openReadingPlanSuggestions = useCallback(() => {
+    navigation.navigate('ReadingPlanSuggestions');
+  }, [navigation]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -574,6 +626,7 @@ const DailyNotificationsScreen = ({ navigation }: any) => {
           onClearChapters={() => setSelectedChapters([])}
           onAddReadingEntry={handleAddReadingEntry}
           onRemoveReadingEntry={handleRemoveReadingEntry}
+          onOpenSuggestions={openReadingPlanSuggestions}
           onEditTime={openTimePicker}
           onSave={handleSave}
         />

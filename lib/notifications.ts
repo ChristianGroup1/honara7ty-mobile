@@ -268,7 +268,7 @@ function buildDevotionNotificationPayload(params: {
     android: {
       channelId: CHANNEL_ID,
       smallIcon: 'ic_notification',
-      color: '#C9A84C',
+      color: '#78A1BD',
       pressAction: {
         id: DEVOTION_PRESS_ACTION_ID,
         launchActivity: 'default',

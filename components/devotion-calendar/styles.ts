@@ -12,7 +12,7 @@ import {
 } from '../shared/heroStyles';
 
 export const NAVY = '#0A1124';
-export const GOLD = '#C9A84C';
+export const GOLD = '#78A1BD';
 export const BG = '#F2F4F8';
 
 export const devotionCalendarStyles = StyleSheet.create({
@@ -104,7 +104,7 @@ export const devotionCalendarStyles = StyleSheet.create({
     backgroundColor: NAVY,
   },
   statIconWrapGold: {
-    backgroundColor: '#FFF2CD',
+    backgroundColor: '#78A1BD',
   },
   statIconWrapSoft: {
     backgroundColor: '#E9EEF8',
@@ -184,7 +184,7 @@ export const devotionCalendarStyles = StyleSheet.create({
   recordDevotionButton: {
     minHeight: 42,
     borderRadius: 12,
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 12,
@@ -263,9 +263,9 @@ export const devotionCalendarStyles = StyleSheet.create({
     borderRadius: 4,
   },
   legendSwatchCompleted: {
-    backgroundColor: 'rgba(201,168,76,0.32)',
+    backgroundColor: 'rgba(120,161,189,0.32)',
     borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.48)',
+    borderColor: 'rgba(18,30,52,0.48)',
   },
   legendSwatchToday: {
     backgroundColor: '#EEF3FF',
@@ -323,7 +323,7 @@ export const devotionCalendarStyles = StyleSheet.create({
   },
   dayCellCompleted: {
     backgroundColor: '#FFF7E2',
-    borderColor: 'rgba(201,168,76,0.42)',
+    borderColor: 'rgba(18,30,52,0.42)',
   },
   dayCellMissed: {
     backgroundColor: '#FFF4EA',
@@ -338,7 +338,7 @@ export const devotionCalendarStyles = StyleSheet.create({
     borderColor: GOLD,
     borderWidth: 2,
     transform: [{ translateY: -1 }],
-    shadowColor: GOLD,
+    shadowColor: '#78A1BD',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.16,
     shadowRadius: 10,
@@ -374,7 +374,7 @@ export const devotionCalendarStyles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
   },
   modalOverlay: {
     flex: 1,
@@ -508,13 +508,13 @@ export const devotionCalendarStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
-    backgroundColor: '#FFF4D6',
+    backgroundColor: '#78A1BD',
   },
   addReadingEntryBtnDisabled: {
     opacity: 0.55,
   },
   addReadingEntryText: {
-    color: NAVY,
+    color: '#FFF',
     fontSize: 13,
     fontWeight: '900',
   },
@@ -645,7 +645,7 @@ export const devotionCalendarStyles = StyleSheet.create({
     fontWeight: '700',
   },
   saveBtn: {
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',

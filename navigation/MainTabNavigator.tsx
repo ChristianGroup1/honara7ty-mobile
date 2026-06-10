@@ -6,6 +6,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import HomeScreen from '../components/home/HomeScreen';
 import ProfileScreen from '../components/profile/ProfileScreen';
 import DailyNotificationsScreen from '../components/daily-notifications/DailyNotificationsScreen';
+import ReadingPlanSuggestionsScreen from '../components/daily-notifications/ReadingPlanSuggestionsScreen';
 import MoreScreen from '../components/more/MoreScreen';
 import AboutIdeaScreen from '../components/about-idea/AboutIdeaScreen';
 import PrayerNotesScreen from '../components/prayer-notes/PrayerNotesScreen';
@@ -20,24 +21,18 @@ import DevotionGroupInviteScreen from '../components/devotion-groups/DevotionGro
 import DevotionGroupDetailsScreen from '../components/devotion-groups/DevotionGroupDetailsScreen';
 import DevotionGroupMemberDetailsScreen from '../components/devotion-groups/DevotionGroupMemberDetailsScreen';
 import { getStrings } from '../localization';
+import { useNightMode } from '../lib/nightMode';
 
-const NAVY = '#0A1124';
-const GOLD = '#C9A84C';
+const GOLD = '#78A1BD';
 
 const Tab = createBottomTabNavigator();
 
-function renderTabBarIcon(
-  routeName: string,
-  color: string,
-  focused: boolean,
-) {
+function renderTabBarIcon(routeName: string, color: string, focused: boolean) {
   const icons: Record<string, string> = {
     Home: focused ? 'home' : 'home-outline',
     Profile: focused ? 'account' : 'account-outline',
     DailyNotifications: focused ? 'cog' : 'cog-outline',
-    More: focused
-      ? 'dots-horizontal-circle'
-      : 'dots-horizontal-circle-outline',
+    More: focused ? 'dots-horizontal-circle' : 'dots-horizontal-circle-outline',
   };
 
   return (
@@ -57,6 +52,7 @@ const hiddenTabScreenOptions = {
 const MainTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const strings = getStrings().navigation;
+  const { colors } = useNightMode();
   const bottomInset = Math.max(insets.bottom, 0);
   const tabBarBaseHeight = Platform.OS === 'android' ? 60 : 58;
   const tabBarBottomPadding =
@@ -74,16 +70,16 @@ const MainTabNavigator = () => {
       initialRouteName="Home"
       backBehavior="history"
       detachInactiveScreens
-      sceneContainerStyle={{ backgroundColor: NAVY }}
+      sceneContainerStyle={{ backgroundColor: colors.background }}
       screenOptions={({ route }) => ({
         headerShown: false,
         lazy: true,
         freezeOnBlur: true,
         tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: GOLD,
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.45)',
+        tabBarInactiveTintColor: colors.tabInactive,
         tabBarStyle: {
-          backgroundColor: NAVY,
+          backgroundColor: colors.header,
           borderTopWidth: 0,
           paddingBottom: tabBarBottomPadding,
           paddingTop: 6,
@@ -105,6 +101,11 @@ const MainTabNavigator = () => {
       <Tab.Screen
         name="DailyNotifications"
         component={DailyNotificationsScreen}
+      />
+      <Tab.Screen
+        name="ReadingPlanSuggestions"
+        component={ReadingPlanSuggestionsScreen}
+        options={hiddenTabScreenOptions}
       />
       <Tab.Screen name="More" component={MoreScreen} />
       <Tab.Screen

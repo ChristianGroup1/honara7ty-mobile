@@ -12,7 +12,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { Testament } from '../data/bibleMetadata';
 
 const NAVY = '#0A1124';
-const GOLD = '#C9A84C';
+const GOLD = '#78A1BD';
 
 type Labels = {
   bookTitle: string;

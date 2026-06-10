@@ -59,7 +59,7 @@ const DevotionCalendarSummary = ({
           <MaterialCommunityIcons
             name="calendar-month"
             size={18}
-            color={NAVY}
+            color="#FFF"
           />
         </View>
         <Text style={styles.statNumber}>{monthCompletedCount}</Text>

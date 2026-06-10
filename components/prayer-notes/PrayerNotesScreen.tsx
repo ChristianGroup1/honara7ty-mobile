@@ -312,7 +312,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
               <MaterialCommunityIcons
                 name="hand-heart"
                 size={42}
-                color="#C9A84C"
+                color="#78A1BD"
               />
             </View>
             <Text style={styles.emptyTitle}>{strings.emptyTitle}</Text>

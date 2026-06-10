@@ -73,7 +73,7 @@ export const homeStyles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
@@ -138,7 +138,7 @@ export const homeStyles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 75,
-    backgroundColor: 'rgba(201,168,76,0.13)',
+    backgroundColor: 'rgba(120,161,189,0.13)',
   },
   questionTopRow: {
     flexDirection: 'row',
@@ -169,7 +169,7 @@ export const homeStyles = StyleSheet.create({
     lineHeight: 29,
   },
   answerBtn: {
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
     borderRadius: 14,
     minHeight: 48,
     alignItems: 'center',
@@ -305,13 +305,13 @@ export const homeStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
-    backgroundColor: '#FFF4D6',
+    backgroundColor: '#78A1BD',
   },
   addReadingEntryBtnDisabled: {
     opacity: 0.55,
   },
   addReadingEntryText: {
-    color: NAVY,
+    color: '#FFF',
     fontSize: 13,
     fontWeight: '900',
   },
@@ -472,7 +472,7 @@ export const homeStyles = StyleSheet.create({
     color: '#FFF',
   },
   saveAnswerBtn: {
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
     borderRadius: 16,
     paddingVertical: 14,
     alignItems: 'center',

@@ -50,7 +50,7 @@ import {
 import { saveDevotionLog } from '../../lib/offlineSync';
 
 const NAVY = '#0A1124';
-const GOLD = '#C9A84C';
+const GOLD = '#78A1BD';
 const BG = '#F2F4F8';
 
 const formatDate = (date: string) => {
@@ -189,7 +189,10 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
         setVisibleMonth(startOfMonth(new Date()));
       } catch (error) {
         if (__DEV__) {
-          console.warn('[devotion-groups] failed to load member history', error);
+          console.warn(
+            '[devotion-groups] failed to load member history',
+            error,
+          );
         }
         setAlertConfig({
           visible: true,
@@ -221,15 +224,15 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
   const completedCount = logs.filter(log => log.completed).length;
   const latestLog = logs[0] ?? null;
   const latestCompletedLog = logs.find(log => log.completed) ?? null;
-  const title = member?.display_name ?? displayName ?? strings.memberDetailsTitle;
+  const title =
+    member?.display_name ?? displayName ?? strings.memberDetailsTitle;
   const logsByDate = useMemo(
     () => new Map(logs.map(log => [log.date, log])),
     [logs],
   );
   const loggedDates = useMemo(() => new Set(logs.map(log => log.date)), [logs]);
   const completedDates = useMemo(
-    () =>
-      new Set(logs.filter(log => log.completed).map(log => log.date)),
+    () => new Set(logs.filter(log => log.completed).map(log => log.date)),
     [logs],
   );
   const monthCells = useMemo(
@@ -245,7 +248,9 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
   }, [monthCells]);
   const selectedLog = logsByDate.get(selectedDate);
   const calendarStrings = getStrings().devotionCalendar;
-  const canEditSelectedMember = Boolean(currentUserId && currentUserId === userId);
+  const canEditSelectedMember = Boolean(
+    currentUserId && currentUserId === userId,
+  );
   const canEditSelectedDate =
     canEditSelectedMember && selectedDate <= toIsoDate(new Date());
   const shouldShowCalendar = logs.length > 0 || canEditSelectedMember;
@@ -254,7 +259,8 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
     [answerBook],
   );
   const answerBooks = useMemo(
-    () => (answerTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS),
+    () =>
+      answerTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS,
     [answerTestament],
   );
   const answerChapterOptions = useMemo(
@@ -470,8 +476,12 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
           <View style={styles.latestCard}>
             <View style={styles.latestHeader}>
               <View>
-                <Text style={styles.latestTitle}>{strings.latestDevotionTitle}</Text>
-                <Text style={styles.latestDate}>{formatDate(latestLog.date)}</Text>
+                <Text style={styles.latestTitle}>
+                  {strings.latestDevotionTitle}
+                </Text>
+                <Text style={styles.latestDate}>
+                  {formatDate(latestLog.date)}
+                </Text>
               </View>
               <View
                 style={[
@@ -489,7 +499,9 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
                       : styles.statusPillTextPending,
                   ]}
                 >
-                  {latestLog.completed ? strings.completed : strings.notCompleted}
+                  {latestLog.completed
+                    ? strings.completed
+                    : strings.notCompleted}
                 </Text>
               </View>
             </View>
@@ -504,10 +516,12 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
               />
               <Text style={styles.readingText}>{formatReading(latestLog)}</Text>
             </View>
-            {latestCompletedLog && latestCompletedLog.date !== latestLog.date ? (
+            {latestCompletedLog &&
+            latestCompletedLog.date !== latestLog.date ? (
               <Text style={styles.latestMeta}>
                 {strings.latestCompletedDevotionPrefix}{' '}
-                {formatDate(latestCompletedLog.date)} - {formatTime(latestCompletedLog.created_at)}
+                {formatDate(latestCompletedLog.date)} -{' '}
+                {formatTime(latestCompletedLog.created_at)}
               </Text>
             ) : null}
           </View>
@@ -604,7 +618,9 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
                       const cellLog = cell.isoDate
                         ? logsByDate.get(cell.isoDate)
                         : undefined;
-                      const hasLog = Boolean(cell.isoDate && loggedDates.has(cell.isoDate));
+                      const hasLog = Boolean(
+                        cell.isoDate && loggedDates.has(cell.isoDate),
+                      );
 
                       return (
                         <TouchableOpacity
@@ -633,8 +649,7 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
                               <Text
                                 style={[
                                   styles.dayText,
-                                  cellLog?.completed &&
-                                    styles.dayTextCompleted,
+                                  cellLog?.completed && styles.dayTextCompleted,
                                   hasLog &&
                                     !cellLog?.completed &&
                                     styles.dayTextPending,
@@ -674,7 +689,8 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
                         {formatDate(selectedLog.date)}
                       </Text>
                       <Text style={styles.logTime}>
-                        {strings.recordedAt} {formatTime(selectedLog.created_at)}
+                        {strings.recordedAt}{' '}
+                        {formatTime(selectedLog.created_at)}
                       </Text>
                     </View>
                     <View
@@ -933,9 +949,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendSwatchCompleted: {
-    backgroundColor: 'rgba(201,168,76,0.32)',
+    backgroundColor: 'rgba(120,161,189,0.32)',
     borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.48)',
+    borderColor: 'rgba(18,30,52,0.48)',
   },
   legendSwatchPending: {
     backgroundColor: 'rgba(217,123,41,0.12)',
@@ -981,7 +997,7 @@ const styles = StyleSheet.create({
   },
   dayCellCompleted: {
     backgroundColor: '#FFF7E2',
-    borderColor: 'rgba(201,168,76,0.42)',
+    borderColor: 'rgba(18,30,52,0.42)',
   },
   dayCellPending: {
     backgroundColor: '#FFF4EA',
@@ -1016,7 +1032,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
   },
   loadingBlock: { paddingVertical: 28, alignItems: 'center' },
   logCard: {
@@ -1079,7 +1095,7 @@ const styles = StyleSheet.create({
   editDayButton: {
     minHeight: 42,
     borderRadius: 12,
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 12,

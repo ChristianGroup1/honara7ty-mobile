@@ -2,7 +2,7 @@ import { Difficulty, WordSlot } from './types';
 import { getStrings } from '../../localization';
 
 export const NAVY = '#0A1124';
-export const GOLD = '#C9A84C';
+export const GOLD = '#78A1BD';
 
 const memorizationStrings = getStrings().bibleMemorization;
 

@@ -225,7 +225,7 @@ const ReciteScreen = ({ navigation, route }: Props) => {
                       isReferenceBlurred ? 'eye-off-outline' : 'eye-outline'
                     }
                     size={20}
-                    color="#C9A84C"
+                    color="#FFF"
                   />
                 </TouchableOpacity>
               </View>
@@ -251,7 +251,7 @@ const ReciteScreen = ({ navigation, route }: Props) => {
               <MaterialCommunityIcons
                 name={isFullTextMode ? 'form-textbox' : 'feather'}
                 size={18}
-                color="#C9A84C"
+                color="#78A1BD"
               />
             </View>
             {isFullTextMode ? (

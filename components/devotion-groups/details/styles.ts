@@ -7,7 +7,7 @@ export const styles = StyleSheet.create({
   permissionCard: {
     backgroundColor: '#FFF8E5', borderRadius: 16, padding: 14, marginBottom: 12,
     flexDirection: 'row', alignItems: 'center', borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.32)',
+    borderColor: 'rgba(18,30,52,0.32)',
   },
   permissionIcon: {
     width: 42, height: 42, borderRadius: 13, backgroundColor: '#FFF',

@@ -24,7 +24,7 @@ const SpiritualReflectionHeader = ({
         <AppHeaderAction
           icon="plus"
           onPress={onAdd}
-          backgroundColor="rgba(201,168,76,0.16)"
+          backgroundColor="rgba(18,30,52,0.16)"
         />
       }
     />

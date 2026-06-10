@@ -9,7 +9,7 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const NAVY = '#0A1124';
-const GOLD = '#C9A84C';
+const GOLD = '#78A1BD';
 
 type Props = {
   title: string;
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   button: {
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
     borderRadius: 16,
     minHeight: 48,
     alignItems: 'center',

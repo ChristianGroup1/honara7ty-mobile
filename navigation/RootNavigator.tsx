@@ -26,8 +26,7 @@ import {
   trackSentryScreen,
 } from '../lib/sentry';
 import { trackFirebaseScreen } from '../lib/firebase';
-
-const NAVY = '#0A1124';
+import { useNightMode } from '../lib/nightMode';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -108,6 +107,7 @@ const RootNavigator = ({
   pendingDevotionGroupInviteCode,
   onConsumeDevotionGroupInvite,
 }: RootNavigatorProps) => {
+  const { colors } = useNightMode();
   const routeNameRef = useRef<string | undefined>(undefined);
   const navigationReadyRef = useRef(false);
   const [navigationReady, setNavigationReady] = useState(false);
@@ -239,13 +239,13 @@ const RootNavigator = ({
         trackFirebaseScreen(currentRouteName);
       }}
     >
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <Stack.Navigator
         initialRouteName={initialRouteName}
         detachInactiveScreens
         screenOptions={{
           headerShown: false,
-          cardStyle: { backgroundColor: NAVY },
+          cardStyle: { backgroundColor: colors.background },
         }}
       >
         <Stack.Screen

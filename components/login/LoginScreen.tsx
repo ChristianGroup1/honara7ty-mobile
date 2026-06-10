@@ -235,7 +235,7 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   if (initializing) {
     return (
       <View style={initializingContainerStyle}>
-        <ActivityIndicator size="large" color="#ffffff" />
+        <ActivityIndicator size="large" color="#78A1BD" />
       </View>
     );
   }

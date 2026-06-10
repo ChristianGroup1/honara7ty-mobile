@@ -29,6 +29,41 @@ export const dailyNotificationsStrings = {
   editTimeSubtitle: 'حرّك المؤشر لاختيار الوقت المناسب',
   readingPlanTitle: 'خطة القراءة اليومية',
   readingPlanSubtitle: 'حدد المكان اللي هتبدأ منه والقراءات اليومية',
+  suggestionsTitle: 'اقتراحات جاهزة',
+  suggestionsSubtitle:
+    'افتح شاشة الخطط الجاهزة واختار منها اللي يناسبك.',
+  openSuggestions: 'اختيار خطة قراءة',
+  suggestionsScreenTitle: 'اقتراحات القراءة',
+  suggestionsScreenHeading: 'اختار بداية مناسبة لرحلتك',
+  suggestionsScreenBody:
+    'كل خطة هتجهز قراءة اليوم تلقائياً. بعد الاختيار هترجع تعدّل أو تحفظ من شاشة وقتك مع الله.',
+  applySuggestion: 'استخدام الخطة',
+  suggestionEntriesCount: (count: number) =>
+    count === 1 ? 'قراءة واحدة لليوم' : `${count} قراءات لليوم`,
+  suggestionDaysCount: (count: number) =>
+    count === 1 ? 'يوم واحد' : `${count} يوم`,
+  suggestionDayLabel: (day: number) => `اليوم ${day}`,
+  suggestionMoreDays: (count: number) => `+ ${count} يوم آخر في الخطة`,
+  showAllDays: 'عرض كل الأيام',
+  hidePlanDays: 'إخفاء باقي الأيام',
+  readingPlanSuggestions: {
+    bibleYearTitle: 'الكتاب كله في سنة',
+    bibleYearSubtitle: 'ابدأ من التكوين بقراءة يومية متوازنة حوالي 4 إصحاحات.',
+    bibleYearBadge: '365 يوم',
+    newTestamentTitle: 'العهد الجديد في 3 شهور',
+    newTestamentSubtitle: 'رحلة مركّزة تبدأ من إنجيل متى حوالي 3 إصحاحات يومياً.',
+    newTestamentBadge: '90 يوم',
+    topicalPeaceTitle: 'سلام وتشجيع',
+    topicalPeaceSubtitle: 'قراءات مختارة من المزامير ويوحنا وفيلبي لوقت هادئ.',
+    topicalPeaceBadge: 'موضوعية',
+    topicalWisdomTitle: 'حكمة عملية',
+    topicalWisdomSubtitle: 'بداية قصيرة من الأمثال ويعقوب للقرارات اليومية.',
+    topicalWisdomBadge: 'موضوعية',
+    paceTitle: 'حسب سرعتك الحالية',
+    paceSubtitle: (chapters: number) =>
+      `اقتراح تلقائي يكمل من آخر قراءة بمعدل ${chapters} إصحاح يومياً.`,
+    paceBadge: 'تلقائي',
+  },
   multipleReadingsHint:
     'تقدر تضيف أكتر من قراءة في خطتك. اختار السفر والإصحاحات، واضغط إضافة قراءة أخرى.',
   addReadingEntry: 'إضافة قراءة أخرى',

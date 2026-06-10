@@ -26,7 +26,7 @@ const DailyQuestionCard = ({
           <MaterialCommunityIcons
             name="book-open-page-variant-outline"
             size={21}
-            color="#C9A84C"
+            color="#78A1BD"
           />
         </View>
         <Text style={styles.questionCardLabel}>{strings.dailyCardLabel}</Text>

@@ -12,7 +12,7 @@ import {
 } from '../shared/heroStyles';
 
 export const NAVY = '#0A1124';
-export const GOLD = '#C9A84C';
+export const GOLD = '#78A1BD';
 
 export const spiritualReflectionStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F4F8' },
@@ -38,7 +38,7 @@ export const spiritualReflectionStyles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(201,168,76,0.14)',
+    backgroundColor: 'rgba(120,161,189,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -160,7 +160,7 @@ export const spiritualReflectionStyles = StyleSheet.create({
     width: 4,
     borderTopRightRadius: 8,
     borderBottomRightRadius: 8,
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
   },
   cardBody: { flex: 1, minWidth: 0 },
   cardHeader: {
@@ -228,7 +228,7 @@ export const spiritualReflectionStyles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: 'rgba(201,168,76,0.14)',
+    backgroundColor: 'rgba(120,161,189,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },

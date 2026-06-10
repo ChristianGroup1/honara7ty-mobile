@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getStrings } from '../../localization';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 
-const GOLD = '#C9A84C';
+const GOLD = '#78A1BD';
 const BG = '#F2F4F8';
 
 type Props = { navigation: any; route: any };

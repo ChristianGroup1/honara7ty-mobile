@@ -3,7 +3,7 @@
  * Shows consistency badges earned by the user.
  * Reads from Supabase `devotion_log` table to compute streaks.
  * Only days answered with `completed = true` count toward the streak.
- * Awards weekly (7 days), monthly (30 days), and yearly (365 days) badges.
+ * Awards tiered streak badges and XP.
  */
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -29,7 +29,7 @@ import BadgesHeader from './BadgesHeader';
 import { BADGE_CONFIGS, BadgeConfig, GOLD, NAVY, WEB_URL } from './constants';
 import { badgesStyles as styles } from './styles';
 import StreakCard from './StreakCard';
-import { computeStreak } from './utils';
+import { computeStreak, computeXp } from './utils';
 import { getStrings } from '../../localization';
 import {
   readCachedDevotionLogs,
@@ -95,7 +95,10 @@ const BadgesScreen = ({ navigation }: any) => {
       try {
         const webLink = `${WEB_URL}/badges/${badge.key}`;
 
-        const message = `${badge.shareText}\n\n${strings.shareLinkPrefix}${webLink}`;
+        const message = `${badge.shareText}\n\n${strings.screen.shareBadgeSummary(
+          badge.tier,
+          badge.xp,
+        )}\n\n${strings.shareLinkPrefix}${webLink}`;
 
         if (Platform.OS === 'web') {
           if (navigator.share) {
@@ -136,6 +139,10 @@ const BadgesScreen = ({ navigation }: any) => {
     [streak],
   );
   const earnedCount = earnedBadges.length;
+  const totalXp = useMemo(
+    () => computeXp(streak, earnedBadges),
+    [earnedBadges, streak],
+  );
   const spotlightBadge =
     lockedBadges[0] ??
     earnedBadges[earnedBadges.length - 1] ??
@@ -223,6 +230,7 @@ const BadgesScreen = ({ navigation }: any) => {
               streak={streak}
               earnedCount={earnedCount}
               totalCount={BADGE_CONFIGS.length}
+              xp={totalXp}
             />
           );
         case 'spotlight':
@@ -245,9 +253,14 @@ const BadgesScreen = ({ navigation }: any) => {
               </View>
 
               <Text style={styles.spotlightTitle}>{spotlightBadge.title}</Text>
-              <Text style={styles.spotlightDays}>
-                {strings.card.days(spotlightBadge.days)}
-              </Text>
+              <View style={styles.spotlightMetaRow}>
+                <Text style={styles.spotlightDays}>
+                  {strings.card.days(spotlightBadge.days)}
+                </Text>
+                <Text style={styles.spotlightXp}>
+                  {spotlightBadge.tier} · {strings.card.xp(spotlightBadge.xp)}
+                </Text>
+              </View>
               <Text style={styles.spotlightText}>
                 {spotlightEarned
                   ? strings.screen.spotlightEarnedText
@@ -298,6 +311,7 @@ const BadgesScreen = ({ navigation }: any) => {
       loading,
       streak,
       earnedCount,
+      totalXp,
       strings,
       spotlightGlowStyle,
       spotlightPillStyle,

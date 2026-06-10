@@ -4,6 +4,8 @@ export const badgeConfigs = [
     icon: 'star',
     title: 'أسبوع',
     days: 7,
+    tier: 'برونزي',
+    xp: 100,
     color: '#4A90D9',
     emoji: '⭐',
     shareText:
@@ -14,6 +16,8 @@ export const badgeConfigs = [
     icon: 'calendar-check',
     title: 'أسبوعان',
     days: 14,
+    tier: 'برونزي',
+    xp: 175,
     color: '#00BCD4',
     emoji: '📅',
     shareText:
@@ -24,7 +28,9 @@ export const badgeConfigs = [
     icon: 'medal',
     title: 'شهر',
     days: 30,
-    color: '#C9A84C',
+    tier: 'فضي',
+    xp: 350,
+    color: '#78A1BD',
     emoji: '🥇',
     shareText:
       'لقد أكملت شهراً كاملاً (3️⃣0️⃣ يوماً) من قراءة الكتاب المقدس! 🏆\n\nهذا إنجاز عظيم لي في رحلتي الروحية. شكراً "هنا راحتي"!\n\n#هنا_راحتي #الثبات #الكتاب_المقدس',
@@ -34,6 +40,8 @@ export const badgeConfigs = [
     icon: 'lightning-bolt',
     title: '60 يوم',
     days: 60,
+    tier: 'فضي',
+    xp: 650,
     color: '#FF6B6B',
     emoji: '⚡',
     shareText:
@@ -44,6 +52,8 @@ export const badgeConfigs = [
     icon: 'crown',
     title: '3 أشهر',
     days: 90,
+    tier: 'ذهبي',
+    xp: 1000,
     color: '#9C27B0',
     emoji: '👑',
     shareText:
@@ -54,6 +64,8 @@ export const badgeConfigs = [
     icon: 'heart',
     title: '6 أشهر',
     days: 180,
+    tier: 'بلاتيني',
+    xp: 2200,
     color: '#E91E63',
     emoji: '❤️',
     shareText:
@@ -64,6 +76,8 @@ export const badgeConfigs = [
     icon: 'trophy',
     title: 'سنة',
     days: 365,
+    tier: 'ماسي',
+    xp: 5000,
     color: '#E84393',
     emoji: '🏆',
     shareText:
@@ -74,6 +88,8 @@ export const badgeConfigs = [
     icon: 'book-heart',
     title: 'سنتان',
     days: 730,
+    tier: 'ماسي',
+    xp: 10000,
     color: '#4CAF50',
     emoji: '🎖️',
     shareText:
@@ -96,6 +112,8 @@ export const badgesStrings = {
     spotlightEarnedText: 'فتحته بالفعل بثباتك الجميل',
     spotlightNextText: (daysLeft: number) =>
       `فاضل ${daysLeft} يوم وتفتحه`,
+    shareBadgeSummary: (tier: string, xp: number) =>
+      `وسام ${tier} · ${xp.toLocaleString('ar-EG')} XP`,
     earnedSection: 'أوسمة تم فتحها',
     lockedSection: 'أوسمة في الطريق',
   },
@@ -113,11 +131,13 @@ export const badgesStrings = {
     opened: 'تم فتحه',
     total: 'إجمالي الأوسام',
     streakDays: 'أيام الثبات',
+    xp: 'نقاط XP',
   },
   card: {
     earned: 'تم الإنجاز',
     inProgress: 'قيد التقدم',
     days: (days: number) => `${days} يوم`,
+    xp: (xp: number) => `${xp.toLocaleString('ar-EG')} XP`,
     earnedSubtitle: 'أكملت هذا الوسام بنجاح',
     remainingSubtitle: (daysLeft: number) => `تبقّى ${daysLeft} يوم للوصول`,
     progressLabel: 'نسبة التقدم',

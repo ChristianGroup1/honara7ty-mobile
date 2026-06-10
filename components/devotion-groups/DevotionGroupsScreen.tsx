@@ -30,7 +30,7 @@ import {
 } from '../../lib/devotionGroups';
 
 const NAVY = '#0A1124';
-const GOLD = '#C9A84C';
+const GOLD = '#78A1BD';
 const BG = '#F2F4F8';
 type ActionMode = 'create' | 'join';
 
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
     width: 170,
     height: 170,
     borderRadius: 85,
-    backgroundColor: 'rgba(201,168,76,0.14)',
+    backgroundColor: 'rgba(120,161,189,0.14)',
   },
   heroTopRow: {
     flexDirection: 'row',
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: 'rgba(201,168,76,0.14)',
+    backgroundColor: 'rgba(120,161,189,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },

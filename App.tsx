@@ -21,6 +21,7 @@ import {
   registerFirebaseGlobalErrorHandler,
 } from './lib/firebase';
 import { navigationRef } from './navigation/navigationRef';
+import { NightModeProvider } from './lib/nightMode';
 
 function runWhenIdle(task: () => void) {
   const idleScheduler = (globalThis as any).requestIdleCallback;
@@ -80,19 +81,21 @@ function App() {
 
   return (
     <SafeAreaProvider>
-      {showSplash ? (
-        <SplashScreen />
-      ) : (
-        <RootNavigator
-          isLoggedIn={isLoggedIn}
-          isRecoveryMode={isRecoveryMode}
-          recoveryLinkValid={recoveryLinkValid}
-          needsOnboarding={needsOnboarding}
-          needsProfileCompletion={needsProfileCompletion}
-          pendingDevotionGroupInviteCode={pendingDevotionGroupInviteCode}
-          onConsumeDevotionGroupInvite={clearPendingDevotionGroupInvite}
-        />
-      )}
+      <NightModeProvider>
+        {showSplash ? (
+          <SplashScreen />
+        ) : (
+          <RootNavigator
+            isLoggedIn={isLoggedIn}
+            isRecoveryMode={isRecoveryMode}
+            recoveryLinkValid={recoveryLinkValid}
+            needsOnboarding={needsOnboarding}
+            needsProfileCompletion={needsProfileCompletion}
+            pendingDevotionGroupInviteCode={pendingDevotionGroupInviteCode}
+            onConsumeDevotionGroupInvite={clearPendingDevotionGroupInvite}
+          />
+        )}
+      </NightModeProvider>
     </SafeAreaProvider>
   );
 }

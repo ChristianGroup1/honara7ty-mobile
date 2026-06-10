@@ -35,7 +35,7 @@ import {
 } from '../../lib/offlineSync';
 
 const NAVY = '#0A1124';
-const GOLD = '#C9A84C';
+const GOLD = '#78A1BD';
 const BG = '#F2F4F8';
 const PHONE_REGEX = /^\+?[0-9]{9,15}$/;
 
@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
     width: 92,
     height: 92,
     borderRadius: 46,
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -793,7 +793,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 14,
-    backgroundColor: 'rgba(201,168,76,0.16)',
+    backgroundColor: 'rgba(120,161,189,0.16)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,

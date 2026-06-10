@@ -24,7 +24,7 @@ import {
 import { registerPushToken } from '../../lib/pushTokens';
 
 const NAVY = '#0A1124';
-const GOLD = '#C9A84C';
+const GOLD = '#78A1BD';
 const SKY = '#EEF3F8';
 
 const NotificationPermissionScreen = ({ navigation }: any) => {
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: 'rgba(201,168,76,0.24)',
+    backgroundColor: 'rgba(120,161,189,0.24)',
   },
   topRow: {
     flexDirection: 'row',
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   primaryBtn: {
-    backgroundColor: GOLD,
+    backgroundColor: '#78A1BD',
     borderRadius: 18,
     paddingVertical: 16,
     alignItems: 'center',

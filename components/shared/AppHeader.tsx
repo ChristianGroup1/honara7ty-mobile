@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNetInfo } from '@react-native-community/netinfo';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import OfflineBanner from './OfflineBanner';
+import { useNightMode } from '../../lib/nightMode';
 
 const NAVY = '#0A1124';
 
@@ -48,7 +49,10 @@ const AppHeader = ({
   titleNumberOfLines = 1,
 }: AppHeaderProps) => {
   const netInfo = useNetInfo();
+  const { colors } = useNightMode();
   const [isOffline, setIsOffline] = React.useState(false);
+  const resolvedBackgroundColor =
+    backgroundColor === NAVY ? colors.header : backgroundColor;
 
   React.useEffect(() => {
     const nextOffline =
@@ -66,9 +70,12 @@ const AppHeader = ({
   return (
     <>
       <View
-        style={[styles.topInset, { height: topInsetHeight, backgroundColor }]}
+        style={[
+          styles.topInset,
+          { height: topInsetHeight, backgroundColor: resolvedBackgroundColor },
+        ]}
       />
-      <View style={[styles.shell, { backgroundColor }]}>
+      <View style={[styles.shell, { backgroundColor: resolvedBackgroundColor }]}>
         <View style={styles.topRow}>
           <View style={styles.identity}>
             {leading ? <View style={styles.leadingWrap}>{leading}</View> : null}

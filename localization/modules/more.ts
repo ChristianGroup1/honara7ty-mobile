@@ -1,5 +1,9 @@
 export const moreStrings = {
   title: 'المزيد',
+  nightMode: {
+    title: 'الوضع الليلي',
+    subtitle: 'استخدم ألوان أهدأ ومريحة للقراءة ليلاً',
+  },
   items: {
     aboutIdea: {
       title: 'عن الفكره',

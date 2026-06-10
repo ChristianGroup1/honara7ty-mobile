@@ -1,3 +1,5 @@
+import type { BadgeConfig } from './constants';
+
 const toLocalIsoDate = (value: Date) => {
   const year = value.getFullYear();
   const month = String(value.getMonth() + 1).padStart(2, '0');
@@ -27,4 +29,11 @@ export function computeStreak(dates: string[]): number {
   }
 
   return streak;
+}
+
+export function computeXp(streak: number, earnedBadges: BadgeConfig[]): number {
+  const dailyXp = Math.max(streak, 0) * 10;
+  const badgeXp = earnedBadges.reduce((total, badge) => total + badge.xp, 0);
+
+  return dailyXp + badgeXp;
 }

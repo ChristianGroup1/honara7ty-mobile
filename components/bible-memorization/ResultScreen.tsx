@@ -114,7 +114,7 @@ const ResultScreen = ({ navigation, route }: Props) => {
             <MaterialCommunityIcons
               name="check-circle-outline"
               size={18}
-              color="#C9A84C"
+              color="#78A1BD"
             />
           </View>
           <View style={styles.wordsWrap}>

@@ -1,5 +1,5 @@
 export const HERO_NAVY = '#0A1124';
-export const HERO_GOLD = '#C9A84C';
+export const HERO_GOLD = '#78A1BD';
 
 export const heroCardBase = {
   backgroundColor: HERO_NAVY,
@@ -22,7 +22,7 @@ export const heroGlowBase = {
   width: 180,
   height: 180,
   borderRadius: 90,
-  backgroundColor: 'rgba(201,168,76,0.14)',
+  backgroundColor: 'rgba(120,161,189,0.14)',
 };
 
 export const heroTopRowBase = {

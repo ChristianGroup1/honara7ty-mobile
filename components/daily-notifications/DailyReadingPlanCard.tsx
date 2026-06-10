@@ -26,6 +26,7 @@ type Props = {
   onClearChapters?: () => void;
   onAddReadingEntry: () => void;
   onRemoveReadingEntry: (index: number) => void;
+  onOpenSuggestions: () => void;
   onEditTime: () => void;
   onSave: () => void;
 };
@@ -50,6 +51,7 @@ const DailyReadingPlanCard = ({
   onClearChapters,
   onAddReadingEntry,
   onRemoveReadingEntry,
+  onOpenSuggestions,
   onEditTime,
   onSave,
 }: Props) => {
@@ -82,6 +84,26 @@ const DailyReadingPlanCard = ({
       <Text style={styles.multiReadingHint}>
         {strings.multipleReadingsHint}
       </Text>
+      <TouchableOpacity
+        style={styles.openSuggestionsCard}
+        onPress={onOpenSuggestions}
+        activeOpacity={0.84}
+        accessibilityRole="button"
+        accessibilityLabel={strings.openSuggestions}
+      >
+        <View style={styles.openSuggestionsIcon}>
+          <MaterialCommunityIcons name="map-search-outline" size={20} color={GOLD} />
+        </View>
+        <View style={styles.openSuggestionsBody}>
+          <Text style={styles.openSuggestionsTitle}>
+            {strings.suggestionsTitle}
+          </Text>
+          <Text style={styles.openSuggestionsText}>
+            {strings.suggestionsSubtitle}
+          </Text>
+        </View>
+        <MaterialCommunityIcons name="chevron-left" size={22} color={GOLD} />
+      </TouchableOpacity>
       <BiblePassagePicker
         labels={{
           bookTitle: strings.selectBook,

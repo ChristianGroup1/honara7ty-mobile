@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import CustomAlert, { AlertConfig } from '../shared/CustomAlert';
@@ -21,16 +24,21 @@ import {
 } from '../../lib/devotionGroups';
 
 const NAVY = '#0A1124';
-const GOLD = '#C9A84C';
+const GOLD = '#78A1BD';
 const BG = '#F2F4F8';
 
 const DevotionGroupInviteScreen = ({ navigation, route }: any) => {
   const strings = getStrings().devotionGroups;
   const insets = useSafeAreaInsets();
-  const inviteCode = String(route?.params?.inviteCode ?? '').replace(/\s+/g, '');
+  const inviteCode = String(route?.params?.inviteCode ?? '').replace(
+    /\s+/g,
+    '',
+  );
   const [saving, setSaving] = useState(false);
   const [checkingMembership, setCheckingMembership] = useState(true);
-  const [existingGroup, setExistingGroup] = useState<DevotionGroup | null>(null);
+  const [existingGroup, setExistingGroup] = useState<DevotionGroup | null>(
+    null,
+  );
   const [alreadyJoinedAlertShown, setAlreadyJoinedAlertShown] = useState(false);
   const [alertConfig, setAlertConfig] = useState<AlertConfig>({
     visible: false,
@@ -69,7 +77,10 @@ const DevotionGroupInviteScreen = ({ navigation, route }: any) => {
       }
     } catch (error) {
       if (__DEV__) {
-        console.warn('[devotion-groups] failed to check invite membership', error);
+        console.warn(
+          '[devotion-groups] failed to check invite membership',
+          error,
+        );
       }
     } finally {
       setCheckingMembership(false);
@@ -87,7 +98,9 @@ const DevotionGroupInviteScreen = ({ navigation, route }: any) => {
 
   const openExistingGroup = () => {
     if (existingGroup?.id) {
-      navigation.navigate('DevotionGroupDetails', { groupId: existingGroup.id });
+      navigation.navigate('DevotionGroupDetails', {
+        groupId: existingGroup.id,
+      });
       return;
     }
 
@@ -174,7 +187,9 @@ const DevotionGroupInviteScreen = ({ navigation, route }: any) => {
             ]}
           >
             <MaterialCommunityIcons
-              name={alreadyJoined ? 'check-circle-outline' : 'account-heart-outline'}
+              name={
+                alreadyJoined ? 'check-circle-outline' : 'account-heart-outline'
+              }
               size={34}
               color={alreadyJoined ? '#2E8B57' : GOLD}
             />
@@ -210,7 +225,9 @@ const DevotionGroupInviteScreen = ({ navigation, route }: any) => {
                 activeOpacity={0.84}
                 onPress={openExistingGroup}
               >
-                <Text style={styles.primaryButtonText}>{strings.openGroup}</Text>
+                <Text style={styles.primaryButtonText}>
+                  {strings.openGroup}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.secondaryButton}

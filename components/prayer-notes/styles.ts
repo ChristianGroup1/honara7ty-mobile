@@ -137,7 +137,7 @@ export const prayerNotesStyles = StyleSheet.create({
     width: 4,
     borderTopRightRadius: 8,
     borderBottomRightRadius: 8,
-    backgroundColor: '#C9A84C',
+    backgroundColor: '#78A1BD',
   },
   cardAccentAnswered: {
     backgroundColor: '#2D9C5A',
@@ -275,7 +275,7 @@ export const prayerNotesStyles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: 'rgba(201,168,76,0.14)',
+    backgroundColor: 'rgba(120,161,189,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },
