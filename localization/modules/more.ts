@@ -9,9 +9,17 @@ export const moreStrings = {
       title: 'عن الفكره',
       subtitle: 'تعرف على فكرة التطبيق',
     },
+    devotionGuide: {
+      title: 'شرح الخلوة',
+      subtitle: 'خطوات عملية لوقت هادئ مع الله',
+    },
     bibleMemorization: {
       title: 'حفظ الكتاب المقدس',
       subtitle: 'اختبر حفظك للآيات',
+    },
+    lockScreenVerse: {
+      title: ' تصميم آية',
+      subtitle: 'صمّم آية يومية واحفظها كخلفية',
     },
     badges: {
       title: 'شارات الثبات',

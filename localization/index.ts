@@ -16,6 +16,7 @@ import { devotionStrings } from './modules/devotion';
 import { onboardingStrings } from './modules/onboarding';
 import { notificationPermissionStrings } from './modules/notificationPermission';
 import { devotionGroupsStrings } from './modules/devotionGroups';
+import { lockScreenVerseStrings } from './modules/lockScreenVerse';
 
 const locales = {
   ar: {
@@ -37,6 +38,7 @@ const locales = {
     onboarding: onboardingStrings,
     notificationPermission: notificationPermissionStrings,
     devotionGroups: devotionGroupsStrings,
+    lockScreenVerse: lockScreenVerseStrings,
   },
 } as const;
 

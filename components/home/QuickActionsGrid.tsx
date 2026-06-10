@@ -17,25 +17,15 @@ const QuickActionsGrid = ({ navigation }: QuickActionsGridProps) => {
       icon: 'account-group-outline',
       label: strings.quickActions.devotionGroups,
     },
-    {
+    /*{
       route: 'DevotionGuide',
       icon: 'head-cog-outline',
       label: strings.quickActions.devotionGuide,
-    },
+    },*/
     {
       route: 'DailyNotifications',
       icon: 'cog-outline',
       label: strings.quickActions.settings,
-    },
-    {
-      route: 'DevotionCalendar',
-      icon: 'calendar-check-outline',
-      label: strings.quickActions.calendar,
-    },
-    {
-      route: 'Badges',
-      icon: 'medal-outline',
-      label: strings.quickActions.badges,
     },
     {
       route: 'BibleMemorization',

@@ -26,6 +26,14 @@ const MoreScreen = ({ navigation }: any) => {
   const themedStyles = useMemo(() => createStyles(colors), [colors]);
   const items = [
     {
+      key: 'DevotionGuide',
+      route: 'DevotionGuide',
+      icon: 'head-cog-outline',
+      title: strings.items.devotionGuide.title,
+      subtitle: strings.items.devotionGuide.subtitle,
+      color: '#4A90D9',
+    },
+    {
       key: 'AboutIdea',
       icon: 'lightbulb-on-outline',
       title: strings.items.aboutIdea.title,
@@ -40,6 +48,13 @@ const MoreScreen = ({ navigation }: any) => {
       color: '#1A7A7A',
     },
     {
+      key: 'LockScreenVerse',
+      icon: 'image-edit-outline',
+      title: strings.items.lockScreenVerse.title,
+      subtitle: strings.items.lockScreenVerse.subtitle,
+      color: GOLD,
+    },
+    {
       key: 'Badges',
       icon: 'medal-outline',
       title: strings.items.badges.title,
@@ -52,13 +67,6 @@ const MoreScreen = ({ navigation }: any) => {
       title: strings.items.devotionCalendar.title,
       subtitle: strings.items.devotionCalendar.subtitle,
       color: '#2E8B57',
-    },
-    {
-      key: 'DevotionGroups',
-      icon: 'account-group-outline',
-      title: strings.items.devotionGroups.title,
-      subtitle: strings.items.devotionGroups.subtitle,
-      color: '#6D5BD0',
     },
   ];
 

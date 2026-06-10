@@ -59,5 +59,6 @@ export const homeStrings = {
     calendar: 'متابعة وقتك مع الله',
     badges: 'الأوسمة والجوائز',
     bibleMemorization: 'حفظ الكتاب المقدس',
+    lockScreenVerse: 'آية شاشة القفل',
   },
 } as const;

@@ -42,11 +42,13 @@
     "react-native-safe-area-context": "^5.6.2",
     "react-native-screens": "^4.19.0",
     "react-native-scroll-into-view": "^2.0.2",
+    "react-native-share": "^12.3.1",
     "react-native-svg": "^15.15.4",
     "react-native-svg-transformer": "^1.5.3",
     "react-native-text-input-interactive": "^0.1.5",
     "react-native-url-polyfill": "^3.0.0",
     "react-native-vector-icons": "^10.3.0",
+    "react-native-view-shot": "^5.1.0",
     "react-native-webview": "^13.16.1",
     "react-native-youtube-iframe": "^2.4.1"
   },

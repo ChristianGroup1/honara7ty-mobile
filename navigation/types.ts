@@ -20,6 +20,7 @@ export type RootStackParamList = {
   BibleReader: undefined;
   BibleMemorization: undefined;
   Badges: undefined;
+  LockScreenVerse: undefined;
   Testimonies: undefined;
   DailyNotifications: undefined;
   DevotionGuide: undefined;
