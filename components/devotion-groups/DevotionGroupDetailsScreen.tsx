@@ -25,14 +25,15 @@ import {
 } from '../shared/chapterSelection';
 import { CUSTOM_TARGET_VALUE, GOLD, NAVY } from './details/constants';
 import {
+  GroupPrayerRequestsCard,
   InviteCodeCard,
-  PersonalStatsCard,
   PushRegistrationCard,
   SharedReadingCard,
   SummaryCards,
   TodayDevotionCard,
 } from './details/GroupCards';
 import MembersList from './details/MembersList';
+import SharedReadingDetailsModal from './details/SharedReadingDetailsModal';
 import SharedReadingEditorModal from './details/SharedReadingEditorModal';
 import { styles } from './details/styles';
 import { useDevotionGroupDetails } from './details/useDevotionGroupDetails';
@@ -61,6 +62,8 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
   const { state, actions } = useDevotionGroupDetails(navigation, groupId);
   const { loadDetails } = actions;
   const [answerSheetVisible, setAnswerSheetVisible] = useState(false);
+  const [sharedReadingDetailsVisible, setSharedReadingDetailsVisible] =
+    useState(false);
   const [pendingCompleted, setPendingCompleted] = useState(true);
   const [answerTestament, setAnswerTestament] = useState<Testament>('old');
   const [answerBook, setAnswerBook] = useState('');
@@ -74,7 +77,8 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
     [answerBook],
   );
   const answerBooks = useMemo(
-    () => (answerTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS),
+    () =>
+      answerTestament === 'old' ? OLD_TESTAMENT_BOOKS : NEW_TESTAMENT_BOOKS,
     [answerTestament],
   );
   const answerChapterOptions = useMemo(
@@ -369,20 +373,30 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
               completedCount={state.completedCount}
               strings={strings}
             />
-            <TodayDevotionCard
-              member={state.currentMembership}
-              strings={strings}
-              saving={state.saving}
-              onOpen={openTodayDevotionSheet}
-            />
-            <PersonalStatsCard stats={state.personalStats} strings={strings} />
-            <SharedReadingCard
-              group={state.group}
-              strings={strings}
-              canManage={state.canSendReminders}
-              saving={state.saving}
-              onEdit={() => actions.setSharedReadingEditorVisible(true)}
-            />
+            <View style={styles.groupActionsGrid}>
+              <TodayDevotionCard
+                member={state.currentMembership}
+                strings={strings}
+                saving={state.saving}
+                onOpen={openTodayDevotionSheet}
+              />
+              <SharedReadingCard
+                group={state.group}
+                strings={strings}
+                saving={state.saving}
+                onOpen={() => setSharedReadingDetailsVisible(true)}
+              />
+              <GroupPrayerRequestsCard
+                strings={strings}
+                saving={state.saving}
+                onOpen={() =>
+                  navigation.navigate('DevotionGroupPrayerRequests', {
+                    groupId: state.group!.id,
+                    groupName: state.group!.name,
+                  })
+                }
+              />
+            </View>
             {state.canSendReminders ? (
               <TouchableOpacity
                 style={styles.pendingReminderButton}
@@ -464,6 +478,22 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
         onAddReadingEntry={handleAddAnswerReading}
         onRemoveReadingEntry={handleRemoveAnswerReading}
         onSave={handleSaveTodayDevotion}
+      />
+      <SharedReadingDetailsModal
+        visible={sharedReadingDetailsVisible}
+        group={state.group}
+        strings={strings}
+        saving={state.saving}
+        canManage={state.canSendReminders}
+        onClose={() => setSharedReadingDetailsVisible(false)}
+        onEdit={() => {
+          setSharedReadingDetailsVisible(false);
+          actions.setSharedReadingEditorVisible(true);
+        }}
+        onClear={() => {
+          setSharedReadingDetailsVisible(false);
+          actions.saveSharedReading(null, null, null);
+        }}
       />
       <SharedReadingEditorModal
         visible={state.sharedReadingEditorVisible}

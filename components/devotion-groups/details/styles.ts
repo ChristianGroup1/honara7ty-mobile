@@ -73,56 +73,49 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   todayDevotionCard: {
-    backgroundColor: '#FFF', borderRadius: 16, padding: 14, marginBottom: 14,
+    width: '31.2%', minHeight: 104, backgroundColor: '#FFF',
+    borderRadius: 16, paddingVertical: 12, paddingHorizontal: 8,
+    alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: 'rgba(10,17,36,0.06)',
   },
-  todayDevotionHeader: { flexDirection: 'row', alignItems: 'center' },
   todayDevotionIcon: {
-    width: 42, height: 42, borderRadius: 14, backgroundColor: '#78A1BD',
-    alignItems: 'center', justifyContent: 'center',
+    width: 40, height: 40, borderRadius: 14, backgroundColor: '#78A1BD',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 8,
   },
-  todayDevotionBody: { flex: 1, marginHorizontal: 10 },
   todayDevotionTitle: {
-    color: NAVY, fontSize: 15, fontWeight: '900', textAlign: 'left',
-  },
-  todayDevotionText: {
-    color: '#5F6874', fontSize: 13, lineHeight: 20, marginTop: 4,
-    textAlign: 'left',
-  },
-  todayDevotionButton: {
-    minHeight: 42, borderRadius: 12, backgroundColor: '#78A1BD',
-    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10,
-    marginTop: 12,
-  },
-  todayDevotionButtonText: {
-    color: '#FFF', fontSize: 13, fontWeight: '900', lineHeight: 18,
+    color: NAVY, fontSize: 12, lineHeight: 17, fontWeight: '800',
     textAlign: 'center',
   },
+  groupActionsGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 14,
+  },
   sharedReadingCard: {
-    backgroundColor: '#FFF', borderRadius: 16, padding: 14, marginBottom: 14,
+    width: '31.2%', minHeight: 104, backgroundColor: '#FFF',
+    borderRadius: 16, paddingVertical: 12, paddingHorizontal: 8,
+    alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: 'rgba(10,17,36,0.06)',
   },
-  sharedReadingHeader: { flexDirection: 'row', alignItems: 'center' },
   sharedReadingIcon: {
-    width: 44, height: 44, borderRadius: 14, backgroundColor: '#78A1BD',
+    width: 40, height: 40, borderRadius: 14, backgroundColor: '#78A1BD',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 8,
+  },
+  sharedReadingTitle: {
+    color: NAVY, fontSize: 12, lineHeight: 17, fontWeight: '800',
+    textAlign: 'center',
+  },
+  groupPrayerCard: {
+    width: '31.2%', minHeight: 104, backgroundColor: '#FFF',
+    borderRadius: 16, paddingVertical: 12, paddingHorizontal: 8,
     alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(10,17,36,0.06)',
   },
-  sharedReadingBody: { flex: 1, marginHorizontal: 10 },
-  sharedReadingTitle: { color: NAVY, fontSize: 15, fontWeight: '900', textAlign: 'left' },
-  sharedReadingText: {
-    color: '#5F6874', fontSize: 13, lineHeight: 20, marginTop: 4, textAlign: 'left',
+  groupPrayerIcon: {
+    width: 40, height: 40, borderRadius: 14, backgroundColor: '#78A1BD',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 8,
   },
-  sharedTargetText: {
-    color: '#7A818B', fontSize: 12, lineHeight: 18, marginTop: 4, textAlign: 'left',
-  },
-  sharedReadingButton: {
-    minHeight: 40, borderRadius: 12, marginTop: 12, backgroundColor: '#78A1BD',
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, paddingHorizontal: 12,
-  },
-  sharedReadingButtonText: {
-    flexShrink: 1, color: '#FFF', fontSize: 13, lineHeight: 18,
-    fontWeight: '900', textAlign: 'center',
+  groupPrayerTitle: {
+    color: NAVY, fontSize: 12, lineHeight: 17, fontWeight: '800',
+    textAlign: 'center',
   },
   pendingReminderButton: {
     minHeight: 46, borderRadius: 14, backgroundColor: NAVY, flexDirection: 'row',
@@ -211,6 +204,36 @@ export const styles = StyleSheet.create({
   editorCard: {
     backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24,
     padding: 16, paddingBottom: 20, maxHeight: '86%',
+  },
+  sharedReadingDetailsCard: {
+    backgroundColor: '#FFF', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 16, paddingBottom: 20,
+  },
+  sharedReadingDetailsHeader: {
+    flexDirection: 'row', alignItems: 'center', marginBottom: 14,
+  },
+  sharedReadingDetailsIcon: {
+    width: 46, height: 46, borderRadius: 15, backgroundColor: '#78A1BD',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  sharedReadingDetailsHeading: { flex: 1, marginHorizontal: 10 },
+  sharedReadingDetailsTitle: {
+    color: NAVY, fontSize: 17, fontWeight: '900', textAlign: 'left',
+  },
+  sharedReadingDetailsSubtitle: {
+    color: '#5F6874', fontSize: 14, lineHeight: 21, marginTop: 5,
+    textAlign: 'left',
+  },
+  sharedReadingDetailsPanel: {
+    backgroundColor: '#F6F8FC', borderRadius: 14, padding: 12, marginBottom: 14,
+    borderWidth: 1, borderColor: 'rgba(10,17,36,0.06)',
+  },
+  sharedReadingDetailsLabel: {
+    color: '#7A818B', fontSize: 12, fontWeight: '800', textAlign: 'left',
+  },
+  sharedReadingDetailsValue: {
+    color: NAVY, fontSize: 14, lineHeight: 21, fontWeight: '900',
+    marginTop: 4, textAlign: 'left',
   },
   editorHandle: {
     alignSelf: 'center', width: 42, height: 4, borderRadius: 999,

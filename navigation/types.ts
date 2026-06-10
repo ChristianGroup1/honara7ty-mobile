@@ -28,6 +28,7 @@ export type RootStackParamList = {
   DevotionGroups: { joinSuccess?: boolean } | undefined;
   DevotionGroupInvite: { inviteCode: string };
   DevotionGroupDetails: { groupId: string };
+  DevotionGroupPrayerRequests: { groupId: string; groupName?: string };
   DevotionGroupMemberDetails: {
     groupId: string;
     userId: string;

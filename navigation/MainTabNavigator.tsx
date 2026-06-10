@@ -20,6 +20,7 @@ import DevotionGroupsScreen from '../components/devotion-groups/DevotionGroupsSc
 import DevotionGroupInviteScreen from '../components/devotion-groups/DevotionGroupInviteScreen';
 import DevotionGroupDetailsScreen from '../components/devotion-groups/DevotionGroupDetailsScreen';
 import DevotionGroupMemberDetailsScreen from '../components/devotion-groups/DevotionGroupMemberDetailsScreen';
+import DevotionGroupPrayerRequestsScreen from '../components/devotion-groups/DevotionGroupPrayerRequestsScreen';
 import { getStrings } from '../localization';
 import { useNightMode } from '../lib/nightMode';
 
@@ -164,6 +165,11 @@ const MainTabNavigator = () => {
       <Tab.Screen
         name="DevotionGroupDetails"
         component={DevotionGroupDetailsScreen}
+        options={hiddenTabScreenOptions}
+      />
+      <Tab.Screen
+        name="DevotionGroupPrayerRequests"
+        component={DevotionGroupPrayerRequestsScreen}
         options={hiddenTabScreenOptions}
       />
       <Tab.Screen
