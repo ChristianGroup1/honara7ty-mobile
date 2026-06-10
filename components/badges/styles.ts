@@ -203,7 +203,7 @@ export const badgesStyles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
   },
-  statNum: { fontSize: 18, fontWeight: '900', color: '#FFF4D6' },
+  statNum: { fontSize: 18, fontWeight: '900', color: '#78A1BD' },
   statLabel: {
     fontSize: 11,
     color: 'rgba(255,255,255,0.62)',

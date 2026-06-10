@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { DANGER, MUTED, NAVY, PREVIEW_CHARS } from './constants';
+import { DANGER, NAVY, PREVIEW_CHARS } from './constants';
 import { prayerNotesStyles as styles } from './styles';
 import { PrayerNote } from './types';
 
@@ -66,7 +66,7 @@ const PrayerNoteCard = ({
                 : 'checkbox-blank-circle-outline'
             }
             size={22}
-            color={item.is_answered ? '#2D9C5A' : MUTED}
+            color={item.is_answered ? '#2D9C5A' : '#FFF'}
           />
         </TouchableOpacity>
       </View>

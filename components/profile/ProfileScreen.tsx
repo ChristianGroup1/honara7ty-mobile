@@ -35,7 +35,6 @@ import {
 } from '../../lib/offlineSync';
 
 const NAVY = '#0A1124';
-const GOLD = '#78A1BD';
 const BG = '#F2F4F8';
 const PHONE_REGEX = /^\+?[0-9]{9,15}$/;
 
@@ -419,7 +418,7 @@ const ProfileScreen = ({ navigation }: any) => {
               <MaterialCommunityIcons
                 name="check-decagram"
                 size={16}
-                color={NAVY}
+                color="#FFF"
               />
             </View>
           </View>
@@ -432,7 +431,7 @@ const ProfileScreen = ({ navigation }: any) => {
               <MaterialCommunityIcons
                 name="book-open-variant"
                 size={15}
-                color={NAVY}
+                color="#FFF"
               />
               <Text style={styles.heroMetaText}>
                 {strings.accountSavedBadge}
@@ -447,7 +446,7 @@ const ProfileScreen = ({ navigation }: any) => {
               <MaterialCommunityIcons
                 name="account-edit-outline"
                 size={18}
-                color={NAVY}
+                color="#FFF"
               />
             </View>
             <View style={styles.sectionCopy}>
@@ -500,7 +499,7 @@ const ProfileScreen = ({ navigation }: any) => {
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIconWrap}>
-              <MaterialCommunityIcons name="church" size={18} color={NAVY} />
+              <MaterialCommunityIcons name="church" size={18} color="#FFF" />
             </View>
             <View style={styles.sectionCopy}>
               <Text style={styles.sectionTitle}>{strings.churchTitle}</Text>
@@ -535,7 +534,7 @@ const ProfileScreen = ({ navigation }: any) => {
               <MaterialCommunityIcons
                 name="calendar-heart"
                 size={18}
-                color={NAVY}
+                color="#FFF"
               />
             </View>
             <View style={styles.sectionCopy}>
@@ -727,7 +726,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarText: { color: NAVY, fontSize: 30, fontWeight: '800' },
+  avatarText: { color: '#FFF', fontSize: 30, fontWeight: '800' },
   avatarBadge: {
     position: 'absolute',
     left: -2,
@@ -735,7 +734,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FFF7DF',
+    backgroundColor: '#78A1BD',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,

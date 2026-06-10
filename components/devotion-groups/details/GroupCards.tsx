@@ -124,7 +124,7 @@ export const PersonalStatsCard = ({
     <View style={styles.personalStatsCard}>
       <View style={styles.personalStatsHeader}>
         <View style={styles.personalStatsIcon}>
-          <MaterialCommunityIcons name="chart-line" size={21} color={GOLD} />
+          <MaterialCommunityIcons name="chart-line" size={21} color="#FFF" />
         </View>
         <Text style={styles.personalStatsTitle}>{strings.personalStatsTitle}</Text>
       </View>
@@ -165,7 +165,7 @@ export const TodayDevotionCard = ({
           <MaterialCommunityIcons
             name={completed ? 'check-circle-outline' : 'calendar-check-outline'}
             size={22}
-            color={GOLD}
+            color="#FFF"
           />
         </View>
         <View style={styles.todayDevotionBody}>
@@ -216,7 +216,7 @@ export const SharedReadingCard = ({
           <MaterialCommunityIcons
             name="book-open-page-variant-outline"
             size={22}
-            color={GOLD}
+            color="#FFF"
           />
         </View>
         <View style={styles.sharedReadingBody}>
@@ -240,7 +240,7 @@ export const SharedReadingCard = ({
           <MaterialCommunityIcons
             name={hasSharedReading ? 'pencil-outline' : 'plus'}
             size={17}
-            color={NAVY}
+            color="#FFF"
           />
           <Text style={styles.sharedReadingButtonText}>
             {hasSharedReading ? strings.editSharedReading : strings.setSharedReading}

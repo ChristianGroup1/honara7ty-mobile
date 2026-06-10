@@ -24,7 +24,6 @@ import { formatReadingEntries } from '../../lib/readingEntries';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import {
   dailyNotificationStyles as styles,
-  GOLD,
   NAVY,
 } from './styles';
 
@@ -105,7 +104,7 @@ const ReadingPlanSuggestionsScreen = ({ navigation }: any) => {
         >
           <View style={styles.planSuggestionTopRow}>
             <View style={styles.planSuggestionIcon}>
-              <MaterialCommunityIcons name={item.icon} size={20} color={GOLD} />
+              <MaterialCommunityIcons name={item.icon} size={20} color="#FFF" />
             </View>
             <View style={styles.planSuggestionBadge}>
               <Text style={styles.planSuggestionBadgeText}>{item.badge}</Text>

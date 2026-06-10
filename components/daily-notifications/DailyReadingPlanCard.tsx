@@ -92,7 +92,7 @@ const DailyReadingPlanCard = ({
         accessibilityLabel={strings.openSuggestions}
       >
         <View style={styles.openSuggestionsIcon}>
-          <MaterialCommunityIcons name="map-search-outline" size={20} color={GOLD} />
+          <MaterialCommunityIcons name="map-search-outline" size={20} color="#FFF" />
         </View>
         <View style={styles.openSuggestionsBody}>
           <Text style={styles.openSuggestionsTitle}>

@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { BG, GOLD, NAVY } from './constants';
+import { BG, NAVY } from './constants';
 
 export const homeStyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
@@ -79,7 +79,7 @@ export const homeStyles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.16)',
   },
-  avatarText: { color: NAVY, fontSize: 16, fontWeight: '800' },
+  avatarText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
   scrollContent: { padding: 16, paddingBottom: 36, gap: 14 },
   quickActionsSection: {
     marginBottom: 2,
@@ -513,7 +513,7 @@ export const homeStyles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 16,
-    backgroundColor: '#FFF8E5',
+    backgroundColor: '#78A1BD',
     justifyContent: 'center',
     alignItems: 'center',
   },

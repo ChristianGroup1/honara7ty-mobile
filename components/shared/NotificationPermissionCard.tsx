@@ -9,7 +9,6 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const NAVY = '#0A1124';
-const GOLD = '#78A1BD';
 
 type Props = {
   title: string;
@@ -90,13 +89,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badge: {
-    backgroundColor: '#F6EBCD',
+    backgroundColor: '#78A1BD',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   badgeText: {
-    color: '#8A6A3F',
+    color: '#FFF',
     fontSize: 12,
     fontWeight: '700',
   },

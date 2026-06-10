@@ -304,7 +304,7 @@ export const memorizationStyles = StyleSheet.create({
     shadowRadius: 4,
   },
   referenceVerseBox: {
-    backgroundColor: '#FFF8E5',
+    backgroundColor: '#EAF3F8',
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -370,7 +370,7 @@ export const memorizationStyles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: 'rgba(255,248,229,0.9)',
+    backgroundColor: 'rgba(234,243,248,0.9)',
   },
   statusPillsRow: {
     flexDirection: 'row',
@@ -482,7 +482,7 @@ export const memorizationStyles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.1)',
   },
   resultToneBadgeText: {
-    color: '#FFF4D6',
+    color: '#FFF',
     fontSize: 13,
     fontWeight: '800',
   },

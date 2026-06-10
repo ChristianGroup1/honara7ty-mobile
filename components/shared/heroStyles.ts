@@ -53,7 +53,7 @@ export const heroBadgeBase = {
 };
 
 export const heroBadgeTextBase = {
-  color: '#FFF4D6',
+  color: '#78A1BD',
   fontSize: 12,
   fontWeight: '800' as const,
 };

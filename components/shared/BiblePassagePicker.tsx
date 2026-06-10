@@ -12,7 +12,6 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { Testament } from '../data/bibleMetadata';
 
 const NAVY = '#0A1124';
-const GOLD = '#78A1BD';
 
 type Labels = {
   bookTitle: string;
@@ -158,7 +157,7 @@ const BiblePassagePicker = ({
           <MaterialCommunityIcons
             name="book-open-variant"
             size={19}
-            color={GOLD}
+            color="#FFF"
           />
         </View>
         <View style={styles.selectorBody}>
@@ -183,7 +182,7 @@ const BiblePassagePicker = ({
           <MaterialCommunityIcons
             name="format-list-numbered"
             size={19}
-            color={GOLD}
+            color="#FFF"
           />
         </View>
         <View style={styles.selectorBody}>
@@ -207,7 +206,7 @@ const BiblePassagePicker = ({
                 <MaterialCommunityIcons
                   name="numeric-1-box-outline"
                   size={19}
-                  color={GOLD}
+                  color="#FFF"
                 />
               </View>
               <View style={styles.selectorBody}>
@@ -232,7 +231,7 @@ const BiblePassagePicker = ({
                 <MaterialCommunityIcons
                   name="numeric-1-box-multiple-outline"
                   size={19}
-                  color={GOLD}
+                  color="#FFF"
                 />
               </View>
               <View style={styles.selectorBody}>
@@ -306,7 +305,7 @@ const BiblePassagePicker = ({
                 : onSelectAllChapters
             }
           >
-            <MaterialCommunityIcons name="select-all" size={17} color={NAVY} />
+            <MaterialCommunityIcons name="select-all" size={17} color="#FFF" />
             <Text style={styles.selectAllButtonText}>
               {allChaptersSelected && onClearChapters
                 ? labels.clearChapters ?? 'مسح الاختيار'
@@ -364,7 +363,7 @@ const BiblePassagePicker = ({
                 allVersesSelected ? 'close-box-multiple-outline' : 'select-all'
               }
               size={17}
-              color={NAVY}
+              color="#FFF"
             />
             <Text style={styles.selectAllButtonText}>
               {allVersesSelected && onClearVerses
@@ -525,7 +524,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 13,
-    backgroundColor: '#FFF8E5',
+    backgroundColor: '#78A1BD',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -616,14 +615,14 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     minHeight: 38,
     borderRadius: 12,
-    backgroundColor: '#FFF4D6',
+    backgroundColor: '#78A1BD',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 12,
     marginBottom: 12,
   },
-  selectAllButtonText: { color: NAVY, fontSize: 13, fontWeight: '900' },
+  selectAllButtonText: { color: '#FFF', fontSize: 13, fontWeight: '900' },
   chapterGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chapterOption: {
     minWidth: 44,

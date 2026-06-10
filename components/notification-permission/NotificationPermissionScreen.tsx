@@ -24,7 +24,6 @@ import {
 import { registerPushToken } from '../../lib/pushTokens';
 
 const NAVY = '#0A1124';
-const GOLD = '#78A1BD';
 const SKY = '#EEF3F8';
 
 const NotificationPermissionScreen = ({ navigation }: any) => {
@@ -100,7 +99,7 @@ const NotificationPermissionScreen = ({ navigation }: any) => {
         {strings.points.map(point => (
           <View key={point} style={styles.pointRow}>
             <View style={styles.pointIconWrap}>
-              <MaterialCommunityIcons name="check" size={16} color={NAVY} />
+              <MaterialCommunityIcons name="check" size={16} color="#FFF" />
             </View>
             <Text style={styles.pointText}>{point}</Text>
           </View>
@@ -201,7 +200,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#F6EBCD',
+    backgroundColor: '#78A1BD',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,

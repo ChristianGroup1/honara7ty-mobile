@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { spiritualReflectionStyles as styles, GOLD } from './styles';
+import { spiritualReflectionStyles as styles } from './styles';
 import { Reflection } from './types';
 import { formatDate, PREVIEW_LIMIT } from './utils';
 
@@ -39,7 +39,7 @@ const ReflectionCard = ({
             <MaterialCommunityIcons
               name="calendar-outline"
               size={14}
-              color={GOLD}
+              color="#FFF"
             />
             <Text style={styles.dateText}>{formatDate(item.date)}</Text>
           </View>

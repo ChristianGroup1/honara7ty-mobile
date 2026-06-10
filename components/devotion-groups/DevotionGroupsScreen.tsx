@@ -245,12 +245,12 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
         }
       >
         <View style={styles.groupIcon}>
-          <MaterialCommunityIcons name="account-group" size={22} color={GOLD} />
+          <MaterialCommunityIcons name="account-group" size={22} color="#FFF" />
         </View>
         <View style={styles.groupBody}>
           <Text style={styles.groupName}>{group.name}</Text>
           <View style={styles.invitePill}>
-            <MaterialCommunityIcons name="key-variant" size={13} color={GOLD} />
+            <MaterialCommunityIcons name="key-variant" size={13} color="#FFF" />
             <Text style={styles.groupMeta}>
               {strings.inviteCode}: {group.invite_code}
             </Text>
@@ -272,7 +272,7 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
               <MaterialCommunityIcons
                 name="account-group-outline"
                 size={28}
-                color={GOLD}
+                color="#FFF"
               />
             </View>
             <View style={styles.heroBadge}>
@@ -403,7 +403,7 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
           <MaterialCommunityIcons
             name="account-group-outline"
             size={24}
-            color={GOLD}
+            color="#FFF"
           />
         </View>
         <Text style={styles.emptyText}>{strings.emptyGroups}</Text>
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.1)',
   },
   heroBadgeText: {
-    color: '#FFF4D6',
+    color: '#FFF',
     fontSize: 12,
     fontWeight: '900',
   },
@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   groupMeta: {
-    color: NAVY,
+    color: '#FFF',
     fontSize: 12,
     fontWeight: '800',
     textAlign: 'left',
@@ -654,7 +654,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 999,
-    backgroundColor: '#FFF8E5',
+    backgroundColor: '#78A1BD',
   },
   emptyCard: {
     backgroundColor: '#FFF',
@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: '#FFF8E5',
+    backgroundColor: '#78A1BD',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,

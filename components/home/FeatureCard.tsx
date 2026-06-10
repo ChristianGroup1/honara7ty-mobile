@@ -2,7 +2,6 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { homeStyles as styles } from './styles';
-import { NAVY } from './constants';
 
 interface FeatureCardProps {
   title: string;
@@ -19,7 +18,7 @@ const FeatureCard = ({ title, subtitle, icon, onPress }: FeatureCardProps) => {
       onPress={onPress}
     >
       <View style={styles.featureIconCircle}>
-        <MaterialCommunityIcons name={icon} size={26} color={NAVY} />
+        <MaterialCommunityIcons name={icon} size={26} color="#FFF" />
       </View>
       <View style={styles.featureCardBody}>
         <Text style={styles.featureCardTitle}>{title}</Text>

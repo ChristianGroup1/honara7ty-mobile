@@ -189,7 +189,7 @@ const ProfileCompletionUI: React.FC<any> = ({ navigation, route }) => {
             <MaterialCommunityIcons
               name="information-outline"
               size={18}
-              color="#8A6A3F"
+              color="#78A1BD"
               style={styles.noticeIcon}
             />
             <Text style={styles.noticeText}>{profileNotice}</Text>
@@ -385,10 +385,10 @@ const styles = StyleSheet.create({
   noticeCard: {
     flexDirection: 'row-reverse',
     alignItems: 'flex-start',
-    backgroundColor: '#FFF6E7',
+    backgroundColor: '#EAF3F8',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#ECD9AE',
+    borderColor: '#BFD4E3',
     paddingVertical: 12,
     paddingHorizontal: 14,
     marginBottom: 18,

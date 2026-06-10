@@ -5,9 +5,9 @@ export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   content: { padding: 16, paddingBottom: 36 },
   permissionCard: {
-    backgroundColor: '#FFF8E5', borderRadius: 16, padding: 14, marginBottom: 12,
+    backgroundColor: '#EAF3F8', borderRadius: 16, padding: 14, marginBottom: 12,
     flexDirection: 'row', alignItems: 'center', borderWidth: 1,
-    borderColor: 'rgba(18,30,52,0.32)',
+    borderColor: 'rgba(120,161,189,0.32)',
   },
   permissionIcon: {
     width: 42, height: 42, borderRadius: 13, backgroundColor: '#FFF',
@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
   },
   personalStatsHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   personalStatsIcon: {
-    width: 38, height: 38, borderRadius: 13, backgroundColor: '#FFF8E5',
+    width: 38, height: 38, borderRadius: 13, backgroundColor: '#78A1BD',
     alignItems: 'center', justifyContent: 'center',
   },
   personalStatsTitle: {
@@ -78,7 +78,7 @@ export const styles = StyleSheet.create({
   },
   todayDevotionHeader: { flexDirection: 'row', alignItems: 'center' },
   todayDevotionIcon: {
-    width: 42, height: 42, borderRadius: 14, backgroundColor: '#FFF8E5',
+    width: 42, height: 42, borderRadius: 14, backgroundColor: '#78A1BD',
     alignItems: 'center', justifyContent: 'center',
   },
   todayDevotionBody: { flex: 1, marginHorizontal: 10 },
@@ -90,12 +90,12 @@ export const styles = StyleSheet.create({
     textAlign: 'left',
   },
   todayDevotionButton: {
-    minHeight: 42, borderRadius: 12, backgroundColor: '#FFF4D6',
+    minHeight: 42, borderRadius: 12, backgroundColor: '#78A1BD',
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10,
     marginTop: 12,
   },
   todayDevotionButtonText: {
-    color: NAVY, fontSize: 13, fontWeight: '900', lineHeight: 18,
+    color: '#FFF', fontSize: 13, fontWeight: '900', lineHeight: 18,
     textAlign: 'center',
   },
   sharedReadingCard: {
@@ -104,7 +104,7 @@ export const styles = StyleSheet.create({
   },
   sharedReadingHeader: { flexDirection: 'row', alignItems: 'center' },
   sharedReadingIcon: {
-    width: 44, height: 44, borderRadius: 14, backgroundColor: '#FFF8E5',
+    width: 44, height: 44, borderRadius: 14, backgroundColor: '#78A1BD',
     alignItems: 'center', justifyContent: 'center',
   },
   sharedReadingBody: { flex: 1, marginHorizontal: 10 },
@@ -116,12 +116,12 @@ export const styles = StyleSheet.create({
     color: '#7A818B', fontSize: 12, lineHeight: 18, marginTop: 4, textAlign: 'left',
   },
   sharedReadingButton: {
-    minHeight: 40, borderRadius: 12, marginTop: 12, backgroundColor: '#FFF4D6',
+    minHeight: 40, borderRadius: 12, marginTop: 12, backgroundColor: '#78A1BD',
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 6, paddingHorizontal: 12,
   },
   sharedReadingButtonText: {
-    flexShrink: 1, color: NAVY, fontSize: 13, lineHeight: 18,
+    flexShrink: 1, color: '#FFF', fontSize: 13, lineHeight: 18,
     fontWeight: '900', textAlign: 'center',
   },
   pendingReminderButton: {
@@ -178,12 +178,12 @@ export const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: 'rgba(10,17,36,0.08)',
   },
   memberAdminButton: {
-    flex: 1, minHeight: 38, borderRadius: 12, backgroundColor: '#FFF4D6',
+    flex: 1, minHeight: 38, borderRadius: 12, backgroundColor: '#78A1BD',
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 6, paddingHorizontal: 10,
   },
   memberAdminButtonText: {
-    flexShrink: 1, color: NAVY, fontSize: 12, fontWeight: '900',
+    flexShrink: 1, color: '#FFF', fontSize: 12, fontWeight: '900',
     lineHeight: 17, textAlign: 'center',
   },
   memberRemoveButton: {
@@ -260,10 +260,10 @@ export const styles = StyleSheet.create({
   },
   selectAllButton: {
     alignSelf: 'flex-start', minHeight: 36, borderRadius: 12,
-    backgroundColor: '#FFF4D6', flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#78A1BD', flexDirection: 'row', alignItems: 'center',
     gap: 6, paddingHorizontal: 12, marginBottom: 8,
   },
-  selectAllButtonText: { color: NAVY, fontSize: 13, fontWeight: '900' },
+  selectAllButtonText: { color: '#FFF', fontSize: 13, fontWeight: '900' },
   targetOptionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   targetOption: {
     minHeight: 38, borderRadius: 12, paddingHorizontal: 12, backgroundColor: '#F6F8FC',

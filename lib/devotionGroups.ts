@@ -50,6 +50,15 @@ export type DevotionGroupReminder = {
   read_at?: string | null;
 };
 
+export type DevotionGroupPrayerRequest = {
+  id: string;
+  group_id: string;
+  author_id: string;
+  author_display_name: string;
+  content: string;
+  created_at: string;
+};
+
 export function buildDevotionGroupInviteLink(inviteCode: string) {
   return `https://honara7ty.space/devotion-group-invite?code=${encodeURIComponent(
     inviteCode.replace(/\s+/g, ''),
@@ -261,6 +270,61 @@ export async function updateDevotionGroupMemberRole(params: {
       target_user_id: params.userId,
       target_role: params.role,
     }),
+  );
+}
+
+export async function fetchDevotionGroupPrayerRequests(groupId: string) {
+  return withExpiredJwtRetry(() =>
+    supabase
+      .from('devotion_group_prayer_requests')
+      .select('id, group_id, author_id, author_display_name, content, created_at')
+      .eq('group_id', groupId)
+      .order('created_at', { ascending: false })
+      .limit(20),
+  );
+}
+
+export async function createDevotionGroupPrayerRequest(params: {
+  groupId: string;
+  authorId: string;
+  authorDisplayName: string;
+  content: string;
+}) {
+  return withExpiredJwtRetry(() =>
+    supabase
+      .from('devotion_group_prayer_requests')
+      .insert({
+        group_id: params.groupId,
+        author_id: params.authorId,
+        author_display_name:
+          params.authorDisplayName.trim() || 'عضو في المجموعة',
+        content: params.content.trim(),
+      })
+      .select('id, group_id, author_id, author_display_name, content, created_at')
+      .single(),
+  );
+}
+
+export async function updateDevotionGroupPrayerRequest(params: {
+  requestId: string;
+  content: string;
+}) {
+  return withExpiredJwtRetry(() =>
+    supabase
+      .from('devotion_group_prayer_requests')
+      .update({ content: params.content.trim() })
+      .eq('id', params.requestId)
+      .select('id, group_id, author_id, author_display_name, content, created_at')
+      .single(),
+  );
+}
+
+export async function deleteDevotionGroupPrayerRequest(requestId: string) {
+  return withExpiredJwtRetry(() =>
+    supabase
+      .from('devotion_group_prayer_requests')
+      .delete()
+      .eq('id', requestId),
   );
 }
 

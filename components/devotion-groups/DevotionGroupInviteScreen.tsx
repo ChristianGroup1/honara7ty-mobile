@@ -191,7 +191,7 @@ const DevotionGroupInviteScreen = ({ navigation, route }: any) => {
                 alreadyJoined ? 'check-circle-outline' : 'account-heart-outline'
               }
               size={34}
-              color={alreadyJoined ? '#2E8B57' : GOLD}
+              color={alreadyJoined ? '#2E8B57' : '#FFF'}
             />
           </View>
 
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 24,
-    backgroundColor: '#FFF8E5',
+    backgroundColor: '#78A1BD',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
