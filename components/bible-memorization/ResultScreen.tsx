@@ -45,7 +45,6 @@ const ResultScreen = ({ navigation, route }: Props) => {
 
   useEffect(() => {
     saveMemorizationAttempt(result);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

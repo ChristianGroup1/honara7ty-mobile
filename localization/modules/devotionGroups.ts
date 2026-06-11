@@ -14,7 +14,6 @@ export const devotionGroupsStrings = {
   inviteShareMessage: (link: string) =>
     `اتدعيت لمجموعة خلوة على هنار حتي. افتح اللينك لو حابب تدخل:\n${link}`,
   groupsCount: 'مجموعة خلوة',
-  searchGroupsPlaceholder: 'ابحث في المجموعات...',
   myGroupsTitle: 'مجموعات الخلوة',
   groupDetailsTitle: 'تفاصيل مجموعة الخلوة',
   membersTitle: 'أعضاء مجموعة الخلوة',

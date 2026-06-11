@@ -1,3 +1,4 @@
+import supabase from './supbase';
 import { scheduleDailyDevotionReminder } from './notifications';
 import { refreshProfileRecord, saveProfileRecord } from './offlineSync';
 
