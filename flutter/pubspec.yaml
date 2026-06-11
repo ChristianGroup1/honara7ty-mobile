@@ -1,0 +1,61 @@
+name: honara7ty
+description: هنا راحتي – A Christian spiritual companion app
+version: 2.0.0+1
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Backend / Auth
+  supabase_flutter: ^2.8.4
+  google_sign_in: ^6.2.1
+  flutter_facebook_auth: ^7.1.1
+
+  # Routing
+  go_router: ^14.6.2
+
+  # State Management
+  provider: ^6.1.2
+
+  # Local Storage
+  shared_preferences: ^2.3.2
+
+  # Firebase (analytics, crashlytics, messaging, performance)
+  firebase_core: ^3.6.0
+  firebase_analytics: ^11.3.3
+  firebase_crashlytics: ^4.1.3
+  firebase_messaging: ^15.1.3
+  firebase_performance: ^0.10.0+3
+
+  # Push Notifications
+  flutter_local_notifications: ^18.0.1
+
+  # UI helpers
+  flutter_svg: ^2.0.10+1
+  cached_network_image: ^3.4.1
+
+  # Utilities
+  intl: ^0.19.0
+  url_launcher: ^6.3.1
+  share_plus: ^10.1.2
+  image_gallery_saver: ^2.0.3
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/images/
