@@ -1,6 +1,7 @@
 export const devotionStrings = {
   guide: {
     title: 'شرح الخلوة',
+    searchPlaceholder: 'ابحث في المقالات...',
   },
   detail: {
     articleMissing: 'مقالة غير موجودة',
