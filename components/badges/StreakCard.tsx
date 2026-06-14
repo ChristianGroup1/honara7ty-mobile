@@ -3,6 +3,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { badgesStyles as styles } from './styles';
 import { GOLD } from './constants';
 import { getStrings } from '../../localization';
+import HeroBackground from '../shared/HeroBackground';
 
 interface StreakCardProps {
   loading: boolean;
@@ -28,7 +29,7 @@ const StreakCard = ({
         <ActivityIndicator color={GOLD} size="large" />
       ) : (
         <>
-          <View style={styles.streakHeroGlow} />
+          <HeroBackground />
 
           <View style={styles.streakTopRow}>
             <View style={styles.streakIconOrb}>
@@ -45,7 +46,7 @@ const StreakCard = ({
           <View style={styles.streakScorePanel}>
             <View style={styles.xpBlock}>
               <Text style={styles.xpLabel}>{strings.streak.xp}</Text>
-              <Text style={styles.xpNumber}>{xp.toLocaleString('ar-EG')}</Text>
+              <Text style={styles.xpNumber}>{xp.toLocaleString('en-US')}</Text>
               <Text style={styles.streakHint}>
                 {earnedCount >= totalCount
                   ? strings.streak.allUnlocked

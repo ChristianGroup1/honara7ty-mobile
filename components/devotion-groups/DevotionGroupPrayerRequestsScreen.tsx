@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
@@ -25,9 +26,7 @@ import {
   updateDevotionGroupPrayerRequest,
 } from '../../lib/devotionGroups';
 
-const NAVY = '#0A1124';
-const GOLD = '#78A1BD';
-const BG = '#F2F4F8';
+import { BG, GOLD, NAVY } from '../shared/designTokens';
 
 const formatRequestDate = (createdAt: string) => {
   const date = new Date(createdAt);
@@ -54,7 +53,9 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
   const [editingRequest, setEditingRequest] =
     useState<DevotionGroupPrayerRequest | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const hasLoadedRequestsRef = useRef(false);
   const [alertConfig, setAlertConfig] = useState<any>({
     visible: false,
     title: '',
@@ -65,7 +66,10 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
     membership?.role === 'owner' || membership?.role === 'leader';
 
   const loadRequests = useCallback(
-    async (showLoader = false) => {
+    async ({
+      showLoader = false,
+      showRefreshing = false,
+    }: { showLoader?: boolean; showRefreshing?: boolean } = {}) => {
       if (!groupId) {
         navigation.goBack();
         return;
@@ -73,6 +77,9 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
 
       if (showLoader) {
         setLoading(true);
+      }
+      if (showRefreshing) {
+        setRefreshing(true);
       }
 
       try {
@@ -106,14 +113,19 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
         });
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     },
     [groupId, navigation, strings.genericErrorMessage, strings.genericErrorTitle],
   );
 
-  useEffect(() => {
-    loadRequests(true);
-  }, [loadRequests]);
+  useFocusEffect(
+    useCallback(() => {
+      const shouldShowLoader = !hasLoadedRequestsRef.current;
+      hasLoadedRequestsRef.current = true;
+      loadRequests({ showLoader: shouldShowLoader });
+    }, [loadRequests]),
+  );
 
   const resetEditor = () => {
     setText('');
@@ -342,7 +354,7 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
         titleNumberOfLines={2}
       />
 
-      {loading ? (
+      {loading && requests.length === 0 ? (
         <View style={styles.loadingBlock}>
           <ActivityIndicator color={GOLD} />
         </View>
@@ -358,8 +370,8 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
           contentContainerStyle={styles.content}
           refreshControl={
             <RefreshControl
-              refreshing={loading}
-              onRefresh={() => loadRequests(false)}
+              refreshing={refreshing}
+              onRefresh={() => loadRequests({ showRefreshing: true })}
             />
           }
         />

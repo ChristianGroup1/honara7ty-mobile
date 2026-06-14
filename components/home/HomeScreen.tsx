@@ -58,10 +58,17 @@ import {
   saveDevotionLog,
 } from '../../lib/offlineSync';
 import {
+  formatReadingEntries,
   mergeReadingDraft,
   ReadingEntry,
   readingEntriesFromLegacy,
 } from '../../lib/readingEntries';
+import { refreshAndPersistProfileXp } from '../../lib/xp';
+import { buildReadingPlanSuggestions } from '../../lib/readingPlanSuggestions';
+import {
+  getActiveReadingPlan,
+  resolveTodayPlanEntries,
+} from '../../lib/activeReadingPlan';
 
 const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
@@ -80,6 +87,8 @@ const HomeScreen = ({ route, navigation }: any) => {
   const [readingBook, setReadingBook] = useState('');
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
   const [readingEntries, setReadingEntries] = useState<ReadingEntry[]>([]);
+  const [todayPlanEntries, setTodayPlanEntries] = useState<ReadingEntry[]>([]);
+  const [todayPlanDay, setTodayPlanDay] = useState(0);
   const [permissionLoading, setPermissionLoading] = useState(false);
   const [notificationPermissionState, setNotificationPermissionState] =
     useState<'allowed' | 'denied' | 'not_determined'>('not_determined');
@@ -122,7 +131,32 @@ const HomeScreen = ({ route, navigation }: any) => {
     setSelectedChapters([]);
     setReadingEntries([]);
     setSelectedTestament('old');
+    setTodayPlanEntries([]);
+    setTodayPlanDay(0);
   }, []);
+
+  const resolveTodayPlan = useCallback(
+    async (userId: string, logs: Record<string, any>) => {
+      const plan = await getActiveReadingPlan(userId);
+      if (!plan) {
+        setTodayPlanEntries([]);
+        setTodayPlanDay(0);
+        return;
+      }
+      const suggestions = buildReadingPlanSuggestions(
+        getStrings().dailyNotifications.readingPlanSuggestions,
+        logs,
+      );
+      const today = resolveTodayPlanEntries({
+        plan,
+        suggestions,
+        devotionLogs: logs,
+      });
+      setTodayPlanEntries(today?.entries ?? []);
+      setTodayPlanDay(today?.dayNumber ?? 0);
+    },
+    [],
+  );
 
   const refreshNotificationPermission = useCallback(async () => {
     try {
@@ -206,6 +240,7 @@ const HomeScreen = ({ route, navigation }: any) => {
             applyTodayDevotionLog(cachedDevotionLogs[getTodayDate()]);
             hasLoadedRef.current = true;
             setLoading(false);
+            resolveTodayPlan(userId, cachedDevotionLogs).catch(() => undefined);
           }
 
           const { data: devotionLogs } = await refreshDevotionLogs(userId);
@@ -215,6 +250,7 @@ const HomeScreen = ({ route, navigation }: any) => {
           }
 
           applyTodayDevotionLog(devotionLogs[getTodayDate()]);
+          resolveTodayPlan(userId, devotionLogs).catch(() => undefined);
         } finally {
           if (isActive) {
             hasLoadedRef.current = true;
@@ -233,6 +269,7 @@ const HomeScreen = ({ route, navigation }: any) => {
       applyTodayDevotionLog,
       clearDevotionState,
       refreshNotificationPermission,
+      resolveTodayPlan,
       userFromParams,
     ]),
   );
@@ -349,6 +386,8 @@ const HomeScreen = ({ route, navigation }: any) => {
 
       await syncDevotionReminderSchedule(userId, { startTomorrow: true });
 
+      refreshAndPersistProfileXp(userId).catch(() => undefined);
+
       setDevotionAnswer(completed);
       if (completed) {
         showAlert(
@@ -434,6 +473,10 @@ const HomeScreen = ({ route, navigation }: any) => {
     navigation.navigate('SpiritualReflection');
   }, [navigation]);
 
+  const navigateWeeklyReport = useCallback(() => {
+    navigation.navigate('WeeklyReport');
+  }, [navigation]);
+
   useEffect(() => {
     const normalized = normalizeSelectedChapters(
       selectedChapters,
@@ -470,6 +513,27 @@ const HomeScreen = ({ route, navigation }: any) => {
       ),
     [selectedBook],
   );
+
+  const todayPlanLabel = useMemo(
+    () => formatReadingEntries(todayPlanEntries),
+    [todayPlanEntries],
+  );
+
+  const todayPlanApplied = useMemo(
+    () =>
+      todayPlanEntries.length > 0 &&
+      formatReadingEntries(readingEntries) === todayPlanLabel,
+    [readingEntries, todayPlanEntries, todayPlanLabel],
+  );
+
+  const handleApplyTodayPlan = useCallback(() => {
+    if (todayPlanEntries.length === 0) {
+      return;
+    }
+    setReadingEntries(todayPlanEntries);
+    setReadingBook('');
+    setSelectedChapters([]);
+  }, [todayPlanEntries]);
 
   const handleAddAnswerSheetReading = useCallback(() => {
     const normalizedChapters = normalizeSelectedChapters(
@@ -562,6 +626,12 @@ const HomeScreen = ({ route, navigation }: any) => {
           icon="notebook-outline"
           onPress={navigateSpiritualReflection}
         />
+        <FeatureCard
+          title={strings.featureWeeklyReportTitle}
+          subtitle={strings.featureWeeklyReportSubtitle}
+          icon="chart-box-outline"
+          onPress={navigateWeeklyReport}
+        />
       </ScrollView>
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
@@ -576,6 +646,10 @@ const HomeScreen = ({ route, navigation }: any) => {
         selectedChapters={selectedChapters}
         readingEntries={readingEntries}
         canSaveReading={canSaveReading}
+        planLabel={todayPlanLabel}
+        planDayNumber={todayPlanDay}
+        planApplied={todayPlanApplied}
+        onApplyPlan={handleApplyTodayPlan}
         onClose={closeAnswerSheet}
         onSetPendingCompleted={setPendingCompleted}
         onSetSelectedTestament={handleSetAnswerSheetTestament}

@@ -22,10 +22,10 @@ import DevotionGroupInviteScreen from '../components/devotion-groups/DevotionGro
 import DevotionGroupDetailsScreen from '../components/devotion-groups/DevotionGroupDetailsScreen';
 import DevotionGroupMemberDetailsScreen from '../components/devotion-groups/DevotionGroupMemberDetailsScreen';
 import DevotionGroupPrayerRequestsScreen from '../components/devotion-groups/DevotionGroupPrayerRequestsScreen';
+import WeeklyReportScreen from '../components/weekly-report/WeeklyReportScreen';
 import { getStrings } from '../localization';
 import { useNightMode } from '../lib/nightMode';
-
-const GOLD = '#78A1BD';
+import { GOLD } from '../components/shared/designTokens';
 
 const Tab = createBottomTabNavigator();
 
@@ -181,6 +181,11 @@ const MainTabNavigator = () => {
       <Tab.Screen
         name="DevotionGroupMemberDetails"
         component={DevotionGroupMemberDetailsScreen}
+        options={hiddenTabScreenOptions}
+      />
+      <Tab.Screen
+        name="WeeklyReport"
+        component={WeeklyReportScreen}
         options={hiddenTabScreenOptions}
       />
     </Tab.Navigator>

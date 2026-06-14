@@ -27,15 +27,26 @@ import CustomAlert, { AlertButton, AlertConfig } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
 import { getStrings } from '../../localization';
 import AppHeader from '../shared/AppHeader';
+import GradientSurface from '../shared/GradientSurface';
+import { headerGradient, NAVY, palette, shadow } from '../shared/designTokens';
+import { useNightMode } from '../../lib/nightMode';
 import {
+  readCachedDevotionLogs,
   readCachedProfileRecord,
+  refreshDevotionLogs,
   refreshProfileRecord,
   saveAuthMetadata,
   saveProfileRecord,
 } from '../../lib/offlineSync';
+import {
+  getLevelInfo,
+  LevelInfo,
+  persistProfileXp,
+  summarizeXpFromDevotionLogs,
+  XpSummary,
+} from '../../lib/xp';
 
-const NAVY = '#0A1124';
-const BG = '#F2F4F8';
+const BG = palette.bg;
 const PHONE_REGEX = /^\+?[0-9]{9,15}$/;
 
 type PickerType = 'birthDate' | null;
@@ -76,6 +87,10 @@ const parseDateString = (value?: string | null): Date => {
 const ProfileScreen = ({ navigation }: any) => {
   const strings = getStrings().profile;
   const insets = useSafeAreaInsets();
+  const { isNightMode } = useNightMode();
+  const heroGradientColors = isNightMode
+    ? headerGradient.dark
+    : headerGradient.light;
   const { width } = useWindowDimensions();
   const isCompactWidth = width < 360;
   const hasLoadedProfileRef = useRef(false);
@@ -97,6 +112,7 @@ const ProfileScreen = ({ navigation }: any) => {
   const [saving, setSaving] = useState(false);
   const [currentDevotionTime, setCurrentDevotionTime] =
     useState<string>('07:00');
+  const [xpSummary, setXpSummary] = useState<XpSummary | null>(null);
   const [activePicker, setActivePicker] = useState<PickerType>(null);
   const [pickerDate, setPickerDate] = useState<Date>(() => {
     const fallback = new Date();
@@ -167,8 +183,16 @@ const ProfileScreen = ({ navigation }: any) => {
         applyProfileForm(currentUser, cachedProfile);
         setLoading(false);
 
+        const cachedLogs = await readCachedDevotionLogs(currentUser.id);
+        setXpSummary(summarizeXpFromDevotionLogs(cachedLogs));
+
         const { data: profile } = await refreshProfileRecord(currentUser.id);
         applyProfileForm(currentUser, profile);
+
+        const { data: logs } = await refreshDevotionLogs(currentUser.id);
+        const freshSummary = summarizeXpFromDevotionLogs(logs);
+        setXpSummary(freshSummary);
+        persistProfileXp(currentUser.id, freshSummary.xp);
       } finally {
         setLoading(false);
       }
@@ -195,6 +219,11 @@ const ProfileScreen = ({ navigation }: any) => {
 
     return JSON.stringify(form) !== JSON.stringify(initialForm);
   }, [form, initialForm]);
+
+  const levelInfo = useMemo<LevelInfo | null>(
+    () => (xpSummary ? getLevelInfo(xpSummary.completedDays) : null),
+    [xpSummary],
+  );
 
   const displayName =
     form.fullName.trim() ||
@@ -376,7 +405,7 @@ const ProfileScreen = ({ navigation }: any) => {
     );
   };
 
-  if (loading) {
+  if (loading && !user) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={NAVY} />
@@ -410,6 +439,8 @@ const ProfileScreen = ({ navigation }: any) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.heroCard}>
+          <GradientSurface colors={heroGradientColors} />
+          <View style={styles.heroGlow} />
           <View style={styles.avatarWrap}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>{initials}</Text>
@@ -439,6 +470,74 @@ const ProfileScreen = ({ navigation }: any) => {
             </View>
           </View>
         </View>
+
+        {levelInfo && xpSummary ? (
+          <View style={styles.levelCard}>
+            <View style={styles.levelTopRow}>
+              <View style={styles.levelIconWrap}>
+                <MaterialCommunityIcons
+                  name="star-four-points"
+                  size={22}
+                  color="#FFF"
+                />
+              </View>
+              <View style={styles.levelCopy}>
+                <Text style={styles.levelTitle}>
+                  {strings.level.levelLabel(levelInfo.level)} ·{' '}
+                  {levelInfo.title}
+                </Text>
+                <Text style={styles.levelSubtitle}>
+                  {strings.level.cardSubtitle}
+                </Text>
+              </View>
+              <Text style={styles.levelXpValue}>
+                {strings.level.xpValue(levelInfo.xp)}
+              </Text>
+            </View>
+
+            <View style={styles.levelProgressTrack}>
+              <View
+                style={[
+                  styles.levelProgressFill,
+                  { width: `${Math.round(levelInfo.progress * 100)}%` },
+                ]}
+              />
+            </View>
+            <Text style={styles.levelToNext}>
+              {strings.level.toNext(
+                levelInfo.daysToNextLevel,
+                levelInfo.nextLevelBonusXp,
+              )}
+            </Text>
+
+            <View style={styles.levelStatsRow}>
+              <View style={styles.levelStatBox}>
+                <Text style={styles.levelStatNum}>
+                  {xpSummary.completedDays}
+                </Text>
+                <Text style={styles.levelStatLabel}>
+                  {strings.level.daysLabel}
+                </Text>
+              </View>
+              <View style={styles.levelStatDivider} />
+              <View style={styles.levelStatBox}>
+                <Text style={styles.levelStatNum}>{xpSummary.streak}</Text>
+                <Text style={styles.levelStatLabel}>
+                  {strings.level.streakLabel}
+                </Text>
+              </View>
+              <View style={styles.levelStatDivider} />
+              <View style={styles.levelStatBox}>
+                <Text style={styles.levelStatNum}>
+                  {xpSummary.earnedBadges}
+                </Text>
+                <Text style={styles.levelStatLabel}>
+                  {strings.level.badgesLabel}
+                </Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
@@ -700,19 +799,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: { color: '#FFF', fontSize: 18, fontWeight: '700' },
-  content: { padding: 16, paddingBottom: 40 },
+  content: { padding: 18, paddingBottom: 40 },
   heroCard: {
     backgroundColor: NAVY,
-    borderRadius: 28,
+    borderRadius: 30,
     paddingHorizontal: 20,
-    paddingVertical: 24,
+    paddingVertical: 26,
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: NAVY,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    elevation: 6,
+    overflow: 'hidden',
+    ...shadow.hero,
+  },
+  heroGlow: {
+    position: 'absolute',
+    top: -50,
+    right: -30,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(120,161,189,0.18)',
   },
   avatarWrap: {
     position: 'relative',
@@ -769,19 +874,93 @@ const styles = StyleSheet.create({
 
     fontWeight: '700',
   },
+  levelCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 24,
+    padding: 18,
+    marginBottom: 14,
+    ...shadow.soft,
+  },
+  levelTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  levelIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#78A1BD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  levelCopy: { flex: 1 },
+  levelTitle: {
+    color: NAVY,
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'left',
+  },
+  levelSubtitle: {
+    color: '#737B86',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 3,
+    textAlign: 'left',
+  },
+  levelXpValue: {
+    color: '#78A1BD',
+    fontSize: 14,
+    fontWeight: '800',
+    marginLeft: 8,
+  },
+  levelProgressTrack: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#EEF2F6',
+    overflow: 'hidden',
+  },
+  levelProgressFill: {
+    height: '100%',
+    borderRadius: 5,
+    backgroundColor: '#78A1BD',
+  },
+  levelToNext: {
+    color: '#737B86',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 8,
+    textAlign: 'left',
+  },
+  levelStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  levelStatBox: { flex: 1, alignItems: 'center' },
+  levelStatDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: '#E7EBF1',
+  },
+  levelStatNum: {
+    color: NAVY,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  levelStatLabel: {
+    color: '#737B86',
+    fontSize: 11,
+    marginTop: 2,
+  },
   sectionCard: {
     backgroundColor: '#FFF',
-    borderRadius: 22,
+    borderRadius: 24,
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 18,
     marginBottom: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(10,17,36,0.06)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 2,
+    ...shadow.soft,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -789,10 +968,10 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   sectionIconWrap: {
-    width: 38,
-    height: 38,
+    width: 44,
+    height: 44,
     borderRadius: 14,
-    backgroundColor: 'rgba(120,161,189,0.16)',
+    backgroundColor: '#78A1BD',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
@@ -852,19 +1031,15 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     backgroundColor: NAVY,
-    borderRadius: 16,
-    paddingVertical: 16,
+    borderRadius: 18,
+    paddingVertical: 17,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
     marginTop: 6,
     marginBottom: 12,
-    shadowColor: NAVY,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    elevation: 4,
+    ...shadow.hero,
   },
   saveBtnDisabled: {
     opacity: 0.55,
@@ -872,8 +1047,8 @@ const styles = StyleSheet.create({
   saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
   logoutBtn: {
     backgroundColor: '#E74C3C',
-    borderRadius: 16,
-    paddingVertical: 16,
+    borderRadius: 18,
+    paddingVertical: 17,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',

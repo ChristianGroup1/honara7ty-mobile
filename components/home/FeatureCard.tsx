@@ -25,7 +25,9 @@ const FeatureCard = ({ title, subtitle, icon, onPress }: FeatureCardProps) => {
         <Text style={styles.featureCardSub}>{subtitle}</Text>
       </View>
 
-      <MaterialCommunityIcons name="chevron-left" size={22} color="#CCC" />
+      <View style={styles.featureChevron}>
+        <MaterialCommunityIcons name="chevron-left" size={20} color="#78A1BD" />
+      </View>
     </TouchableOpacity>
   );
 };

@@ -1,11 +1,15 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { devotionCalendarStyles as styles, GOLD, NAVY } from './styles';
+import { AppTheme } from '../../lib/nightMode';
+import HeroBackground from '../shared/HeroBackground';
+import { DevotionCalendarStyles } from './styles';
 
 type Strings = any;
 
 type Props = {
+  styles: DevotionCalendarStyles;
+  colors: AppTheme['colors'];
   strings: Strings;
   currentStreak: number;
   monthCompletedCount: number;
@@ -13,6 +17,8 @@ type Props = {
 };
 
 const DevotionCalendarSummary = ({
+  styles,
+  colors,
   strings,
   currentStreak,
   monthCompletedCount,
@@ -20,13 +26,13 @@ const DevotionCalendarSummary = ({
 }: Props) => (
   <>
     <View style={styles.heroCard}>
-      <View style={styles.heroGlow} />
+      <HeroBackground />
       <View style={styles.heroTopRow}>
         <View style={styles.heroIconWrap}>
           <MaterialCommunityIcons
             name="calendar-heart"
             size={24}
-            color={'#fff'}
+            color="#FFF"
           />
         </View>
         <View style={styles.heroBadge}>
@@ -40,7 +46,7 @@ const DevotionCalendarSummary = ({
         <MaterialCommunityIcons
           name="star-outline"
           size={16}
-          color={GOLD}
+          color={colors.accent}
         />
         <Text style={styles.heroHintText}>{strings.heroHint}</Text>
       </View>
@@ -70,7 +76,7 @@ const DevotionCalendarSummary = ({
           <MaterialCommunityIcons
             name="check-decagram"
             size={18}
-            color={NAVY}
+            color={colors.text}
           />
         </View>
         <Text style={styles.statNumber}>{totalCompleted}</Text>

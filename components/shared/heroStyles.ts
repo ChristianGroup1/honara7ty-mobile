@@ -1,28 +1,29 @@
-export const HERO_NAVY = '#0A1124';
-export const HERO_GOLD = '#78A1BD';
+import { GOLD as HERO_GOLD, NAVY as HERO_NAVY } from './designTokens';
+
+export { HERO_GOLD, HERO_NAVY };
 
 export const heroCardBase = {
   backgroundColor: HERO_NAVY,
-  borderRadius: 28,
+  borderRadius: 30,
   paddingHorizontal: 20,
-  paddingVertical: 20,
+  paddingVertical: 22,
   marginBottom: 18,
   overflow: 'hidden' as const,
   shadowColor: HERO_NAVY,
-  shadowOffset: { width: 0, height: 6 },
-  shadowOpacity: 0.12,
-  shadowRadius: 10,
-  elevation: 8,
+  shadowOffset: { width: 0, height: 12 },
+  shadowOpacity: 0.18,
+  shadowRadius: 24,
+  elevation: 12,
 };
 
 export const heroGlowBase = {
   position: 'absolute' as const,
-  top: -34,
-  left: -18,
-  width: 180,
-  height: 180,
-  borderRadius: 90,
-  backgroundColor: 'rgba(120,161,189,0.14)',
+  top: -40,
+  left: -24,
+  width: 200,
+  height: 200,
+  borderRadius: 100,
+  backgroundColor: 'rgba(120,161,189,0.18)',
 };
 
 export const heroTopRowBase = {
@@ -53,7 +54,7 @@ export const heroBadgeBase = {
 };
 
 export const heroBadgeTextBase = {
-  color: '#78A1BD',
+  color: HERO_GOLD,
   fontSize: 12,
   fontWeight: '800' as const,
 };

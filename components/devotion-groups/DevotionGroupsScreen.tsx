@@ -19,6 +19,7 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import supabase from '../../lib/supbase';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
+import HeroBackground from '../shared/HeroBackground';
 import CustomAlert, { AlertConfig } from '../shared/CustomAlert';
 import { getStrings } from '../../localization';
 import { getDisplayName } from '../home/utils';
@@ -29,9 +30,7 @@ import {
   joinDevotionGroupByCode,
 } from '../../lib/devotionGroups';
 
-const NAVY = '#0A1124';
-const GOLD = '#78A1BD';
-const BG = '#F2F4F8';
+import { BG, GOLD, NAVY } from '../shared/designTokens';
 type ActionMode = 'create' | 'join';
 
 const DevotionGroupsScreen = ({ navigation, route }: any) => {
@@ -266,7 +265,7 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
     () => (
       <>
         <View style={styles.heroCard}>
-          <View style={styles.heroGlow} />
+          <HeroBackground />
           <View style={styles.heroTopRow}>
             <View style={styles.heroIcon}>
               <MaterialCommunityIcons
@@ -628,7 +627,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: 'rgba(120,161,189,0.14)',
+    backgroundColor: '#78A1BD',
     alignItems: 'center',
     justifyContent: 'center',
   },

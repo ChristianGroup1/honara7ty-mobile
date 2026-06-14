@@ -46,5 +46,9 @@ export const moreStrings = {
       title: 'مجموعات الخلوة',
       subtitle: 'تابع خلوة أعضاء مجموعة الخلوة',
     },
+    weeklyReport: {
+      title: 'أسبوعك مع ربنا',
+      subtitle: 'ملخص أسبوعي لخلوتك وقراءتك وصلواتك',
+    },
   },
 } as const;

@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { BG, GOLD, NAVY, palette } from '../shared/designTokens';
 import {
   heroBadgeBase,
   heroBadgeTextBase,
@@ -10,14 +11,14 @@ import {
   heroTopRowBase,
 } from '../shared/heroStyles';
 
-export const NAVY = '#0A1124';
-export const GOLD = '#78A1BD';
-export const SKY = '#EEF3F8';
-export const SLATE = '#5C6676';
-export const INK = '#1F2A3A';
+export { GOLD, NAVY };
+
+export const SKY = BG;
+export const SLATE = palette.mutedText;
+export const INK = palette.text;
 
 export const dailyNotificationStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: SKY },
+  container: { flex: 1, backgroundColor: BG },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   topInset: { backgroundColor: NAVY },
   header: {

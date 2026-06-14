@@ -23,9 +23,7 @@ import {
   joinDevotionGroupByCode,
 } from '../../lib/devotionGroups';
 
-const NAVY = '#0A1124';
-const GOLD = '#78A1BD';
-const BG = '#F2F4F8';
+import { BG, GOLD, NAVY } from '../shared/designTokens';
 
 const DevotionGroupInviteScreen = ({ navigation, route }: any) => {
   const strings = getStrings().devotionGroups;

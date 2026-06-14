@@ -29,7 +29,8 @@ import BadgesHeader from './BadgesHeader';
 import { BADGE_CONFIGS, BadgeConfig, GOLD, NAVY, WEB_URL } from './constants';
 import { badgesStyles as styles } from './styles';
 import StreakCard from './StreakCard';
-import { computeStreak, computeXp } from './utils';
+import { computeStreak } from './utils';
+import { computeTotalXp } from '../../lib/xp';
 import { getStrings } from '../../localization';
 import {
   readCachedDevotionLogs,
@@ -44,6 +45,7 @@ const BadgesScreen = ({ navigation }: any) => {
   const hasLoadedStreakRef = useRef(false);
   const sessionUserRef = useRef<any>(null);
   const [streak, setStreak] = useState(0);
+  const [completedDays, setCompletedDays] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchStreak = useCallback(async (showLoader = false) => {
@@ -68,6 +70,7 @@ const BadgesScreen = ({ navigation }: any) => {
         .filter(([, value]) => value.completed)
         .map(([date]) => date);
       setStreak(computeStreak(cachedDates));
+      setCompletedDays(cachedDates.length);
       setLoading(false);
 
       const { data } = await refreshDevotionLogs(userId);
@@ -76,6 +79,7 @@ const BadgesScreen = ({ navigation }: any) => {
         .map(([date]) => date);
       const newStreak = computeStreak(dates);
       setStreak(newStreak);
+      setCompletedDays(dates.length);
     } catch {
       /* ignore */
     }
@@ -140,8 +144,8 @@ const BadgesScreen = ({ navigation }: any) => {
   );
   const earnedCount = earnedBadges.length;
   const totalXp = useMemo(
-    () => computeXp(streak, earnedBadges),
-    [earnedBadges, streak],
+    () => computeTotalXp(completedDays),
+    [completedDays],
   );
   const spotlightBadge =
     lockedBadges[0] ??

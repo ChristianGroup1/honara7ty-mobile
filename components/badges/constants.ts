@@ -1,8 +1,8 @@
 import { badgeConfigs } from '../../localization/modules/badges';
+import { BG, GOLD, NAVY } from '../shared/designTokens';
 
-export const NAVY = '#0A1124';
-export const GOLD = '#78A1BD';
-export const BG = '#F2F4F8';
+export { BG, GOLD, NAVY };
+
 export const APP_SCHEME = 'hanaraahti://';
 export const WEB_URL = 'https://hanaraahti.app';
 

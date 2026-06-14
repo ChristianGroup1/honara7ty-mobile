@@ -10,6 +10,8 @@ import React, {
 } from 'react';
 import { processColor, StyleSheet, View } from 'react-native';
 
+import { darkPalette, palette } from '../components/shared/designTokens';
+
 const NIGHT_MODE_KEY = 'app_night_mode_enabled';
 
 declare global {
@@ -33,29 +35,29 @@ export type AppTheme = {
 };
 
 const lightColors: AppTheme['colors'] = {
-  background: '#F2F4F8',
-  card: '#FFFFFF',
-  cardMuted: '#F8FAFD',
-  header: '#0A1124',
-  text: '#0A1124',
-  mutedText: '#667085',
-  border: '#E3E8F1',
-  accent: '#78A1BD',
+  background: palette.bg,
+  card: palette.card,
+  cardMuted: palette.cardMuted,
+  header: palette.navy,
+  text: palette.text,
+  mutedText: palette.mutedText,
+  border: palette.border,
+  accent: palette.accent,
   tabInactive: 'rgba(255,255,255,0.45)',
   shadow: '#000000',
 };
 
 const darkColors: AppTheme['colors'] = {
-  background: '#0B1020',
-  card: '#151E31',
-  cardMuted: '#1D2940',
-  header: '#111A2E',
-  text: '#F7FAFC',
-  mutedText: '#C0C8D6',
-  border: '#34425F',
-  accent: '#78A1BD',
-  tabInactive: 'rgba(220,226,238,0.62)',
-  shadow: '#000000',
+  background: darkPalette.background,
+  card: darkPalette.card,
+  cardMuted: darkPalette.cardMuted,
+  header: darkPalette.header,
+  text: darkPalette.text,
+  mutedText: darkPalette.mutedText,
+  border: darkPalette.border,
+  accent: darkPalette.accent,
+  tabInactive: darkPalette.tabInactive,
+  shadow: darkPalette.shadow,
 };
 
 let globalNightModeEnabled = false;
@@ -63,7 +65,7 @@ let globalNightModeEnabled = false;
 const normalizeHex = (value: string) => value.trim().toUpperCase();
 
 const isDarkInk = (value: string) =>
-  ['#0A1124', '#1F2A3A', '#222', '#222222', '#333', '#333333'].includes(
+  [palette.navy, palette.text, '#1F2A3A', '#222', '#222222', '#333', '#333333'].includes(
     normalizeHex(value),
   );
 
@@ -95,11 +97,11 @@ const isLightSurface = (value: string) =>
   ['#FFF', '#FFFFFF'].includes(normalizeHex(value));
 
 const isLightBackground = (value: string) =>
-  ['#F2F4F8', '#EEF3F8', '#F6F7F9', '#F8F8F8'].includes(normalizeHex(value));
+  [palette.bg, '#EEF3F8', '#F6F7F9', '#F8F8F8'].includes(normalizeHex(value));
 
 const isMutedSurface = (value: string) =>
   [
-    '#F8FAFD',
+    palette.cardMuted,
     '#F4F6FA',
     '#F6F8FC',
     '#F6F9FC',
@@ -132,7 +134,7 @@ const isWarmSurface = (value: string) =>
   ].includes(normalizeHex(value));
 
 const isAccent = (value: string) =>
-  ['#78A1BD', '#B08F45', '#C9A84C'].includes(normalizeHex(value));
+  [palette.accent, '#B08F45', '#C9A84C'].includes(normalizeHex(value));
 
 const isAccentAlpha = (value: string) =>
   /^RGBA\(18,\s*30,\s*52,\s*0\.\d+\)$/i.test(value.trim()) ||
@@ -159,7 +161,7 @@ const transformColor = (property: string, value: unknown) => {
     if (isWarmSurface(value)) {
       return 'rgba(120,161,189,0.18)';
     }
-    if (color === '#0A1124') {
+    if (color === normalizeHex(palette.navy)) {
       return darkColors.header;
     }
     if (isAccent(value)) {
@@ -194,7 +196,7 @@ const transformColor = (property: string, value: unknown) => {
     property === 'shadowColor'
   ) {
     if (
-      color === '#E3E8F1' ||
+      color === normalizeHex(palette.border) ||
       color === '#E9EDF4' ||
       color === '#D4DAE4' ||
       color === '#E9EEF8' ||

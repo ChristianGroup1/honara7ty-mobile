@@ -9,13 +9,14 @@ import {
   View,
 } from 'react-native';
 import { BibleBook, Testament } from '../data/bibleMetadata';
-import { devotionCalendarStyles as styles } from './styles';
+import { DevotionCalendarStyles } from './styles';
 import BiblePassagePicker from '../shared/BiblePassagePicker';
 import { ReadingEntry, formatReadingEntries } from '../../lib/readingEntries';
 
 type Strings = any;
 
 type Props = {
+  styles: DevotionCalendarStyles;
   strings: Strings;
   visible: boolean;
   selectedDate: string;
@@ -39,6 +40,7 @@ type Props = {
 };
 
 const DevotionDayEditor = ({
+  styles,
   strings,
   visible,
   selectedDate,

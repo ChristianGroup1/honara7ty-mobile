@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
@@ -100,10 +100,13 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
         : '',
     [state.group?.invite_code],
   );
+  const hasLoadedDetailsRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
-      loadDetails(true, true);
+      const shouldShowLoader = !hasLoadedDetailsRef.current;
+      hasLoadedDetailsRef.current = true;
+      loadDetails(shouldShowLoader, shouldShowLoader);
     }, [loadDetails]),
   );
 

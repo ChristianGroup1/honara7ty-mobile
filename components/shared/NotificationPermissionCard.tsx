@@ -7,8 +7,7 @@ import {
   View,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-
-const NAVY = '#0A1124';
+import { NAVY } from './designTokens';
 
 type Props = {
   title: string;

@@ -3,9 +3,9 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNetInfo } from '@react-native-community/netinfo';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import OfflineBanner from './OfflineBanner';
+import GradientSurface from './GradientSurface';
 import { useNightMode } from '../../lib/nightMode';
-
-const NAVY = '#0A1124';
+import { headerGradient, NAVY } from './designTokens';
 
 interface AppHeaderProps {
   topInsetHeight: number;
@@ -49,10 +49,13 @@ const AppHeader = ({
   titleNumberOfLines = 1,
 }: AppHeaderProps) => {
   const netInfo = useNetInfo();
-  const { colors } = useNightMode();
+  const { colors, isNightMode } = useNightMode();
   const [isOffline, setIsOffline] = React.useState(false);
-  const resolvedBackgroundColor =
-    backgroundColor === NAVY ? colors.header : backgroundColor;
+  const useGradient = backgroundColor === NAVY;
+  const resolvedBackgroundColor = useGradient ? colors.header : backgroundColor;
+  const gradientColors = isNightMode
+    ? headerGradient.dark
+    : headerGradient.light;
 
   React.useEffect(() => {
     const nextOffline =
@@ -72,10 +75,17 @@ const AppHeader = ({
       <View
         style={[
           styles.topInset,
-          { height: topInsetHeight, backgroundColor: resolvedBackgroundColor },
+          {
+            height: topInsetHeight,
+            backgroundColor: useGradient
+              ? gradientColors[0]
+              : resolvedBackgroundColor,
+          },
         ]}
       />
       <View style={[styles.shell, { backgroundColor: resolvedBackgroundColor }]}>
+        {useGradient ? <GradientSurface colors={gradientColors} /> : null}
+        <View style={styles.glow} />
         <View style={styles.topRow}>
           <View style={styles.identity}>
             {leading ? <View style={styles.leadingWrap}>{leading}</View> : null}
@@ -104,10 +114,20 @@ const styles = StyleSheet.create({
   shell: {
     backgroundColor: NAVY,
     paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 18,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    paddingTop: 14,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
+  },
+  glow: {
+    position: 'absolute',
+    top: -60,
+    left: -30,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(120,161,189,0.16)',
   },
   topRow: {
     flexDirection: 'row',
@@ -146,10 +166,12 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   actionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },

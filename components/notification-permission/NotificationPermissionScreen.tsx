@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import HeroBackground from '../shared/HeroBackground';
 import { getStrings } from '../../localization';
 import supabase from '../../lib/supbase';
 import { ensureDefaultDevotionTime } from '../../lib/ensureDefaultDevotionTime';
@@ -22,9 +23,7 @@ import {
   requestNotificationPermission,
 } from '../../lib/notifications';
 import { registerPushToken } from '../../lib/pushTokens';
-
-const NAVY = '#0A1124';
-const SKY = '#EEF3F8';
+import { BG as SKY, NAVY } from '../shared/designTokens';
 
 const NotificationPermissionScreen = ({ navigation }: any) => {
   const strings = getStrings().notificationPermission;
@@ -81,7 +80,7 @@ const NotificationPermissionScreen = ({ navigation }: any) => {
         backgroundColor="transparent"
       />
       <View style={styles.heroCard}>
-        <View style={styles.heroGlow} />
+        <HeroBackground />
         <View style={styles.topRow}>
           <View style={styles.iconWrap}>
             <MaterialCommunityIcons name="bell" size={28} color="#FFF" />

@@ -10,6 +10,7 @@ import {
   AppState,
   Modal,
   Platform,
+  RefreshControl,
   ScrollView,
   StatusBar,
   Text,
@@ -67,6 +68,7 @@ import {
   buildReadingPlanSuggestions,
 } from '../../lib/readingPlanSuggestions';
 import type { ReadingPlanSuggestion } from '../../lib/readingPlanSuggestions';
+import { setActiveReadingPlan } from '../../lib/activeReadingPlan';
 
 const DailyNotificationsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().dailyNotifications;
@@ -98,6 +100,8 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [hasContent, setHasContent] = useState(false);
   const [permissionLoading, setPermissionLoading] = useState(false);
   const [notificationPermissionState, setNotificationPermissionState] =
     useState<'allowed' | 'denied' | 'not_determined'>('not_determined');
@@ -109,6 +113,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
     buttons?: AlertButton[];
   }>({ visible: false, title: '' });
   const sessionUserRef = useRef<any>(null);
+  const hasLoadedNotificationsRef = useRef(false);
 
   const showAlert = (
     title: string,
@@ -209,52 +214,59 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
     [],
   );
 
-  useEffect(() => {
-    let isActive = true;
-
-    const load = async () => {
-      let sessionUser = sessionUserRef.current;
-      if (!sessionUser) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        sessionUser = sessionData?.session?.user;
+  const loadNotifications = useCallback(
+    async ({
+      showLoader = false,
+      showRefreshing = false,
+    }: { showLoader?: boolean; showRefreshing?: boolean } = {}) => {
+      if (showLoader) {
+        setLoading(true);
       }
-      const userId = sessionUser?.id;
-      if (!userId) {
-        if (isActive) {
-          setLoading(false);
+      if (showRefreshing) {
+        setRefreshing(true);
+      }
+
+      try {
+        let sessionUser = sessionUserRef.current;
+        if (!sessionUser) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          sessionUser = sessionData?.session?.user;
         }
-        return;
+        const userId = sessionUser?.id;
+        if (!userId) {
+          return;
+        }
+
+        sessionUserRef.current = sessionUser;
+
+        const [cachedProfile, cachedDevotionLogs] = await Promise.all([
+          readCachedProfileRecord(userId),
+          readCachedDevotionLogs(userId),
+        ]);
+        await applyReminderData(userId, cachedProfile, cachedDevotionLogs);
+        setHasContent(true);
+        setLoading(false);
+
+        const [{ data: profile }, { data: devotionLogs }] = await Promise.all([
+          refreshProfileRecord(userId),
+          refreshDevotionLogs(userId),
+        ]);
+        await applyReminderData(userId, profile, devotionLogs, true);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
+    },
+    [applyReminderData],
+  );
 
-      sessionUserRef.current = sessionUser;
-
-      const [cachedProfile, cachedDevotionLogs] = await Promise.all([
-        readCachedProfileRecord(userId),
-        readCachedDevotionLogs(userId),
-      ]);
-      if (!isActive) {
-        return;
-      }
-      await applyReminderData(userId, cachedProfile, cachedDevotionLogs);
-      setLoading(false);
-
-      const [{ data: profile }, { data: devotionLogs }] = await Promise.all([
-        refreshProfileRecord(userId),
-        refreshDevotionLogs(userId),
-      ]);
-      if (!isActive) {
-        return;
-      }
-      await applyReminderData(userId, profile, devotionLogs, true);
-      setLoading(false);
-    };
-
-    load();
-
-    return () => {
-      isActive = false;
-    };
-  }, [applyReminderData]);
+  useFocusEffect(
+    useCallback(() => {
+      const shouldShowLoader = !hasLoadedNotificationsRef.current;
+      hasLoadedNotificationsRef.current = true;
+      loadNotifications({ showLoader: shouldShowLoader });
+    }, [loadNotifications]),
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -403,6 +415,17 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
     );
     if (suggestion) {
       handleApplySuggestion(suggestion);
+      // Persist the active plan so the Home screen can auto-fill today's reading.
+      (async () => {
+        let sessionUser = sessionUserRef.current;
+        if (!sessionUser) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          sessionUser = sessionData?.session?.user;
+        }
+        if (sessionUser?.id) {
+          await setActiveReadingPlan(sessionUser.id, selectedPlanKey);
+        }
+      })().catch(() => undefined);
       navigation.setParams({ selectedReadingPlanKey: undefined });
     }
   }, [
@@ -532,7 +555,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
     hour12: true,
   });
 
-  if (loading) {
+  if (loading && !hasContent) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={NAVY} />
@@ -557,6 +580,12 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => loadNotifications({ showRefreshing: true })}
+          />
+        }
       >
         <DailyNotificationsHero
           strings={strings}

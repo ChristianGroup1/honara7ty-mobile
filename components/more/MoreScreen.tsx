@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
+  Platform,
 } from 'react-native';
 import {
   SafeAreaView,
@@ -29,8 +30,6 @@ import {
 import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
 import supabase from '../../lib/supbase';
 
-const GOLD = '#78A1BD';
-
 const MoreScreen = ({ navigation }: any) => {
   const strings = getStrings().more;
   const insets = useSafeAreaInsets();
@@ -52,42 +51,42 @@ const MoreScreen = ({ navigation }: any) => {
       icon: 'head-cog-outline',
       title: strings.items.devotionGuide.title,
       subtitle: strings.items.devotionGuide.subtitle,
-      color: '#4A90D9',
     },
     {
       key: 'AboutIdea',
       icon: 'lightbulb-on-outline',
       title: strings.items.aboutIdea.title,
       subtitle: strings.items.aboutIdea.subtitle,
-      color: '#D97B29',
     },
     {
       key: 'BibleMemorization',
       icon: 'brain',
       title: strings.items.bibleMemorization.title,
       subtitle: strings.items.bibleMemorization.subtitle,
-      color: '#1A7A7A',
     },
     {
       key: 'LockScreenVerse',
       icon: 'image-edit-outline',
       title: strings.items.lockScreenVerse.title,
       subtitle: strings.items.lockScreenVerse.subtitle,
-      color: GOLD,
     },
     {
       key: 'Badges',
       icon: 'medal-outline',
       title: strings.items.badges.title,
       subtitle: strings.items.badges.subtitle,
-      color: GOLD,
     },
     {
       key: 'DevotionCalendar',
       icon: 'calendar-check-outline',
       title: strings.items.devotionCalendar.title,
       subtitle: strings.items.devotionCalendar.subtitle,
-      color: '#2E8B57',
+    },
+    {
+      key: 'WeeklyReport',
+      icon: 'chart-box-outline',
+      title: strings.items.weeklyReport.title,
+      subtitle: strings.items.weeklyReport.subtitle,
     },
   ];
 
@@ -170,7 +169,7 @@ const MoreScreen = ({ navigation }: any) => {
             <MaterialCommunityIcons
               name={isNightMode ? 'weather-night' : 'white-balance-sunny'}
               size={24}
-              color={colors.accent}
+              color="#FFF"
             />
           </View>
           <View style={themedStyles.rowBody}>
@@ -197,7 +196,7 @@ const MoreScreen = ({ navigation }: any) => {
             <MaterialCommunityIcons
               name="bell-cancel-outline"
               size={24}
-              color={colors.accent}
+              color="#FFF"
             />
           </View>
           <View style={themedStyles.rowBody}>
@@ -220,16 +219,11 @@ const MoreScreen = ({ navigation }: any) => {
             activeOpacity={0.8}
             onPress={() => navigation.navigate(item.key)}
           >
-            <View
-              style={[
-                themedStyles.iconCircle,
-                { backgroundColor: item.color + '22' },
-              ]}
-            >
+            <View style={themedStyles.iconCircle}>
               <MaterialCommunityIcons
                 name={item.icon}
-                size={26}
-                color={item.color}
+                size={24}
+                color="#FFF"
               />
             </View>
 
@@ -262,41 +256,35 @@ const createStyles = (colors: AppTheme['colors']) =>
       alignItems: 'center',
     },
     headerTitle: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
-    content: { padding: 16, paddingBottom: 32 },
+    content: { padding: 18, paddingBottom: 36, gap: 14 },
     preferenceCard: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: 20,
       padding: 18,
-      marginBottom: 12,
       flexDirection: 'row',
       alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.border,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.07,
-      shadowRadius: 6,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.05,
+      shadowRadius: 12,
+      elevation: 3,
     },
     row: {
       backgroundColor: colors.card,
-      borderRadius: 16,
+      borderRadius: 20,
       padding: 18,
-      marginBottom: 12,
       flexDirection: 'row',
       alignItems: 'center',
-      borderWidth: 1,
-      borderColor: colors.border,
-      elevation: 2,
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.07,
-      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.05,
+      shadowRadius: 12,
+      elevation: 3,
     },
-    rowBody: { flex: 1, marginHorizontal: 12, alignItems: 'flex-start' },
+    rowBody: { flex: 1, marginHorizontal: 14, alignItems: 'flex-start' },
     rowTitle: {
       fontSize: 16,
-      fontWeight: 'bold',
+      fontWeight: '800',
       color: colors.text,
       textAlign: 'left',
     },
@@ -304,22 +292,24 @@ const createStyles = (colors: AppTheme['colors']) =>
       fontSize: 12,
       color: colors.mutedText,
       marginTop: 4,
+      lineHeight: 18,
       textAlign: 'left',
     },
     iconCircle: {
-      width: 50,
-      height: 50,
-      borderRadius: 25,
+      width: 52,
+      height: 52,
+      borderRadius: 18,
       justifyContent: 'center',
       alignItems: 'center',
+      backgroundColor: colors.accent,
     },
     preferenceIcon: {
-      width: 50,
-      height: 50,
-      borderRadius: 25,
+      width: 52,
+      height: 52,
+      borderRadius: 18,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: `${colors.accent}22`,
+      backgroundColor: colors.accent,
     },
   });
 

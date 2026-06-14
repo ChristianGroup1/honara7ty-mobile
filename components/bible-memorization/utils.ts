@@ -1,8 +1,8 @@
 import { Difficulty, WordSlot } from './types';
 import { getStrings } from '../../localization';
+import { GOLD, NAVY } from '../shared/designTokens';
 
-export const NAVY = '#0A1124';
-export const GOLD = '#78A1BD';
+export { GOLD, NAVY };
 
 const memorizationStrings = getStrings().bibleMemorization;
 

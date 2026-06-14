@@ -49,9 +49,7 @@ import {
 } from '../shared/chapterSelection';
 import { saveDevotionLog } from '../../lib/offlineSync';
 
-const NAVY = '#0A1124';
-const GOLD = '#78A1BD';
-const BG = '#F2F4F8';
+import { BG, GOLD, NAVY } from '../shared/designTokens';
 
 const formatDate = (date: string) => {
   try {
@@ -133,6 +131,7 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
   );
   const [selectedDate, setSelectedDate] = useState(toIsoDate(new Date()));
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [answerSheetVisible, setAnswerSheetVisible] = useState(false);
   const [pendingCompleted, setPendingCompleted] = useState(true);
@@ -147,11 +146,15 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
     title: '',
   });
   const requestIdRef = useRef(0);
+  const hasLoadedHistoryRef = useRef(false);
 
   const hideAlert = () => setAlertConfig(prev => ({ ...prev, visible: false }));
 
   const loadHistory = useCallback(
-    async (showLoader = false) => {
+    async ({
+      showLoader = false,
+      showRefreshing = false,
+    }: { showLoader?: boolean; showRefreshing?: boolean } = {}) => {
       if (!groupId || !userId) {
         navigation.goBack();
         return;
@@ -165,6 +168,9 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
         setLogs([]);
         setSelectedDate(toIsoDate(new Date()));
         setVisibleMonth(startOfMonth(new Date()));
+      }
+      if (showRefreshing) {
+        setRefreshing(true);
       }
 
       try {
@@ -203,6 +209,7 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
       } finally {
         if (requestId === requestIdRef.current) {
           setLoading(false);
+          setRefreshing(false);
         }
       }
     },
@@ -217,7 +224,9 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
 
   useFocusEffect(
     useCallback(() => {
-      loadHistory(true);
+      const shouldShowLoader = !hasLoadedHistoryRef.current;
+      hasLoadedHistoryRef.current = true;
+      loadHistory({ showLoader: shouldShowLoader });
     }, [loadHistory]),
   );
 
@@ -408,7 +417,7 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
         },
       });
       setAnswerSheetVisible(false);
-      await loadHistory(false);
+      await loadHistory();
       setAlertConfig({
         visible: true,
         title: calendarStrings.saveSuccessTitle,
@@ -441,8 +450,8 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
-            refreshing={loading && Boolean(member)}
-            onRefresh={() => loadHistory(false)}
+            refreshing={refreshing}
+            onRefresh={() => loadHistory({ showRefreshing: true })}
           />
         }
         showsVerticalScrollIndicator={false}

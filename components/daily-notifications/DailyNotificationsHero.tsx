@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { dailyNotificationStyles as styles, GOLD, NAVY } from './styles';
+import HeroBackground from '../shared/HeroBackground';
 
 type Props = {
   strings: any;
@@ -15,7 +16,7 @@ const DailyNotificationsHero = ({
   onEditTime,
 }: Props) => (
   <View style={styles.heroCard}>
-    <View style={styles.heroGlow} />
+    <HeroBackground />
     <View style={styles.heroTopRow}>
       <View style={styles.heroIconWrap}>
         <MaterialCommunityIcons

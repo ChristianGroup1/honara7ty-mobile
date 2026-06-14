@@ -12,6 +12,7 @@ import {
   Testament,
 } from '../data/bibleMetadata';
 import MemorizationHeader from './MemorizationHeader';
+import HeroBackground from '../shared/HeroBackground';
 import { memorizationStyles as styles } from './styles';
 import { Difficulty, MemorizationStackParamList } from './types';
 import { DIFFICULTY_LEVELS } from './utils';
@@ -214,7 +215,7 @@ const PickScreen = ({ navigation }: Props) => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.heroCard}>
-            <View style={styles.heroGlow} />
+            <HeroBackground />
             <View style={styles.heroTopRow}>
               <View style={styles.heroIconWrap}>
                 <MaterialCommunityIcons

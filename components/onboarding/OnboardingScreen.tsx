@@ -19,6 +19,7 @@ import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermi
 
 import { getStrings } from '../../localization';
 import type { OnboardingSlide } from '../../localization/modules/onboarding';
+import { ACCENT, NAVY } from '../shared/designTokens';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -30,14 +31,13 @@ const TEXT = '#4F5562';
 const TITLE = '#3F4653';
 const SHADOW = '#9197A3';
 const MIST = '#D5DCE6';
-const NAVY = '#0A1124';
 const SHEET_HEIGHT = Math.max(SCREEN_HEIGHT * 0.34, 290);
 const VIEWABILITY_CONFIG = { viewAreaCoveragePercentThreshold: 60 };
 
 const THEMES = [
   {
     background: '#0C1121',
-    accent: '#78A1BD',
+    accent: ACCENT,
     secondary: 'rgba(255,255,255,0.16)',
     icon: 'book-open-page-variant',
     label: 'بداية هادئة',

@@ -18,6 +18,20 @@ export const profileStrings = {
   noSessionMessage: 'سجّل الدخول أولاً للوصول إلى الملف الشخصي.',
   title: 'الملف الشخصي',
   accountSavedBadge: 'بياناتك محفوظة على الحساب',
+  level: {
+    cardTitle: 'مستواك الروحي',
+    cardSubtitle:
+      'كل يوم خلوة بيزوّدك نقط، وكل ٧ أيام بتوصل مستوى جديد وتاخد مكافأة نقط.',
+    levelLabel: (level: number) => `المستوى ${level}`,
+    xpValue: (xp: number) => `${xp.toLocaleString('en-US')} XP`,
+    toNext: (days: number, bonus: number) =>
+      `فاضل ${days.toLocaleString('ar-EG')} يوم للمستوى الجاي · +${bonus.toLocaleString(
+        'en-US',
+      )} XP`,
+    daysLabel: 'أيام الخلوة',
+    streakLabel: 'سلسلة متواصلة',
+    badgesLabel: 'أوسمة',
+  },
   basicInfoTitle: 'البيانات الأساسية',
   basicInfoSubtitle: 'يمكنك تعديل الاسم والهاتف والبيانات الشخصية من هنا.',
   name: 'الاسم',

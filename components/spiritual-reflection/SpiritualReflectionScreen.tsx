@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
+  RefreshControl,
   StatusBar,
   Text,
   TextInput,
@@ -21,6 +22,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import supabase from '../../lib/supbase';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import ReflectionCard from './ReflectionCard';
@@ -28,6 +30,7 @@ import ReflectionDetailModal from './ReflectionDetailModal';
 import ReflectionEditorModal from './ReflectionEditorModal';
 import SpiritualReflectionHeader from './SpiritualReflectionHeader';
 import { spiritualReflectionStyles as styles, GOLD, NAVY } from './styles';
+import HeroBackground from '../shared/HeroBackground';
 import { Reflection } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
@@ -43,8 +46,10 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const sessionUserRef = useRef<any>(null);
+  const hasLoadedReflectionsRef = useRef(false);
   const [reflections, setReflections] = useState<Reflection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState<Reflection | null>(null);
@@ -100,26 +105,45 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
     return sessionUser?.id as string | undefined;
   }, []);
 
-  const fetchReflections = useCallback(async () => {
-    setLoading(true);
-    const userId = await getCurrentUserId();
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
+  const fetchReflections = useCallback(
+    async ({
+      showLoader = false,
+      showRefreshing = false,
+    }: { showLoader?: boolean; showRefreshing?: boolean } = {}) => {
+      if (showLoader) {
+        setLoading(true);
+      }
+      if (showRefreshing) {
+        setRefreshing(true);
+      }
 
-    const cached = await readCachedReflections(userId);
-    setReflections(cached);
-    setLoading(false);
+      try {
+        const userId = await getCurrentUserId();
+        if (!userId) {
+          return;
+        }
 
-    const { data } = await refreshReflections(userId);
-    setReflections(data);
-    setLoading(false);
-  }, [getCurrentUserId]);
+        const cached = await readCachedReflections(userId);
+        setReflections(cached);
+        setLoading(false);
 
-  useEffect(() => {
-    fetchReflections();
-  }, [fetchReflections]);
+        const { data } = await refreshReflections(userId);
+        setReflections(data);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [getCurrentUserId],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const shouldShowLoader = !hasLoadedReflectionsRef.current;
+      hasLoadedReflectionsRef.current = true;
+      fetchReflections({ showLoader: shouldShowLoader });
+    }, [fetchReflections]),
+  );
 
   // hide dim overlay when keyboard is open (prevents dark strip under buttons)
   useEffect(() => {
@@ -266,10 +290,18 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
           maxToRenderPerBatch={8}
           updateCellsBatchingPeriod={40}
           windowSize={7}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchReflections({ showRefreshing: true })}
+              colors={[NAVY]}
+              tintColor={NAVY}
+            />
+          }
           ListHeaderComponent={
             shouldShowHero ? (
               <View style={styles.heroCard}>
-                <View style={styles.heroGlow} />
+                <HeroBackground />
                 <View style={styles.heroTopRow}>
                   <View style={styles.heroIconWrap}>
                     <MaterialCommunityIcons

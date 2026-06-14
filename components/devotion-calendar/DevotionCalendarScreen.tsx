@@ -31,9 +31,10 @@ import {
 import DevotionCalendarSummary from './DevotionCalendarSummary';
 import DevotionCalendarGrid from './DevotionCalendarGrid';
 import DevotionDayEditor from './DevotionDayEditor';
-import { devotionCalendarStyles as styles, NAVY } from './styles';
+import { createDevotionCalendarStyles } from './styles';
 import { DevotionDayLog } from './types';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
+import { useNightMode } from '../../lib/nightMode';
 import { buildMonthCells, getMonthKey, startOfMonth, toIsoDate } from './utils';
 import {
   firstSelectedChapter,
@@ -56,6 +57,8 @@ import {
 const DevotionCalendarScreen = ({ navigation }: any) => {
   const strings = getStrings().devotionCalendar;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const styles = useMemo(() => createDevotionCalendarStyles(colors), [colors]);
   const hasLoadedCalendarRef = useRef(false);
   const sessionUserRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
@@ -354,7 +357,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <AppHeader
         topInsetHeight={insets?.top ?? 0}
         title={strings.title}
@@ -369,7 +372,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
 
       {loading && Object.keys(devotionLogsByDate).length === 0 ? (
         <View style={[styles.loadingWrap, styles.loadingWrapMuted]}>
-          <ActivityIndicator size="large" color={NAVY} />
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : (
         <ScrollView
@@ -377,6 +380,8 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
           showsVerticalScrollIndicator={false}
         >
           <DevotionCalendarSummary
+            styles={styles}
+            colors={colors}
             strings={strings}
             currentStreak={currentStreak}
             monthCompletedCount={monthCompletedCount}
@@ -384,6 +389,8 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
           />
 
           <DevotionCalendarGrid
+            styles={styles}
+            colors={colors}
             strings={strings}
             visibleMonth={visibleMonth}
             monthCells={monthCells}
@@ -452,6 +459,7 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
       )}
 
       <DevotionDayEditor
+        styles={styles}
         strings={strings}
         visible={editorVisible}
         selectedDate={selectedDate}

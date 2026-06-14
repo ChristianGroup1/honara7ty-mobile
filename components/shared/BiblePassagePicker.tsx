@@ -10,8 +10,7 @@ import {
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Testament } from '../data/bibleMetadata';
-
-const NAVY = '#0A1124';
+import { NAVY } from './designTokens';
 
 type Labels = {
   bookTitle: string;

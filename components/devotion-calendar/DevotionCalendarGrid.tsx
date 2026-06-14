@@ -1,13 +1,17 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { devotionCalendarStyles as styles, NAVY } from './styles';
+import { AppTheme } from '../../lib/nightMode';
+import { palette } from '../shared/designTokens';
+import { DevotionCalendarStyles } from './styles';
 import { CalendarCell } from './types';
 import { getMonthLabel } from './utils';
 
 type Strings = any;
 
 type Props = {
+  styles: DevotionCalendarStyles;
+  colors: AppTheme['colors'];
   strings: Strings;
   visibleMonth: Date;
   monthCells: CalendarCell[];
@@ -18,6 +22,8 @@ type Props = {
 };
 
 const DevotionCalendarGrid = ({
+  styles,
+  colors,
   strings,
   visibleMonth,
   monthCells,
@@ -30,6 +36,11 @@ const DevotionCalendarGrid = ({
   for (let i = 0; i < monthCells.length; i += 7) {
     rows.push(monthCells.slice(i, i + 7));
   }
+  const missedIconColor =
+    colors.background === palette.bg ? '#B45B12' : '#F0A060';
+  const isLight = colors.background === palette.bg;
+  const completedCheckColor = '#FFFFFF';
+  const legendCompletedCheckColor = isLight ? '#FFFFFF' : '#5FD492';
 
   return (
     <View style={styles.calendarCard}>
@@ -42,26 +53,40 @@ const DevotionCalendarGrid = ({
           <MaterialCommunityIcons
             name="calendar-blank-outline"
             size={20}
-            color={NAVY}
+            color={colors.accent}
           />
         </View>
       </View>
 
       <View style={styles.monthHeader}>
         <TouchableOpacity style={styles.monthNavBtn} onPress={onNextMonth}>
-          <MaterialCommunityIcons name="chevron-right" size={22} color={NAVY} />
+          <MaterialCommunityIcons
+            name="chevron-right"
+            size={22}
+            color={colors.text}
+          />
         </TouchableOpacity>
 
         <Text style={styles.monthTitle}>{getMonthLabel(visibleMonth)}</Text>
 
         <TouchableOpacity style={styles.monthNavBtn} onPress={onPrevMonth}>
-          <MaterialCommunityIcons name="chevron-left" size={22} color={NAVY} />
+          <MaterialCommunityIcons
+            name="chevron-left"
+            size={22}
+            color={colors.text}
+          />
         </TouchableOpacity>
       </View>
 
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendSwatch, styles.legendSwatchCompleted]} />
+          <View style={[styles.legendSwatch, styles.legendSwatchCompleted]}>
+            <MaterialCommunityIcons
+              name="check-bold"
+              size={9}
+              color={legendCompletedCheckColor}
+            />
+          </View>
           <Text style={styles.legendText}>{strings.completed}</Text>
         </View>
         <View style={styles.legendItem}>
@@ -97,11 +122,22 @@ const DevotionCalendarGrid = ({
                 onPress={() => cell.isoDate && onPickDay(cell.isoDate)}
                 style={[
                   styles.dayCell,
-                  cell.completed && styles.dayCellCompleted,
-                  cell.missed && styles.dayCellMissed,
-                  cell.today && styles.dayCellToday,
-                  cell.isoDate === selectedDate && styles.dayCellSelected,
                   cell.empty && styles.dayCellEmpty,
+                  !cell.empty &&
+                    cell.missed &&
+                    !cell.completed &&
+                    styles.dayCellMissed,
+                  !cell.empty &&
+                    cell.today &&
+                    !cell.completed &&
+                    styles.dayCellToday,
+                  !cell.empty && cell.completed && styles.dayCellCompleted,
+                  cell.isoDate === selectedDate &&
+                    cell.completed &&
+                    styles.dayCellSelectedCompleted,
+                  cell.isoDate === selectedDate &&
+                    !cell.completed &&
+                    styles.dayCellSelected,
                 ]}
               >
                 {!cell.empty ? (
@@ -118,14 +154,20 @@ const DevotionCalendarGrid = ({
                     </Text>
                     {cell.completed ? (
                       <View style={styles.dayMetaWrap}>
-                        <View style={styles.dot} />
+                        <View style={styles.completedMark}>
+                          <MaterialCommunityIcons
+                            name="check-bold"
+                            size={isLight ? 11 : 10}
+                            color={completedCheckColor}
+                          />
+                        </View>
                       </View>
                     ) : cell.missed ? (
                       <View style={styles.dayMetaWrap}>
                         <MaterialCommunityIcons
                           name="close"
                           size={13}
-                          color="#B45B12"
+                          color={missedIconColor}
                         />
                       </View>
                     ) : cell.today ? (
@@ -133,7 +175,7 @@ const DevotionCalendarGrid = ({
                         <MaterialCommunityIcons
                           name="circle-small"
                           size={16}
-                          color={NAVY}
+                          color={colors.accent}
                         />
                       </View>
                     ) : null}

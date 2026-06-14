@@ -16,9 +16,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { ARTICLES, CARD_ACCENTS } from './devotionData';
 import { getStrings } from '../../localization';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
-
-const NAVY = '#0A1124';
-const BG = '#F2F4F8';
+import { BG, NAVY } from '../shared/designTokens';
 
 type Props = { navigation: any };
 

@@ -15,9 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getStrings } from '../../localization';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import FocusModeToggle from '../shared/FocusModeToggle';
-
-const GOLD = '#78A1BD';
-const BG = '#F2F4F8';
+import { BG, GOLD } from '../shared/designTokens';
 
 type Props = { navigation: any; route: any };
 

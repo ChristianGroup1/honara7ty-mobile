@@ -205,7 +205,7 @@ const ReadingPlanSuggestionsScreen = ({ navigation }: any) => {
         }
       />
 
-      {loading ? (
+      {loading && suggestions.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={NAVY} />
         </View>

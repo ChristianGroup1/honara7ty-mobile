@@ -1,4 +1,5 @@
 import { Platform, StyleSheet } from 'react-native';
+import { BG, GOLD, NAVY, palette } from '../shared/designTokens';
 import {
   heroBadgeBase,
   heroBadgeTextBase,
@@ -11,11 +12,10 @@ import {
   heroTopRowBase,
 } from '../shared/heroStyles';
 
-export const NAVY = '#0A1124';
-export const GOLD = '#78A1BD';
+export { GOLD, NAVY };
 
 export const spiritualReflectionStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F4F8' },
+  container: { flex: 1, backgroundColor: BG },
   topInset: { backgroundColor: NAVY },
   header: {
     backgroundColor: NAVY,
@@ -136,19 +136,17 @@ export const spiritualReflectionStyles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#FFF',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 12,
-    elevation: 2,
+    elevation: 3,
     shadowColor: '#0A1124',
     justifyContent: 'space-between',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowRadius: 12,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    borderWidth: 1,
-    borderColor: 'rgba(10,17,36,0.05)',
     overflow: 'hidden',
   },
   cardCompact: { padding: 12 },

@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
+  RefreshControl,
   StatusBar,
   Text,
   TextInput,
@@ -21,14 +22,16 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import supabase from '../../lib/supbase';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
-import { MUTED, NAVY } from './constants';
+import { MUTED, NAVY, GOLD } from './constants';
 import PrayerDetailModal from './PrayerDetailModal';
 import PrayerEditorModal from './PrayerEditorModal';
 import PrayerNotesHeader from './PrayerNotesHeader';
 import PrayerNoteCard from './PrayerNoteCard';
 import { prayerNotesStyles as styles } from './styles';
+import HeroBackground from '../shared/HeroBackground';
 import { PrayerNote } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
@@ -46,8 +49,10 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const sessionUserRef = useRef<any>(null);
+  const hasLoadedNotesRef = useRef(false);
   const [notes, setNotes] = useState<PrayerNote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [editItem, setEditItem] = useState<PrayerNote | null>(null);
@@ -87,26 +92,45 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     return sessionUser?.id as string | undefined;
   }, []);
 
-  const fetchNotes = useCallback(async () => {
-    setLoading(true);
-    const userId = await getCurrentUserId();
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
+  const fetchNotes = useCallback(
+    async ({
+      showLoader = false,
+      showRefreshing = false,
+    }: { showLoader?: boolean; showRefreshing?: boolean } = {}) => {
+      if (showLoader) {
+        setLoading(true);
+      }
+      if (showRefreshing) {
+        setRefreshing(true);
+      }
 
-    const cached = await readCachedPrayerNotes(userId);
-    setNotes(cached);
-    setLoading(false);
+      try {
+        const userId = await getCurrentUserId();
+        if (!userId) {
+          return;
+        }
 
-    const { data } = await refreshPrayerNotes(userId);
-    setNotes(data);
-    setLoading(false);
-  }, [getCurrentUserId]);
+        const cached = await readCachedPrayerNotes(userId);
+        setNotes(cached);
+        setLoading(false);
 
-  useEffect(() => {
-    fetchNotes();
-  }, [fetchNotes]);
+        const { data } = await refreshPrayerNotes(userId);
+        setNotes(data);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [getCurrentUserId],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const shouldShowLoader = !hasLoadedNotesRef.current;
+      hasLoadedNotesRef.current = true;
+      fetchNotes({ showLoader: shouldShowLoader });
+    }, [fetchNotes]),
+  );
 
   useEffect(() => {
     const showEvent =
@@ -279,62 +303,34 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         <View style={styles.fullScreenLoader}>
           <ActivityIndicator size="large" color={NAVY} />
         </View>
-      ) : filtered.length === 0 ? (
-        <>
-          {shouldShowHero ? (
-            <View style={styles.list}>
-              <View style={styles.heroCard}>
-                <View style={styles.heroGlow} />
-                <View style={styles.heroTopRow}>
-                  <View style={styles.heroIconWrap}>
-                    <MaterialCommunityIcons
-                      name="hand-heart"
-                      size={24}
-                      color="#FFF"
-                    />
-                  </View>
-                  <View style={styles.heroBadge}>
-                    <Text style={styles.heroBadgeText}>
-                      {strings.heroBadge}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text style={styles.heroEyebrow}>{strings.headerEyebrow}</Text>
-                <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
-                <Text style={styles.heroText}>{strings.heroText}</Text>
-              </View>
-            </View>
-          ) : null}
-
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconWrap}>
-              <MaterialCommunityIcons
-                name="hand-heart"
-                size={42}
-                color="#78A1BD"
-              />
-            </View>
-            <Text style={styles.emptyTitle}>{strings.emptyTitle}</Text>
-            <Text style={styles.emptyTextSmall}>{strings.emptyMessage}</Text>
-          </View>
-        </>
       ) : (
         <FlatList
           data={filtered}
           keyExtractor={keyExtractor}
           renderItem={renderNote}
-          contentContainerStyle={styles.listWithBottomPadding}
+          contentContainerStyle={
+            filtered.length === 0
+              ? styles.list
+              : styles.listWithBottomPadding
+          }
           keyboardShouldPersistTaps="handled"
           removeClippedSubviews={Platform.OS === 'android'}
           initialNumToRender={8}
           maxToRenderPerBatch={8}
           updateCellsBatchingPeriod={40}
           windowSize={7}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchNotes({ showRefreshing: true })}
+              colors={[NAVY]}
+              tintColor={NAVY}
+            />
+          }
           ListHeaderComponent={
             shouldShowHero ? (
               <View style={styles.heroCard}>
-                <View style={styles.heroGlow} />
+                <HeroBackground />
                 <View style={styles.heroTopRow}>
                   <View style={styles.heroIconWrap}>
                     <MaterialCommunityIcons
@@ -355,6 +351,19 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
                 <Text style={styles.heroText}>{strings.heroText}</Text>
               </View>
             ) : null
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconWrap}>
+                <MaterialCommunityIcons
+                  name="hand-heart"
+                  size={42}
+                  color={GOLD}
+                />
+              </View>
+              <Text style={styles.emptyTitle}>{strings.emptyTitle}</Text>
+              <Text style={styles.emptyTextSmall}>{strings.emptyMessage}</Text>
+            </View>
           }
         />
       )}

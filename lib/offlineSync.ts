@@ -52,6 +52,7 @@ export type ProfileRecord = {
   daily_chapters_target?: number | null;
   selected_chapters?: number[] | null;
   reading_entries?: DevotionDayLog['reading_entries'];
+  xp?: number | null;
   updated_at?: string | null;
 };
 
@@ -990,7 +991,7 @@ export async function refreshProfileRecord(userId: string) {
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'church, sect, birth_date, gender, devotion_time, reading_book, reading_chapter, daily_chapters_target, selected_chapters, reading_entries, updated_at',
+      'church, sect, birth_date, gender, devotion_time, reading_book, reading_chapter, daily_chapters_target, selected_chapters, reading_entries, xp, updated_at',
     )
     .eq('id', userId)
     .maybeSingle();

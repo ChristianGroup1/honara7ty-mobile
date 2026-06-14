@@ -113,7 +113,7 @@ export const badgesStrings = {
     spotlightNextText: (daysLeft: number) =>
       `فاضل ${daysLeft} يوم وتفتحه`,
     shareBadgeSummary: (tier: string, xp: number) =>
-      `وسام ${tier} · ${xp.toLocaleString('ar-EG')} XP`,
+      `وسام ${tier} · ${xp.toLocaleString('en-US')} XP`,
     earnedSection: 'أوسمة تم فتحها',
     lockedSection: 'أوسمة في الطريق',
   },
@@ -137,7 +137,7 @@ export const badgesStrings = {
     earned: 'تم الإنجاز',
     inProgress: 'قيد التقدم',
     days: (days: number) => `${days} يوم`,
-    xp: (xp: number) => `${xp.toLocaleString('ar-EG')} XP`,
+    xp: (xp: number) => `${xp.toLocaleString('en-US')} XP`,
     earnedSubtitle: 'أكملت هذا الوسام بنجاح',
     remainingSubtitle: (daysLeft: number) => `تبقّى ${daysLeft} يوم للوصول`,
     progressLabel: 'نسبة التقدم',

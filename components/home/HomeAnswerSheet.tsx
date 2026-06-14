@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Testament } from '../data/bibleMetadata';
 import { homeStyles as styles } from './styles';
 import BiblePassagePicker from '../shared/BiblePassagePicker';
@@ -23,6 +24,10 @@ type Props = {
   selectedChapters: number[];
   readingEntries: ReadingEntry[];
   canSaveReading: boolean;
+  planLabel?: string;
+  planDayNumber?: number;
+  planApplied?: boolean;
+  onApplyPlan?: () => void;
   onClose: () => void;
   onSetPendingCompleted: (value: boolean) => void;
   onSetSelectedTestament: (value: Testament) => void;
@@ -44,6 +49,10 @@ const HomeAnswerSheet = ({
   selectedChapters,
   readingEntries,
   canSaveReading,
+  planLabel,
+  planDayNumber,
+  planApplied,
+  onApplyPlan,
   onClose,
   onSetPendingCompleted,
   onSetSelectedTestament,
@@ -112,6 +121,42 @@ const HomeAnswerSheet = ({
 
             {pendingCompleted ? (
               <>
+                {planLabel ? (
+                  <View style={styles.planTodayCard}>
+                    <View style={styles.planTodayHeaderRow}>
+                      <MaterialCommunityIcons
+                        name="map-marker-path"
+                        size={18}
+                        color="#FFF"
+                      />
+                      <Text style={styles.planTodayEyebrow}>
+                        {strings.planTodayEyebrow}
+                        {planDayNumber
+                          ? ` · ${strings.planTodayDay(planDayNumber)}`
+                          : ''}
+                      </Text>
+                    </View>
+                    <Text style={styles.planTodayQuestion}>
+                      {strings.planTodayQuestion}
+                    </Text>
+                    <Text style={styles.planTodayLabel}>{planLabel}</Text>
+                    <TouchableOpacity
+                      style={[
+                        styles.planTodayBtn,
+                        planApplied && styles.planTodayBtnApplied,
+                      ]}
+                      onPress={onApplyPlan}
+                      disabled={planApplied}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.planTodayBtnText}>
+                        {planApplied
+                          ? strings.planTodayApplied
+                          : strings.planTodayApply}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
                 <Text style={styles.answerSheetHint}>
                   {strings.multipleReadingsHint}
                 </Text>
