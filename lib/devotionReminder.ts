@@ -3,6 +3,8 @@ import {
   scheduleDailyDevotionReminder,
 } from './notifications';
 import { refreshProfileRecord } from './offlineSync';
+import { getFocusModePreference, scheduleFocusMode, cancelScheduledFocusMode } from './focusMode';
+import { Platform } from 'react-native';
 
 const DEFAULT_DEVOTION_TIME = '07:00';
 
@@ -25,6 +27,15 @@ export async function syncDevotionReminderSchedule(
     startTomorrow: options?.startTomorrow,
     requestPermission: options?.requestPermission,
   });
+
+  if (Platform.OS === 'android') {
+    const pref = await getFocusModePreference();
+    if (pref === 'automatic') {
+      await scheduleFocusMode(hours, minutes);
+    } else {
+      await cancelScheduledFocusMode();
+    }
+  }
 
   return { error: null };
 }

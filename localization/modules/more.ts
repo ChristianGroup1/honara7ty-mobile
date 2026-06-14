@@ -4,6 +4,19 @@ export const moreStrings = {
     title: 'الوضع الليلي',
     subtitle: 'استخدم ألوان أهدأ ومريحة للقراءة ليلاً',
   },
+  focusMode: {
+    title: 'وضع الخلوة (لا تزعجني)',
+    subtitle: 'كتم الإشعارات الخارجية وقت الخلوة',
+    options: {
+      disabled: 'معطل (إيقاف)',
+      manual: 'تفعيل الآن',
+      automatic: 'تلقائي (عند دخول الخلوة)',
+    },
+    permissionRequiredTitle: 'صلاحية مطلوبة',
+    permissionRequiredMessage: 'نحتاج لصلاحية التحكم في وضع عدم الإزعاج لتفعيل هذه الميزة.',
+    iosGuideTitle: 'إعداد وضع الخلوة للآيفون',
+    iosGuideMessage: 'آبل لا تسمح بتفعيل وضع عدم الإزعاج تلقائياً، ولكن يمكنك إعداد "Focus Mode" مخصص للخلوة في إعدادات الهاتف والسماح لتطبيق "هنا راحتي" فقط بإرسال الإشعارات.',
+  },
   items: {
     aboutIdea: {
       title: 'عن الفكره',

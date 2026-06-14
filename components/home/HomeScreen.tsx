@@ -22,6 +22,7 @@ import CustomAlert, { AlertButton } from '../shared/CustomAlert';
 import { BG, NAVY, NO_MESSAGE, YES_MESSAGE } from './constants';
 import DailyQuestionCard from './DailyQuestionCard';
 import FeatureCard from './FeatureCard';
+import FocusModeBanner from '../shared/FocusModeBanner';
 import HomeHeader from './HomeHeader';
 import HomeAnswerSheet from './HomeAnswerSheet';
 import QuickActionsGrid from './QuickActionsGrid';
@@ -528,6 +529,7 @@ const HomeScreen = ({ route, navigation }: any) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <FocusModeBanner />
         <DailyQuestionCard
           devotionAnswer={devotionAnswer}
           onAnswerNow={handleAnswerNow}

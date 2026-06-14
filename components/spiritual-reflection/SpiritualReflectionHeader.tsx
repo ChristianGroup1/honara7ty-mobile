@@ -1,6 +1,9 @@
 import React from 'react';
+import { View } from 'react-native';
 import { getStrings } from '../../localization';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
+
+import FocusModeToggle from '../shared/FocusModeToggle';
 
 interface SpiritualReflectionHeaderProps {
   topInsetHeight: number;
@@ -21,11 +24,15 @@ const SpiritualReflectionHeader = ({
       title={strings.title}
       leading={<AppHeaderAction icon="arrow-right" onPress={onBack} />}
       trailing={
-        <AppHeaderAction
-          icon="plus"
-          onPress={onAdd}
-          backgroundColor="rgba(18,30,52,0.16)"
-        />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <FocusModeToggle color="#FFF" />
+          <View style={{ width: 8 }} />
+          <AppHeaderAction
+            icon="plus"
+            onPress={onAdd}
+            backgroundColor="rgba(18,30,52,0.16)"
+          />
+        </View>
       }
     />
   );

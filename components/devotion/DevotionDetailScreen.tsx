@@ -14,6 +14,7 @@ import { ARTICLES, CARD_ACCENTS } from './devotionData';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getStrings } from '../../localization';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
+import FocusModeToggle from '../shared/FocusModeToggle';
 
 const GOLD = '#78A1BD';
 const BG = '#F2F4F8';
@@ -74,6 +75,9 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
             onPress={() => navigation.goBack()}
             size={22}
           />
+        }
+        trailing={
+          <FocusModeToggle color="#FFF" />
         }
       />
 

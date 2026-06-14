@@ -15,7 +15,19 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
 import AppHeader from '../shared/AppHeader';
+import CustomAlert from '../shared/CustomAlert';
 import { AppTheme, useNightMode } from '../../lib/nightMode';
+import { 
+  getFocusModePreference, 
+  setFocusModePreference, 
+  FocusModePreference,
+  hasFocusModePermission,
+  requestFocusModePermission,
+  enableFocusMode,
+  disableFocusMode
+} from '../../lib/focusMode';
+import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
+import supabase from '../../lib/supbase';
 
 const GOLD = '#78A1BD';
 
@@ -24,6 +36,15 @@ const MoreScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { colors, isNightMode, setNightMode } = useNightMode();
   const themedStyles = useMemo(() => createStyles(colors), [colors]);
+
+  const [focusPref, setFocusPref] = React.useState<FocusModePreference>('disabled');
+  const [alertConfig, setAlertConfig] = React.useState<any>({ visible: false, title: '' });
+
+  React.useEffect(() => {
+    getFocusModePreference().then(setFocusPref);
+  }, []);
+
+  const hideAlert = () => setAlertConfig((prev: any) => ({ ...prev, visible: false }));
   const items = [
     {
       key: 'DevotionGuide',
@@ -70,6 +91,71 @@ const MoreScreen = ({ navigation }: any) => {
     },
   ];
 
+  const handleFocusModePress = async () => {
+    // If Android and not permitted, ask permission first
+    if (Platform.OS === 'android') {
+      const hasPerm = await hasFocusModePermission();
+      if (!hasPerm) {
+        setAlertConfig({
+          visible: true,
+          title: strings.focusMode.permissionRequiredTitle,
+          message: strings.focusMode.permissionRequiredMessage,
+          type: 'warning',
+          buttons: [
+            { text: 'إلغاء', style: 'cancel' },
+            { 
+              text: 'موافق', 
+              onPress: async () => {
+                await requestFocusModePermission();
+              } 
+            }
+          ]
+        });
+        return;
+      }
+    }
+
+    setAlertConfig({
+      visible: true,
+      title: strings.focusMode.title,
+      message: Platform.OS === 'ios' ? strings.focusMode.iosGuideMessage : strings.focusMode.subtitle,
+      type: 'info',
+      buttons: [
+        { 
+          text: strings.focusMode.options.disabled, 
+          style: focusPref === 'disabled' ? 'default' : 'cancel',
+          onPress: async () => { 
+            setFocusPref('disabled'); 
+            await setFocusModePreference('disabled'); 
+            if (Platform.OS === 'android') await disableFocusMode();
+          }
+        },
+        { 
+          text: strings.focusMode.options.manual, 
+          style: focusPref === 'manual' ? 'default' : 'cancel',
+          onPress: async () => { 
+            setFocusPref('manual'); 
+            await setFocusModePreference('manual'); 
+            if (Platform.OS === 'android') await enableFocusMode();
+          }
+        },
+        { 
+          text: strings.focusMode.options.automatic, 
+          style: focusPref === 'automatic' ? 'default' : 'cancel',
+          onPress: async () => { 
+            setFocusPref('automatic'); 
+            await setFocusModePreference('automatic'); 
+            if (Platform.OS === 'android') {
+              await disableFocusMode();
+              const { data } = await supabase.auth.getSession();
+              await syncDevotionReminderSchedule(data.session?.user?.id);
+            }
+          }
+        }
+      ]
+    });
+  };
+
   return (
     <SafeAreaView style={themedStyles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.header} />
@@ -101,6 +187,31 @@ const MoreScreen = ({ navigation }: any) => {
             ios_backgroundColor="#D0D5DD"
           />
         </View>
+
+        <TouchableOpacity 
+          style={themedStyles.preferenceCard} 
+          activeOpacity={0.8}
+          onPress={handleFocusModePress}
+        >
+          <View style={themedStyles.preferenceIcon}>
+            <MaterialCommunityIcons
+              name="bell-cancel-outline"
+              size={24}
+              color={colors.accent}
+            />
+          </View>
+          <View style={themedStyles.rowBody}>
+            <Text style={themedStyles.rowTitle}>{strings.focusMode.title}</Text>
+            <Text style={themedStyles.rowSub}>
+              {strings.focusMode.options[focusPref]}
+            </Text>
+          </View>
+          <MaterialCommunityIcons
+            name="chevron-left"
+            size={22}
+            color={colors.mutedText}
+          />
+        </TouchableOpacity>
 
         {items.map(item => (
           <TouchableOpacity
@@ -134,6 +245,8 @@ const MoreScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      <CustomAlert {...alertConfig} onDismiss={hideAlert} />
     </SafeAreaView>
   );
 };
