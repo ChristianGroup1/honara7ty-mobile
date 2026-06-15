@@ -48,6 +48,7 @@ import {
   toggleChapterSelection,
 } from '../shared/chapterSelection';
 import { saveDevotionLog } from '../../lib/offlineSync';
+import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
 
 import { BG, GOLD, NAVY } from '../shared/designTokens';
 
@@ -416,6 +417,11 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
           reading_entries: pendingCompleted ? nextEntries : null,
         },
       });
+      if (selectedDate === toIsoDate(new Date())) {
+        await syncDevotionReminderSchedule(currentUserId, {
+          startTomorrow: true,
+        });
+      }
       setAnswerSheetVisible(false);
       await loadHistory();
       setAlertConfig({

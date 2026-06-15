@@ -14,6 +14,7 @@ import {
   updateDevotionGroupMemberRole,
 } from '../../../lib/devotionGroups';
 import { refreshDevotionLogs, saveDevotionLog } from '../../../lib/offlineSync';
+import { syncDevotionReminderSchedule } from '../../../lib/devotionReminder';
 import { registerPushToken } from '../../../lib/pushTokens';
 import {
   getNotificationPermissionState,
@@ -452,6 +453,7 @@ export const useDevotionGroupDetails = (navigation: any, groupId?: string) => {
         },
       });
 
+      await syncDevotionReminderSchedule(user.id, { startTomorrow: true });
       await loadDetails(false, false);
       setAlertConfig({
         visible: true,
