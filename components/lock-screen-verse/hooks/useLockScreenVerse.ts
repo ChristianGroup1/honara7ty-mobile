@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import RNShare from 'react-native-share';
 import { WALLPAPER_THEMES, WallpaperTheme } from '../constants/wallpaperThemes';
 import bibleDataJson from '../../data/bible.json';
+import { getDailyVerse } from '../../../lib/dailyVerse';
 
 const bibleData: any = bibleDataJson;
 
@@ -14,26 +15,37 @@ export interface CustomVerse {
 
 export type PickerStep = 'book' | 'chapter' | 'verse';
 
-const getDayOfYear = () => {
-  const today = new Date();
-  const start = new Date(today.getFullYear(), 0, 0);
-  return Math.floor((today.getTime() - start.getTime()) / 86400000);
-};
-
-export const useLockScreenVerse = (strings: any) => {
+export const useLockScreenVerse = (
+  strings: any,
+  initialCustomVerse?: CustomVerse | null,
+) => {
   // ─── Verse State ───
-  const defaultVerse = strings.verses[getDayOfYear() % strings.verses.length];
-  const [customVerse, setCustomVerse] = useState<CustomVerse | null>(null);
+  const defaultVerse = getDailyVerse(strings.verses) ?? strings.verses[0];
+  const [customVerse, setCustomVerse] = useState<CustomVerse | null>(
+    initialCustomVerse ?? null,
+  );
   const verse = customVerse || defaultVerse;
 
+  useEffect(() => {
+    if (initialCustomVerse) {
+      setCustomVerse(initialCustomVerse);
+    }
+  }, [initialCustomVerse]);
+
   // ─── Theme State ───
-  const [selectedTheme, setSelectedTheme] = useState<WallpaperTheme>(WALLPAPER_THEMES[0]);
+  const [selectedTheme, setSelectedTheme] = useState<WallpaperTheme>(
+    WALLPAPER_THEMES[0],
+  );
 
   // ─── Picker State ───
   const [showPicker, setShowPicker] = useState(false);
   const [pickerStep, setPickerStep] = useState<PickerStep>('book');
-  const [selectedBookIndex, setSelectedBookIndex] = useState<number | null>(null);
-  const [selectedChapterIndex, setSelectedChapterIndex] = useState<number | null>(null);
+  const [selectedBookIndex, setSelectedBookIndex] = useState<number | null>(
+    null,
+  );
+  const [selectedChapterIndex, setSelectedChapterIndex] = useState<
+    number | null
+  >(null);
   const [selectedVerses, setSelectedVerses] = useState<number[]>([]);
 
   // ─── Capture State ───
@@ -67,12 +79,22 @@ export const useLockScreenVerse = (strings: any) => {
   };
 
   const confirmSelection = () => {
-    if (selectedBookIndex === null || selectedChapterIndex === null || selectedVerses.length === 0) return;
+    if (
+      selectedBookIndex === null ||
+      selectedChapterIndex === null ||
+      selectedVerses.length === 0
+    )
+      return;
     const book = bibleData.books[selectedBookIndex];
     const chapter = book.chapters[selectedChapterIndex];
-    const combinedText = selectedVerses.map((idx: number) => chapter.verses[idx]?.text).join(' ');
+    const combinedText = selectedVerses
+      .map((idx: number) => chapter.verses[idx]?.text)
+      .join(' ');
     const verseRef = selectedVerses.map((v: number) => v + 1).join('، ');
-    setCustomVerse({ text: combinedText, reference: `${book.name} ${chapter.chapter}: ${verseRef}` });
+    setCustomVerse({
+      text: combinedText,
+      reference: `${book.name} ${chapter.chapter}: ${verseRef}`,
+    });
     setShowPicker(false);
   };
 
@@ -83,7 +105,11 @@ export const useLockScreenVerse = (strings: any) => {
     if (!wallpaperRef.current || capturing) return;
     setCapturing(true);
     try {
-      const uri = await captureRef(wallpaperRef, { format: 'png', quality: 1, result: 'tmpfile' });
+      const uri = await captureRef(wallpaperRef, {
+        format: 'png',
+        quality: 1,
+        result: 'tmpfile',
+      });
       const fileUri = Platform.OS === 'android' ? `file://${uri}` : uri;
       await RNShare.open({
         title: strings.title,

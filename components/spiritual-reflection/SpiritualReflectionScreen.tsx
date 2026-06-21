@@ -41,12 +41,13 @@ import {
   saveReflection,
 } from '../../lib/offlineSync';
 
-const SpiritualReflectionScreen = ({ navigation }: any) => {
+const SpiritualReflectionScreen = ({ navigation, route }: any) => {
   const strings = getStrings().spiritualReflection;
   const insets = useSafeAreaInsets();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const sessionUserRef = useRef<any>(null);
   const hasLoadedReflectionsRef = useRef(false);
+  const lastInitialReflectionTextRef = useRef<string | null>(null);
   const [reflections, setReflections] = useState<Reflection[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -164,6 +165,22 @@ const SpiritualReflectionScreen = ({ navigation }: any) => {
     setText('');
     setShowModal(true);
   }, []);
+
+  useEffect(() => {
+    const initialReflectionText = route?.params?.initialReflectionText;
+    if (
+      typeof initialReflectionText !== 'string' ||
+      !initialReflectionText.trim() ||
+      lastInitialReflectionTextRef.current === initialReflectionText
+    ) {
+      return;
+    }
+
+    lastInitialReflectionTextRef.current = initialReflectionText;
+    setEditItem(null);
+    setText(initialReflectionText);
+    setShowModal(true);
+  }, [route?.params?.initialReflectionText]);
 
   const openEdit = useCallback((item: Reflection) => {
     setEditItem(item);

@@ -10,6 +10,8 @@
     "web:build": "npm --prefix web run build",
     "web:preview": "npm --prefix web run preview",
     "start": "react-native start",
+    "strongs:build": "node scripts/build-strongs-data.js",
+    "strongs:translate-ar": "node scripts/translate-strongs-ar.js",
     "test": "jest"
   },
   "dependencies": {

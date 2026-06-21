@@ -21,7 +21,7 @@ import WallpaperPreview from './components/WallpaperPreview';
 import ThemeSelector from './components/ThemeSelector';
 import VersePicker from './components/VersePicker';
 
-const LockScreenVerseScreen = ({ navigation }: any) => {
+const LockScreenVerseScreen = ({ navigation, route }: any) => {
   const strings = getStrings().lockScreenVerse;
   const insets = useSafeAreaInsets();
   const { colors } = useNightMode();
@@ -49,7 +49,7 @@ const LockScreenVerseScreen = ({ navigation }: any) => {
     capturing,
     shareWallpaperImage,
     shareVerseText,
-  } = useLockScreenVerse(strings);
+  } = useLockScreenVerse(strings, route?.params?.designedVerse ?? null);
 
   return (
     <SafeAreaView style={themedStyles.container} edges={[]}>

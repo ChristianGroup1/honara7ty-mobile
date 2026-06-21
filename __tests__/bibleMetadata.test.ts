@@ -1,7 +1,9 @@
 import {
   BIBLE_BOOKS,
+  BIBLE_TRANSLATIONS,
   NEW_TESTAMENT_BOOKS,
   OLD_TESTAMENT_BOOKS,
+  getBibleBooksForTranslation,
 } from '../components/data/bibleMetadata';
 
 describe('bibleMetadata', () => {
@@ -19,12 +21,14 @@ describe('bibleMetadata', () => {
       localBookIndex: 0,
     });
     expect(BIBLE_BOOKS[39]).toMatchObject({
-      bookID: '50',
+      bookID: '40',
+      helloAoBookID: 'MAT',
       bookName: 'إنجيل متى',
       testament: 'new',
     });
     expect(BIBLE_BOOKS[65]).toMatchObject({
-      bookID: '76',
+      bookID: '66',
+      helloAoBookID: 'REV',
       bookName: 'سفر رؤيا يوحنا اللاهوتي',
       testament: 'new',
     });
@@ -32,6 +36,22 @@ describe('bibleMetadata', () => {
 
   it('exposes chapter data for local readers and memorization', () => {
     expect(BIBLE_BOOKS[0].chapters).toBeGreaterThan(0);
-    expect(BIBLE_BOOKS[0].chaptersData[0].verses[0].text.length).toBeGreaterThan(0);
+    expect(
+      BIBLE_BOOKS[0].chaptersData[0].verses[0].text.length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('exposes offline translation data for the reader', () => {
+    expect(BIBLE_TRANSLATIONS.map(translation => translation.id)).toEqual([
+      'local_bible',
+      'arb_nav',
+    ]);
+
+    const navBooks = getBibleBooksForTranslation('arb_nav');
+
+    expect(navBooks).toHaveLength(66);
+    expect(navBooks[0].chaptersData[0].verses[0].text).toContain(
+      'خَلَقَ اللهُ',
+    );
   });
 });

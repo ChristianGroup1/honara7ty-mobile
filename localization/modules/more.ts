@@ -13,9 +13,11 @@ export const moreStrings = {
       automatic: 'تلقائي (عند دخول الخلوة)',
     },
     permissionRequiredTitle: 'صلاحية مطلوبة',
-    permissionRequiredMessage: 'نحتاج لصلاحية التحكم في وضع عدم الإزعاج لتفعيل هذه الميزة.',
+    permissionRequiredMessage:
+      'نحتاج لصلاحية التحكم في وضع عدم الإزعاج لتفعيل هذه الميزة.',
     iosGuideTitle: 'إعداد وضع الخلوة للآيفون',
-    iosGuideMessage: 'آبل لا تسمح بتفعيل وضع عدم الإزعاج تلقائياً، ولكن يمكنك إعداد "Focus Mode" مخصص للخلوة في إعدادات الهاتف والسماح لتطبيق "هنا راحتي" فقط بإرسال الإشعارات.',
+    iosGuideMessage:
+      'آبل لا تسمح بتفعيل وضع عدم الإزعاج تلقائياً، ولكن يمكنك إعداد "Focus Mode" مخصص للخلوة في إعدادات الهاتف والسماح لتطبيق "هنا راحتي" فقط بإرسال الإشعارات.',
   },
   items: {
     aboutIdea: {
@@ -49,6 +51,10 @@ export const moreStrings = {
     weeklyReport: {
       title: 'أسبوعك مع ربنا',
       subtitle: 'ملخص أسبوعي لخلوتك وقراءتك وصلواتك',
+    },
+    myServices: {
+      title: 'خدماتي',
+      subtitle: 'حضّر خدماتك بآيات وملاحظات وتنسيقك',
     },
   },
 } as const;

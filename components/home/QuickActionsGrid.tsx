@@ -1,9 +1,9 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { homeStyles as styles } from './styles';
-import { NAVY } from './constants';
+import { createHomeStyles } from './styles';
 import { getStrings } from '../../localization';
+import { useNightMode } from '../../lib/nightMode';
 
 interface QuickActionsGridProps {
   navigation: any;
@@ -11,6 +11,8 @@ interface QuickActionsGridProps {
 
 const QuickActionsGrid = ({ navigation }: QuickActionsGridProps) => {
   const strings = getStrings().home;
+  const { colors } = useNightMode();
+  const styles = React.useMemo(() => createHomeStyles(colors), [colors]);
   const quickActions = [
     {
       route: 'DevotionGroups',
@@ -48,7 +50,7 @@ const QuickActionsGrid = ({ navigation }: QuickActionsGridProps) => {
               <MaterialCommunityIcons
                 name={action.icon}
                 size={22}
-                color={NAVY}
+                color={colors.text}
               />
             </View>
             <Text style={styles.quickBtnText}>{action.label}</Text>

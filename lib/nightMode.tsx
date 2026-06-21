@@ -65,9 +65,15 @@ let globalNightModeEnabled = false;
 const normalizeHex = (value: string) => value.trim().toUpperCase();
 
 const isDarkInk = (value: string) =>
-  [palette.navy, palette.text, '#1F2A3A', '#222', '#222222', '#333', '#333333'].includes(
-    normalizeHex(value),
-  );
+  [
+    palette.navy,
+    palette.text,
+    '#1F2A3A',
+    '#222',
+    '#222222',
+    '#333',
+    '#333333',
+  ].includes(normalizeHex(value));
 
 const isMutedText = (value: string) =>
   [
@@ -342,7 +348,6 @@ export const NightModeProvider = ({ children }: { children: ReactNode }) => {
   return (
     <NightModeContext.Provider value={value}>
       <View
-        key={isNightMode ? 'night' : 'day'}
         style={[
           styles.providerShell,
           isNightMode ? styles.providerShellNight : styles.providerShellDay,

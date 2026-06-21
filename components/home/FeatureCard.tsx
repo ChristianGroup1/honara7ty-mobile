@@ -1,7 +1,8 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { homeStyles as styles } from './styles';
+import { createHomeStyles } from './styles';
+import { useNightMode } from '../../lib/nightMode';
 
 interface FeatureCardProps {
   title: string;
@@ -11,6 +12,9 @@ interface FeatureCardProps {
 }
 
 const FeatureCard = ({ title, subtitle, icon, onPress }: FeatureCardProps) => {
+  const { colors } = useNightMode();
+  const styles = React.useMemo(() => createHomeStyles(colors), [colors]);
+
   return (
     <TouchableOpacity
       style={styles.featureCard}
@@ -26,7 +30,11 @@ const FeatureCard = ({ title, subtitle, icon, onPress }: FeatureCardProps) => {
       </View>
 
       <View style={styles.featureChevron}>
-        <MaterialCommunityIcons name="chevron-left" size={20} color="#78A1BD" />
+        <MaterialCommunityIcons
+          name="chevron-left"
+          size={20}
+          color={colors.accent}
+        />
       </View>
     </TouchableOpacity>
   );

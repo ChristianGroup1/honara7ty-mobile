@@ -18,14 +18,14 @@ import { getStrings } from '../../localization';
 import AppHeader from '../shared/AppHeader';
 import CustomAlert from '../shared/CustomAlert';
 import { AppTheme, useNightMode } from '../../lib/nightMode';
-import { 
-  getFocusModePreference, 
-  setFocusModePreference, 
+import {
+  getFocusModePreference,
+  setFocusModePreference,
   FocusModePreference,
   hasFocusModePermission,
   requestFocusModePermission,
   enableFocusMode,
-  disableFocusMode
+  disableFocusMode,
 } from '../../lib/focusMode';
 import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
 import supabase from '../../lib/supbase';
@@ -36,14 +36,19 @@ const MoreScreen = ({ navigation }: any) => {
   const { colors, isNightMode, setNightMode } = useNightMode();
   const themedStyles = useMemo(() => createStyles(colors), [colors]);
 
-  const [focusPref, setFocusPref] = React.useState<FocusModePreference>('disabled');
-  const [alertConfig, setAlertConfig] = React.useState<any>({ visible: false, title: '' });
+  const [focusPref, setFocusPref] =
+    React.useState<FocusModePreference>('disabled');
+  const [alertConfig, setAlertConfig] = React.useState<any>({
+    visible: false,
+    title: '',
+  });
 
   React.useEffect(() => {
     getFocusModePreference().then(setFocusPref);
   }, []);
 
-  const hideAlert = () => setAlertConfig((prev: any) => ({ ...prev, visible: false }));
+  const hideAlert = () =>
+    setAlertConfig((prev: any) => ({ ...prev, visible: false }));
   const items = [
     {
       key: 'DevotionGuide',
@@ -88,6 +93,12 @@ const MoreScreen = ({ navigation }: any) => {
       title: strings.items.weeklyReport.title,
       subtitle: strings.items.weeklyReport.subtitle,
     },
+    {
+      key: 'MyServices',
+      icon: 'notebook-edit-outline',
+      title: strings.items.myServices.title,
+      subtitle: strings.items.myServices.subtitle,
+    },
   ];
 
   const handleFocusModePress = async () => {
@@ -102,13 +113,13 @@ const MoreScreen = ({ navigation }: any) => {
           type: 'warning',
           buttons: [
             { text: 'إلغاء', style: 'cancel' },
-            { 
-              text: 'موافق', 
+            {
+              text: 'موافق',
               onPress: async () => {
                 await requestFocusModePermission();
-              } 
-            }
-          ]
+              },
+            },
+          ],
         });
         return;
       }
@@ -117,41 +128,44 @@ const MoreScreen = ({ navigation }: any) => {
     setAlertConfig({
       visible: true,
       title: strings.focusMode.title,
-      message: Platform.OS === 'ios' ? strings.focusMode.iosGuideMessage : strings.focusMode.subtitle,
+      message:
+        Platform.OS === 'ios'
+          ? strings.focusMode.iosGuideMessage
+          : strings.focusMode.subtitle,
       type: 'info',
       buttons: [
-        { 
-          text: strings.focusMode.options.disabled, 
+        {
+          text: strings.focusMode.options.disabled,
           style: focusPref === 'disabled' ? 'default' : 'cancel',
-          onPress: async () => { 
-            setFocusPref('disabled'); 
-            await setFocusModePreference('disabled'); 
+          onPress: async () => {
+            setFocusPref('disabled');
+            await setFocusModePreference('disabled');
             if (Platform.OS === 'android') await disableFocusMode();
-          }
+          },
         },
-        { 
-          text: strings.focusMode.options.manual, 
+        {
+          text: strings.focusMode.options.manual,
           style: focusPref === 'manual' ? 'default' : 'cancel',
-          onPress: async () => { 
-            setFocusPref('manual'); 
-            await setFocusModePreference('manual'); 
+          onPress: async () => {
+            setFocusPref('manual');
+            await setFocusModePreference('manual');
             if (Platform.OS === 'android') await enableFocusMode();
-          }
+          },
         },
-        { 
-          text: strings.focusMode.options.automatic, 
+        {
+          text: strings.focusMode.options.automatic,
           style: focusPref === 'automatic' ? 'default' : 'cancel',
-          onPress: async () => { 
-            setFocusPref('automatic'); 
-            await setFocusModePreference('automatic'); 
+          onPress: async () => {
+            setFocusPref('automatic');
+            await setFocusModePreference('automatic');
             if (Platform.OS === 'android') {
               await disableFocusMode();
               const { data } = await supabase.auth.getSession();
               await syncDevotionReminderSchedule(data.session?.user?.id);
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
     });
   };
 
@@ -187,8 +201,8 @@ const MoreScreen = ({ navigation }: any) => {
           />
         </View>
 
-        <TouchableOpacity 
-          style={themedStyles.preferenceCard} 
+        <TouchableOpacity
+          style={themedStyles.preferenceCard}
           activeOpacity={0.8}
           onPress={handleFocusModePress}
         >
@@ -220,11 +234,7 @@ const MoreScreen = ({ navigation }: any) => {
             onPress={() => navigation.navigate(item.key)}
           >
             <View style={themedStyles.iconCircle}>
-              <MaterialCommunityIcons
-                name={item.icon}
-                size={24}
-                color="#FFF"
-              />
+              <MaterialCommunityIcons name={item.icon} size={24} color="#FFF" />
             </View>
 
             <View style={themedStyles.rowBody}>

@@ -2,8 +2,9 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { DAILY_QUESTION } from './constants';
-import { homeStyles as styles } from './styles';
+import { createHomeStyles } from './styles';
 import { getStrings } from '../../localization';
+import { useNightMode } from '../../lib/nightMode';
 
 interface DailyQuestionCardProps {
   devotionAnswer: boolean | null;
@@ -17,6 +18,8 @@ const DailyQuestionCard = ({
   onEditAnswer,
 }: DailyQuestionCardProps) => {
   const strings = getStrings().home;
+  const { colors } = useNightMode();
+  const styles = React.useMemo(() => createHomeStyles(colors), [colors]);
 
   return (
     <View style={styles.questionCard}>

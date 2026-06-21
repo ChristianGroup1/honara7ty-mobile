@@ -10,6 +10,7 @@ export { default as NotificationPermissionScreen } from '../components/notificat
 export { default as PrayerNotesScreen } from '../components/prayer-notes/PrayerNotesScreen';
 export { default as SpiritualReflectionScreen } from '../components/spiritual-reflection/SpiritualReflectionScreen';
 export { default as DailyNotificationsScreen } from '../components/daily-notifications/DailyNotificationsScreen';
+export { default as BibleReaderScreen } from '../components/bible-reader/BibleReaderScreen';
 export { default as BibleMemorizationScreen } from '../components/bible-memorization/BibleMemorizationScreen';
 export { default as BadgesScreen } from '../components/badges/BadgesScreen';
 export { default as LockScreenVerseScreen } from '../components/lock-screen-verse/LockScreenVerseScreen';
@@ -18,3 +19,4 @@ export { default as ProfileScreen } from '../components/profile/ProfileScreen';
 export { default as DevotionGuideScreen } from '../components/devotion/DevotionGuideScreen';
 export { default as DevotionDetailScreen } from '../components/devotion/DevotionDetailScreen';
 export { default as DevotionCalendarScreen } from '../components/devotion-calendar/DevotionCalendarScreen';
+export { default as MyServicesScreen } from '../components/my-services/MyServicesScreen';

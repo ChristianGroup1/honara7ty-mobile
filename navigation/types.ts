@@ -16,11 +16,14 @@ export type RootStackParamList = {
   NotificationPermission: undefined;
   AboutIdea: undefined;
   PrayerNotes: undefined;
-  SpiritualReflection: undefined;
+  SpiritualReflection: { initialReflectionText?: string } | undefined;
   BibleReader: undefined;
   BibleMemorization: undefined;
   Badges: undefined;
   WeeklyReport: undefined;
+  MyServices:
+    | { initialServiceVerse?: { text: string; reference: string } }
+    | undefined;
   LockScreenVerse: undefined;
   Testimonies: undefined;
   DailyNotifications: undefined;

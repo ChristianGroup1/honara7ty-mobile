@@ -1,10 +1,16 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import HomeScreen from '../components/home/HomeScreen';
 import ProfileScreen from '../components/profile/ProfileScreen';
+import BibleReaderScreen from '../components/bible-reader/BibleReaderScreen';
 import DailyNotificationsScreen from '../components/daily-notifications/DailyNotificationsScreen';
 import ReadingPlanSuggestionsScreen from '../components/daily-notifications/ReadingPlanSuggestionsScreen';
 import MoreScreen from '../components/more/MoreScreen';
@@ -23,8 +29,10 @@ import DevotionGroupDetailsScreen from '../components/devotion-groups/DevotionGr
 import DevotionGroupMemberDetailsScreen from '../components/devotion-groups/DevotionGroupMemberDetailsScreen';
 import DevotionGroupPrayerRequestsScreen from '../components/devotion-groups/DevotionGroupPrayerRequestsScreen';
 import WeeklyReportScreen from '../components/weekly-report/WeeklyReportScreen';
+import MyServicesScreen from '../components/my-services/MyServicesScreen';
 import { getStrings } from '../localization';
 import { useNightMode } from '../lib/nightMode';
+import { getTabBarLayout } from '../lib/tabBarLayout';
 import { GOLD } from '../components/shared/designTokens';
 
 const Tab = createBottomTabNavigator();
@@ -33,6 +41,9 @@ function renderTabBarIcon(routeName: string, color: string, focused: boolean) {
   const icons: Record<string, string> = {
     Home: focused ? 'home' : 'home-outline',
     Profile: focused ? 'account' : 'account-outline',
+    BibleReader: focused
+      ? 'book-open-page-variant'
+      : 'book-open-page-variant-outline',
     DailyNotifications: focused ? 'cog' : 'cog-outline',
     More: focused ? 'dots-horizontal-circle' : 'dots-horizontal-circle-outline',
   };
@@ -51,18 +62,43 @@ const hiddenTabScreenOptions = {
   tabBarItemStyle: { display: 'none' as const },
 };
 
+const CenterBibleTabButton = ({ accessibilityState, onPress }: any) => {
+  const focused = Boolean(accessibilityState?.selected);
+
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={accessibilityState}
+      activeOpacity={0.88}
+      onPress={onPress}
+      style={styles.centerButtonWrap}
+    >
+      <View style={[styles.centerButton, focused && styles.centerButtonActive]}>
+        <MaterialCommunityIcons
+          name="book-open-page-variant"
+          size={26}
+          color="#FFF"
+        />
+      </View>
+      <Text
+        numberOfLines={1}
+        style={[styles.centerLabel, focused && styles.centerLabelActive]}
+      >
+        الكتاب المقدس
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
 const MainTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const strings = getStrings().navigation;
   const { colors } = useNightMode();
-  const bottomInset = Math.max(insets.bottom, 0);
-  const tabBarBaseHeight = Platform.OS === 'android' ? 60 : 58;
-  const tabBarBottomPadding =
-    Platform.OS === 'android' ? Math.max(bottomInset, 8) : bottomInset + 6;
-  const tabBarHeight = tabBarBaseHeight + tabBarBottomPadding;
+  const { tabBarBottomPadding, tabBarHeight } = getTabBarLayout(insets.bottom);
   const tabLabels: Record<string, string> = {
     Home: strings.tabs.home,
     Profile: strings.tabs.profile,
+    BibleReader: strings.tabs.bible,
     DailyNotifications: strings.tabs.settings,
     More: strings.tabs.more,
   };
@@ -83,23 +119,39 @@ const MainTabNavigator = () => {
         tabBarStyle: {
           backgroundColor: colors.header,
           borderTopWidth: 0,
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 28,
           paddingBottom: tabBarBottomPadding,
-          paddingTop: 6,
+          paddingTop: 12,
           height: tabBarHeight,
-          elevation: 12,
+          elevation: 18,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -3 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
+          shadowOffset: { width: 0, height: -8 },
+          shadowOpacity: 0.18,
+          shadowRadius: 18,
         },
-        tabBarLabel: tabLabels[route.name] ?? route.name,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginBottom: 0 },
+        tabBarLabel: ({ color }) => (
+          <Text numberOfLines={1} style={[styles.tabLabel, { color }]}>
+            {tabLabels[route.name] ?? route.name}
+          </Text>
+        ),
+        tabBarItemStyle:
+          route.name === 'BibleReader' ? styles.centerTabItem : undefined,
+        tabBarButton:
+          route.name === 'BibleReader'
+            ? props => <CenterBibleTabButton {...props} />
+            : undefined,
         tabBarIcon: ({ color, focused }) =>
           renderTabBarIcon(route.name, color, focused),
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="BibleReader" component={BibleReaderScreen} />
       <Tab.Screen
         name="DailyNotifications"
         component={DailyNotificationsScreen}
@@ -188,8 +240,60 @@ const MainTabNavigator = () => {
         component={WeeklyReportScreen}
         options={hiddenTabScreenOptions}
       />
+      <Tab.Screen
+        name="MyServices"
+        component={MyServicesScreen}
+        options={hiddenTabScreenOptions}
+      />
     </Tab.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  centerTabItem: {
+    marginTop: -24,
+  },
+  centerButtonWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    marginTop: -24,
+  },
+  centerButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GOLD,
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 14,
+  },
+  centerButtonActive: {
+    transform: [{ scale: 1.04 }],
+  },
+  centerLabel: {
+    color: 'rgba(255,255,255,0.78)',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 6,
+    width: 86,
+    textAlign: 'center',
+  },
+  centerLabelActive: {
+    color: '#FFFFFF',
+  },
+  tabLabel: {
+    width: 76,
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+});
 
 export default MainTabNavigator;

@@ -1,8 +1,9 @@
 import React from 'react';
 import { Text, View } from 'react-native';
-import { homeStyles as styles } from './styles';
+import { createHomeStyles } from './styles';
 import { getStrings } from '../../localization';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
+import { useNightMode } from '../../lib/nightMode';
 
 interface HomeHeaderProps {
   topInsetHeight: number;
@@ -18,6 +19,8 @@ const HomeHeader = ({
   onLogout,
 }: HomeHeaderProps) => {
   const strings = getStrings().home;
+  const { colors } = useNightMode();
+  const styles = React.useMemo(() => createHomeStyles(colors), [colors]);
 
   return (
     <AppHeader

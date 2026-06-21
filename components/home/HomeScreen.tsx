@@ -19,15 +19,18 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import supabase from '../../lib/supbase';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
-import { BG, NAVY, NO_MESSAGE, YES_MESSAGE } from './constants';
+import { NO_MESSAGE, YES_MESSAGE } from './constants';
 import DailyQuestionCard from './DailyQuestionCard';
+import TodayReadingCard from './TodayReadingCard';
+import DailyVerseCard from './DailyVerseCard';
 import FeatureCard from './FeatureCard';
 import FocusModeBanner from '../shared/FocusModeBanner';
 import HomeHeader from './HomeHeader';
 import HomeAnswerSheet from './HomeAnswerSheet';
 import QuickActionsGrid from './QuickActionsGrid';
-import { homeStyles as styles } from './styles';
+import { createHomeStyles } from './styles';
 import { getDisplayName, getInitials, getTodayDate } from './utils';
+import { useNightMode } from '../../lib/nightMode';
 import { getStrings } from '../../localization';
 import {
   getNotificationPermissionState,
@@ -59,6 +62,7 @@ import {
 } from '../../lib/offlineSync';
 import {
   formatReadingEntries,
+  getNextDevotionReadingDraft,
   mergeReadingDraft,
   ReadingEntry,
   readingEntriesFromLegacy,
@@ -73,9 +77,12 @@ import {
 const HomeScreen = ({ route, navigation }: any) => {
   const strings = getStrings().home;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const styles = useMemo(() => createHomeStyles(colors), [colors]);
   const userFromParams = route?.params?.user;
   const hasLoadedRef = useRef(Boolean(userFromParams));
   const sessionUserRef = useRef<any>(userFromParams || null);
+  const devotionLogsRef = useRef<Record<string, any>>({});
   const migratedUserIdsRef = useRef(new Set<string>());
   const [user, setUser] = useState<any>(userFromParams || null);
   const [loading, setLoading] = useState(!userFromParams);
@@ -87,6 +94,9 @@ const HomeScreen = ({ route, navigation }: any) => {
   const [readingBook, setReadingBook] = useState('');
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
   const [readingEntries, setReadingEntries] = useState<ReadingEntry[]>([]);
+  const [devotionLogsByDate, setDevotionLogsByDate] = useState<
+    Record<string, any>
+  >({});
   const [todayPlanEntries, setTodayPlanEntries] = useState<ReadingEntry[]>([]);
   const [todayPlanDay, setTodayPlanDay] = useState(0);
   const [permissionLoading, setPermissionLoading] = useState(false);
@@ -133,6 +143,8 @@ const HomeScreen = ({ route, navigation }: any) => {
     setSelectedTestament('old');
     setTodayPlanEntries([]);
     setTodayPlanDay(0);
+    setDevotionLogsByDate({});
+    devotionLogsRef.current = {};
   }, []);
 
   const resolveTodayPlan = useCallback(
@@ -236,7 +248,9 @@ const HomeScreen = ({ route, navigation }: any) => {
           }
 
           const cachedDevotionLogs = await readCachedDevotionLogs(userId);
+          devotionLogsRef.current = cachedDevotionLogs;
           if (isActive) {
+            setDevotionLogsByDate(cachedDevotionLogs);
             applyTodayDevotionLog(cachedDevotionLogs[getTodayDate()]);
             hasLoadedRef.current = true;
             setLoading(false);
@@ -249,6 +263,8 @@ const HomeScreen = ({ route, navigation }: any) => {
             return;
           }
 
+          devotionLogsRef.current = devotionLogs;
+          setDevotionLogsByDate(devotionLogs);
           applyTodayDevotionLog(devotionLogs[getTodayDate()]);
           resolveTodayPlan(userId, devotionLogs).catch(() => undefined);
         } finally {
@@ -417,6 +433,25 @@ const HomeScreen = ({ route, navigation }: any) => {
   );
 
   /* ── Logout ── */
+  const todaySuggestedReading = useMemo(() => {
+    if (devotionAnswer === true) {
+      return null;
+    }
+
+    return getNextDevotionReadingDraft(devotionLogsByDate);
+  }, [devotionAnswer, devotionLogsByDate]);
+
+  const todaySuggestedLabel = useMemo(
+    () => formatReadingEntries(todaySuggestedReading?.entries),
+    [todaySuggestedReading],
+  );
+
+  const isFirstSuggestedReading = useMemo(
+    () =>
+      !Object.values(devotionLogsByDate).some(log => Boolean(log?.completed)),
+    [devotionLogsByDate],
+  );
+
   const handleLogout = () => {
     showAlert(
       strings.logoutTitle,
@@ -454,12 +489,36 @@ const HomeScreen = ({ route, navigation }: any) => {
   /* ── Show question dialog ── */
   const handleAnswerNow = useCallback(() => {
     setPendingCompleted(devotionAnswer ?? true);
-    const matchedBook = BIBLE_BOOKS.find(book => book.bookName === readingBook);
-    if (matchedBook) {
-      setSelectedTestament(matchedBook.testament);
+
+    const hasReadingDraft =
+      readingEntries.length > 0 ||
+      Boolean(readingBook) ||
+      selectedChapters.length > 0;
+
+    if (!hasReadingDraft) {
+      const suggestedReading = getNextDevotionReadingDraft(
+        devotionLogsRef.current,
+      );
+      if (suggestedReading) {
+        setReadingEntries(suggestedReading.entries);
+        setReadingBook('');
+        setSelectedChapters([]);
+        setSelectedTestament(suggestedReading.testament);
+      }
+    } else {
+      const matchedBook = BIBLE_BOOKS.find(book => book.bookName === readingBook);
+      if (matchedBook) {
+        setSelectedTestament(matchedBook.testament);
+      }
     }
+
     setAnswerSheetVisible(true);
-  }, [devotionAnswer, readingBook]);
+  }, [
+    devotionAnswer,
+    readingBook,
+    readingEntries.length,
+    selectedChapters.length,
+  ]);
 
   const closeAnswerSheet = useCallback(() => {
     setAnswerSheetVisible(false);
@@ -566,8 +625,8 @@ const HomeScreen = ({ route, navigation }: any) => {
 
   if (loading && !user) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: BG }]}>
-        <ActivityIndicator size="large" color={NAVY} />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
@@ -579,7 +638,7 @@ const HomeScreen = ({ route, navigation }: any) => {
     <SafeAreaView style={styles.container} edges={[]}>
       <StatusBar
         barStyle="light-content"
-        backgroundColor={NAVY}
+        backgroundColor={colors.header}
         translucent={false}
       />
       <HomeHeader
@@ -594,11 +653,19 @@ const HomeScreen = ({ route, navigation }: any) => {
         showsVerticalScrollIndicator={false}
       >
         <FocusModeBanner />
+
         <DailyQuestionCard
           devotionAnswer={devotionAnswer}
           onAnswerNow={handleAnswerNow}
           onEditAnswer={handleAnswerNow}
         />
+        {todaySuggestedLabel ? (
+          <TodayReadingCard
+            readingLabel={todaySuggestedLabel}
+            isFirstReading={isFirstSuggestedReading}
+            onPress={handleAnswerNow}
+          />
+        ) : null}
         {notificationPermissionState !== 'allowed' && (
           <NotificationPermissionCard
             title={strings.permissionNoticeTitle}
@@ -626,12 +693,7 @@ const HomeScreen = ({ route, navigation }: any) => {
           icon="notebook-outline"
           onPress={navigateSpiritualReflection}
         />
-        <FeatureCard
-          title={strings.featureWeeklyReportTitle}
-          subtitle={strings.featureWeeklyReportSubtitle}
-          icon="chart-box-outline"
-          onPress={navigateWeeklyReport}
-        />
+        <DailyVerseCard />
       </ScrollView>
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />

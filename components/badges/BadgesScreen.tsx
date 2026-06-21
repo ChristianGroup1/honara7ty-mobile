@@ -29,6 +29,7 @@ import BadgesHeader from './BadgesHeader';
 import { BADGE_CONFIGS, BadgeConfig, GOLD, NAVY, WEB_URL } from './constants';
 import { badgesStyles as styles } from './styles';
 import StreakCard from './StreakCard';
+import GrowthTreeCard from './GrowthTreeCard';
 import { computeStreak } from './utils';
 import { computeTotalXp } from '../../lib/xp';
 import { getStrings } from '../../localization';
@@ -196,7 +197,11 @@ const BadgesScreen = ({ navigation }: any) => {
   );
 
   const listData = useMemo(() => {
-    const data: any[] = [{ type: 'hero' }, { type: 'spotlight' }];
+    const data: any[] = [
+      { type: 'hero' },
+      { type: 'tree' },
+      { type: 'spotlight' },
+    ];
 
     if (earnedBadges.length) {
       data.push({ type: 'sectionHeader', title: strings.screen.earnedSection });
@@ -236,6 +241,10 @@ const BadgesScreen = ({ navigation }: any) => {
               totalCount={BADGE_CONFIGS.length}
               xp={totalXp}
             />
+          );
+        case 'tree':
+          return (
+            <GrowthTreeCard completedDays={completedDays} streak={streak} />
           );
         case 'spotlight':
           return (
@@ -314,6 +323,7 @@ const BadgesScreen = ({ navigation }: any) => {
     [
       loading,
       streak,
+      completedDays,
       earnedCount,
       totalXp,
       strings,

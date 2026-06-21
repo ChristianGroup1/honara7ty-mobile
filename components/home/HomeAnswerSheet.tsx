@@ -9,9 +9,10 @@ import {
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Testament } from '../data/bibleMetadata';
-import { homeStyles as styles } from './styles';
+import { createHomeStyles } from './styles';
 import BiblePassagePicker from '../shared/BiblePassagePicker';
 import { ReadingEntry, formatReadingEntries } from '../../lib/readingEntries';
+import { useNightMode } from '../../lib/nightMode';
 
 type Props = {
   visible: boolean;
@@ -63,6 +64,8 @@ const HomeAnswerSheet = ({
   onSave,
 }: Props) => {
   const canAddReading = Boolean(readingBook && selectedChapters.length > 0);
+  const { colors } = useNightMode();
+  const styles = React.useMemo(() => createHomeStyles(colors), [colors]);
 
   return (
     <Modal
@@ -189,7 +192,9 @@ const HomeAnswerSheet = ({
                     })
                   }
                   onClearChapters={() =>
-                    selectedChapters.forEach(chapter => onToggleChapter(chapter))
+                    selectedChapters.forEach(chapter =>
+                      onToggleChapter(chapter),
+                    )
                   }
                 />
                 <TouchableOpacity
