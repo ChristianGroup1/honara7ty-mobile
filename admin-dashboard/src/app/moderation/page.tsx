@@ -137,7 +137,7 @@ export default function ModerationPage() {
   return (
     <div className="animate-fade-in" style={{ direction: 'rtl' }}>
       {/* Header */}
-      <header style={{ marginBottom: '35px' }}>
+      <header className="page-header" style={{ marginBottom: '35px' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '6px' }}>الإشراف ومراجعة المحتوى</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
           تصفح طلبات الصلاة والشهادات المنشورة في التغذية العامة. يمكنك إزالة المحتوى غير اللائق أو المسيء.

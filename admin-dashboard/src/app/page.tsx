@@ -441,7 +441,7 @@ export default function DashboardPage() {
   return (
     <div className="animate-fade-in" style={{ direction: 'rtl' }}>
       {/* Title */}
-      <header style={{ marginBottom: '35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="page-header" style={{ marginBottom: '35px' }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '6px' }}>لوحة التحكم والتحليلات</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>نظرة شاملة على أداء تطبيق خلوتي ومستوى التفاعل الروحي</p>
@@ -753,7 +753,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '5px' }}>
+              <div className="responsive-2col" style={{ gap: '12px', marginTop: '5px' }}>
                 <div style={{ background: 'rgba(20, 184, 166, 0.03)', border: '1px solid rgba(20, 184, 166, 0.1)', padding: '8px', borderRadius: '6px', textAlign: 'center' }}>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>قراءات العهد القديم</span>
                   <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent-teal)', display: 'block', marginTop: '2px' }}>{testamentSplit.oldTestament}</span>
@@ -831,7 +831,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="responsive-2col" style={{ gap: '12px' }}>
                       <div style={{ background: 'rgba(99, 102, 241, 0.03)', border: '1px solid rgba(99, 102, 241, 0.1)', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>عدد الذكور</span>
                         <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--primary)', display: 'block', marginTop: '2px' }}>{demographics.gender.male}</span>

@@ -247,7 +247,7 @@ export default function UsersPage() {
   return (
     <div className="animate-fade-in" style={{ direction: 'rtl' }}>
       {/* Header */}
-      <header style={{ marginBottom: '35px' }}>
+      <header className="page-header" style={{ marginBottom: '35px' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '6px' }}>إدارة المستخدمين</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
           تصفح المجلد العام، تحقق من التزام الخلوة، وراجع ملاحظات الصلوات والتأملات الخاصة بالمشاركين.

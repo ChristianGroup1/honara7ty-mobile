@@ -216,7 +216,7 @@ export default function UserDetailsPage() {
     return (
       <div style={{ padding: '20px', direction: 'rtl' }} className="animate-pulse">
         <div style={{ height: '32px', width: '220px', background: 'var(--bg-tertiary)', borderRadius: '6px', marginBottom: '30px' }} />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '30px' }}>
+        <div className="responsive-3col" style={{ marginBottom: '30px' }}>
           {[1, 2, 3].map(i => (
             <div key={i} style={{ height: '70px', background: 'var(--bg-secondary)', borderRadius: '10px' }} />
           ))}
@@ -240,7 +240,7 @@ export default function UserDetailsPage() {
   return (
     <div className="animate-fade-in" style={{ direction: 'rtl' }}>
       {/* Header & Back Action */}
-      <header style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', justifyItems: 'flex-start', gap: '16px' }}>
+      <header className="page-header" style={{ marginBottom: '30px', alignItems: 'center' }}>
         <button 
           onClick={() => router.push('/users')}
           style={{
@@ -448,15 +448,16 @@ export default function UserDetailsPage() {
                       </div>
                     </div>
 
+                    <div className="calendar-scroll">
                     {/* Week Days Headers */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', textAlign: 'center', marginBottom: '10px' }}>
+                    <div className="calendar-grid-7" style={{ textAlign: 'center', marginBottom: '10px' }}>
                       {DAYS_OF_WEEK_AR.map(day => (
                         <span key={day} style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>{day}</span>
                       ))}
                     </div>
 
                     {/* Monthly Days Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
+                    <div className="calendar-grid-7">
                       {/* Blank spaces for offset */}
                       {Array.from({ length: firstDayIdx }).map((_, idx) => (
                         <div key={`blank-${idx}`} />
@@ -520,6 +521,7 @@ export default function UserDetailsPage() {
                           </button>
                         );
                       })}
+                    </div>
                     </div>
 
                     {/* Legend */}
