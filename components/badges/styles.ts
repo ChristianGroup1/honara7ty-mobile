@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { BG, GOLD, NAVY } from './constants';
+import type { AppTheme } from '../../lib/nightMode';
 import {
   heroBadgeBase,
   heroBadgeTextBase,
@@ -526,3 +527,93 @@ export const badgesStyles = StyleSheet.create({
     textAlign: 'left',
   },
 });
+
+export const createThemedBadgesStyles = (colors: AppTheme['colors']) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+    },
+    content: {
+      backgroundColor: colors.background,
+    },
+    streakNumberShell: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    streakNumber: {
+      color: colors.text,
+    },
+    streakDays: {
+      color: colors.mutedText,
+    },
+    gallerySectionTitle: {
+      color: colors.text,
+    },
+    spotlightCard: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    spotlightPillLocked: {
+      backgroundColor: colors.cardMuted,
+    },
+    spotlightPillTextMuted: {
+      color: colors.mutedText,
+    },
+    spotlightTitle: {
+      color: colors.text,
+    },
+    spotlightDays: {
+      color: colors.mutedText,
+    },
+    spotlightText: {
+      color: colors.mutedText,
+    },
+    spotlightProgressTrack: {
+      backgroundColor: colors.cardMuted,
+    },
+    badgeCard: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    badgeRingLocked: {
+      backgroundColor: colors.cardMuted,
+    },
+    badgeXpText: {
+      color: colors.mutedText,
+    },
+    badgeTitle: {
+      color: colors.text,
+    },
+    badgeSubtitle: {
+      color: colors.mutedText,
+    },
+    progressLabel: {
+      color: colors.mutedText,
+    },
+    progressBar: {
+      backgroundColor: colors.cardMuted,
+    },
+    pendingText: {
+      color: colors.mutedText,
+    },
+    motivationalCard: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    motivationalTitle: {
+      color: colors.text,
+    },
+    motivationalText: {
+      color: colors.mutedText,
+    },
+  });
+
+export type ThemedBadgesStyles = ReturnType<typeof createThemedBadgesStyles>;

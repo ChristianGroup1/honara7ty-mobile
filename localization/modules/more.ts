@@ -52,9 +52,5 @@ export const moreStrings = {
       title: 'أسبوعك مع ربنا',
       subtitle: 'ملخص أسبوعي لخلوتك وقراءتك وصلواتك',
     },
-    myServices: {
-      title: 'خدماتي',
-      subtitle: 'حضّر خدماتك بآيات وملاحظات وتنسيقك',
-    },
   },
 } as const;

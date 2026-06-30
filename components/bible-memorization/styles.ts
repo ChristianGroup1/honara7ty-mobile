@@ -1,4 +1,5 @@
 import { StyleSheet } from 'react-native';
+import { AppTheme } from '../../lib/nightMode';
 import { GOLD, NAVY } from './utils';
 import {
   heroBadgeBase,
@@ -859,3 +860,80 @@ export const memorizationStyles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export const createThemedMemorizationStyles = (
+  colors: AppTheme['colors'],
+) =>
+  StyleSheet.create({
+    container: { backgroundColor: colors.background },
+    card: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    cardMuted: {
+      backgroundColor: colors.cardMuted,
+      borderColor: colors.border,
+    },
+    segmentedWrap: {
+      backgroundColor: colors.cardMuted,
+    },
+    segmentedOptionActive: {
+      backgroundColor: colors.card,
+      shadowColor: colors.shadow,
+    },
+    primaryText: {
+      color: colors.text,
+    },
+    mutedText: {
+      color: colors.mutedText,
+    },
+    accentText: {
+      color: colors.accent,
+    },
+    sectionIconWrap: {
+      backgroundColor: colors.cardMuted,
+    },
+    chip: {
+      backgroundColor: colors.cardMuted,
+      borderColor: colors.border,
+    },
+    chipActive: {
+      backgroundColor: colors.header,
+      borderColor: colors.header,
+    },
+    input: {
+      backgroundColor: colors.cardMuted,
+      borderColor: colors.border,
+      borderBottomColor: colors.accent,
+      color: colors.text,
+    },
+    referenceVerseBox: {
+      backgroundColor: colors.cardMuted,
+      borderColor: colors.border,
+    },
+    dividerBorder: {
+      borderBottomColor: colors.border,
+    },
+    blurOverlay: {
+      backgroundColor: `${colors.cardMuted}E6`,
+    },
+    resultSecondaryBtn: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+    },
+    modalContent: {
+      backgroundColor: colors.card,
+    },
+    progressTrack: {
+      backgroundColor: colors.cardMuted,
+    },
+    dividerTop: {
+      borderTopColor: colors.border,
+    },
+    goalAdjustBtn: {
+      backgroundColor: colors.cardMuted,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+  });

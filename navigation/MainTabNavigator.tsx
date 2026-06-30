@@ -29,7 +29,6 @@ import DevotionGroupDetailsScreen from '../components/devotion-groups/DevotionGr
 import DevotionGroupMemberDetailsScreen from '../components/devotion-groups/DevotionGroupMemberDetailsScreen';
 import DevotionGroupPrayerRequestsScreen from '../components/devotion-groups/DevotionGroupPrayerRequestsScreen';
 import WeeklyReportScreen from '../components/weekly-report/WeeklyReportScreen';
-import MyServicesScreen from '../components/my-services/MyServicesScreen';
 import { getStrings } from '../localization';
 import { useNightMode } from '../lib/nightMode';
 import { getTabBarLayout } from '../lib/tabBarLayout';
@@ -112,17 +111,13 @@ const MainTabNavigator = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         lazy: true,
-        freezeOnBlur: true,
+        freezeOnBlur: false,
         tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: GOLD,
         tabBarInactiveTintColor: colors.tabInactive,
         tabBarStyle: {
           backgroundColor: colors.header,
           borderTopWidth: 0,
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
           borderTopLeftRadius: 28,
           borderTopRightRadius: 28,
           paddingBottom: tabBarBottomPadding,
@@ -238,11 +233,6 @@ const MainTabNavigator = () => {
       <Tab.Screen
         name="WeeklyReport"
         component={WeeklyReportScreen}
-        options={hiddenTabScreenOptions}
-      />
-      <Tab.Screen
-        name="MyServices"
-        component={MyServicesScreen}
         options={hiddenTabScreenOptions}
       />
     </Tab.Navigator>

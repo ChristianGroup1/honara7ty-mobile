@@ -19,7 +19,6 @@ export interface SavedReadingSettings {
   stripDiacritics: boolean;
   parallelLifeTranslation: boolean;
   inlineLifeTranslation: boolean;
-  isNightMode: boolean;
 }
 
 export interface BibleSearchResult {

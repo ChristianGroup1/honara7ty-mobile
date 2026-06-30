@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { GroupMemberStatus } from '../../../lib/devotionGroups';
-import { styles } from './styles';
+import { styles as defaultStyles } from './styles';
 import { formatMemberReading, roleLabels } from './utils';
 
 type Props = {
@@ -16,6 +16,9 @@ type Props = {
   onConfirmRemoveMember?: (member: GroupMemberStatus) => void;
   onConfirmSetMemberAdmin?: (member: GroupMemberStatus) => void;
   onConfirmUnsetMemberAdmin?: (member: GroupMemberStatus) => void;
+  styles?: typeof defaultStyles;
+  mutedIconColor?: string;
+  adminIconColor?: string;
 };
 
 const MembersList = ({
@@ -29,6 +32,9 @@ const MembersList = ({
   onConfirmRemoveMember,
   onConfirmSetMemberAdmin,
   onConfirmUnsetMemberAdmin,
+  styles = defaultStyles,
+  mutedIconColor = '#A0A7B2',
+  adminIconColor = '#0A1124',
 }: Props) => (
   <>
     <View style={styles.sectionHeader}>
@@ -89,7 +95,7 @@ const MembersList = ({
                 <MaterialCommunityIcons
                   name="chevron-left"
                   size={22}
-                  color="#A0A7B2"
+                  color={mutedIconColor}
                 />
               </View>
 
@@ -108,7 +114,7 @@ const MembersList = ({
                     <MaterialCommunityIcons
                       name="shield-account-outline"
                       size={17}
-                      color="#0A1124"
+                      color={adminIconColor}
                     />
                     <Text style={styles.memberAdminButtonText}>
                       {strings.makeMemberAdmin}
@@ -125,7 +131,7 @@ const MembersList = ({
                     <MaterialCommunityIcons
                       name="shield-off-outline"
                       size={17}
-                      color="#0A1124"
+                      color={adminIconColor}
                     />
                     <Text style={styles.memberAdminButtonText}>
                       {strings.removeMemberAdmin}

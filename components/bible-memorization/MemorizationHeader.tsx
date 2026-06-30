@@ -1,8 +1,8 @@
 import React from 'react';
 import { StatusBar } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { NAVY } from './utils';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
+import { useNightMode } from '../../lib/nightMode';
 
 interface MemorizationHeaderProps {
   title: string;
@@ -12,10 +12,11 @@ interface MemorizationHeaderProps {
 
 const MemorizationHeader = ({ title, onBack, trailing }: MemorizationHeaderProps) => {
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <AppHeader
         topInsetHeight={insets.top}
         title={title}

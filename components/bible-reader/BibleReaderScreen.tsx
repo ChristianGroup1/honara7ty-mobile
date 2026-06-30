@@ -24,7 +24,7 @@ import {
 } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNightMode } from '../../lib/nightMode';
-import { getTabBarLayout, SELECTION_BAR_HEIGHT } from '../../lib/tabBarLayout';
+import { SELECTION_BAR_HEIGHT } from '../../lib/tabBarLayout';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import {
   BIBLE_BOOKS,
@@ -61,7 +61,6 @@ import SelectionHighlightRow from './SelectionHighlightRow';
 
 const BibleReaderScreen = ({ navigation }: any = {}) => {
   const insets = useSafeAreaInsets();
-  const { tabBarHeight } = getTabBarLayout(insets.bottom);
   const { colors, isNightMode, setNightMode } = useNightMode();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -87,6 +86,8 @@ const BibleReaderScreen = ({ navigation }: any = {}) => {
   const [savedVersesKind, setSavedVersesKind] =
     useState<SavedVersesModalKind | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectionBarHeight, setSelectionBarHeight] =
+    useState(SELECTION_BAR_HEIGHT);
   const [verseAnnotations, setVerseAnnotations] = useState<
     Record<string, VerseAnnotation>
   >({});
@@ -371,9 +372,6 @@ const BibleReaderScreen = ({ navigation }: any = {}) => {
             setInlineLifeTranslation(savedSettings.inlineLifeTranslation);
           }
 
-          if (typeof savedSettings.isNightMode === 'boolean') {
-            setNightMode(savedSettings.isNightMode);
-          }
         }
 
         if (rawFavorites) {
@@ -416,13 +414,11 @@ const BibleReaderScreen = ({ navigation }: any = {}) => {
       stripDiacritics,
       parallelLifeTranslation,
       inlineLifeTranslation,
-      isNightMode,
     };
 
     void AsyncStorage.setItem(READING_SETTINGS_KEY, JSON.stringify(settings));
   }, [
     inlineLifeTranslation,
-    isNightMode,
     parallelLifeTranslation,
     settingsLoaded,
     stripDiacritics,
@@ -842,6 +838,13 @@ const BibleReaderScreen = ({ navigation }: any = {}) => {
     });
   };
 
+  const handleSelectionBarLayout = (event: LayoutChangeEvent) => {
+    const nextHeight = Math.ceil(event.nativeEvent.layout.height);
+    if (nextHeight > 0 && nextHeight !== selectionBarHeight) {
+      setSelectionBarHeight(nextHeight);
+    }
+  };
+
   return (
     <SafeAreaView
       testID="bible-reader-screen"
@@ -1241,7 +1244,7 @@ const BibleReaderScreen = ({ navigation }: any = {}) => {
           styles.content,
           !selecting &&
             selectionMode && {
-              paddingBottom: tabBarHeight + SELECTION_BAR_HEIGHT,
+              paddingBottom: selectionBarHeight + spacing.lg,
             },
         ]}
         showsVerticalScrollIndicator={false}
@@ -1637,21 +1640,15 @@ const BibleReaderScreen = ({ navigation }: any = {}) => {
                       selectedForAction && styles.selectedVerseForAction,
                     ]}
                   >
+                    {selectedForAction ? (
+                      <View
+                        pointerEvents="none"
+                        style={styles.selectedVerseOutline}
+                      />
+                    ) : null}
                     <View style={styles.parallelVerseNumber}>
                       <Text style={styles.verseNumberText}>{verse.verse}</Text>
                     </View>
-                    {selectedForAction ? (
-                      <View
-                        testID={`selected-verse-check-${verse.verse}`}
-                        style={styles.selectedVerseCheck}
-                      >
-                        <MaterialCommunityIcons
-                          name="check"
-                          size={14}
-                          color="#FFF"
-                        />
-                      </View>
-                    ) : null}
                     <View style={styles.parallelColumns}>
                       <View style={styles.parallelColumn}>
                         <Text style={[styles.verseText, verseTextStyle]}>
@@ -1688,24 +1685,18 @@ const BibleReaderScreen = ({ navigation }: any = {}) => {
                     onPress={() => handleVersePress(verse.verse, verseKey)}
                     onLongPress={() => handleVerseLongPress(verseKey)}
                   >
+                    {selectedForAction ? (
+                      <View
+                        pointerEvents="none"
+                        style={styles.selectedVerseOutline}
+                      />
+                    ) : null}
                     <View style={styles.verseNumber}>
                       <Text style={styles.verseNumberText}>{verse.verse}</Text>
                     </View>
                     <Text style={[styles.verseText, verseTextStyle]}>
                       {formatVerseText(verse.text)}
                     </Text>
-                    {selectedForAction ? (
-                      <View
-                        testID={`selected-verse-check-${verse.verse}`}
-                        style={styles.selectedVerseCheck}
-                      >
-                        <MaterialCommunityIcons
-                          name="check"
-                          size={14}
-                          color="#FFF"
-                        />
-                      </View>
-                    ) : null}
                   </TouchableOpacity>
 
                   {selected && inlineLifeTranslation && !wordMeaningsEnabled ? (
@@ -1783,10 +1774,11 @@ const BibleReaderScreen = ({ navigation }: any = {}) => {
       {!selecting && selectionMode ? (
         <View
           testID="verse-selection-toolbar"
+          onLayout={handleSelectionBarLayout}
           style={[
             styles.selectionBar,
             {
-              bottom: tabBarHeight,
+              bottom: 0,
               paddingBottom: spacing.sm,
             },
           ]}

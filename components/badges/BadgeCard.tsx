@@ -2,23 +2,29 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { BadgeConfig } from './constants';
-import { badgesStyles as styles } from './styles';
+import { badgesStyles as styles, ThemedBadgesStyles } from './styles';
 import { getStrings } from '../../localization';
 
 interface BadgeCardProps {
   badge: BadgeConfig;
   streak: number;
   onShare: (badge: BadgeConfig) => void;
+  themedStyles: ThemedBadgesStyles;
+  mutedTextColor: string;
 }
 
-const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
+const BadgeCard = ({
+  badge,
+  streak,
+  onShare,
+  themedStyles,
+  mutedTextColor,
+}: BadgeCardProps) => {
   const strings = getStrings().badges;
   const earned = streak >= badge.days;
   const progress = Math.min(streak / badge.days, 1);
   const daysLeft = Math.max(badge.days - streak, 0);
-  const badgeRingStyle = {
-    backgroundColor: earned ? `${badge.color}22` : '#EEF2F6',
-  };
+  const badgeRingStyle = { backgroundColor: `${badge.color}22` };
   const badgeTintStyle = { backgroundColor: `${badge.color}10` };
   const checkmarkStyle = { backgroundColor: badge.color };
   const progressFillStyle = {
@@ -34,12 +40,18 @@ const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
     : styles.badgeCardLocked;
 
   return (
-    <View style={[styles.badgeCard, cardShellStyle]}>
+    <View style={[styles.badgeCard, themedStyles.badgeCard, cardShellStyle]}>
       <View style={[styles.badgeCardAccent, topAccentStyle]} />
 
       <View style={styles.badgeTopRow}>
         <View style={styles.badgeIdentityRow}>
-          <View style={[styles.badgeRing, badgeRingStyle]}>
+          <View
+            style={[
+              styles.badgeRing,
+              !earned && themedStyles.badgeRingLocked,
+              earned && badgeRingStyle,
+            ]}
+          >
             {earned ? (
               <Text style={styles.badgeEmoji}>{badge.emoji}</Text>
             ) : (
@@ -62,25 +74,31 @@ const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
               {badge.tier}
             </Text>
           </View>
-          <Text style={styles.badgeXpText}>{strings.card.xp(badge.xp)}</Text>
+          <Text style={[styles.badgeXpText, themedStyles.badgeXpText]}>
+            {strings.card.xp(badge.xp)}
+          </Text>
         </View>
       </View>
 
-      <Text style={styles.badgeTitle}>{badge.title}</Text>
-      <Text style={styles.badgeSubtitle}>
+      <Text style={[styles.badgeTitle, themedStyles.badgeTitle]}>
+        {badge.title}
+      </Text>
+      <Text style={[styles.badgeSubtitle, themedStyles.badgeSubtitle]}>
         {earned
           ? strings.card.earnedSubtitle
           : strings.card.remainingSubtitle(daysLeft)}
       </Text>
 
       <View style={styles.progressMetaRow}>
-        <Text style={styles.progressLabel}>{strings.card.progressLabel}</Text>
+        <Text style={[styles.progressLabel, themedStyles.progressLabel]}>
+          {strings.card.progressLabel}
+        </Text>
         <Text style={[styles.progressMetaText, progressMetaStyle]}>
           {Math.round(progress * 100)}%
         </Text>
       </View>
 
-      <View style={styles.progressBar}>
+      <View style={[styles.progressBar, themedStyles.progressBar]}>
         <View style={[styles.progressFill, progressFillStyle]} />
       </View>
 
@@ -103,8 +121,14 @@ const BadgeCard = ({ badge, streak, onShare }: BadgeCardProps) => {
         </TouchableOpacity>
       ) : (
         <View style={styles.pendingRow}>
-          <MaterialCommunityIcons name="timer-sand" size={14} color="#7E8896" />
-          <Text style={styles.pendingText}>{strings.card.remainingDays(daysLeft)}</Text>
+          <MaterialCommunityIcons
+            name="timer-sand"
+            size={14}
+            color={mutedTextColor}
+          />
+          <Text style={[styles.pendingText, themedStyles.pendingText]}>
+            {strings.card.remainingDays(daysLeft)}
+          </Text>
         </View>
       )}
     </View>

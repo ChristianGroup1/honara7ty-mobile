@@ -93,12 +93,6 @@ const MoreScreen = ({ navigation }: any) => {
       title: strings.items.weeklyReport.title,
       subtitle: strings.items.weeklyReport.subtitle,
     },
-    {
-      key: 'MyServices',
-      icon: 'notebook-edit-outline',
-      title: strings.items.myServices.title,
-      subtitle: strings.items.myServices.subtitle,
-    },
   ];
 
   const handleFocusModePress = async () => {

@@ -13,11 +13,15 @@ import {
 } from '../data/bibleMetadata';
 import MemorizationHeader from './MemorizationHeader';
 import HeroBackground from '../shared/HeroBackground';
-import { memorizationStyles as styles } from './styles';
+import {
+  createThemedMemorizationStyles,
+  memorizationStyles as styles,
+} from './styles';
 import { Difficulty, MemorizationStackParamList } from './types';
 import { DIFFICULTY_LEVELS } from './utils';
 import { getStrings } from '../../localization';
 import MemorizationStatsPanel from './MemorizationStatsPanel';
+import { useNightMode } from '../../lib/nightMode';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Pick'>;
 
@@ -28,6 +32,11 @@ interface VerseOption {
 const PickScreen = ({ navigation }: Props) => {
   const memorizationStrings = getStrings().bibleMemorization;
   const strings = memorizationStrings.pick;
+  const { colors } = useNightMode();
+  const themedStyles = useMemo(
+    () => createThemedMemorizationStyles(colors),
+    [colors],
+  );
   const [activeTab, setActiveTab] = useState<'pick' | 'stats'>('pick');
   const [selectedBook, setSelectedBook] = useState<BibleBook | null>(
     BIBLE_BOOKS[0] ?? null,
@@ -164,24 +173,28 @@ const PickScreen = ({ navigation }: Props) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, themedStyles.container]}>
       <MemorizationHeader
         title={strings.title}
         onBack={() => navigation.getParent()?.goBack()}
       />
 
-      <View style={styles.segmentedWrap}>
+      <View style={[styles.segmentedWrap, themedStyles.segmentedWrap]}>
         <TouchableOpacity
           style={[
             styles.segmentedOption,
+            themedStyles.chip,
             activeTab === 'pick' && styles.segmentedOptionActive,
+            activeTab === 'pick' && themedStyles.segmentedOptionActive,
           ]}
           onPress={() => setActiveTab('pick')}
         >
           <Text
             style={[
               styles.segmentedOptionText,
+              themedStyles.mutedText,
               activeTab === 'pick' && styles.segmentedOptionTextActive,
+              activeTab === 'pick' && themedStyles.primaryText,
             ]}
           >
             {memorizationStrings.tabs.pick}
@@ -190,14 +203,18 @@ const PickScreen = ({ navigation }: Props) => {
         <TouchableOpacity
           style={[
             styles.segmentedOption,
+            themedStyles.chip,
             activeTab === 'stats' && styles.segmentedOptionActive,
+            activeTab === 'stats' && themedStyles.segmentedOptionActive,
           ]}
           onPress={() => setActiveTab('stats')}
         >
           <Text
             style={[
               styles.segmentedOptionText,
+              themedStyles.mutedText,
               activeTab === 'stats' && styles.segmentedOptionTextActive,
+              activeTab === 'stats' && themedStyles.primaryText,
             ]}
           >
             {memorizationStrings.tabs.stats}
@@ -208,6 +225,7 @@ const PickScreen = ({ navigation }: Props) => {
       {activeTab === 'stats' ? (
         <MemorizationStatsPanel
           contentContainerStyle={styles.tabPanelContent}
+          themedStyles={themedStyles}
         />
       ) : (
         <ScrollView
@@ -233,7 +251,7 @@ const PickScreen = ({ navigation }: Props) => {
             <Text style={styles.heroText}>{strings.heroText}</Text>
           </View>
 
-          <View style={styles.sectionCard}>
+          <View style={[styles.sectionCard, themedStyles.card]}>
             <BiblePassagePicker
               labels={{
                 bookTitle: strings.chooseBook,
@@ -279,18 +297,20 @@ const PickScreen = ({ navigation }: Props) => {
             />
           </View>
 
-          <View style={styles.sectionCard}>
+          <View style={[styles.sectionCard, themedStyles.card]}>
             <View style={styles.sectionHeading}>
-              <View style={styles.sectionIconWrap}>
+              <View style={[styles.sectionIconWrap, themedStyles.sectionIconWrap]}>
                 <MaterialCommunityIcons
                   name="brain"
                   size={18}
-                  color="#0A1124"
+                  color={colors.text}
                 />
               </View>
               <View style={styles.sectionHeadingText}>
-                <Text style={styles.sectionLabel}>{strings.levelTitle}</Text>
-                <Text style={styles.sectionCaption}>
+                <Text style={[styles.sectionLabel, themedStyles.mutedText]}>
+                  {strings.levelTitle}
+                </Text>
+                <Text style={[styles.sectionCaption, themedStyles.mutedText]}>
                   {strings.levelCaption}
                 </Text>
               </View>
@@ -301,13 +321,16 @@ const PickScreen = ({ navigation }: Props) => {
                   key={level}
                   style={[
                     styles.levelChip,
+                    themedStyles.chip,
                     difficulty === level && styles.levelChipActive,
+                    difficulty === level && themedStyles.chipActive,
                   ]}
                   onPress={() => setDifficulty(level)}
                 >
                   <Text
                     style={[
                       styles.levelChipText,
+                      themedStyles.primaryText,
                       difficulty === level && styles.levelChipTextActive,
                     ]}
                   >
@@ -317,7 +340,7 @@ const PickScreen = ({ navigation }: Props) => {
               ))}
             </View>
 
-            <Text style={styles.helperText}>
+            <Text style={[styles.helperText, themedStyles.mutedText]}>
               {difficulty === 'easy'
                 ? strings.easyHint
                 : difficulty === 'medium'

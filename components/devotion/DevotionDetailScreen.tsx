@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ScrollView,
   StatusBar,
@@ -15,7 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getStrings } from '../../localization';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import FocusModeToggle from '../shared/FocusModeToggle';
-import { BG, GOLD } from '../shared/designTokens';
+import { GOLD } from '../shared/designTokens';
+import { useNightMode } from '../../lib/nightMode';
 
 type Props = { navigation: any; route: any };
 
@@ -36,6 +37,8 @@ const getYoutubeVideoId = (url?: string) => {
 const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const strings = getStrings().devotion;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const themedStyles = useMemo(() => createThemedStyles(colors), [colors]);
   const { width: windowWidth } = useWindowDimensions();
   const { articleId } = route.params;
   const article = ARTICLES.find(a => a.id === articleId);
@@ -49,9 +52,11 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   // ✅ تحقق من وجود المقالة قبل الاستخدام
   if (!article) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{strings.detail.articleMissing}</Text>
+      <SafeAreaView style={[styles.container, themedStyles.container]}>
+        <View style={[styles.errorContainer, themedStyles.container]}>
+          <Text style={[styles.errorText, themedStyles.mutedText]}>
+            {strings.detail.articleMissing}
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -60,7 +65,7 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const youtubeVideoId = getYoutubeVideoId(article.youtubeUrl);
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
+    <SafeAreaView style={[styles.container, themedStyles.container]} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={accent} />
       <AppHeader
         topInsetHeight={insets.top}
@@ -84,7 +89,9 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.detailHero, { backgroundColor: accent }]}>
-          <View style={styles.detailHeroIconRing}>
+          <View
+            style={[styles.detailHeroIconRing, themedStyles.detailHeroIconRing]}
+          >
             <MaterialCommunityIcons
               name={article.icon}
               size={36}
@@ -96,7 +103,7 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         </View>
 
         {!!youtubeVideoId && (
-          <View style={styles.videoCard}>
+          <View style={[styles.videoCard, themedStyles.card]}>
             <View style={styles.videoHeaderRow}>
               <Text style={styles.videoEyebrow}>ملخص مرئي</Text>
               <MaterialCommunityIcons
@@ -105,7 +112,7 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 color="#D32F2F"
               />
             </View>
-            <View style={styles.videoPlayerWrap}>
+            <View style={[styles.videoPlayerWrap, themedStyles.videoPlayerWrap]}>
               <YoutubePlayer
                 height={playerHeight}
                 width={playerWidth}
@@ -118,7 +125,10 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 webViewProps={{
                   allowsFullscreenVideo: true,
                 }}
-                webViewStyle={styles.videoPlayer}
+                webViewStyle={StyleSheet.flatten([
+                  styles.videoPlayer,
+                  themedStyles.videoPlayer,
+                ])}
               />
             </View>
           </View>
@@ -131,9 +141,11 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
           return (
             <View
               key={idx}
-              style={
-                isFirstAndNoHeading ? styles.quoteBlock : styles.sectionBlock
-              }
+              style={[
+                isFirstAndNoHeading ? styles.quoteBlock : styles.sectionBlock,
+                themedStyles.card,
+                isFirstAndNoHeading && themedStyles.quoteBlock,
+              ]}
             >
               {isFirstAndNoHeading ? (
                 <>
@@ -143,7 +155,9 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                     color={GOLD}
                     style={quoteOpenStyle}
                   />
-                  <Text style={styles.quoteText}>{section.body}</Text>
+                  <Text style={[styles.quoteText, themedStyles.bodyText]}>
+                    {section.body}
+                  </Text>
                   <MaterialCommunityIcons
                     name="format-quote-close"
                     size={28}
@@ -167,7 +181,9 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                   )}
 
                   {!!section.body && (
-                    <Text style={styles.sectionBody}>{section.body}</Text>
+                    <Text style={[styles.sectionBody, themedStyles.bodyText]}>
+                      {section.body}
+                    </Text>
                   )}
 
                   {Array.isArray(section.items) &&
@@ -181,7 +197,9 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                         >
                           <Text style={styles.bulletNumber}>{i + 1}</Text>
                         </View>
-                        <Text style={styles.bulletText}>{item}</Text>
+                        <Text style={[styles.bulletText, themedStyles.bodyText]}>
+                          {item}
+                        </Text>
                       </View>
                     ))}
                 </>
@@ -197,7 +215,7 @@ const DevotionDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BG,
+    backgroundColor: '#F2F4F8',
   },
 
   /* ── Header ── */
@@ -403,7 +421,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: BG,
+    backgroundColor: '#F2F4F8',
   },
   errorText: {
     fontSize: 16,
@@ -411,5 +429,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+const createThemedStyles = (
+  colors: ReturnType<typeof useNightMode>['colors'],
+) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+    },
+    card: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    detailHeroIconRing: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    quoteBlock: {
+      borderColor: colors.border,
+    },
+    bodyText: {
+      color: colors.text,
+    },
+    mutedText: {
+      color: colors.mutedText,
+    },
+    videoPlayerWrap: {
+      backgroundColor: colors.cardMuted,
+    },
+    videoPlayer: {
+      backgroundColor: colors.cardMuted,
+    },
+  });
 
 export default DevotionDetailScreen;

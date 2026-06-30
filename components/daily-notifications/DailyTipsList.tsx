@@ -1,14 +1,21 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { dailyNotificationStyles as styles, NAVY } from './styles';
+import { dailyNotificationStyles as defaultStyles, NAVY } from './styles';
 
 type Props = {
   strings: any;
   tips: Array<{ icon: string; text: string }>;
+  styles?: typeof defaultStyles;
+  iconColor?: string;
 };
 
-const DailyTipsList = ({ strings, tips }: Props) => (
+const DailyTipsList = ({
+  strings,
+  tips,
+  styles = defaultStyles,
+  iconColor = NAVY,
+}: Props) => (
   <>
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{strings.tipsTitle}</Text>
@@ -21,7 +28,7 @@ const DailyTipsList = ({ strings, tips }: Props) => (
           <Text style={styles.tipText}>{tip.text}</Text>
         </View>
         <View style={styles.tipIconWrap}>
-          <MaterialCommunityIcons name={tip.icon} size={24} color={NAVY} />
+          <MaterialCommunityIcons name={tip.icon} size={24} color={iconColor} />
         </View>
       </View>
     ))}

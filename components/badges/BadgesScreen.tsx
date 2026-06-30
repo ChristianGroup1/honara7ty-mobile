@@ -26,8 +26,11 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import supabase from '../../lib/supbase';
 import BadgeCard from './BadgeCard';
 import BadgesHeader from './BadgesHeader';
-import { BADGE_CONFIGS, BadgeConfig, GOLD, NAVY, WEB_URL } from './constants';
-import { badgesStyles as styles } from './styles';
+import { BADGE_CONFIGS, BadgeConfig, GOLD, WEB_URL } from './constants';
+import {
+  badgesStyles as styles,
+  createThemedBadgesStyles,
+} from './styles';
 import StreakCard from './StreakCard';
 import GrowthTreeCard from './GrowthTreeCard';
 import { computeStreak } from './utils';
@@ -37,12 +40,18 @@ import {
   readCachedDevotionLogs,
   refreshDevotionLogs,
 } from '../../lib/offlineSync';
+import { useNightMode } from '../../lib/nightMode';
 
 declare const navigator: any;
 
 const BadgesScreen = ({ navigation }: any) => {
   const strings = getStrings().badges;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const themedStyles = useMemo(
+    () => createThemedBadgesStyles(colors),
+    [colors],
+  );
   const hasLoadedStreakRef = useRef(false);
   const sessionUserRef = useRef<any>(null);
   const [streak, setStreak] = useState(0);
@@ -166,9 +175,9 @@ const BadgesScreen = ({ navigation }: any) => {
       StyleSheet.compose(styles.spotlightPill, {
         backgroundColor: spotlightEarned
           ? `${spotlightBadge.color}18`
-          : '#EEF2F6',
+          : colors.cardMuted,
       }),
-    [spotlightBadge.color, spotlightEarned],
+    [colors.cardMuted, spotlightBadge.color, spotlightEarned],
   );
   const spotlightPillTextStyle = useMemo(
     () =>
@@ -176,9 +185,9 @@ const BadgesScreen = ({ navigation }: any) => {
         styles.spotlightPillText,
         spotlightEarned
           ? { color: spotlightBadge.color }
-          : styles.spotlightPillTextMuted,
+          : themedStyles.spotlightPillTextMuted,
       ),
-    [spotlightBadge.color, spotlightEarned],
+    [spotlightBadge.color, spotlightEarned, themedStyles],
   );
   const spotlightIconStyle = useMemo(
     () =>
@@ -240,6 +249,7 @@ const BadgesScreen = ({ navigation }: any) => {
               earnedCount={earnedCount}
               totalCount={BADGE_CONFIGS.length}
               xp={totalXp}
+              themedStyles={themedStyles}
             />
           );
         case 'tree':
@@ -248,7 +258,7 @@ const BadgesScreen = ({ navigation }: any) => {
           );
         case 'spotlight':
           return (
-            <View style={styles.spotlightCard}>
+            <View style={[styles.spotlightCard, themedStyles.spotlightCard]}>
               <View style={spotlightGlowStyle} />
               <View style={styles.spotlightTopRow}>
                 <View style={spotlightPillStyle}>
@@ -265,28 +275,44 @@ const BadgesScreen = ({ navigation }: any) => {
                 </View>
               </View>
 
-              <Text style={styles.spotlightTitle}>{spotlightBadge.title}</Text>
+              <Text style={[styles.spotlightTitle, themedStyles.spotlightTitle]}>
+                {spotlightBadge.title}
+              </Text>
               <View style={styles.spotlightMetaRow}>
-                <Text style={styles.spotlightDays}>
+                <Text style={[styles.spotlightDays, themedStyles.spotlightDays]}>
                   {strings.card.days(spotlightBadge.days)}
                 </Text>
                 <Text style={styles.spotlightXp}>
                   {spotlightBadge.tier} · {strings.card.xp(spotlightBadge.xp)}
                 </Text>
               </View>
-              <Text style={styles.spotlightText}>
+              <Text style={[styles.spotlightText, themedStyles.spotlightText]}>
                 {spotlightEarned
                   ? strings.screen.spotlightEarnedText
                   : strings.screen.spotlightNextText(spotlightDaysLeft)}
               </Text>
 
-              <View style={styles.spotlightProgressTrack}>
+              <View
+                style={[
+                  styles.spotlightProgressTrack,
+                  themedStyles.spotlightProgressTrack,
+                ]}
+              >
                 <View style={spotlightProgressStyle} />
               </View>
             </View>
           );
         case 'sectionHeader':
-          return <Text style={styles.gallerySectionTitle}>{item.title}</Text>;
+          return (
+            <Text
+              style={[
+                styles.gallerySectionTitle,
+                themedStyles.gallerySectionTitle,
+              ]}
+            >
+              {item.title}
+            </Text>
+          );
         case 'badgeRow':
           return (
             <View style={styles.badgesContainer}>
@@ -296,6 +322,8 @@ const BadgesScreen = ({ navigation }: any) => {
                   badge={badge}
                   streak={streak}
                   onShare={handleShare}
+                  themedStyles={themedStyles}
+                  mutedTextColor={colors.mutedText}
                 />
               ))}
               {/* Spacer for odd number of items in a row */}
@@ -304,13 +332,25 @@ const BadgesScreen = ({ navigation }: any) => {
           );
         case 'footer':
           return (
-            <View style={styles.motivationalCard}>
+            <View
+              style={[styles.motivationalCard, themedStyles.motivationalCard]}
+            >
               <MaterialCommunityIcons name="lightbulb" size={28} color={GOLD} />
               <View style={styles.motivationalBody}>
-                <Text style={styles.motivationalTitle}>
+                <Text
+                  style={[
+                    styles.motivationalTitle,
+                    themedStyles.motivationalTitle,
+                  ]}
+                >
                   {strings.screen.motivationalTitle}
                 </Text>
-                <Text style={styles.motivationalText}>
+                <Text
+                  style={[
+                    styles.motivationalText,
+                    themedStyles.motivationalText,
+                  ]}
+                >
                   {strings.screen.motivationalText}
                 </Text>
               </View>
@@ -327,6 +367,7 @@ const BadgesScreen = ({ navigation }: any) => {
       earnedCount,
       totalXp,
       strings,
+      themedStyles,
       spotlightGlowStyle,
       spotlightPillStyle,
       spotlightPillTextStyle,
@@ -340,8 +381,11 @@ const BadgesScreen = ({ navigation }: any) => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+    <SafeAreaView
+      style={[styles.container, themedStyles.container]}
+      edges={[]}
+    >
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <BadgesHeader
         topInsetHeight={insets?.top ?? 0}
         onBack={() => navigation.goBack()}
@@ -351,7 +395,7 @@ const BadgesScreen = ({ navigation }: any) => {
         data={listData}
         renderItem={renderItem}
         keyExtractor={(_item, index) => String(index)}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, themedStyles.content]}
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={Platform.OS === 'android'}
         initialNumToRender={6}

@@ -1,7 +1,10 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { spiritualReflectionStyles as styles } from './styles';
+import {
+  spiritualReflectionStyles as styles,
+  ThemedSpiritualReflectionStyles,
+} from './styles';
 import { Reflection } from './types';
 import { formatDate, PREVIEW_LIMIT } from './utils';
 
@@ -11,6 +14,7 @@ interface ReflectionCardProps {
   onOpenDetail: (item: Reflection) => void;
   onOpenEdit: (item: Reflection) => void;
   onDelete: (item: Reflection) => void;
+  themedStyles: ThemedSpiritualReflectionStyles;
 }
 
 const ReflectionCard = ({
@@ -19,6 +23,7 @@ const ReflectionCard = ({
   onOpenDetail,
   onOpenEdit,
   onDelete,
+  themedStyles,
 }: ReflectionCardProps) => {
   const preview =
     item.content.length > PREVIEW_LIMIT
@@ -29,7 +34,7 @@ const ReflectionCard = ({
     <TouchableOpacity
       activeOpacity={0.92}
       onPress={() => onOpenDetail(item)}
-      style={[styles.card, isNarrowWidth && styles.cardCompact]}
+      style={[styles.card, themedStyles.card, isNarrowWidth && styles.cardCompact]}
     >
       <View style={styles.cardAccent} />
 
@@ -45,7 +50,9 @@ const ReflectionCard = ({
           </View>
         </View>
 
-        <Text style={styles.cardContent}>{preview}</Text>
+        <Text style={[styles.cardContent, themedStyles.cardContent]}>
+          {preview}
+        </Text>
       </View>
 
       <View
@@ -53,7 +60,7 @@ const ReflectionCard = ({
       >
         <TouchableOpacity
           onPress={() => onOpenEdit(item)}
-          style={[styles.actionBtnCircle, styles.editBtn]}
+          style={[styles.actionBtnCircle, styles.editBtn, themedStyles.editBtn]}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           activeOpacity={0.8}
         >

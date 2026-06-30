@@ -11,7 +11,7 @@ export const createStyles = (colors: AppTheme['colors']) =>
     },
     content: {
       padding: spacing.lg,
-      paddingBottom: 120,
+      paddingBottom: spacing.lg,
       gap: spacing.lg,
     },
     readerActionsOverlay: {
@@ -196,8 +196,10 @@ export const createStyles = (colors: AppTheme['colors']) =>
     },
     searchModalOverlay: {
       flex: 1,
-      justifyContent: 'center',
-      padding: spacing.lg,
+      justifyContent: 'flex-end',
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.lg,
     },
     searchModalBackdrop: {
       ...StyleSheet.absoluteFillObject,
@@ -206,7 +208,10 @@ export const createStyles = (colors: AppTheme['colors']) =>
     searchPanel: {
       ...shadow.card,
       backgroundColor: colors.card,
-      borderRadius: radius.xl,
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
+      borderBottomLeftRadius: radius.md,
+      borderBottomRightRadius: radius.md,
       borderWidth: 1,
       borderColor: colors.border,
       padding: spacing.lg,
@@ -710,23 +715,13 @@ export const createStyles = (colors: AppTheme['colors']) =>
     verseRowActive: {
       backgroundColor: `${palette.accent}12`,
     },
-    selectedVerseForAction: {
+    selectedVerseForAction: {},
+    selectedVerseOutline: {
+      ...StyleSheet.absoluteFillObject,
+      borderRadius: 16,
       borderWidth: 2,
       borderColor: colors.accent,
-    },
-    selectedVerseCheck: {
-      position: 'absolute',
-      top: 4,
-      right: 4,
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.accent,
-      borderWidth: 2,
-      borderColor: colors.card,
-      zIndex: 2,
+      pointerEvents: 'none',
     },
     verseNumber: {
       width: 28,

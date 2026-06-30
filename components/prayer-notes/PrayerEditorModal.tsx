@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { prayerNotesStyles as styles } from './styles';
+import type { ThemedPrayerNotesStyles } from './styles';
 import { getStrings } from '../../localization';
 
 interface PrayerEditorModalProps {
@@ -25,6 +26,8 @@ interface PrayerEditorModalProps {
   onClose: () => void;
   onChangeText: (value: string) => void;
   onSave: () => void;
+  themedStyles: ThemedPrayerNotesStyles;
+  placeholderTextColor: string;
 }
 
 const PrayerEditorModal = ({
@@ -37,6 +40,8 @@ const PrayerEditorModal = ({
   onClose,
   onChangeText,
   onSave,
+  themedStyles,
+  placeholderTextColor,
 }: PrayerEditorModalProps) => {
   const strings = getStrings().prayerNotes;
   const modalOverlayStyle = keyboardVisible
@@ -61,11 +66,13 @@ const PrayerEditorModal = ({
           style={styles.flexOne}
         >
           <View style={[styles.modalOverlay, modalOverlayStyle]}>
-            <View style={styles.modalBox}>
-              <Text style={styles.modalTitle}>
+            <View style={[styles.modalBox, themedStyles.modalBox]}>
+              <Text style={[styles.modalTitle, themedStyles.modalTitle]}>
                 {editMode ? strings.editor.editTitle : strings.editor.newTitle}
               </Text>
-              <Text style={styles.modalHint}>{strings.editor.hint}</Text>
+              <Text style={[styles.modalHint, themedStyles.modalHint]}>
+                {strings.editor.hint}
+              </Text>
 
               <ScrollView
                 contentContainerStyle={styles.modalScroll}
@@ -73,10 +80,10 @@ const PrayerEditorModal = ({
                 showsVerticalScrollIndicator={false}
               >
                 <TextInput
-                  style={styles.modalInput}
+                  style={[styles.modalInput, themedStyles.modalInput]}
                   multiline
                   placeholder={strings.editor.placeholder}
-                  placeholderTextColor="#AAA"
+                  placeholderTextColor={placeholderTextColor}
                   value={text}
                   onChangeText={onChangeText}
                   textAlign="right"
@@ -85,11 +92,16 @@ const PrayerEditorModal = ({
               </ScrollView>
 
               <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                  <Text style={styles.cancelBtnText}>{strings.cancel}</Text>
+                <TouchableOpacity
+                  style={[styles.cancelBtn, themedStyles.cancelBtn]}
+                  onPress={onClose}
+                >
+                  <Text style={[styles.cancelBtnText, themedStyles.cancelBtnText]}>
+                    {strings.cancel}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.saveBtn, saveButtonStyle]}
+                  style={[styles.saveBtn, themedStyles.saveBtn, saveButtonStyle]}
                   onPress={onSave}
                   disabled={saving}
                 >

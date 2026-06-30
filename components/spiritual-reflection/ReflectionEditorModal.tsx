@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { spiritualReflectionStyles as styles } from './styles';
+import type { ThemedSpiritualReflectionStyles } from './styles';
 import { getStrings } from '../../localization';
 
 interface ReflectionEditorModalProps {
@@ -25,6 +26,8 @@ interface ReflectionEditorModalProps {
   onClose: () => void;
   onChangeText: (value: string) => void;
   onSave: () => void;
+  themedStyles: ThemedSpiritualReflectionStyles;
+  placeholderTextColor: string;
 }
 
 const ReflectionEditorModal = ({
@@ -37,6 +40,8 @@ const ReflectionEditorModal = ({
   onClose,
   onChangeText,
   onSave,
+  themedStyles,
+  placeholderTextColor,
 }: ReflectionEditorModalProps) => {
   const strings = getStrings().spiritualReflection;
   const keyboardAvoidingViewStyle = styles.flexOne;
@@ -62,11 +67,13 @@ const ReflectionEditorModal = ({
           style={keyboardAvoidingViewStyle}
         >
           <View style={[styles.modalOverlay, modalOverlayStyle]}>
-            <View style={styles.modalBox}>
-              <Text style={styles.modalTitle}>
+            <View style={[styles.modalBox, themedStyles.modalBox]}>
+              <Text style={[styles.modalTitle, themedStyles.modalTitle]}>
                 {editMode ? strings.editor.editTitle : strings.editor.newTitle}
               </Text>
-              <Text style={styles.modalHint}>{strings.editor.hint}</Text>
+              <Text style={[styles.modalHint, themedStyles.modalHint]}>
+                {strings.editor.hint}
+              </Text>
 
               <ScrollView
                 contentContainerStyle={styles.modalScroll}
@@ -74,10 +81,10 @@ const ReflectionEditorModal = ({
                 showsVerticalScrollIndicator={false}
               >
                 <TextInput
-                  style={styles.modalInput}
+                  style={[styles.modalInput, themedStyles.modalInput]}
                   multiline
                   placeholder={strings.editor.placeholder}
-                  placeholderTextColor="#AAA"
+                  placeholderTextColor={placeholderTextColor}
                   value={text}
                   onChangeText={onChangeText}
                   textAlign="right"
@@ -86,11 +93,16 @@ const ReflectionEditorModal = ({
               </ScrollView>
 
               <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                  <Text style={styles.cancelBtnText}>{strings.cancel}</Text>
+                <TouchableOpacity
+                  style={[styles.cancelBtn, themedStyles.cancelBtn]}
+                  onPress={onClose}
+                >
+                  <Text style={[styles.cancelBtnText, themedStyles.cancelBtnText]}>
+                    {strings.cancel}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.saveBtn, saveButtonStyle]}
+                  style={[styles.saveBtn, themedStyles.saveBtn, saveButtonStyle]}
                   onPress={onSave}
                   disabled={saving}
                 >

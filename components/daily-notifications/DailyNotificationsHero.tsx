@@ -1,19 +1,21 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { dailyNotificationStyles as styles, GOLD, NAVY } from './styles';
+import { dailyNotificationStyles as defaultStyles } from './styles';
 import HeroBackground from '../shared/HeroBackground';
 
 type Props = {
   strings: any;
   timeDisplay: string;
   onEditTime: () => void;
+  styles?: typeof defaultStyles;
 };
 
 const DailyNotificationsHero = ({
   strings,
   timeDisplay,
   onEditTime,
+  styles = defaultStyles,
 }: Props) => (
   <View style={styles.heroCard}>
     <HeroBackground />

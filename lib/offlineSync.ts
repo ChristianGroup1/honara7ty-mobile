@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from '@react-native-community/netinfo';
+import { AppState } from 'react-native';
 import supabase from './supbase';
 import { PrayerNote } from '../components/prayer-notes/types';
 import { Reflection } from '../components/spiritual-reflection/types';
 import { DevotionDayLog } from '../components/devotion-calendar/types';
 import { syncReadingLogForDate } from './readingLog';
 import { deriveKey, encryptText, decryptText, isEncrypted } from './crypto';
+import { isNetworkAvailable } from './networkStatus';
 
 const OFFLINE_QUEUE_KEY = 'offline_sync_queue_v1';
 const LOCAL_ID_PREFIX = 'local-';
@@ -119,6 +120,10 @@ type SyncResult = {
 
 let inFlightFlush: Promise<SyncResult> | null = null;
 
+function isAppActive() {
+  return AppState.currentState === 'active';
+}
+
 function nowIso() {
   return new Date().toISOString();
 }
@@ -152,11 +157,6 @@ async function getQueue() {
 
 async function setQueue(queue: OfflineMutation[]) {
   await writeJson(OFFLINE_QUEUE_KEY, queue);
-}
-
-async function isNetworkAvailable() {
-  const state = await NetInfo.fetch();
-  return Boolean(state.isConnected && state.isInternetReachable !== false);
 }
 
 function sortPrayerNotes(notes: PrayerNote[]) {
@@ -443,11 +443,19 @@ function mapDevotionRows(
 }
 
 export async function flushOfflineQueue(): Promise<SyncResult> {
+  if (!isAppActive()) {
+    return { synced: false };
+  }
+
   if (inFlightFlush) {
     return inFlightFlush;
   }
 
   inFlightFlush = (async () => {
+    if (!isAppActive()) {
+      return { synced: false };
+    }
+
     if (!(await isNetworkAvailable())) {
       return { synced: false };
     }
@@ -462,6 +470,11 @@ export async function flushOfflineQueue(): Promise<SyncResult> {
     // at the end of the batch (or if we hit a terminal error) to minimize I/O.
     let index = 0;
     while (index < queue.length) {
+      if (!isAppActive()) {
+        await setQueue(queue);
+        return { synced: false };
+      }
+
       // Yield to the event loop every few mutations to prevent blocking the main thread/ANRs
       if (index > 0 && index % 3 === 0) {
         await new Promise(resolve => setTimeout(resolve, 0));

@@ -24,9 +24,10 @@ import { GOLD, NAVY } from './utils';
 
 type Props = {
   contentContainerStyle?: StyleProp<ViewStyle>;
+  themedStyles?: Record<string, any>;
 };
 
-const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
+const MemorizationStatsPanel = ({ contentContainerStyle, themedStyles }: Props) => {
   const strings = getStrings().bibleMemorization;
   const [stats, setStats] = useState<MemorizationStats | null>(null);
   const [showGoalModal, setShowGoalModal] = useState(false);
@@ -84,13 +85,13 @@ const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
     });
 
     return (
-      <View style={styles.sectionCard}>
+      <View style={[styles.sectionCard, themedStyles?.card]}>
         <View style={styles.historyRow}>
           <View style={styles.historyInfo}>
-            <Text style={styles.subSectionLabel}>
+            <Text style={[styles.subSectionLabel, themedStyles?.primaryText]}>
               {item.bookLabel} {item.chapterLabel}
             </Text>
-            <Text style={styles.sectionCaption}>
+            <Text style={[styles.sectionCaption, themedStyles?.mutedText]}>
               {date} • {item.timeSeconds || 0} ثانية
             </Text>
           </View>
@@ -103,7 +104,9 @@ const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
             >
               {item.score}/{item.total}
             </Text>
-            <Text style={styles.statLabel}>{strings.result.scoreLabel}</Text>
+            <Text style={[styles.statLabel, themedStyles?.mutedText]}>
+              {strings.result.scoreLabel}
+            </Text>
           </View>
           <TouchableOpacity
             style={styles.historyDeleteBtn}
@@ -129,9 +132,11 @@ const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
         ListHeaderComponent={
           <>
             {stats && (
-              <View style={styles.statsCard}>
+              <View style={[styles.statsCard, themedStyles?.card]}>
                 <View style={styles.statsHeader}>
-                  <Text style={styles.statsTitle}>{progressTitle}</Text>
+                  <Text style={[styles.statsTitle, themedStyles?.primaryText]}>
+                    {progressTitle}
+                  </Text>
                   <TouchableOpacity
                     style={styles.goalBtn}
                     onPress={openGoalModal}
@@ -148,43 +153,43 @@ const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
                 </View>
 
                 <View style={styles.statsGrid}>
-                  <View style={styles.statItem}>
+                  <View style={[styles.statItem, themedStyles?.cardMuted]}>
                     <Text style={styles.statValue}>
                       {stats.currentPeriodCount}
                     </Text>
-                    <Text style={styles.statLabel}>
+                    <Text style={[styles.statLabel, themedStyles?.mutedText]}>
                       {strings.stats.currentPeriod}
                     </Text>
                   </View>
-                  <View style={styles.statItem}>
+                  <View style={[styles.statItem, themedStyles?.cardMuted]}>
                     <Text style={styles.statValue}>{stats.totalVerses}</Text>
-                    <Text style={styles.statLabel}>
+                    <Text style={[styles.statLabel, themedStyles?.mutedText]}>
                       {strings.stats.totalVerses}
                     </Text>
                   </View>
-                  <View style={styles.statItem}>
+                  <View style={[styles.statItem, themedStyles?.cardMuted]}>
                     <Text style={styles.statValue}>{stats.averageScore}%</Text>
-                    <Text style={styles.statLabel}>
+                    <Text style={[styles.statLabel, themedStyles?.mutedText]}>
                       {strings.stats.avgScore}
                     </Text>
                   </View>
-                  <View style={styles.statItem}>
+                  <View style={[styles.statItem, themedStyles?.cardMuted]}>
                     <Text style={styles.statValue}>{stats.totalAttempts}</Text>
-                    <Text style={styles.statLabel}>
+                    <Text style={[styles.statLabel, themedStyles?.mutedText]}>
                       {strings.stats.totalAttempts}
                     </Text>
                   </View>
                 </View>
 
                 {stats.goal > 0 && (
-                  <View style={styles.progressBox}>
-                    <Text style={styles.progressText}>
+                  <View style={[styles.progressBox, themedStyles?.dividerTop]}>
+                    <Text style={[styles.progressText, themedStyles?.mutedText]}>
                       {strings.stats.goalReach(
                         stats.currentPeriodCount,
                         stats.goal,
                       )}
                     </Text>
-                    <View style={styles.progressBarContainer}>
+                    <View style={[styles.progressBarContainer, themedStyles?.progressTrack]}>
                       <View
                         style={[
                           styles.progressBar,
@@ -201,53 +206,53 @@ const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
                 )}
 
                 <View style={styles.insightGrid}>
-                  <View style={styles.insightItem}>
+                  <View style={[styles.insightItem, themedStyles?.cardMuted]}>
                     <MaterialCommunityIcons
                       name="fire"
                       size={18}
                       color={GOLD}
                     />
-                    <Text style={styles.insightValue}>
+                    <Text style={[styles.insightValue, themedStyles?.primaryText]}>
                       {stats.currentStreak}
                     </Text>
-                    <Text style={styles.insightLabel}>
+                    <Text style={[styles.insightLabel, themedStyles?.mutedText]}>
                       {strings.stats.currentStreak}
                     </Text>
                   </View>
-                  <View style={styles.insightItem}>
+                  <View style={[styles.insightItem, themedStyles?.cardMuted]}>
                     <MaterialCommunityIcons
                       name="timer-outline"
                       size={18}
                       color={GOLD}
                     />
-                    <Text style={styles.insightValue}>
+                    <Text style={[styles.insightValue, themedStyles?.primaryText]}>
                       {formatSeconds(stats.averageTimeSeconds)}
                     </Text>
-                    <Text style={styles.insightLabel}>
+                    <Text style={[styles.insightLabel, themedStyles?.mutedText]}>
                       {strings.stats.avgTime}
                     </Text>
                   </View>
-                  <View style={styles.insightItem}>
+                  <View style={[styles.insightItem, themedStyles?.cardMuted]}>
                     <MaterialCommunityIcons
                       name="check-decagram-outline"
                       size={18}
                       color={GOLD}
                     />
-                    <Text style={styles.insightValue}>
+                    <Text style={[styles.insightValue, themedStyles?.primaryText]}>
                       {stats.perfectAttempts}
                     </Text>
-                    <Text style={styles.insightLabel}>
+                    <Text style={[styles.insightLabel, themedStyles?.mutedText]}>
                       {strings.stats.perfectAttempts}
                     </Text>
                   </View>
-                  <View style={styles.insightItem}>
+                  <View style={[styles.insightItem, themedStyles?.cardMuted]}>
                     <MaterialCommunityIcons
                       name="star-outline"
                       size={18}
                       color={GOLD}
                     />
-                    <Text style={styles.insightValue}>{stats.bestScore}%</Text>
-                    <Text style={styles.insightLabel}>
+                    <Text style={[styles.insightValue, themedStyles?.primaryText]}>{stats.bestScore}%</Text>
+                    <Text style={[styles.insightLabel, themedStyles?.mutedText]}>
                       {strings.stats.bestScore}
                     </Text>
                   </View>
@@ -255,12 +260,12 @@ const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
 
                 {stats.difficultyBreakdown.length > 0 && (
                   <View style={styles.difficultyBox}>
-                    <Text style={styles.statsSubTitle}>
+                    <Text style={[styles.statsSubTitle, themedStyles?.primaryText]}>
                       {strings.stats.difficultyBreakdown}
                     </Text>
                     {stats.difficultyBreakdown.map(item => (
-                      <View style={styles.difficultyRow} key={item.difficulty}>
-                        <Text style={styles.difficultyLabel}>
+                      <View style={[styles.difficultyRow, themedStyles?.cardMuted]} key={item.difficulty}>
+                        <Text style={[styles.difficultyLabel, themedStyles?.primaryText]}>
                           {strings.difficultyLevels[
                             item.difficulty as keyof typeof strings.difficultyLevels
                           ] || item.difficulty}
@@ -274,7 +279,7 @@ const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
                 )}
               </View>
             )}
-            <Text style={styles.historyTitle}>سجل النتائج</Text>
+            <Text style={[styles.historyTitle, themedStyles?.primaryText]}>سجل النتائج</Text>
           </>
         }
         data={stats?.history || []}
@@ -290,7 +295,7 @@ const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
         onRequestClose={() => setShowGoalModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, styles.goalModalContent]}>
+          <View style={[styles.modalContent, styles.goalModalContent, themedStyles?.modalContent]}>
             <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.goalModalScroll}
@@ -301,27 +306,29 @@ const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
                   size={42}
                   color={GOLD}
                 />
-                <Text style={styles.modalTitle}>
+                <Text style={[styles.modalTitle, themedStyles?.primaryText]}>
                   {strings.stats.goalModalTitle}
                 </Text>
-                <Text style={styles.modalCaption}>
+                <Text style={[styles.modalCaption, themedStyles?.mutedText]}>
                   {strings.stats.goalModalCaption}
                 </Text>
               </View>
 
-              <View style={styles.goalPeriodRow}>
+              <View style={[styles.goalPeriodRow, themedStyles?.segmentedWrap]}>
                 {(['week', 'month'] as MemorizationGoalPeriod[]).map(period => (
                   <TouchableOpacity
                     key={period}
                     style={[
                       styles.goalPeriodOption,
                       goalPeriod === period && styles.goalPeriodOptionActive,
+                      goalPeriod === period && themedStyles?.chipActive,
                     ]}
                     onPress={() => setGoalPeriod(period)}
                   >
                     <Text
                       style={[
                         styles.goalPeriodText,
+                        themedStyles?.primaryText,
                         goalPeriod === period && styles.goalPeriodTextActive,
                       ]}
                     >
@@ -335,24 +342,26 @@ const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
 
               <View style={styles.goalInputRow}>
                 <TouchableOpacity
-                  style={styles.goalAdjustBtn}
+                  style={[styles.goalAdjustBtn, themedStyles?.goalAdjustBtn]}
                   onPress={() => setTempGoal(Math.max(1, tempGoal - 1))}
                 >
-                  <MaterialCommunityIcons name="minus" size={24} color={NAVY} />
+                  <MaterialCommunityIcons name="minus" size={24} color={themedStyles ? '#78A1BD' : NAVY} />
                 </TouchableOpacity>
 
                 <View style={styles.goalValueBlock}>
-                  <Text style={styles.goalValue}>{tempGoal}</Text>
-                  <Text style={styles.goalUnitText}>
+                  <Text style={[styles.goalValue, themedStyles?.accentText]}>
+                    {tempGoal}
+                  </Text>
+                  <Text style={[styles.goalUnitText, themedStyles?.mutedText]}>
                     {strings.stats.versesUnit}
                   </Text>
                 </View>
 
                 <TouchableOpacity
-                  style={styles.goalAdjustBtn}
+                  style={[styles.goalAdjustBtn, themedStyles?.goalAdjustBtn]}
                   onPress={() => setTempGoal(tempGoal + 1)}
                 >
-                  <MaterialCommunityIcons name="plus" size={24} color={NAVY} />
+                  <MaterialCommunityIcons name="plus" size={24} color={themedStyles ? '#78A1BD' : NAVY} />
                 </TouchableOpacity>
               </View>
 
@@ -369,7 +378,7 @@ const MemorizationStatsPanel = ({ contentContainerStyle }: Props) => {
                 style={styles.ghostBtn}
                 onPress={() => setShowGoalModal(false)}
               >
-                <Text style={styles.ghostBtnText}>إلغاء</Text>
+                <Text style={[styles.ghostBtnText, themedStyles?.mutedText]}>إلغاء</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>

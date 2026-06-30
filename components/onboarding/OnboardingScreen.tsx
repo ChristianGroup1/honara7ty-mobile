@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   ActivityIndicator,
   Dimensions,
@@ -20,6 +21,7 @@ import { hasSeenNotificationPermissionPrompt } from '../../lib/notificationPermi
 import { getStrings } from '../../localization';
 import type { OnboardingSlide } from '../../localization/modules/onboarding';
 import { ACCENT, NAVY } from '../shared/designTokens';
+import { useNightMode } from '../../lib/nightMode';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -66,11 +68,13 @@ const HeroArtwork = ({
   accent,
   label,
   index,
+  themedStyles,
 }: {
   icon: string;
   accent: string;
   label: string;
   index: number;
+  themedStyles: ReturnType<typeof createThemedStyles>;
 }) => {
   const badgeRotation = index % 2 === 0 ? '10deg' : '-10deg';
 
@@ -83,9 +87,11 @@ const HeroArtwork = ({
       <View style={styles.dotClusterTop} />
       <View style={styles.ringTopRight} />
       <View style={styles.ringBottomLeft} />
-      <View style={styles.heroPill}>
+      <View style={[styles.heroPill, themedStyles.heroPill]}>
         <MaterialCommunityIcons name={icon} size={16} color={accent} />
-        <Text style={styles.heroPillText}>{label}</Text>
+        <Text style={[styles.heroPillText, themedStyles.heroPillText]}>
+          {label}
+        </Text>
       </View>
 
       <View style={styles.photoShadow} />
@@ -118,6 +124,7 @@ type Props = {
   route?: {
     params?: {
       inApp?: boolean;
+      resetOnFocus?: boolean;
     };
   };
 };
@@ -126,10 +133,28 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   const strings = getStrings().onboarding;
   const slides = strings.slides;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const themedStyles = React.useMemo(() => createThemedStyles(colors), [colors]);
   const listRef = useRef<FlatList<Slide>>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [finishing, setFinishing] = useState(false);
   const inApp = route?.params?.inApp === true;
+  const resetOnFocus = route?.params?.resetOnFocus === true;
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!resetOnFocus) {
+        return undefined;
+      }
+
+      setCurrentIndex(0);
+      requestAnimationFrame(() => {
+        listRef.current?.scrollToOffset({ offset: 0, animated: false });
+      });
+
+      return undefined;
+    }, [resetOnFocus]),
+  );
 
   useEffect(() => {
     const currentSlide = slides[currentIndex];
@@ -238,12 +263,14 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
             accent={theme.accent}
             label={theme.label}
             index={index}
+            themedStyles={themedStyles}
           />
         </View>
 
         <View
           style={[
             styles.bottomCard,
+            themedStyles.bottomCard,
             {
               paddingBottom: Math.max(insets.bottom, 18) + 10,
             },
@@ -256,6 +283,7 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
                   key={dotIndex}
                   style={[
                     styles.dot,
+                    themedStyles.dot,
                     dotIndex === currentIndex
                       ? [styles.dotActive, { backgroundColor: theme.accent }]
                       : null,
@@ -264,18 +292,32 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
               ))}
             </View>
 
-            {item.title ? <Text style={styles.title}>{item.title}</Text> : null}
+            {item.title ? (
+              <Text style={[styles.title, themedStyles.title]}>
+                {item.title}
+              </Text>
+            ) : null}
 
             {item.body ? (
-              <Text style={[styles.body, !item.title ? styles.bodyLead : null]}>
+              <Text
+                style={[
+                  styles.body,
+                  themedStyles.body,
+                  !item.title ? [styles.bodyLead, themedStyles.bodyLead] : null,
+                ]}
+              >
                 {item.body}
               </Text>
             ) : null}
 
             {item.verse ? (
               <View style={styles.verseWrap}>
-                <Text style={styles.verseText}>{item.verse}</Text>
-                <Text style={styles.verseRef}>{item.verseRef}</Text>
+                <Text style={[styles.verseText, themedStyles.verseText]}>
+                  {item.verse}
+                </Text>
+                <Text style={[styles.verseRef, themedStyles.verseRef]}>
+                  {item.verseRef}
+                </Text>
               </View>
             ) : null}
           </View>
@@ -286,7 +328,9 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
               disabled={finishing}
               activeOpacity={0.8}
             >
-              <Text style={styles.skipText}>{strings.skip}</Text>
+              <Text style={[styles.skipText, themedStyles.skipText]}>
+                {strings.skip}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -322,7 +366,7 @@ const OnboardingScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, themedStyles.root]}>
       <StatusBar
         barStyle={'light-content'}
         translucent
@@ -660,5 +704,47 @@ const styles = StyleSheet.create({
     elevation: 7,
   },
 });
+
+const createThemedStyles = (
+  colors: ReturnType<typeof useNightMode>['colors'],
+) =>
+  StyleSheet.create({
+    root: {
+      backgroundColor: colors.background,
+    },
+    heroPill: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    heroPillText: {
+      color: colors.text,
+    },
+    bottomCard: {
+      backgroundColor: colors.card,
+      shadowColor: colors.shadow,
+    },
+    dot: {
+      backgroundColor: colors.cardMuted,
+    },
+    title: {
+      color: colors.text,
+    },
+    body: {
+      color: colors.mutedText,
+    },
+    bodyLead: {
+      color: colors.text,
+    },
+    verseText: {
+      color: colors.text,
+    },
+    verseRef: {
+      color: colors.mutedText,
+    },
+    skipText: {
+      color: colors.text,
+    },
+  });
 
 export default OnboardingScreen;

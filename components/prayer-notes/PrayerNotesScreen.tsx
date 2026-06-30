@@ -25,16 +25,20 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import supabase from '../../lib/supbase';
 import CustomAlert, { AlertButton } from '../shared/CustomAlert';
-import { MUTED, NAVY, GOLD } from './constants';
+import { GOLD } from './constants';
 import PrayerDetailModal from './PrayerDetailModal';
 import PrayerEditorModal from './PrayerEditorModal';
 import PrayerNotesHeader from './PrayerNotesHeader';
 import PrayerNoteCard from './PrayerNoteCard';
-import { prayerNotesStyles as styles } from './styles';
+import {
+  createThemedPrayerNotesStyles,
+  prayerNotesStyles as styles,
+} from './styles';
 import HeroBackground from '../shared/HeroBackground';
 import { PrayerNote } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
+import { useNightMode } from '../../lib/nightMode';
 
 import {
   deletePrayerNote,
@@ -47,6 +51,11 @@ import {
 const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const strings = getStrings().prayerNotes;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const themedStyles = useMemo(
+    () => createThemedPrayerNotesStyles(colors),
+    [colors],
+  );
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const sessionUserRef = useRef<any>(null);
   const hasLoadedNotesRef = useRef(false);
@@ -274,34 +283,47 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         onOpenDetail={openDetail}
         onOpenEdit={openEdit}
         onDelete={deleteNote}
+        themedStyles={themedStyles}
+        answeredActionColor={colors.text}
       />
     ),
-    [deleteNote, isNarrowWidth, openDetail, openEdit, toggleAnswered],
+    [
+      deleteNote,
+      isNarrowWidth,
+      openDetail,
+      openEdit,
+      themedStyles,
+      toggleAnswered,
+    ],
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+    <SafeAreaView style={[styles.container, themedStyles.container]} edges={[]}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <PrayerNotesHeader
         topInsetHeight={insets?.top ?? 0}
         onBack={() => navigation.goBack()}
         onAdd={openNew}
       />
 
-      <View style={styles.searchRow}>
-        <MaterialCommunityIcons name="magnify" size={18} color={MUTED} />
+      <View style={[styles.searchRow, themedStyles.searchRow]}>
+        <MaterialCommunityIcons
+          name="magnify"
+          size={18}
+          color={colors.mutedText}
+        />
         <TextInput
           placeholder={strings.searchPlaceholder}
-          placeholderTextColor={MUTED}
-          style={styles.searchInput}
+          placeholderTextColor={colors.mutedText}
+          style={[styles.searchInput, themedStyles.searchInput]}
           value={query}
           onChangeText={setQuery}
         />
       </View>
 
       {loading && notes.length === 0 ? (
-        <View style={styles.fullScreenLoader}>
-          <ActivityIndicator size="large" color={NAVY} />
+        <View style={[styles.fullScreenLoader, themedStyles.fullScreenLoader]}>
+          <ActivityIndicator size="large" color={colors.accent} />
         </View>
       ) : (
         <FlatList
@@ -323,8 +345,8 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => fetchNotes({ showRefreshing: true })}
-              colors={[NAVY]}
-              tintColor={NAVY}
+              colors={[colors.accent]}
+              tintColor={colors.accent}
             />
           }
           ListHeaderComponent={
@@ -353,16 +375,20 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
             ) : null
           }
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <View style={styles.emptyIconWrap}>
+            <View style={[styles.emptyContainer, themedStyles.emptyContainer]}>
+              <View style={[styles.emptyIconWrap, themedStyles.emptyIconWrap]}>
                 <MaterialCommunityIcons
                   name="hand-heart"
                   size={42}
                   color={GOLD}
                 />
               </View>
-              <Text style={styles.emptyTitle}>{strings.emptyTitle}</Text>
-              <Text style={styles.emptyTextSmall}>{strings.emptyMessage}</Text>
+              <Text style={[styles.emptyTitle, themedStyles.emptyTitle]}>
+                {strings.emptyTitle}
+              </Text>
+              <Text style={[styles.emptyTextSmall, themedStyles.emptyTextSmall]}>
+                {strings.emptyMessage}
+              </Text>
             </View>
           }
         />
@@ -378,6 +404,8 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         onChangeText={setNewNote}
         onClose={resetComposer}
         onSave={handleComposerSubmit}
+        themedStyles={themedStyles}
+        placeholderTextColor={colors.mutedText}
       />
 
       <PrayerDetailModal
@@ -389,6 +417,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         onClose={closeDetail}
         onEdit={openEdit}
         onDelete={deleteNote}
+        themedStyles={themedStyles}
       />
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />

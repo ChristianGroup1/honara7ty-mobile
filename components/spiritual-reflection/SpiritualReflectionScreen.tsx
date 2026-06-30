@@ -29,11 +29,16 @@ import ReflectionCard from './ReflectionCard';
 import ReflectionDetailModal from './ReflectionDetailModal';
 import ReflectionEditorModal from './ReflectionEditorModal';
 import SpiritualReflectionHeader from './SpiritualReflectionHeader';
-import { spiritualReflectionStyles as styles, GOLD, NAVY } from './styles';
+import {
+  createThemedSpiritualReflectionStyles,
+  spiritualReflectionStyles as styles,
+  GOLD,
+} from './styles';
 import HeroBackground from '../shared/HeroBackground';
 import { Reflection } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getStrings } from '../../localization';
+import { useNightMode } from '../../lib/nightMode';
 import {
   deleteReflection as removeReflection,
   readCachedReflections,
@@ -44,6 +49,11 @@ import {
 const SpiritualReflectionScreen = ({ navigation, route }: any) => {
   const strings = getStrings().spiritualReflection;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const themedStyles = useMemo(
+    () => createThemedSpiritualReflectionStyles(colors),
+    [colors],
+  );
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const sessionUserRef = useRef<any>(null);
   const hasLoadedReflectionsRef = useRef(false);
@@ -268,33 +278,42 @@ const SpiritualReflectionScreen = ({ navigation, route }: any) => {
         onOpenDetail={openDetail}
         onOpenEdit={openEdit}
         onDelete={deleteReflection}
+        themedStyles={themedStyles}
       />
     ),
-    [deleteReflection, isNarrowWidth, openDetail, openEdit],
+    [deleteReflection, isNarrowWidth, openDetail, openEdit, themedStyles],
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+    <SafeAreaView style={[styles.container, themedStyles.container]} edges={[]}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <SpiritualReflectionHeader
         topInsetHeight={insets?.top ?? 0}
         onBack={() => navigation.goBack()}
         onAdd={openNew}
       />
 
-      <View style={styles.searchRow}>
-        <MaterialCommunityIcons name="magnify" size={18} color="#8A94A6" />
+      <View style={[styles.searchRow, themedStyles.searchRow]}>
+        <MaterialCommunityIcons
+          name="magnify"
+          size={18}
+          color={colors.mutedText}
+        />
         <TextInput
           placeholder={strings.searchPlaceholder}
-          placeholderTextColor="#8A94A6"
-          style={styles.searchInput}
+          placeholderTextColor={colors.mutedText}
+          style={[styles.searchInput, themedStyles.searchInput]}
           value={query}
           onChangeText={setQuery}
         />
       </View>
 
       {loading && reflections.length === 0 ? (
-        <ActivityIndicator style={styles.loader} size="large" color={NAVY} />
+        <ActivityIndicator
+          style={styles.loader}
+          size="large"
+          color={colors.accent}
+        />
       ) : (
         <FlatList
           data={filteredReflections}
@@ -311,8 +330,8 @@ const SpiritualReflectionScreen = ({ navigation, route }: any) => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => fetchReflections({ showRefreshing: true })}
-              colors={[NAVY]}
-              tintColor={NAVY}
+              colors={[colors.accent]}
+              tintColor={colors.accent}
             />
           }
           ListHeaderComponent={
@@ -341,16 +360,20 @@ const SpiritualReflectionScreen = ({ navigation, route }: any) => {
             ) : null
           }
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <View style={styles.emptyIconWrap}>
+            <View style={[styles.emptyContainer, themedStyles.emptyContainer]}>
+              <View style={[styles.emptyIconWrap, themedStyles.emptyIconWrap]}>
                 <MaterialCommunityIcons
                   name="book-open-variant"
                   size={42}
                   color={GOLD}
                 />
               </View>
-              <Text style={styles.emptyTitle}>{strings.emptyTitle}</Text>
-              <Text style={styles.emptyTextSmall}>{strings.emptyMessage}</Text>
+              <Text style={[styles.emptyTitle, themedStyles.emptyTitle]}>
+                {strings.emptyTitle}
+              </Text>
+              <Text style={[styles.emptyTextSmall, themedStyles.emptyTextSmall]}>
+                {strings.emptyMessage}
+              </Text>
             </View>
           }
         />
@@ -366,6 +389,8 @@ const SpiritualReflectionScreen = ({ navigation, route }: any) => {
         onClose={() => setShowModal(false)}
         onChangeText={setText}
         onSave={handleSave}
+        themedStyles={themedStyles}
+        placeholderTextColor={colors.mutedText}
       />
 
       <ReflectionDetailModal
@@ -376,6 +401,7 @@ const SpiritualReflectionScreen = ({ navigation, route }: any) => {
         isCompactWidth={isCompactWidth}
         onClose={closeDetail}
         onEdit={openEdit}
+        themedStyles={themedStyles}
         onDelete={async item => {
           const userId = await getCurrentUserId();
           if (!userId) {

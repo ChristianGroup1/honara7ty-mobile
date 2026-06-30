@@ -1,4 +1,5 @@
 import { Platform, StyleSheet } from 'react-native';
+import type { AppTheme } from '../../lib/nightMode';
 import { BG, CARD, DANGER, NAVY } from './constants';
 import {
   heroBadgeBase,
@@ -422,3 +423,100 @@ export const prayerNotesStyles = StyleSheet.create({
   editIconBtn: { backgroundColor: NAVY },
   deleteIconBtn: { backgroundColor: DANGER },
 });
+
+export const createThemedPrayerNotesStyles = (
+  colors: AppTheme['colors'],
+) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+    },
+    fullScreenLoader: {
+      backgroundColor: colors.background,
+    },
+    searchRow: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    searchInput: {
+      color: colors.text,
+    },
+    card: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    answeredCard: {
+      backgroundColor: colors.cardMuted,
+    },
+    cardText: {
+      color: colors.text,
+    },
+    iconBtn: {
+      borderColor: colors.border,
+    },
+    answeredIconBtn: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+    },
+    emptyContainer: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+    },
+    emptyIconWrap: {
+      backgroundColor: colors.cardMuted,
+    },
+    emptyTitle: {
+      color: colors.text,
+    },
+    emptyTextSmall: {
+      color: colors.mutedText,
+    },
+    modalBox: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    modalTitle: {
+      color: colors.text,
+    },
+    modalHint: {
+      color: colors.mutedText,
+    },
+    modalInput: {
+      backgroundColor: colors.cardMuted,
+      borderColor: colors.border,
+      color: colors.text,
+    },
+    modalScrollArea: {
+      backgroundColor: colors.cardMuted,
+      borderRadius: 14,
+      paddingHorizontal: 12,
+    },
+    cancelBtn: {
+      backgroundColor: colors.cardMuted,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    cancelBtnText: {
+      color: colors.text,
+    },
+    secondaryBtn: {
+      backgroundColor: colors.cardMuted,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    saveBtn: {
+      backgroundColor: colors.header,
+    },
+    editIconBtn: {
+      backgroundColor: colors.header,
+    },
+  });
+
+export type ThemedPrayerNotesStyles = ReturnType<
+  typeof createThemedPrayerNotesStyles
+>;

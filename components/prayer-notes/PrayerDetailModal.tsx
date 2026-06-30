@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { prayerNotesStyles as styles } from './styles';
+import {
+  prayerNotesStyles as styles,
+  ThemedPrayerNotesStyles,
+} from './styles';
 import { PrayerNote } from './types';
 import { getStrings } from '../../localization';
 
@@ -20,6 +23,7 @@ interface PrayerDetailModalProps {
   onClose: () => void;
   onEdit: (note: PrayerNote) => void;
   onDelete: (note: PrayerNote) => void;
+  themedStyles: ThemedPrayerNotesStyles;
 }
 
 const PrayerDetailModal = ({
@@ -31,6 +35,7 @@ const PrayerDetailModal = ({
   onClose,
   onEdit,
   onDelete,
+  themedStyles,
 }: PrayerDetailModalProps) => {
   const strings = getStrings().prayerNotes;
   const modalOverlayStyle = keyboardVisible
@@ -42,16 +47,26 @@ const PrayerDetailModal = ({
     <Modal visible={visible} animationType="slide" transparent>
       <View style={[styles.modalOverlay, modalOverlayStyle]}>
         <Pressable style={styles.modalPressable} onPress={onClose} />
-        <View style={[styles.modalBox, styles.modalBoxPadded]}>
-          <Text style={styles.modalTitle}>{strings.detailTitle}</Text>
+        <View
+          style={[styles.modalBox, styles.modalBoxPadded, themedStyles.modalBox]}
+        >
+          <Text style={[styles.modalTitle, themedStyles.modalTitle]}>
+            {strings.detailTitle}
+          </Text>
 
           <ScrollView
-            style={[styles.modalScrollArea, scrollStyle]}
+            style={[
+              styles.modalScrollArea,
+              themedStyles.modalScrollArea,
+              scrollStyle,
+            ]}
             contentContainerStyle={styles.modalScrollContent}
             showsVerticalScrollIndicator
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.cardText}>{detailItem?.content ?? ''}</Text>
+            <Text style={[styles.cardText, themedStyles.cardText]}>
+              {detailItem?.content ?? ''}
+            </Text>
           </ScrollView>
 
           <View
@@ -60,12 +75,17 @@ const PrayerDetailModal = ({
               isCompactWidth && styles.detailActionsCompact,
             ]}
           >
-            <TouchableOpacity style={styles.secondaryBtn} onPress={onClose}>
-              <Text style={styles.cancelBtnText}>{strings.close}</Text>
+            <TouchableOpacity
+              style={[styles.secondaryBtn, themedStyles.secondaryBtn]}
+              onPress={onClose}
+            >
+              <Text style={[styles.cancelBtnText, themedStyles.cancelBtnText]}>
+                {strings.close}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.saveBtn}
+              style={[styles.saveBtn, themedStyles.saveBtn]}
               onPress={() => {
                 if (detailItem) {
                   onClose();

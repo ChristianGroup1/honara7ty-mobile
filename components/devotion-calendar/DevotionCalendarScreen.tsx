@@ -9,8 +9,6 @@ import {
   ActivityIndicator,
   ScrollView,
   StatusBar,
-  Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import {
@@ -30,6 +28,7 @@ import {
 } from '../data/bibleMetadata';
 import DevotionCalendarSummary from './DevotionCalendarSummary';
 import DevotionCalendarGrid from './DevotionCalendarGrid';
+import DevotionCalendarSelectedDayCard from './DevotionCalendarSelectedDayCard';
 import DevotionDayEditor from './DevotionDayEditor';
 import { createDevotionCalendarStyles } from './styles';
 import { DevotionDayLog } from './types';
@@ -410,51 +409,16 @@ const DevotionCalendarScreen = ({ navigation }: any) => {
             onPickDay={handlePickDay}
           />
 
-          <View style={styles.selectedDayCard}>
-            <View style={styles.selectedDayHeader}>
-              <View>
-                <Text style={styles.selectedDayTitle}>
-                  {strings.selectedDayTitle}
-                </Text>
-                <Text style={styles.selectedDayDate}>{selectedDate}</Text>
-              </View>
-              <View
-                style={[
-                  styles.selectedDayStatus,
-                  selectedLog?.completed
-                    ? styles.selectedDayStatusDone
-                    : styles.selectedDayStatusPending,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.selectedDayStatusText,
-                    selectedLog?.completed
-                      ? styles.selectedDayStatusTextDone
-                      : styles.selectedDayStatusTextPending,
-                  ]}
-                >
-                  {selectedLog
-                    ? selectedLog.completed
-                      ? strings.completed
-                      : strings.notCompleted
-                    : strings.noRecordStatus}
-                </Text>
-              </View>
-            </View>
-            <Text style={styles.selectedDayReading}>{selectedReadingText}</Text>
-            {canRecordSelectedDate ? (
-              <TouchableOpacity
-                style={styles.recordDevotionButton}
-                onPress={openSelectedDayEditor}
-                disabled={saving}
-              >
-                <Text style={styles.recordDevotionButtonText}>
-                  {strings.recordDevotion}
-                </Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
+          <DevotionCalendarSelectedDayCard
+            styles={styles}
+            strings={strings}
+            selectedDateLabel={selectedDate}
+            readingText={selectedReadingText}
+            completed={selectedLog?.completed ?? null}
+            canRecordSelectedDate={canRecordSelectedDate}
+            saving={saving}
+            onRecord={openSelectedDayEditor}
+          />
         </ScrollView>
       )}
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
-import { badgesStyles as styles } from './styles';
+import { badgesStyles as styles, ThemedBadgesStyles } from './styles';
 import { GOLD } from './constants';
 import { getStrings } from '../../localization';
 import HeroBackground from '../shared/HeroBackground';
@@ -11,6 +11,7 @@ interface StreakCardProps {
   earnedCount: number;
   totalCount: number;
   xp: number;
+  themedStyles: ThemedBadgesStyles;
 }
 
 const StreakCard = ({
@@ -19,6 +20,7 @@ const StreakCard = ({
   earnedCount,
   totalCount,
   xp,
+  themedStyles,
 }: StreakCardProps) => {
   const strings = getStrings().badges;
   const nextMilestone = totalCount > earnedCount ? earnedCount + 1 : totalCount;
@@ -53,9 +55,13 @@ const StreakCard = ({
                   : strings.streak.nextMilestone(nextMilestone)}
               </Text>
             </View>
-            <View style={styles.streakNumberShell}>
-              <Text style={styles.streakNumber}>{streak}</Text>
-              <Text style={styles.streakDays}>
+            <View
+              style={[styles.streakNumberShell, themedStyles.streakNumberShell]}
+            >
+              <Text style={[styles.streakNumber, themedStyles.streakNumber]}>
+                {streak}
+              </Text>
+              <Text style={[styles.streakDays, themedStyles.streakDays]}>
                 {strings.streak.daysContinuous}
               </Text>
             </View>

@@ -6,6 +6,45 @@ const sentryNavigationIntegration = Sentry.reactNavigationIntegration({
 
 let isSentryInitialized = false;
 
+type SentryHint = {
+  originalException?: unknown;
+};
+
+function isExpectedAbortError(event: Sentry.Event, hint?: SentryHint) {
+  const originalException = hint?.originalException;
+  const exceptionName =
+    typeof originalException === 'object' && originalException !== null
+      ? (originalException as { name?: string }).name
+      : undefined;
+  const exceptionMessage =
+    typeof originalException === 'object' && originalException !== null
+      ? (originalException as { message?: string }).message
+      : typeof originalException === 'string'
+        ? originalException
+        : undefined;
+  const eventException = event.exception?.values?.[0];
+  const eventMessage =
+    event.message ?? eventException?.value ?? eventException?.type ?? '';
+  const combinedMessage = [
+    exceptionName,
+    exceptionMessage,
+    eventException?.type,
+    eventException?.value,
+    eventMessage,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return (
+    combinedMessage === 'abort' ||
+    combinedMessage.includes('aborterror') ||
+    combinedMessage.includes('aborted') ||
+    combinedMessage.includes('the operation was aborted') ||
+    combinedMessage.includes('request aborted')
+  );
+}
+
 export function initializeSentry() {
   const dsn = 'https://7048b94c71a6d883a2cfd0aff6c6ac75@o4511268451254272.ingest.de.sentry.io/4511268453875792';
 
@@ -24,6 +63,13 @@ export function initializeSentry() {
     replaysSessionSampleRate: __DEV__ ? 1.0 : 0.1,
     replaysOnErrorSampleRate: 1.0,
     tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+    beforeSend(event, hint) {
+      if (isExpectedAbortError(event, hint)) {
+        return null;
+      }
+
+      return event;
+    },
   });
 
   isSentryInitialized = true;

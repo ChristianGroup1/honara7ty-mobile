@@ -19,4 +19,3 @@ export { default as ProfileScreen } from '../components/profile/ProfileScreen';
 export { default as DevotionGuideScreen } from '../components/devotion/DevotionGuideScreen';
 export { default as DevotionDetailScreen } from '../components/devotion/DevotionDetailScreen';
 export { default as DevotionCalendarScreen } from '../components/devotion-calendar/DevotionCalendarScreen';
-export { default as MyServicesScreen } from '../components/my-services/MyServicesScreen';

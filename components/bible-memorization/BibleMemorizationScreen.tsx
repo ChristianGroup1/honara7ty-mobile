@@ -7,12 +7,18 @@ import ResultScreen from './ResultScreen';
 import StatsScreen from './StatsScreen';
 import { memorizationStyles as styles } from './styles';
 import { MemorizationStackParamList } from './types';
+import { useNightMode } from '../../lib/nightMode';
 
 const Stack = createStackNavigator<MemorizationStackParamList>();
 
 const BibleMemorizationScreen = () => {
+  const { colors } = useNightMode();
+
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={[]}
+    >
       <Stack.Navigator
         initialRouteName="Pick"
         screenOptions={{ headerShown: false }}

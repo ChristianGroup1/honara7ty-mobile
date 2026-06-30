@@ -119,18 +119,4 @@ export function registerNotifeeForegroundHandler(
   });
 }
 
-/**
- * Background handler must be a top-level function and registered in entry file.
- */
-export async function notifeeBackgroundEventHandler({ type, detail }: any) {
-  if (type !== EventType.PRESS) return;
-  if (detail.pressAction?.id !== DEVOTION_PRESS_ACTION_ID) return;
-
-  // In background you usually can't directly navigate.
-  // Common pattern: store a flag in storage, then when app launches read it and navigate.
-  // Implement if needed.
-}
-
-notifee.onBackgroundEvent(notifeeBackgroundEventHandler);
-
 export default Sentry.wrap(App);

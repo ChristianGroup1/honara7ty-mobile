@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -19,7 +18,6 @@ import { palette, radius, shadow, spacing } from '../shared/designTokens';
 
 const DailyVerseCard = () => {
   const { colors } = useNightMode();
-  const { height } = useWindowDimensions();
   const strings = getStrings();
   const verse = useMemo(
     () =>
@@ -29,7 +27,7 @@ const DailyVerseCard = () => {
   );
   const cardRef = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
-  const styles = useMemo(() => createStyles(colors, height), [colors, height]);
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const shareCard = useCallback(async () => {
     if (!cardRef.current || sharing) {
@@ -131,15 +129,11 @@ const DailyVerseCard = () => {
   );
 };
 
-const createStyles = (
-  colors: ReturnType<typeof useNightMode>['colors'],
-  screenHeight: number,
-) =>
+const createStyles = (colors: ReturnType<typeof useNightMode>['colors']) =>
   StyleSheet.create({
     card: {
       borderRadius: radius.xl,
       position: 'relative',
-      marginBottom: Math.min(120, Math.max(56, screenHeight * 0.19)),
       ...shadow.hero,
     },
     captureContent: {

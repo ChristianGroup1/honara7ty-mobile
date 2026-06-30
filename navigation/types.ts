@@ -21,9 +21,6 @@ export type RootStackParamList = {
   BibleMemorization: undefined;
   Badges: undefined;
   WeeklyReport: undefined;
-  MyServices:
-    | { initialServiceVerse?: { text: string; reference: string } }
-    | undefined;
   LockScreenVerse: undefined;
   Testimonies: undefined;
   DailyNotifications: undefined;

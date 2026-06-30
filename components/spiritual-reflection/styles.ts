@@ -1,4 +1,5 @@
 import { Platform, StyleSheet } from 'react-native';
+import type { AppTheme } from '../../lib/nightMode';
 import { BG, GOLD, NAVY, palette } from '../shared/designTokens';
 import {
   heroBadgeBase,
@@ -334,3 +335,83 @@ export const spiritualReflectionStyles = StyleSheet.create({
   },
   deleteBtnText: { color: '#FFF', fontWeight: '700' },
 });
+
+export const createThemedSpiritualReflectionStyles = (
+  colors: AppTheme['colors'],
+) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+    },
+    searchRow: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    searchInput: {
+      color: colors.text,
+    },
+    card: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    cardContent: {
+      color: colors.text,
+    },
+    emptyContainer: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+    },
+    emptyIconWrap: {
+      backgroundColor: colors.cardMuted,
+    },
+    emptyTitle: {
+      color: colors.text,
+    },
+    emptyTextSmall: {
+      color: colors.mutedText,
+    },
+    modalBox: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    modalTitle: {
+      color: colors.text,
+    },
+    modalHint: {
+      color: colors.mutedText,
+    },
+    modalInput: {
+      backgroundColor: colors.cardMuted,
+      borderColor: colors.border,
+      color: colors.text,
+    },
+    modalScrollArea: {
+      backgroundColor: colors.cardMuted,
+      borderRadius: 14,
+      paddingHorizontal: 12,
+    },
+    cancelBtn: {
+      backgroundColor: colors.cardMuted,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    cancelBtnText: {
+      color: colors.text,
+    },
+    saveBtn: {
+      backgroundColor: colors.header,
+    },
+    editBtn: {
+      backgroundColor: colors.header,
+      borderColor: colors.border,
+    },
+  });
+
+export type ThemedSpiritualReflectionStyles = ReturnType<
+  typeof createThemedSpiritualReflectionStyles
+>;

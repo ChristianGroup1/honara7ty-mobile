@@ -1,6 +1,9 @@
 import React from 'react';
 import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { spiritualReflectionStyles as styles } from './styles';
+import {
+  spiritualReflectionStyles as styles,
+  ThemedSpiritualReflectionStyles,
+} from './styles';
 import { Reflection } from './types';
 import { formatDate } from './utils';
 import { getStrings } from '../../localization';
@@ -14,6 +17,7 @@ interface ReflectionDetailModalProps {
   onClose: () => void;
   onEdit: (item: Reflection) => void;
   onDelete: (item: Reflection) => void;
+  themedStyles: ThemedSpiritualReflectionStyles;
 }
 
 const ReflectionDetailModal = ({
@@ -25,6 +29,7 @@ const ReflectionDetailModal = ({
   onClose,
   onEdit,
   onDelete,
+  themedStyles,
 }: ReflectionDetailModalProps) => {
   const strings = getStrings().spiritualReflection;
   const modalOverlayStyle = keyboardVisible ? styles.modalOverlayTransparent : null;
@@ -39,19 +44,29 @@ const ReflectionDetailModal = ({
         ]}
       >
         <Pressable style={styles.modalPressable} onPress={onClose} />
-        <View style={[styles.modalBox, styles.modalBoxPadded]}>
-          <Text style={styles.modalTitle}>{strings.detailTitle}</Text>
-          <Text style={styles.modalHint}>
+        <View
+          style={[styles.modalBox, styles.modalBoxPadded, themedStyles.modalBox]}
+        >
+          <Text style={[styles.modalTitle, themedStyles.modalTitle]}>
+            {strings.detailTitle}
+          </Text>
+          <Text style={[styles.modalHint, themedStyles.modalHint]}>
             {detailItem ? formatDate(detailItem.date) : ''}
           </Text>
 
           <ScrollView
-            style={[styles.modalScrollArea, scrollStyle]}
+            style={[
+              styles.modalScrollArea,
+              themedStyles.modalScrollArea,
+              scrollStyle,
+            ]}
             contentContainerStyle={styles.modalScrollContent}
             showsVerticalScrollIndicator
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.cardContent}>{detailItem?.content ?? ''}</Text>
+            <Text style={[styles.cardContent, themedStyles.cardContent]}>
+              {detailItem?.content ?? ''}
+            </Text>
           </ScrollView>
 
           <View
@@ -60,12 +75,17 @@ const ReflectionDetailModal = ({
               isCompactWidth && styles.modalActionsCompact,
             ]}
           >
-            <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-              <Text style={styles.cancelBtnText}>{strings.close}</Text>
+            <TouchableOpacity
+              style={[styles.cancelBtn, themedStyles.cancelBtn]}
+              onPress={onClose}
+            >
+              <Text style={[styles.cancelBtnText, themedStyles.cancelBtnText]}>
+                {strings.close}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.saveBtn}
+              style={[styles.saveBtn, themedStyles.saveBtn]}
               onPress={() => {
                 if (detailItem) {
                   onClose();

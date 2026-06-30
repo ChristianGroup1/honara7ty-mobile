@@ -1,9 +1,7 @@
 /**
  * Shared design tokens for the youthful redesign.
  *
- * IMPORTANT: colors intentionally reuse the app's existing hex values so the
- * runtime night-mode patch in lib/nightMode.tsx keeps transforming them.
- * This module only adds a consistent scale for radius / spacing / shadows /
+ * This module centralizes the shared palette, radius, spacing, shadows, and
  * typography so every screen shares the same modern, rounded, airy language.
  */
 

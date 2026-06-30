@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Testament } from '../data/bibleMetadata';
-import { NAVY } from './designTokens';
+import { AppTheme, useNightMode } from '../../lib/nightMode';
 
 type Labels = {
   bookTitle: string;
@@ -84,6 +84,8 @@ const BiblePassagePicker = ({
   onSelectAllVerses,
   onClearVerses,
 }: Props) => {
+  const { colors } = useNightMode();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [bookPickerVisible, setBookPickerVisible] = useState(false);
   const [chapterPickerVisible, setChapterPickerVisible] = useState(false);
   const [verseStartPickerVisible, setVerseStartPickerVisible] = useState(false);
@@ -256,6 +258,8 @@ const BiblePassagePicker = ({
       </Text>
 
       <PickerModal
+        styles={styles}
+        colors={colors}
         visible={bookPickerVisible}
         title={
           selectedTestament === 'old'
@@ -291,6 +295,8 @@ const BiblePassagePicker = ({
       </PickerModal>
 
       <PickerModal
+        styles={styles}
+        colors={colors}
         visible={chapterPickerVisible}
         title={labels.chapterTitle}
         onClose={() => setChapterPickerVisible(false)}
@@ -342,6 +348,8 @@ const BiblePassagePicker = ({
       </PickerModal>
 
       <PickerModal
+        styles={styles}
+        colors={colors}
         visible={verseStartPickerVisible}
         title={labels.verseTitle || ''}
         onClose={() => setVerseStartPickerVisible(false)}
@@ -407,6 +415,8 @@ const BiblePassagePicker = ({
       </PickerModal>
 
       <PickerModal
+        styles={styles}
+        colors={colors}
         visible={verseEndPickerVisible}
         title={labels.toVerseTitle || ''}
         onClose={() => setVerseEndPickerVisible(false)}
@@ -443,11 +453,15 @@ const BiblePassagePicker = ({
 };
 
 const PickerModal = ({
+  styles,
+  colors,
   visible,
   title,
   onClose,
   children,
 }: {
+  styles: ReturnType<typeof createStyles>;
+  colors: AppTheme['colors'];
   visible: boolean;
   title: string;
   onClose: () => void;
@@ -466,7 +480,7 @@ const PickerModal = ({
         <View style={styles.modalHeader}>
           <Text style={styles.modalTitle}>{title}</Text>
           <TouchableOpacity style={styles.closeIconButton} onPress={onClose}>
-            <MaterialCommunityIcons name="close" size={20} color={NAVY} />
+            <MaterialCommunityIcons name="close" size={20} color={colors.text} />
           </TouchableOpacity>
         </View>
         <ScrollView
@@ -480,9 +494,10 @@ const PickerModal = ({
   </Modal>
 );
 
-const styles = StyleSheet.create({
+const createStyles = (colors: AppTheme['colors']) =>
+  StyleSheet.create({
   fieldTitle: {
-    color: NAVY,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '900',
     marginTop: 12,
@@ -493,7 +508,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginBottom: 12,
-    backgroundColor: '#EFF3F8',
+    backgroundColor: colors.cardMuted,
     borderRadius: 16,
     padding: 5,
   },
@@ -504,15 +519,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  testamentTabActive: { backgroundColor: NAVY },
-  testamentTabText: { color: NAVY, fontSize: 13, fontWeight: '900' },
+  testamentTabActive: { backgroundColor: colors.header },
+  testamentTabText: { color: colors.text, fontSize: 13, fontWeight: '900' },
   testamentTabTextActive: { color: '#FFF' },
   selectorRow: {
     minHeight: 58,
     borderRadius: 15,
-    backgroundColor: '#F8FAFD',
+    backgroundColor: colors.cardMuted,
     borderWidth: 1,
-    borderColor: '#E3E8F1',
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
@@ -523,26 +538,26 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 13,
-    backgroundColor: '#78A1BD',
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
   selectorBody: { flex: 1, marginHorizontal: 10 },
   selectorLabel: {
-    color: '#667085',
+    color: colors.mutedText,
     fontSize: 11,
     fontWeight: '800',
     textAlign: 'left',
   },
   selectorValue: {
-    color: NAVY,
+    color: colors.text,
     fontSize: 14,
     fontWeight: '900',
     marginTop: 3,
     textAlign: 'left',
   },
   hint: {
-    color: '#667085',
+    color: colors.mutedText,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 0,
@@ -556,7 +571,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: { flex: 1 },
   modalCard: {
-    backgroundColor: '#FFF',
+    backgroundColor: colors.card,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 16,
@@ -567,7 +582,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 4,
     borderRadius: 999,
-    backgroundColor: '#D8DEE8',
+    backgroundColor: colors.border,
     marginBottom: 12,
   },
   modalHeader: {
@@ -577,7 +592,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   modalTitle: {
-    color: NAVY,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '900',
     textAlign: 'left',
@@ -586,7 +601,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: '#F4F6FA',
+    backgroundColor: colors.cardMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -596,15 +611,15 @@ const styles = StyleSheet.create({
     width: '48%',
     minHeight: 46,
     borderRadius: 13,
-    backgroundColor: '#F8FAFD',
+    backgroundColor: colors.cardMuted,
     borderWidth: 1,
-    borderColor: '#E3E8F1',
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
   },
   bookOptionText: {
-    color: NAVY,
+    color: colors.text,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: '800',
@@ -614,7 +629,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     minHeight: 38,
     borderRadius: 12,
-    backgroundColor: '#78A1BD',
+    backgroundColor: colors.accent,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -627,15 +642,15 @@ const styles = StyleSheet.create({
     minWidth: 44,
     minHeight: 40,
     borderRadius: 12,
-    backgroundColor: '#F8FAFD',
+    backgroundColor: colors.cardMuted,
     borderWidth: 1,
-    borderColor: '#E3E8F1',
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 10,
   },
-  chapterOptionText: { color: NAVY, fontSize: 13, fontWeight: '900' },
-  optionSelected: { backgroundColor: NAVY, borderColor: NAVY },
+  chapterOptionText: { color: colors.text, fontSize: 13, fontWeight: '900' },
+  optionSelected: { backgroundColor: colors.header, borderColor: colors.header },
   optionTextSelected: { color: '#FFF' },
 });
 

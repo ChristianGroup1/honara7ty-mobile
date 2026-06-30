@@ -22,9 +22,11 @@ import {
   deleteDevotionGroupPrayerRequest,
   DevotionGroupMember,
   DevotionGroupPrayerRequest,
+  fetchDevotionGroupMember,
   fetchDevotionGroupPrayerRequests,
   updateDevotionGroupPrayerRequest,
 } from '../../lib/devotionGroups';
+import { useNightMode } from '../../lib/nightMode';
 
 import { BG, GOLD, NAVY } from '../shared/designTokens';
 
@@ -44,6 +46,7 @@ const formatRequestDate = (createdAt: string) => {
 const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().devotionGroups;
   const insets = useSafeAreaInsets();
+  const { colors, isNightMode } = useNightMode();
   const groupId = route?.params?.groupId as string | undefined;
   const groupName = route?.params?.groupName as string | undefined;
   const [userId, setUserId] = useState<string | null>(null);
@@ -64,6 +67,30 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
   const canSubmit = Boolean(text.trim()) && !saving;
   const canManageRequests =
     membership?.role === 'owner' || membership?.role === 'leader';
+  const themed = {
+    container: { backgroundColor: colors.background },
+    card: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+    },
+    mutedCard: {
+      backgroundColor: colors.cardMuted,
+      borderColor: colors.border,
+    },
+    title: { color: colors.text },
+    muted: { color: colors.mutedText },
+    bodyText: { color: colors.text },
+    divider: { borderTopColor: colors.border },
+    input: {
+      backgroundColor: colors.cardMuted,
+      borderColor: colors.border,
+      color: colors.text,
+    },
+    cancelButton: {
+      backgroundColor: colors.cardMuted,
+      borderColor: colors.border,
+    },
+  };
 
   const loadRequests = useCallback(
     async ({
@@ -90,12 +117,7 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
         const [{ data: nextRequests, error }, { data: member }] =
           await Promise.all([
             fetchDevotionGroupPrayerRequests(groupId),
-            supabase
-              .from('devotion_group_members')
-              .select('group_id, user_id, role, display_name, joined_at, last_reminded_at')
-              .eq('group_id', groupId)
-              .eq('user_id', nextUserId)
-              .maybeSingle(),
+            fetchDevotionGroupMember({ groupId, userId: nextUserId }),
           ]);
 
         if (error) {
@@ -230,23 +252,23 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
     const canDelete = isAuthor || canManageRequests;
 
     return (
-      <View style={styles.requestCard}>
+      <View style={[styles.requestCard, themed.card]}>
         <View style={styles.requestTopRow}>
           <View style={styles.requestIcon}>
             <MaterialCommunityIcons name="hands-pray" size={18} color="#FFF" />
           </View>
           <View style={styles.requestMeta}>
-            <Text style={styles.requestAuthor} numberOfLines={1}>
+            <Text style={[styles.requestAuthor, themed.title]} numberOfLines={1}>
               {item.author_display_name}
             </Text>
-            <Text style={styles.requestDate}>
+            <Text style={[styles.requestDate, themed.muted]}>
               {formatRequestDate(item.created_at)}
             </Text>
           </View>
         </View>
-        <Text style={styles.requestText}>{item.content}</Text>
+        <Text style={[styles.requestText, themed.bodyText]}>{item.content}</Text>
         {canEdit || canDelete ? (
-          <View style={styles.requestActions}>
+          <View style={[styles.requestActions, themed.divider]}>
             {canEdit ? (
               <TouchableOpacity
                 style={styles.requestActionButton}
@@ -284,28 +306,28 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
   };
 
   const listHeader = (
-    <View style={styles.editorCard}>
+    <View style={[styles.editorCard, themed.card]}>
       <View style={styles.editorHeader}>
         <View style={styles.editorIcon}>
           <MaterialCommunityIcons name="send" size={20} color="#FFF" />
         </View>
         <View style={styles.editorCopy}>
-          <Text style={styles.editorTitle}>
+          <Text style={[styles.editorTitle, themed.title]}>
             {editingRequest
               ? strings.editPrayerRequestTitle
               : strings.sharePrayerRequest}
           </Text>
-          <Text style={styles.editorSubtitle}>
+          <Text style={[styles.editorSubtitle, themed.muted]}>
             {strings.groupPrayerRequestsSubtitle}
           </Text>
         </View>
       </View>
       <TextInput
-        style={styles.input}
+        style={[styles.input, themed.input]}
         value={text}
         onChangeText={setText}
         placeholder={strings.groupPrayerRequestPlaceholder}
-        placeholderTextColor="#8A94A3"
+        placeholderTextColor={colors.mutedText}
         multiline
         maxLength={1000}
         textAlign="right"
@@ -313,8 +335,13 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
       />
       <View style={styles.editorActions}>
         {editingRequest ? (
-          <TouchableOpacity style={styles.cancelButton} onPress={resetEditor}>
-            <Text style={styles.cancelButtonText}>{strings.cancel}</Text>
+          <TouchableOpacity
+            style={[styles.cancelButton, themed.cancelButton]}
+            onPress={resetEditor}
+          >
+            <Text style={[styles.cancelButtonText, themed.title]}>
+              {strings.cancel}
+            </Text>
           </TouchableOpacity>
         ) : null}
         <TouchableOpacity
@@ -340,8 +367,11 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+    <SafeAreaView style={[styles.container, themed.container]} edges={[]}>
+      <StatusBar
+        barStyle={isNightMode ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.header}
+      />
       <AppHeader
         topInsetHeight={insets.top}
         title={groupName ?? strings.groupPrayerRequestsTitle}
@@ -365,13 +395,18 @@ const DevotionGroupPrayerRequestsScreen = ({ navigation, route }: any) => {
           renderItem={renderRequest}
           ListHeaderComponent={listHeader}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>{strings.emptyGroupPrayerRequests}</Text>
+            <Text style={[styles.emptyText, themed.muted]}>
+              {strings.emptyGroupPrayerRequests}
+            </Text>
           }
           contentContainerStyle={styles.content}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={() => loadRequests({ showRefreshing: true })}
+              tintColor={GOLD}
+              colors={[GOLD]}
+              progressBackgroundColor={colors.card}
             />
           }
         />

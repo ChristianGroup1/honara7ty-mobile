@@ -20,6 +20,10 @@ import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import CustomAlert, { AlertConfig } from '../shared/CustomAlert';
 import { getStrings } from '../../localization';
 import HomeAnswerSheet from '../home/HomeAnswerSheet';
+import DevotionCalendarGrid from '../devotion-calendar/DevotionCalendarGrid';
+import DevotionCalendarSelectedDayCard from '../devotion-calendar/DevotionCalendarSelectedDayCard';
+import { createDevotionCalendarStyles } from '../devotion-calendar/styles';
+import { AppTheme, useNightMode } from '../../lib/nightMode';
 import {
   DevotionGroupMember,
   fetchGroupMemberDevotionHistory,
@@ -39,7 +43,6 @@ import {
 } from '../data/bibleMetadata';
 import {
   buildMonthCells,
-  getMonthLabel,
   startOfMonth,
   toIsoDate,
 } from '../devotion-calendar/utils';
@@ -122,6 +125,12 @@ const roleLabels = (role: DevotionGroupMember['role']) => {
 const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().devotionGroups;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const calendarStyles = useMemo(
+    () => createDevotionCalendarStyles(colors),
+    [colors],
+  );
+  const themedStyles = useMemo(() => createThemedStyles(colors), [colors]);
   const { groupId, userId, displayName } = route?.params ?? {};
   const homeStrings = getStrings().home;
   const [member, setMember] = useState<DevotionGroupMember | null>(null);
@@ -240,24 +249,25 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
     () => new Map(logs.map(log => [log.date, log])),
     [logs],
   );
-  const loggedDates = useMemo(() => new Set(logs.map(log => log.date)), [logs]);
   const completedDates = useMemo(
     () => new Set(logs.filter(log => log.completed).map(log => log.date)),
     [logs],
   );
-  const monthCells = useMemo(
-    () => buildMonthCells(visibleMonth, completedDates),
-    [completedDates, visibleMonth],
+  const missedDates = useMemo(
+    () => new Set(logs.filter(log => !log.completed).map(log => log.date)),
+    [logs],
   );
-  const calendarRows = useMemo(() => {
-    const rows = [];
-    for (let i = 0; i < monthCells.length; i += 7) {
-      rows.push(monthCells.slice(i, i + 7));
-    }
-    return rows;
-  }, [monthCells]);
+  const monthCells = useMemo(
+    () => buildMonthCells(visibleMonth, completedDates, missedDates),
+    [completedDates, missedDates, visibleMonth],
+  );
   const selectedLog = logsByDate.get(selectedDate);
   const calendarStrings = getStrings().devotionCalendar;
+  const selectedReadingText = selectedLog
+    ? selectedLog.completed
+      ? formatReading(selectedLog)
+      : calendarStrings.notCompletedDetail
+    : calendarStrings.noRecordForDay;
   const canEditSelectedMember = Boolean(
     currentUserId && currentUserId === userId,
   );
@@ -438,8 +448,11 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={[]}
+    >
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <AppHeader
         topInsetHeight={insets.top}
         title={title}
@@ -463,38 +476,50 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
         showsVerticalScrollIndicator={false}
       >
         {member ? (
-          <View style={styles.memberSummary}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
+          <View style={[styles.memberSummary, themedStyles.card]}>
+            <View style={[styles.avatar, themedStyles.avatar]}>
+              <Text style={[styles.avatarText, themedStyles.avatarText]}>
                 {member.display_name.trim()[0] ?? 'م'}
               </Text>
             </View>
             <View style={styles.memberBody}>
-              <Text style={styles.memberName}>{member.display_name}</Text>
-              <Text style={styles.memberMeta}>{roleLabels(member.role)}</Text>
+              <Text style={[styles.memberName, themedStyles.primaryText]}>
+                {member.display_name}
+              </Text>
+              <Text style={[styles.memberMeta, themedStyles.mutedText]}>
+                {roleLabels(member.role)}
+              </Text>
             </View>
           </View>
         ) : null}
 
         <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{logs.length}</Text>
-            <Text style={styles.statLabel}>{strings.recordedDays}</Text>
+          <View style={[styles.statCard, themedStyles.card]}>
+            <Text style={[styles.statNumber, themedStyles.primaryText]}>
+              {logs.length}
+            </Text>
+            <Text style={[styles.statLabel, themedStyles.mutedText]}>
+              {strings.recordedDays}
+            </Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{completedCount}</Text>
-            <Text style={styles.statLabel}>{strings.completedDays}</Text>
+          <View style={[styles.statCard, themedStyles.card]}>
+            <Text style={[styles.statNumber, themedStyles.primaryText]}>
+              {completedCount}
+            </Text>
+            <Text style={[styles.statLabel, themedStyles.mutedText]}>
+              {strings.completedDays}
+            </Text>
           </View>
         </View>
 
         {latestLog ? (
-          <View style={styles.latestCard}>
+          <View style={[styles.latestCard, themedStyles.card]}>
             <View style={styles.latestHeader}>
               <View>
-                <Text style={styles.latestTitle}>
+                <Text style={[styles.latestTitle, themedStyles.primaryText]}>
                   {strings.latestDevotionTitle}
                 </Text>
-                <Text style={styles.latestDate}>
+                <Text style={[styles.latestDate, themedStyles.mutedText]}>
                   {formatDate(latestLog.date)}
                 </Text>
               </View>
@@ -520,20 +545,22 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
                 </Text>
               </View>
             </View>
-            <Text style={styles.latestMeta}>
+            <Text style={[styles.latestMeta, themedStyles.mutedText]}>
               {strings.recordedAt} {formatTime(latestLog.created_at)}
             </Text>
             <View style={styles.readingRow}>
               <MaterialCommunityIcons
                 name="book-open-page-variant-outline"
                 size={18}
-                color={GOLD}
+                color={colors.accent}
               />
-              <Text style={styles.readingText}>{formatReading(latestLog)}</Text>
+              <Text style={[styles.readingText, themedStyles.secondaryText]}>
+                {formatReading(latestLog)}
+              </Text>
             </View>
             {latestCompletedLog &&
             latestCompletedLog.date !== latestLog.date ? (
-              <Text style={styles.latestMeta}>
+              <Text style={[styles.latestMeta, themedStyles.mutedText]}>
                 {strings.latestCompletedDevotionPrefix}{' '}
                 {formatDate(latestCompletedLog.date)} -{' '}
                 {formatTime(latestCompletedLog.created_at)}
@@ -544,235 +571,37 @@ const DevotionGroupMemberDetailsScreen = ({ navigation, route }: any) => {
 
         {loading && logs.length === 0 ? (
           <View style={styles.loadingBlock}>
-            <ActivityIndicator color={GOLD} />
+            <ActivityIndicator color={colors.accent} />
           </View>
         ) : shouldShowCalendar ? (
           <>
-            <View style={styles.calendarCard}>
-              <View style={styles.sectionHeader}>
-                <View>
-                  <Text style={styles.sectionTitle}>
-                    {strings.memberCalendarTitle}
-                  </Text>
-                  <Text style={styles.sectionCaption}>
-                    {strings.memberCalendarCaption}
-                  </Text>
-                </View>
-                <View style={styles.sectionIconWrap}>
-                  <MaterialCommunityIcons
-                    name="calendar-blank-outline"
-                    size={20}
-                    color={NAVY}
-                  />
-                </View>
-              </View>
+            <DevotionCalendarGrid
+              styles={calendarStyles}
+              colors={colors}
+              strings={calendarStrings}
+              visibleMonth={visibleMonth}
+              monthCells={monthCells}
+              selectedDate={selectedDate}
+              onPrevMonth={goToPrevMonth}
+              onNextMonth={goToNextMonth}
+              onPickDay={setSelectedDate}
+            />
 
-              <View style={styles.monthHeader}>
-                <TouchableOpacity
-                  style={styles.monthNavBtn}
-                  onPress={goToNextMonth}
-                >
-                  <MaterialCommunityIcons
-                    name="chevron-right"
-                    size={22}
-                    color={NAVY}
-                  />
-                </TouchableOpacity>
-
-                <Text style={styles.monthTitle}>
-                  {getMonthLabel(visibleMonth)}
-                </Text>
-
-                <TouchableOpacity
-                  style={styles.monthNavBtn}
-                  onPress={goToPrevMonth}
-                >
-                  <MaterialCommunityIcons
-                    name="chevron-left"
-                    size={22}
-                    color={NAVY}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.legendRow}>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[styles.legendSwatch, styles.legendSwatchCompleted]}
-                  />
-                  <Text style={styles.legendText}>{strings.completed}</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[styles.legendSwatch, styles.legendSwatchPending]}
-                  />
-                  <Text style={styles.legendText}>{strings.notCompleted}</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View
-                    style={[styles.legendSwatch, styles.legendSwatchDefault]}
-                  />
-                  <Text style={styles.legendText}>
-                    {calendarStrings.remainingDays}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.weekRow}>
-                {calendarStrings.weekDays.map((day: string) => (
-                  <Text key={day} style={styles.weekDay}>
-                    {day}
-                  </Text>
-                ))}
-              </View>
-
-              <View style={styles.grid}>
-                {calendarRows.map((row, index) => (
-                  <View key={`row-${index}`} style={styles.gridRow}>
-                    {row.map(cell => {
-                      const cellLog = cell.isoDate
-                        ? logsByDate.get(cell.isoDate)
-                        : undefined;
-                      const hasLog = Boolean(
-                        cell.isoDate && loggedDates.has(cell.isoDate),
-                      );
-
-                      return (
-                        <TouchableOpacity
-                          key={cell.key}
-                          activeOpacity={0.82}
-                          disabled={cell.empty || !cell.isoDate}
-                          onPress={() => {
-                            if (cell.isoDate) {
-                              setSelectedDate(cell.isoDate);
-                            }
-                          }}
-                          style={[
-                            styles.dayCell,
-                            cellLog?.completed && styles.dayCellCompleted,
-                            hasLog &&
-                              !cellLog?.completed &&
-                              styles.dayCellPending,
-                            cell.today && styles.dayCellToday,
-                            cell.isoDate === selectedDate &&
-                              styles.dayCellSelected,
-                            cell.empty && styles.dayCellEmpty,
-                          ]}
-                        >
-                          {!cell.empty ? (
-                            <>
-                              <Text
-                                style={[
-                                  styles.dayText,
-                                  cellLog?.completed && styles.dayTextCompleted,
-                                  hasLog &&
-                                    !cellLog?.completed &&
-                                    styles.dayTextPending,
-                                ]}
-                              >
-                                {cell.dayNumber}
-                              </Text>
-                              {cellLog?.completed ? (
-                                <View style={styles.dayMetaWrap}>
-                                  <View style={styles.dot} />
-                                </View>
-                              ) : hasLog ? (
-                                <View style={styles.dayMetaWrap}>
-                                  <MaterialCommunityIcons
-                                    name="close"
-                                    size={13}
-                                    color="#B45B12"
-                                  />
-                                </View>
-                              ) : null}
-                            </>
-                          ) : null}
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.logCard}>
-              {selectedLog ? (
-                <>
-                  <View style={styles.logHeader}>
-                    <View style={styles.logDateBlock}>
-                      <Text style={styles.logDate}>
-                        {formatDate(selectedLog.date)}
-                      </Text>
-                      <Text style={styles.logTime}>
-                        {strings.recordedAt}{' '}
-                        {formatTime(selectedLog.created_at)}
-                      </Text>
-                    </View>
-                    <View
-                      style={[
-                        styles.statusPill,
-                        selectedLog.completed
-                          ? styles.statusPillDone
-                          : styles.statusPillPending,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.statusPillText,
-                          selectedLog.completed
-                            ? styles.statusPillTextDone
-                            : styles.statusPillTextPending,
-                        ]}
-                      >
-                        {selectedLog.completed
-                          ? strings.completed
-                          : strings.notCompleted}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.readingRow}>
-                    <MaterialCommunityIcons
-                      name="book-open-page-variant-outline"
-                      size={18}
-                      color={GOLD}
-                    />
-                    <Text style={styles.readingText}>
-                      {formatReading(selectedLog)}
-                    </Text>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.emptyText}>{strings.noRecordForDay}</Text>
-                  {canEditSelectedDate ? (
-                    <TouchableOpacity
-                      style={styles.editDayButton}
-                      onPress={openSelectedDayEditor}
-                      disabled={saving}
-                    >
-                      <Text style={styles.editDayButtonText}>
-                        {strings.recordDevotion}
-                      </Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </>
-              )}
-              {selectedLog && canEditSelectedDate ? (
-                <TouchableOpacity
-                  style={styles.editDayButton}
-                  onPress={openSelectedDayEditor}
-                  disabled={saving}
-                >
-                  <Text style={styles.editDayButtonText}>
-                    {strings.recordDevotion}
-                  </Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
+            <DevotionCalendarSelectedDayCard
+              styles={calendarStyles}
+              strings={calendarStrings}
+              selectedDateLabel={selectedDate}
+              readingText={selectedReadingText}
+              completed={selectedLog?.completed ?? null}
+              canRecordSelectedDate={canEditSelectedDate}
+              saving={saving}
+              onRecord={openSelectedDayEditor}
+            />
           </>
         ) : (
-          <Text style={styles.emptyText}>{strings.emptyMemberHistory}</Text>
+          <Text style={[styles.emptyText, themedStyles.mutedText]}>
+            {strings.emptyMemberHistory}
+          </Text>
         )}
       </ScrollView>
 
@@ -1121,6 +950,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '900',
     textAlign: 'center',
+  },
+});
+
+const createThemedStyles = (colors: AppTheme['colors']) => ({
+  card: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderWidth: 1,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 1,
+  },
+  avatar: {
+    backgroundColor: colors.cardMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  avatarText: {
+    color: colors.accent,
+  },
+  primaryText: {
+    color: colors.text,
+  },
+  secondaryText: {
+    color: colors.mutedText,
+  },
+  mutedText: {
+    color: colors.mutedText,
   },
 });
 

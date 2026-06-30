@@ -13,6 +13,7 @@ import {
   RefreshControl,
   ScrollView,
   StatusBar,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -43,7 +44,7 @@ import {
 import DailyNotificationsHero from './DailyNotificationsHero';
 import DailyReadingPlanCard from './DailyReadingPlanCard';
 import DailyTipsList from './DailyTipsList';
-import { dailyNotificationStyles as styles, NAVY } from './styles';
+import { dailyNotificationStyles as styles } from './styles';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
 import NotificationPermissionCard from '../shared/NotificationPermissionCard';
 import {
@@ -69,10 +70,16 @@ import {
 } from '../../lib/readingPlanSuggestions';
 import type { ReadingPlanSuggestion } from '../../lib/readingPlanSuggestions';
 import { setActiveReadingPlan } from '../../lib/activeReadingPlan';
+import { AppTheme, useNightMode } from '../../lib/nightMode';
 
 const DailyNotificationsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().dailyNotifications;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const themedStyles = useMemo(
+    () => createThemedStyles(colors),
+    [colors],
+  );
   const tips = useMemo(
     () => [
       { icon: 'weather-sunset-up', text: strings.tips[0] },
@@ -557,15 +564,15 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
 
   if (loading && !hasContent) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={NAVY} />
+      <View style={themedStyles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+    <SafeAreaView style={themedStyles.container} edges={[]}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <AppHeader
         topInsetHeight={insets?.top ?? 0}
         title={strings.title}
@@ -578,7 +585,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
       />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={themedStyles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -591,6 +598,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           strings={strings}
           timeDisplay={timeDisplay}
           onEditTime={openTimePicker}
+          styles={themedStyles}
         />
 
         {notificationPermissionState !== 'allowed' && (
@@ -618,6 +626,8 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
 
         <DailyReadingPlanCard
           strings={strings}
+          styles={themedStyles}
+          accentColor={colors.accent}
           selectedTestament={selectedTestament}
           booksForTestament={booksForTestament}
           readingBook={readingBook}
@@ -660,7 +670,12 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           onSave={handleSave}
         />
 
-        <DailyTipsList strings={strings} tips={tips} />
+        <DailyTipsList
+          strings={strings}
+          tips={tips}
+          styles={themedStyles}
+          iconColor={colors.accent}
+        />
       </ScrollView>
 
       {showPicker && Platform.OS === 'ios' ? (
@@ -670,21 +685,21 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
           animationType="slide"
           onRequestClose={() => setShowPicker(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.pickerSheet}>
-              <View style={styles.pickerHandle} />
-              <View style={styles.pickerHeader}>
+          <View style={themedStyles.modalOverlay}>
+            <View style={themedStyles.pickerSheet}>
+              <View style={themedStyles.pickerHandle} />
+              <View style={themedStyles.pickerHeader}>
                 <TouchableOpacity onPress={() => setShowPicker(false)}>
-                  <Text style={styles.pickerActionSecondary}>إلغاء</Text>
+                  <Text style={themedStyles.pickerActionSecondary}>إلغاء</Text>
                 </TouchableOpacity>
-                <View style={styles.pickerTitleWrap}>
-                  <Text style={styles.pickerTitle}>{strings.editTime}</Text>
-                  <Text style={styles.pickerSubtitle}>
+                <View style={themedStyles.pickerTitleWrap}>
+                  <Text style={themedStyles.pickerTitle}>{strings.editTime}</Text>
+                  <Text style={themedStyles.pickerSubtitle}>
                     {strings.editTimeSubtitle}
                   </Text>
                 </View>
                 <TouchableOpacity onPress={confirmIosTime}>
-                  <Text style={styles.pickerActionPrimary}>تأكيد</Text>
+                  <Text style={themedStyles.pickerActionPrimary}>تأكيد</Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker
@@ -693,7 +708,7 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
                 display="spinner"
                 onChange={handleTimeChange}
                 locale="ar"
-                style={styles.iosPicker}
+                style={themedStyles.iosPicker}
               />
             </View>
           </View>
@@ -704,5 +719,93 @@ const DailyNotificationsScreen = ({ navigation, route }: any) => {
     </SafeAreaView>
   );
 };
+
+const mergeStyle = (...style: any[]) => StyleSheet.flatten(style);
+
+const createThemedStyles = (colors: AppTheme['colors']) => ({
+  ...styles,
+  container: mergeStyle(styles.container, {
+    backgroundColor: colors.background,
+  }),
+  loadingContainer: mergeStyle(styles.loadingContainer, {
+    backgroundColor: colors.background,
+  }),
+  content: styles.content,
+  pickerCard: mergeStyle(styles.pickerCard, {
+    backgroundColor: colors.card,
+    shadowColor: colors.shadow,
+  }),
+  inlineTimeCard: mergeStyle(styles.inlineTimeCard, {
+    backgroundColor: colors.cardMuted,
+    borderColor: colors.border,
+  }),
+  inlineTimeLabel: mergeStyle(styles.inlineTimeLabel, {
+    color: colors.mutedText,
+  }),
+  inlineTimeValue: mergeStyle(styles.inlineTimeValue, {
+    color: colors.text,
+  }),
+  sectionTitle: mergeStyle(styles.sectionTitle, {
+    color: colors.text,
+  }),
+  sectionSubtitle: mergeStyle(styles.sectionSubtitle, {
+    color: colors.mutedText,
+  }),
+  fieldLabel: mergeStyle(styles.fieldLabel, {
+    color: colors.text,
+  }),
+  rangeHint: mergeStyle(styles.rangeHint, {
+    color: colors.mutedText,
+  }),
+  multiReadingHint: mergeStyle(styles.multiReadingHint, {
+    color: colors.mutedText,
+  }),
+  openSuggestionsCard: mergeStyle(styles.openSuggestionsCard, {
+    backgroundColor: colors.cardMuted,
+    borderColor: colors.border,
+  }),
+  openSuggestionsTitle: mergeStyle(styles.openSuggestionsTitle, {
+    color: colors.text,
+  }),
+  openSuggestionsText: mergeStyle(styles.openSuggestionsText, {
+    color: colors.mutedText,
+  }),
+  readingEntryRow: mergeStyle(styles.readingEntryRow, {
+    backgroundColor: colors.cardMuted,
+    borderColor: colors.border,
+  }),
+  readingEntryText: mergeStyle(styles.readingEntryText, {
+    color: colors.text,
+  }),
+  tipCard: mergeStyle(styles.tipCard, {
+    backgroundColor: colors.card,
+    shadowColor: colors.shadow,
+  }),
+  tipIconWrap: mergeStyle(styles.tipIconWrap, {
+    backgroundColor: colors.cardMuted,
+  }),
+  tipText: mergeStyle(styles.tipText, {
+    color: colors.text,
+  }),
+  pickerSheet: mergeStyle(styles.pickerSheet, {
+    backgroundColor: colors.card,
+  }),
+  pickerHandle: mergeStyle(styles.pickerHandle, {
+    backgroundColor: colors.border,
+  }),
+  pickerHeader: styles.pickerHeader,
+  pickerTitle: mergeStyle(styles.pickerTitle, {
+    color: colors.text,
+  }),
+  pickerSubtitle: mergeStyle(styles.pickerSubtitle, {
+    color: colors.mutedText,
+  }),
+  pickerActionSecondary: mergeStyle(styles.pickerActionSecondary, {
+    color: colors.mutedText,
+  }),
+  pickerActionPrimary: mergeStyle(styles.pickerActionPrimary, {
+    color: colors.accent,
+  }),
+});
 
 export default DailyNotificationsScreen;

@@ -1,8 +1,8 @@
 import supabase from './supbase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MemorizationResult } from '../components/bible-memorization/types';
-import NetInfo from '@react-native-community/netinfo';
 import { BIBLE_BOOKS } from '../components/data/bibleMetadata';
+import { isNetworkAvailable } from './networkStatus';
 
 const MEMORIZATION_LOGS_KEY = (userId: string) =>
   `offline_memorization_logs:${userId}`;
@@ -160,8 +160,7 @@ export const saveMemorizationAttempt = async (result: MemorizationResult) => {
   await AsyncStorage.setItem(cacheKey, JSON.stringify(logs.slice(0, 100))); // Keep last 100
 
   // 2. Try to sync to Supabase
-  const netInfo = await NetInfo.fetch();
-  if (netInfo.isConnected) {
+  if (await isNetworkAvailable()) {
     const { data, error } = await supabase
       .from('memorization_log')
       .insert({
@@ -238,8 +237,7 @@ export const getMemorizationStats = async (): Promise<MemorizationStats> => {
   );
   let allLogs: any[] = localLogsStr ? JSON.parse(localLogsStr) : [];
 
-  const netInfo = await NetInfo.fetch();
-  if (netInfo.isConnected && allLogs.length < 10) {
+  if ((await isNetworkAvailable()) && allLogs.length < 10) {
     // If cache is empty or small, fetch from remote
     const { data: remoteLogs } = await supabase
       .from('memorization_log')
@@ -379,8 +377,7 @@ export const updateMemorizationGoal = async (
     JSON.stringify(nextGoal),
   );
 
-  const netInfo = await NetInfo.fetch();
-  if (netInfo.isConnected) {
+  if (await isNetworkAvailable()) {
     const { error } = await supabase.from('memorization_goals').upsert({
       user_id: user.id,
       target_per_week: nextGoal.target,
@@ -418,8 +415,7 @@ export const deleteMemorizationAttempt = async (targetLog: any) => {
   await AsyncStorage.setItem(cacheKey, JSON.stringify(nextLogs));
 
   if (targetLog.id) {
-    const netInfo = await NetInfo.fetch();
-    if (netInfo.isConnected) {
+    if (await isNetworkAvailable()) {
       await supabase
         .from('memorization_log')
         .delete()

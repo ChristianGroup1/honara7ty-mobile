@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { DevotionGroup } from '../../../lib/devotionGroups';
-import { styles } from './styles';
+import { styles as defaultStyles } from './styles';
 import { formatSharedReading, formatSharedTarget } from './utils';
 
 type Props = {
@@ -20,6 +20,7 @@ type Props = {
   onClose: () => void;
   onEdit: () => void;
   onClear: () => void;
+  styles?: typeof defaultStyles;
 };
 
 const SharedReadingDetailsModal = ({
@@ -31,6 +32,7 @@ const SharedReadingDetailsModal = ({
   onClose,
   onEdit,
   onClear,
+  styles = defaultStyles,
 }: Props) => {
   const hasSharedReading = Boolean(group?.shared_reading_book);
 

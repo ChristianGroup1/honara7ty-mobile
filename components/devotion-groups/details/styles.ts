@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { BG, GOLD, NAVY } from './constants';
+import { AppTheme } from '../../../lib/nightMode';
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
@@ -321,6 +322,218 @@ export const styles = StyleSheet.create({
   },
   saveBtnDisabled: { opacity: 0.45 },
   saveBtnText: { color: '#FFF', fontSize: 14, fontWeight: '900' },
+});
+
+const mergeStyle = (...style: any[]) => StyleSheet.flatten(style);
+
+export const createThemedStyles = (colors: AppTheme['colors']) => ({
+  ...styles,
+  container: mergeStyle(styles.container, {
+    backgroundColor: colors.background,
+  }),
+  permissionCard: mergeStyle(styles.permissionCard, {
+    backgroundColor: colors.cardMuted,
+    borderColor: colors.border,
+  }),
+  permissionIcon: mergeStyle(styles.permissionIcon, {
+    backgroundColor: colors.card,
+  }),
+  permissionTitle: mergeStyle(styles.permissionTitle, {
+    color: colors.text,
+  }),
+  permissionText: mergeStyle(styles.permissionText, {
+    color: colors.mutedText,
+  }),
+  inviteCard: mergeStyle(styles.inviteCard, {
+    backgroundColor: colors.card,
+  }),
+  metaLabel: mergeStyle(styles.metaLabel, {
+    color: colors.mutedText,
+  }),
+  inviteCode: mergeStyle(styles.inviteCode, {
+    color: colors.text,
+  }),
+  inviteLinkLabel: mergeStyle(styles.inviteLinkLabel, {
+    color: colors.mutedText,
+  }),
+  iconButton: mergeStyle(styles.iconButton, {
+    backgroundColor: colors.cardMuted,
+  }),
+  summaryCard: mergeStyle(styles.summaryCard, {
+    backgroundColor: colors.card,
+  }),
+  summaryNumber: mergeStyle(styles.summaryNumber, {
+    color: colors.text,
+  }),
+  summaryLabel: mergeStyle(styles.summaryLabel, {
+    color: colors.mutedText,
+  }),
+  personalStatsCard: mergeStyle(styles.personalStatsCard, {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+  }),
+  personalStatsTitle: mergeStyle(styles.personalStatsTitle, {
+    color: colors.text,
+  }),
+  personalStatItem: mergeStyle(styles.personalStatItem, {
+    backgroundColor: colors.cardMuted,
+  }),
+  personalStatNumber: mergeStyle(styles.personalStatNumber, {
+    color: colors.text,
+  }),
+  personalStatLabel: mergeStyle(styles.personalStatLabel, {
+    color: colors.mutedText,
+  }),
+  todayDevotionCard: mergeStyle(styles.todayDevotionCard, {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+  }),
+  todayDevotionTitle: mergeStyle(styles.todayDevotionTitle, {
+    color: colors.text,
+  }),
+  sharedReadingCard: mergeStyle(styles.sharedReadingCard, {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+  }),
+  sharedReadingTitle: mergeStyle(styles.sharedReadingTitle, {
+    color: colors.text,
+  }),
+  groupPrayerCard: mergeStyle(styles.groupPrayerCard, {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+  }),
+  groupPrayerTitle: mergeStyle(styles.groupPrayerTitle, {
+    color: colors.text,
+  }),
+  pendingReminderButton: mergeStyle(styles.pendingReminderButton, {
+    backgroundColor: colors.header,
+  }),
+  sectionTitle: mergeStyle(styles.sectionTitle, {
+    color: colors.text,
+  }),
+  sectionCaption: mergeStyle(styles.sectionCaption, {
+    color: colors.mutedText,
+  }),
+  memberCard: mergeStyle(styles.memberCard, {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+  }),
+  avatar: mergeStyle(styles.avatar, {
+    backgroundColor: colors.cardMuted,
+  }),
+  avatarText: mergeStyle(styles.avatarText, {
+    color: colors.text,
+  }),
+  memberName: mergeStyle(styles.memberName, {
+    color: colors.text,
+  }),
+  memberRole: mergeStyle(styles.memberRole, {
+    color: colors.mutedText,
+  }),
+  readingText: mergeStyle(styles.readingText, {
+    color: colors.mutedText,
+  }),
+  memberActionsRow: mergeStyle(styles.memberActionsRow, {
+    borderTopColor: colors.border,
+  }),
+  emptyText: mergeStyle(styles.emptyText, {
+    color: colors.mutedText,
+  }),
+  editorCard: mergeStyle(styles.editorCard, {
+    backgroundColor: colors.card,
+  }),
+  sharedReadingDetailsCard: mergeStyle(styles.sharedReadingDetailsCard, {
+    backgroundColor: colors.card,
+  }),
+  sharedReadingDetailsTitle: mergeStyle(styles.sharedReadingDetailsTitle, {
+    color: colors.text,
+  }),
+  sharedReadingDetailsSubtitle: mergeStyle(styles.sharedReadingDetailsSubtitle, {
+    color: colors.mutedText,
+  }),
+  sharedReadingDetailsPanel: mergeStyle(styles.sharedReadingDetailsPanel, {
+    backgroundColor: colors.cardMuted,
+    borderColor: colors.border,
+  }),
+  sharedReadingDetailsLabel: mergeStyle(styles.sharedReadingDetailsLabel, {
+    color: colors.mutedText,
+  }),
+  sharedReadingDetailsValue: mergeStyle(styles.sharedReadingDetailsValue, {
+    color: colors.text,
+  }),
+  editorHandle: mergeStyle(styles.editorHandle, {
+    backgroundColor: colors.border,
+  }),
+  editorTitle: mergeStyle(styles.editorTitle, {
+    color: colors.text,
+  }),
+  editorSubtitle: mergeStyle(styles.editorSubtitle, {
+    color: colors.mutedText,
+  }),
+  fieldTitle: mergeStyle(styles.fieldTitle, {
+    color: colors.text,
+  }),
+  testamentTab: mergeStyle(styles.testamentTab, {
+    backgroundColor: colors.cardMuted,
+  }),
+  testamentTabActive: mergeStyle(styles.testamentTabActive, {
+    backgroundColor: colors.header,
+  }),
+  testamentTabText: mergeStyle(styles.testamentTabText, {
+    color: colors.text,
+  }),
+  bookPanel: mergeStyle(styles.bookPanel, {
+    backgroundColor: colors.cardMuted,
+    borderColor: colors.border,
+  }),
+  bookPanelTitle: mergeStyle(styles.bookPanelTitle, {
+    color: colors.text,
+  }),
+  bookPanelCount: mergeStyle(styles.bookPanelCount, {
+    color: colors.mutedText,
+  }),
+  choiceChip: mergeStyle(styles.choiceChip, {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+  }),
+  choiceChipSelected: mergeStyle(styles.choiceChipSelected, {
+    backgroundColor: colors.header,
+    borderColor: colors.header,
+  }),
+  choiceChipText: mergeStyle(styles.choiceChipText, {
+    color: colors.text,
+  }),
+  rangeHint: mergeStyle(styles.rangeHint, {
+    color: colors.mutedText,
+  }),
+  targetOption: mergeStyle(styles.targetOption, {
+    backgroundColor: colors.cardMuted,
+    borderColor: colors.border,
+  }),
+  targetOptionSelected: mergeStyle(styles.targetOptionSelected, {
+    backgroundColor: colors.header,
+    borderColor: colors.header,
+  }),
+  targetOptionText: mergeStyle(styles.targetOptionText, {
+    color: colors.text,
+  }),
+  targetInput: mergeStyle(styles.targetInput, {
+    backgroundColor: colors.cardMuted,
+    borderColor: colors.border,
+    color: colors.text,
+  }),
+  modalActionsRow: mergeStyle(styles.modalActionsRow, {
+    borderTopColor: colors.border,
+  }),
+  closeBtn: mergeStyle(styles.closeBtn, {
+    backgroundColor: colors.cardMuted,
+  }),
+  closeBtnText: mergeStyle(styles.closeBtnText, {
+    color: colors.text,
+  }),
+  saveBtn: mergeStyle(styles.saveBtn, {
+    backgroundColor: colors.header,
+  }),
 });
 
 export { BG, GOLD, NAVY };

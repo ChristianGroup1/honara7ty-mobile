@@ -1,8 +1,11 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { DANGER, NAVY, PREVIEW_CHARS } from './constants';
-import { prayerNotesStyles as styles } from './styles';
+import { DANGER, PREVIEW_CHARS } from './constants';
+import {
+  prayerNotesStyles as styles,
+  ThemedPrayerNotesStyles,
+} from './styles';
 import { PrayerNote } from './types';
 
 interface PrayerNoteCardProps {
@@ -12,6 +15,8 @@ interface PrayerNoteCardProps {
   onOpenDetail: (note: PrayerNote) => void;
   onOpenEdit: (note: PrayerNote) => void;
   onDelete: (note: PrayerNote) => void;
+  themedStyles: ThemedPrayerNotesStyles;
+  answeredActionColor: string;
 }
 
 const PrayerNoteCard = ({
@@ -21,6 +26,8 @@ const PrayerNoteCard = ({
   onOpenDetail,
   onOpenEdit,
   onDelete,
+  themedStyles,
+  answeredActionColor,
 }: PrayerNoteCardProps) => {
   const preview =
     item.content.length > PREVIEW_CHARS
@@ -40,8 +47,10 @@ const PrayerNoteCard = ({
     <View
       style={[
         styles.card,
+        themedStyles.card,
         isNarrowWidth && styles.cardCompact,
         item.is_answered && styles.answeredCard,
+        item.is_answered && themedStyles.answeredCard,
       ]}
     >
       <View
@@ -76,7 +85,7 @@ const PrayerNoteCard = ({
         activeOpacity={0.95}
         onPress={() => onOpenDetail(item)}
       >
-        <Text style={styles.cardText} numberOfLines={4}>
+        <Text style={[styles.cardText, themedStyles.cardText]} numberOfLines={4}>
           {preview}
         </Text>
       </TouchableOpacity>
@@ -85,17 +94,30 @@ const PrayerNoteCard = ({
         style={[styles.cardActions, isNarrowWidth && styles.cardActionsCompact]}
       >
         <TouchableOpacity
-          style={[styles.iconBtn, actionBorderStyle, editActionStyle]}
+          style={[
+            styles.iconBtn,
+            themedStyles.iconBtn,
+            actionBorderStyle,
+            item.is_answered && themedStyles.answeredIconBtn,
+            editActionStyle,
+            !item.is_answered && themedStyles.editIconBtn,
+          ]}
           onPress={() => onOpenEdit(item)}
         >
           <MaterialCommunityIcons
             name="pencil"
             size={16}
-            color={item.is_answered ? NAVY : '#fff'}
+            color={item.is_answered ? answeredActionColor : '#fff'}
           />
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.iconBtn, actionBorderStyle, deleteActionStyle]}
+          style={[
+            styles.iconBtn,
+            themedStyles.iconBtn,
+            actionBorderStyle,
+            item.is_answered && themedStyles.answeredIconBtn,
+            deleteActionStyle,
+          ]}
           onPress={() => onDelete(item)}
         >
           <MaterialCommunityIcons

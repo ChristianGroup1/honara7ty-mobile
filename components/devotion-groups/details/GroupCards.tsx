@@ -2,18 +2,21 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { DevotionGroup, GroupMemberStatus } from '../../../lib/devotionGroups';
-import { GOLD, NAVY, styles } from './styles';
+import { GOLD, NAVY, styles as defaultStyles } from './styles';
 
 type Strings = any;
+type DetailStyles = typeof defaultStyles;
 
 export const PushRegistrationCard = ({
   notificationPermissionState,
   saving,
   onPress,
+  styles = defaultStyles,
 }: {
   notificationPermissionState: 'allowed' | 'denied' | 'not_determined';
   saving: boolean;
   onPress: () => void;
+  styles?: DetailStyles;
 }) => (
   <TouchableOpacity
     style={styles.permissionCard}
@@ -49,6 +52,8 @@ export const InviteCodeCard = ({
   onCopy,
   onCopyLink,
   onShare,
+  styles = defaultStyles,
+  iconColor = NAVY,
 }: {
   group: DevotionGroup;
   strings: Strings;
@@ -56,6 +61,8 @@ export const InviteCodeCard = ({
   onCopy: () => void;
   onCopyLink: () => void;
   onShare: () => void;
+  styles?: DetailStyles;
+  iconColor?: string;
 }) => (
   <View style={styles.inviteCard}>
     <View style={styles.inviteContent}>
@@ -63,7 +70,7 @@ export const InviteCodeCard = ({
       <View style={styles.inviteValueRow}>
         <Text style={styles.inviteCode}>{group.invite_code}</Text>
         <TouchableOpacity style={styles.iconButton} onPress={onCopy}>
-          <MaterialCommunityIcons name="content-copy" size={20} color={NAVY} />
+          <MaterialCommunityIcons name="content-copy" size={20} color={iconColor} />
         </TouchableOpacity>
       </View>
 
@@ -80,14 +87,14 @@ export const InviteCodeCard = ({
             <MaterialCommunityIcons
               name="content-copy"
               size={20}
-              color={NAVY}
+              color={iconColor}
             />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={onShare}>
             <MaterialCommunityIcons
               name="share-variant"
               size={20}
-              color={NAVY}
+              color={iconColor}
             />
           </TouchableOpacity>
         </View>
@@ -100,10 +107,12 @@ export const SummaryCards = ({
   membersCount,
   completedCount,
   strings,
+  styles = defaultStyles,
 }: {
   membersCount: number;
   completedCount: number;
   strings: Strings;
+  styles?: DetailStyles;
 }) => (
   <View style={styles.summaryRow}>
     <View style={styles.summaryCard}>
@@ -122,11 +131,13 @@ export const TodayDevotionCard = ({
   strings,
   saving,
   onOpen,
+  styles = defaultStyles,
 }: {
   member: GroupMemberStatus | null;
   strings: Strings;
   saving: boolean;
   onOpen: () => void;
+  styles?: DetailStyles;
 }) => {
   const completed = Boolean(member?.devotionLog?.completed);
 
@@ -155,11 +166,13 @@ export const SharedReadingCard = ({
   strings,
   saving,
   onOpen,
+  styles = defaultStyles,
 }: {
   group: DevotionGroup;
   strings: Strings;
   saving: boolean;
   onOpen: () => void;
+  styles?: DetailStyles;
 }) => {
   const hasSharedReading = Boolean(group.shared_reading_book);
 
@@ -187,10 +200,12 @@ export const GroupPrayerRequestsCard = ({
   strings,
   saving,
   onOpen,
+  styles = defaultStyles,
 }: {
   strings: Strings;
   saving: boolean;
   onOpen: () => void;
+  styles?: DetailStyles;
 }) => (
   <TouchableOpacity
     style={styles.groupPrayerCard}

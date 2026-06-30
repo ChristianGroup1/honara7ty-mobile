@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Testament } from '../data/bibleMetadata';
-import { dailyNotificationStyles as styles, GOLD } from './styles';
+import { dailyNotificationStyles as defaultStyles, GOLD } from './styles';
 import BiblePassagePicker from '../shared/BiblePassagePicker';
 import { ReadingEntry, formatReadingEntries } from '../../lib/readingEntries';
 
@@ -29,6 +29,8 @@ type Props = {
   onOpenSuggestions: () => void;
   onEditTime: () => void;
   onSave: () => void;
+  styles?: typeof defaultStyles;
+  accentColor?: string;
 };
 
 
@@ -54,6 +56,8 @@ const DailyReadingPlanCard = ({
   onOpenSuggestions,
   onEditTime,
   onSave,
+  styles = defaultStyles,
+  accentColor = GOLD,
 }: Props) => {
   const canAddReading = Boolean(readingBook && selectedChapters.length > 0);
 
@@ -76,7 +80,7 @@ const DailyReadingPlanCard = ({
         <Text style={styles.inlineTimeLabel}>{strings.selectedTime}</Text>
         <Text style={styles.inlineTimeValue}>{timeDisplay}</Text>
       </View>
-      <MaterialCommunityIcons name="pencil-outline" size={18} color={GOLD} />
+      <MaterialCommunityIcons name="pencil-outline" size={18} color={accentColor} />
     </TouchableOpacity>
 
 
@@ -102,7 +106,7 @@ const DailyReadingPlanCard = ({
             {strings.suggestionsSubtitle}
           </Text>
         </View>
-        <MaterialCommunityIcons name="chevron-left" size={22} color={GOLD} />
+        <MaterialCommunityIcons name="chevron-left" size={22} color={accentColor} />
       </TouchableOpacity>
       <BiblePassagePicker
         labels={{

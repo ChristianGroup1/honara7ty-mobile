@@ -23,7 +23,7 @@ import {
   normalizeSelectedChapters,
   toggleChapterSelection,
 } from '../shared/chapterSelection';
-import { CUSTOM_TARGET_VALUE, GOLD, NAVY } from './details/constants';
+import { CUSTOM_TARGET_VALUE } from './details/constants';
 import {
   GroupPrayerRequestsCard,
   InviteCodeCard,
@@ -35,7 +35,7 @@ import {
 import MembersList from './details/MembersList';
 import SharedReadingDetailsModal from './details/SharedReadingDetailsModal';
 import SharedReadingEditorModal from './details/SharedReadingEditorModal';
-import { styles } from './details/styles';
+import { createThemedStyles } from './details/styles';
 import { useDevotionGroupDetails } from './details/useDevotionGroupDetails';
 import {
   buildDevotionGroupInviteLink,
@@ -53,11 +53,14 @@ import {
   ReadingEntry,
   readingEntriesFromLegacy,
 } from '../../lib/readingEntries';
+import { useNightMode } from '../../lib/nightMode';
 
 const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().devotionGroups;
   const homeStrings = getStrings().home;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const themedStyles = useMemo(() => createThemedStyles(colors), [colors]);
   const groupId = route?.params?.groupId as string | undefined;
   const { state, actions } = useDevotionGroupDetails(navigation, groupId);
   const { loadDetails } = actions;
@@ -310,8 +313,8 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+    <SafeAreaView style={themedStyles.container} edges={[]}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <AppHeader
         topInsetHeight={insets.top}
         title={state.group?.name ?? strings.groupDetailsTitle}
@@ -340,7 +343,7 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
       />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={themedStyles.content}
         refreshControl={
           <RefreshControl
             refreshing={state.loading && Boolean(state.group)}
@@ -350,20 +353,23 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
         showsVerticalScrollIndicator={false}
       >
         {state.loading && !state.group ? (
-          <View style={styles.loadingBlock}>
-            <ActivityIndicator color={GOLD} />
+          <View style={themedStyles.loadingBlock}>
+            <ActivityIndicator color={colors.accent} />
           </View>
         ) : state.group ? (
           <>
             {(state.notificationPermissionState !== 'allowed' ||
               !state.pushTokenRegistered) && (
               <PushRegistrationCard
+                styles={themedStyles}
                 notificationPermissionState={state.notificationPermissionState}
                 saving={state.saving}
                 onPress={actions.handleEnableNotifications}
               />
             )}
             <InviteCodeCard
+              styles={themedStyles}
+              iconColor={colors.text}
               group={state.group}
               strings={strings}
               inviteLink={inviteLink}
@@ -372,24 +378,28 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
               onShare={shareInviteLink}
             />
             <SummaryCards
+              styles={themedStyles}
               membersCount={state.members.length}
               completedCount={state.completedCount}
               strings={strings}
             />
-            <View style={styles.groupActionsGrid}>
+            <View style={themedStyles.groupActionsGrid}>
               <TodayDevotionCard
+                styles={themedStyles}
                 member={state.currentMembership}
                 strings={strings}
                 saving={state.saving}
                 onOpen={openTodayDevotionSheet}
               />
               <SharedReadingCard
+                styles={themedStyles}
                 group={state.group}
                 strings={strings}
                 saving={state.saving}
                 onOpen={() => setSharedReadingDetailsVisible(true)}
               />
               <GroupPrayerRequestsCard
+                styles={themedStyles}
                 strings={strings}
                 saving={state.saving}
                 onOpen={() =>
@@ -402,7 +412,7 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
             </View>
             {state.canSendReminders ? (
               <TouchableOpacity
-                style={styles.pendingReminderButton}
+                style={themedStyles.pendingReminderButton}
                 onPress={actions.handleSendPendingReminders}
                 disabled={state.saving}
               >
@@ -411,14 +421,14 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
                   size={19}
                   color="#FFF"
                 />
-                <Text style={styles.pendingReminderButtonText}>
+                <Text style={themedStyles.pendingReminderButtonText}>
                   {strings.sendPendingReminders}
                 </Text>
               </TouchableOpacity>
             ) : null}
             {!state.isOwner && state.currentMembership ? (
               <TouchableOpacity
-                style={styles.leaveGroupButton}
+                style={themedStyles.leaveGroupButton}
                 onPress={confirmLeaveGroup}
                 disabled={state.saving}
               >
@@ -427,12 +437,15 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
                   size={19}
                   color="#B42318"
                 />
-                <Text style={styles.leaveGroupButtonText}>
+                <Text style={themedStyles.leaveGroupButtonText}>
                   {strings.leaveGroup}
                 </Text>
               </TouchableOpacity>
             ) : null}
             <MembersList
+              styles={themedStyles}
+              mutedIconColor={colors.mutedText}
+              adminIconColor={colors.text}
               members={state.members}
               userId={state.user?.id}
               groupId={groupId}
@@ -449,8 +462,8 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
       </ScrollView>
 
       {state.saving ? (
-        <View style={styles.savingOverlay}>
-          <ActivityIndicator color={GOLD} />
+        <View style={themedStyles.savingOverlay}>
+          <ActivityIndicator color={colors.accent} />
         </View>
       ) : null}
       <CustomAlert {...state.alertConfig} onDismiss={actions.hideAlert} />
@@ -483,6 +496,7 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
         onSave={handleSaveTodayDevotion}
       />
       <SharedReadingDetailsModal
+        styles={themedStyles}
         visible={sharedReadingDetailsVisible}
         group={state.group}
         strings={strings}
@@ -499,6 +513,8 @@ const DevotionGroupDetailsScreen = ({ navigation, route }: any) => {
         }}
       />
       <SharedReadingEditorModal
+        styles={themedStyles}
+        placeholderTextColor={colors.mutedText}
         visible={state.sharedReadingEditorVisible}
         strings={strings}
         saving={state.saving}

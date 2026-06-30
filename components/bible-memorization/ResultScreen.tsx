@@ -3,17 +3,26 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MemorizationHeader from './MemorizationHeader';
-import { memorizationStyles as styles } from './styles';
+import {
+  createThemedMemorizationStyles,
+  memorizationStyles as styles,
+} from './styles';
 import { MemorizationStackParamList } from './types';
 import { GOLD } from './utils';
 import { getStrings } from '../../localization';
 import { saveMemorizationAttempt } from '../../lib/memorization';
 import { useEffect } from 'react';
+import { useNightMode } from '../../lib/nightMode';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Result'>;
 
 const ResultScreen = ({ navigation, route }: Props) => {
   const strings = getStrings().bibleMemorization.result;
+  const { colors } = useNightMode();
+  const themedStyles = React.useMemo(
+    () => createThemedMemorizationStyles(colors),
+    [colors],
+  );
   const result = route.params;
   const isFullTextMode = result.difficulty === 'fullText';
   const isPerfect = result.score === result.total;
@@ -39,7 +48,7 @@ const ResultScreen = ({ navigation, route }: Props) => {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, themedStyles.container]}>
       <MemorizationHeader
         title={strings.title}
         onBack={() => navigation.goBack()}
@@ -94,19 +103,19 @@ const ResultScreen = ({ navigation, route }: Props) => {
           </View>
         </View>
 
-        <View style={styles.infoCard}>
-          <Text style={styles.resultMetaLabel}>
+        <View style={[styles.infoCard, themedStyles.cardMuted]}>
+          <Text style={[styles.resultMetaLabel, themedStyles.mutedText]}>
             {strings.verseReferenceLabel}
           </Text>
           <Text style={styles.refText}>
             {result.bookLabel} - {result.chapterLabel}
           </Text>
-          <Text style={styles.instructionText}>{strings.instruction}</Text>
+          <Text style={[styles.instructionText, themedStyles.mutedText]}>{strings.instruction}</Text>
         </View>
 
-        <View style={styles.verseBox}>
-          <View style={styles.verseBoxHeader}>
-            <Text style={styles.verseBoxTitle}>
+        <View style={[styles.verseBox, themedStyles.card]}>
+          <View style={[styles.verseBoxHeader, themedStyles.dividerBorder]}>
+            <Text style={[styles.verseBoxTitle, themedStyles.primaryText]}>
               {isFullTextMode
                 ? strings.writtenReviewAnswers
                 : strings.reviewAnswers}
@@ -143,7 +152,7 @@ const ResultScreen = ({ navigation, route }: Props) => {
                   </Text>
                 </View>
               ) : isFullTextMode ? null : (
-                <Text key={i} style={styles.wordText}>
+                <Text key={i} style={[styles.wordText, themedStyles.primaryText]}>
                   {slot.word}{' '}
                 </Text>
               ),
@@ -172,7 +181,7 @@ const ResultScreen = ({ navigation, route }: Props) => {
 
         <View style={styles.resultActionsRow}>
           <TouchableOpacity
-            style={styles.resultSecondaryBtn}
+            style={[styles.resultSecondaryBtn, themedStyles.resultSecondaryBtn]}
             onPress={() =>
               navigation.reset({ index: 0, routes: [{ name: 'Pick' }] })
             }
@@ -180,9 +189,9 @@ const ResultScreen = ({ navigation, route }: Props) => {
             <MaterialCommunityIcons
               name="book-search-outline"
               size={19}
-              color="#0A1124"
+              color={colors.text}
             />
-            <Text style={styles.resultSecondaryBtnText}>
+            <Text style={[styles.resultSecondaryBtnText, themedStyles.primaryText]}>
               {strings.chooseAnotherReference}
             </Text>
           </TouchableOpacity>

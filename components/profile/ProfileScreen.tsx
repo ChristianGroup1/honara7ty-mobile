@@ -29,7 +29,7 @@ import { getStrings } from '../../localization';
 import AppHeader from '../shared/AppHeader';
 import GradientSurface from '../shared/GradientSurface';
 import { headerGradient, NAVY, palette, shadow } from '../shared/designTokens';
-import { useNightMode } from '../../lib/nightMode';
+import { AppTheme, useNightMode } from '../../lib/nightMode';
 import {
   readCachedDevotionLogs,
   readCachedProfileRecord,
@@ -87,7 +87,8 @@ const parseDateString = (value?: string | null): Date => {
 const ProfileScreen = ({ navigation }: any) => {
   const strings = getStrings().profile;
   const insets = useSafeAreaInsets();
-  const { isNightMode } = useNightMode();
+  const { colors, isNightMode } = useNightMode();
+  const styles = useMemo(() => createThemedProfileStyles(colors), [colors]);
   const heroGradientColors = isNightMode
     ? headerGradient.dark
     : headerGradient.light;
@@ -408,7 +409,7 @@ const ProfileScreen = ({ navigation }: any) => {
   if (loading && !user) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={NAVY} />
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
@@ -420,7 +421,7 @@ const ProfileScreen = ({ navigation }: any) => {
           <MaterialCommunityIcons
             name="account-off-outline"
             size={54}
-            color="#9AA0AA"
+            color={colors.mutedText}
           />
           <Text style={styles.emptyTitle}>{strings.noSessionTitle}</Text>
           <Text style={styles.emptyText}>{strings.noSessionMessage}</Text>
@@ -431,7 +432,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <AppHeader topInsetHeight={insets?.top ?? 0} title={strings.title} />
 
       <ScrollView
@@ -679,7 +680,7 @@ const ProfileScreen = ({ navigation }: any) => {
                     <MaterialCommunityIcons
                       name={option.icon}
                       size={20}
-                      color={active ? '#FFF' : '#636A74'}
+                      color={active ? '#FFF' : colors.mutedText}
                     />
                     <Text
                       style={[
@@ -1126,6 +1127,96 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: 'center',
   },
+});
+
+const mergeStyle = (...style: any[]) => StyleSheet.flatten(style);
+
+const createThemedProfileStyles = (colors: AppTheme['colors']) => ({
+  ...styles,
+  container: mergeStyle(styles.container, {
+    backgroundColor: colors.background,
+  }),
+  loadingContainer: mergeStyle(styles.loadingContainer, {
+    backgroundColor: colors.background,
+  }),
+  content: styles.content,
+  levelCard: mergeStyle(styles.levelCard, {
+    backgroundColor: colors.card,
+    shadowColor: colors.shadow,
+  }),
+  levelTitle: mergeStyle(styles.levelTitle, {
+    color: colors.text,
+  }),
+  levelSubtitle: mergeStyle(styles.levelSubtitle, {
+    color: colors.mutedText,
+  }),
+  levelProgressTrack: mergeStyle(styles.levelProgressTrack, {
+    backgroundColor: colors.cardMuted,
+  }),
+  levelToNext: mergeStyle(styles.levelToNext, {
+    color: colors.mutedText,
+  }),
+  levelStatDivider: mergeStyle(styles.levelStatDivider, {
+    backgroundColor: colors.border,
+  }),
+  levelStatNum: mergeStyle(styles.levelStatNum, {
+    color: colors.text,
+  }),
+  levelStatLabel: mergeStyle(styles.levelStatLabel, {
+    color: colors.mutedText,
+  }),
+  sectionCard: mergeStyle(styles.sectionCard, {
+    backgroundColor: colors.card,
+    shadowColor: colors.shadow,
+  }),
+  sectionTitle: mergeStyle(styles.sectionTitle, {
+    color: colors.text,
+  }),
+  sectionSubtitle: mergeStyle(styles.sectionSubtitle, {
+    color: colors.mutedText,
+  }),
+  genderLabel: mergeStyle(styles.genderLabel, {
+    color: colors.text,
+  }),
+  genderChip: mergeStyle(styles.genderChip, {
+    backgroundColor: colors.cardMuted,
+    borderColor: colors.border,
+  }),
+  genderChipActive: mergeStyle(styles.genderChipActive, {
+    backgroundColor: colors.header,
+    borderColor: colors.header,
+  }),
+  genderChipText: mergeStyle(styles.genderChipText, {
+    color: colors.mutedText,
+  }),
+  saveBtn: mergeStyle(styles.saveBtn, {
+    backgroundColor: colors.header,
+    shadowColor: colors.shadow,
+  }),
+  pickerSheet: mergeStyle(styles.pickerSheet, {
+    backgroundColor: colors.card,
+  }),
+  pickerHandle: mergeStyle(styles.pickerHandle, {
+    backgroundColor: colors.border,
+  }),
+  pickerHeader: mergeStyle(styles.pickerHeader, {
+    borderBottomColor: colors.border,
+  }),
+  pickerTitle: mergeStyle(styles.pickerTitle, {
+    color: colors.text,
+  }),
+  pickerActionSecondary: mergeStyle(styles.pickerActionSecondary, {
+    color: colors.mutedText,
+  }),
+  pickerActionPrimary: mergeStyle(styles.pickerActionPrimary, {
+    color: colors.accent,
+  }),
+  emptyTitle: mergeStyle(styles.emptyTitle, {
+    color: colors.text,
+  }),
+  emptyText: mergeStyle(styles.emptyText, {
+    color: colors.mutedText,
+  }),
 });
 
 export default ProfileScreen;

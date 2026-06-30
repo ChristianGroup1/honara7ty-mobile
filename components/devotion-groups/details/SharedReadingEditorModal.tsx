@@ -12,7 +12,7 @@ import {
 import { BibleBook, Testament } from '../../data/bibleMetadata';
 import BiblePassagePicker from '../../shared/BiblePassagePicker';
 import { CUSTOM_TARGET_VALUE, TARGET_DAY_OPTIONS } from './constants';
-import { styles } from './styles';
+import { styles as defaultStyles } from './styles';
 import { formatSharedTarget } from './utils';
 
 type Props = {
@@ -38,6 +38,8 @@ type Props = {
   onSelectAllChapters: () => void;
   onSelectTargetDays: (value: number | null) => void;
   onSetCustomTargetDays: (value: string) => void;
+  styles?: typeof defaultStyles;
+  placeholderTextColor?: string;
 };
 
 const SharedReadingEditorModal = ({
@@ -63,6 +65,8 @@ const SharedReadingEditorModal = ({
   onSelectAllChapters,
   onSelectTargetDays,
   onSetCustomTargetDays,
+  styles = defaultStyles,
+  placeholderTextColor = '#98A2B3',
 }: Props) => (
   <Modal
     visible={visible}
@@ -112,8 +116,10 @@ const SharedReadingEditorModal = ({
           />
           <TargetPicker
             strings={strings}
+            styles={styles}
             selectedTargetDays={selectedTargetDays}
             customTargetDays={customTargetDays}
+            placeholderTextColor={placeholderTextColor}
             onSelectTargetDays={onSelectTargetDays}
             onSetCustomTargetDays={onSetCustomTargetDays}
           />
@@ -159,8 +165,10 @@ const SharedReadingEditorModal = ({
 
 const TargetPicker = ({
   strings,
+  styles,
   selectedTargetDays,
   customTargetDays,
+  placeholderTextColor,
   onSelectTargetDays,
   onSetCustomTargetDays,
 }: any) => (
@@ -199,7 +207,7 @@ const TargetPicker = ({
           onSetCustomTargetDays(value.replace(/[^0-9]/g, ''))
         }
         placeholder={strings.customTargetPlaceholder}
-        placeholderTextColor="#98A2B3"
+        placeholderTextColor={placeholderTextColor}
         keyboardType="number-pad"
         textAlign="center"
       />

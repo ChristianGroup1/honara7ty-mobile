@@ -11,9 +11,10 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import TextInputInteractive from 'react-native-text-input-interactive';
 import { getStrings } from '../../localization';
+import { useNightMode } from '../../lib/nightMode';
 
-const ChevronDownIcon = () => (
-  <MaterialCommunityIcons name="chevron-down" size={22} color="#999" />
+const ChevronDownIcon = ({ color }: { color: string }) => (
+  <MaterialCommunityIcons name="chevron-down" size={22} color={color} />
 );
 
 interface Props {
@@ -51,6 +52,8 @@ const CustomInput: React.FC<Props> = ({
 }) => {
   const strings = getStrings().shared;
   const isRTL = I18nManager.isRTL;
+  const { colors } = useNightMode();
+  const mutedIconColor = colors.mutedText;
 
   const handleChangeText = (text: string) => {
     if (!onChangeText) return;
@@ -60,7 +63,15 @@ const CustomInput: React.FC<Props> = ({
   const isPressableField = Boolean(onPress);
 
   const inputArea = (
-    <View style={styles.inputSurface}>
+    <View
+      style={[
+        styles.inputSurface,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+        },
+      ]}
+    >
       <TouchableOpacity
         activeOpacity={1}
         onPress={
@@ -82,7 +93,7 @@ const CustomInput: React.FC<Props> = ({
             isPassword ? (secureText ? 'eye-off-outline' : 'eye-outline') : icon
           }
           size={22}
-          color="#999"
+          color={mutedIconColor}
         />
       </TouchableOpacity>
 
@@ -98,25 +109,33 @@ const CustomInput: React.FC<Props> = ({
               styles.staticInputText,
               !value ? styles.staticInputPlaceholder : null,
               styles.staticInputTextAlign,
+              {
+                color: value ? colors.text : colors.mutedText,
+              },
             ]}
             numberOfLines={1}
           >
             {value || placeholder}
           </Text>
-          <ChevronDownIcon />
+          <ChevronDownIcon color={mutedIconColor} />
         </View>
       ) : (
         <TextInputInteractive
           style={styles.inputField}
-          textInputStyle={[styles.interactiveInput]}
+          textInputStyle={[
+            styles.interactiveInput,
+            {
+              color: colors.text,
+            },
+          ]}
           placeholder={placeholder}
           value={value}
           onChangeText={handleChangeText}
           multiline={Platform.OS === 'ios' ? false : !isPassword}
           secureTextEntry={isPassword ? secureText : false}
-          mainColor="#0A1124"
-          originalColor="#E0E0E0"
-          animatedPlaceholderTextColor="#999"
+          mainColor={colors.text}
+          originalColor={colors.border}
+          animatedPlaceholderTextColor={colors.mutedText}
           returnKeyType="done"
           textAlignVertical="center"
           editable={editable}
@@ -125,6 +144,7 @@ const CustomInput: React.FC<Props> = ({
           autoCorrect={false}
           autoComplete="off"
           textContentType="none"
+          placeholderTextColor={colors.mutedText}
         />
       )}
     </View>
@@ -134,8 +154,24 @@ const CustomInput: React.FC<Props> = ({
     <View style={styles.inputWrapper}>
       {(!!fieldLabel || !!badge) && (
         <View style={styles.fieldLabelRow}>
-          {!!fieldLabel && <Text style={styles.fieldLabel}>{fieldLabel}</Text>}
-          {!!badge && <Text style={styles.optionalBadge}>{badge}</Text>}
+          {!!fieldLabel && (
+            <Text style={[styles.fieldLabel, { color: colors.text }]}>
+              {fieldLabel}
+            </Text>
+          )}
+          {!!badge && (
+            <Text
+              style={[
+                styles.optionalBadge,
+                {
+                  color: colors.mutedText,
+                  backgroundColor: colors.cardMuted,
+                },
+              ]}
+            >
+              {badge}
+            </Text>
+          )}
         </View>
       )}
 

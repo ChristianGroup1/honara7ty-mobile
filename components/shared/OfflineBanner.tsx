@@ -24,7 +24,7 @@ const OfflineBanner = ({ visible, inline = false }: Props) => {
 
   const height = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, inline ? 68 : 80 + insets.top],
+    outputRange: [0, inline ? 92 : 104 + insets.top],
   });
 
   const opacity = animation.interpolate({
@@ -48,9 +48,6 @@ const OfflineBanner = ({ visible, inline = false }: Props) => {
           <Text style={styles.title}>{strings.title}</Text>
           <Text style={styles.message}>{strings.message}</Text>
         </View>
-        <View style={styles.statusPill}>
-          <Text style={styles.statusText}>Offline</Text>
-        </View>
       </View>
     </Animated.View>
   );
@@ -72,9 +69,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#8F4F10',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     borderWidth: 1,
     borderColor: 'rgba(255,244,223,0.18)',
   },
@@ -86,6 +83,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
+    marginTop: 2,
   },
   copy: {
     flex: 1,
@@ -100,21 +98,10 @@ const styles = StyleSheet.create({
   message: {
     color: '#FCE7C7',
     fontSize: 12,
-    lineHeight: 17,
+    lineHeight: 18,
     marginTop: 2,
     textAlign: 'left',
-  },
-  statusPill: {
-    marginLeft: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-  },
-  statusText: {
-    color: '#FFF4DF',
-    fontSize: 11,
-    fontWeight: '700',
+    flexShrink: 1,
   },
 });
 

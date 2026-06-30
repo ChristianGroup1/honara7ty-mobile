@@ -17,7 +17,7 @@ const AboutIdeaScreen = ({ navigation }: any) => {
   return (
     <OnboardingScreen
       navigation={navigation}
-      route={{ params: { inApp: true } }}
+      route={{ params: { inApp: true, resetOnFocus: true } }}
     />
   );
 };

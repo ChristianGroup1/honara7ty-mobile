@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -30,12 +30,15 @@ import {
   joinDevotionGroupByCode,
 } from '../../lib/devotionGroups';
 
-import { BG, GOLD, NAVY } from '../shared/designTokens';
+import { BG, NAVY } from '../shared/designTokens';
+import { AppTheme, useNightMode } from '../../lib/nightMode';
 type ActionMode = 'create' | 'join';
 
 const DevotionGroupsScreen = ({ navigation, route }: any) => {
   const strings = getStrings().devotionGroups;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const themedStyles = useMemo(() => createThemedStyles(colors), [colors]);
   const [user, setUser] = useState<any>(null);
   const [groups, setGroups] = useState<DevotionGroup[]>([]);
   const [groupName, setGroupName] = useState('');
@@ -235,7 +238,7 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
   const renderGroup = useCallback(
     ({ item: group }: { item: DevotionGroup }) => (
       <TouchableOpacity
-        style={styles.groupCard}
+        style={themedStyles.groupCard}
         activeOpacity={0.82}
         onPress={() =>
           navigation.navigate('DevotionGroupDetails', {
@@ -243,53 +246,53 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
           })
         }
       >
-        <View style={styles.groupIcon}>
+        <View style={themedStyles.groupIcon}>
           <MaterialCommunityIcons name="account-group" size={22} color="#FFF" />
         </View>
-        <View style={styles.groupBody}>
-          <Text style={styles.groupName}>{group.name}</Text>
-          <View style={styles.invitePill}>
+        <View style={themedStyles.groupBody}>
+          <Text style={themedStyles.groupName}>{group.name}</Text>
+          <View style={themedStyles.invitePill}>
             <MaterialCommunityIcons name="key-variant" size={13} color="#FFF" />
-            <Text style={styles.groupMeta}>
+            <Text style={themedStyles.groupMeta}>
               {strings.inviteCode}: {group.invite_code}
             </Text>
           </View>
         </View>
-        <MaterialCommunityIcons name="chevron-left" size={22} color="#9AA3AE" />
+        <MaterialCommunityIcons name="chevron-left" size={22} color={colors.mutedText} />
       </TouchableOpacity>
     ),
-    [navigation, strings.inviteCode],
+    [colors.mutedText, navigation, strings.inviteCode, themedStyles],
   );
 
   const renderHeader = useCallback(
     () => (
       <>
-        <View style={styles.heroCard}>
+        <View style={themedStyles.heroCard}>
           <HeroBackground />
-          <View style={styles.heroTopRow}>
-            <View style={styles.heroIcon}>
+          <View style={themedStyles.heroTopRow}>
+            <View style={themedStyles.heroIcon}>
               <MaterialCommunityIcons
                 name="account-group-outline"
                 size={28}
                 color="#FFF"
               />
             </View>
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>
+            <View style={themedStyles.heroBadge}>
+              <Text style={themedStyles.heroBadgeText}>
                 {groups.length} {strings.groupsCount}
               </Text>
             </View>
           </View>
-          <Text style={styles.heroTitle}>{strings.heroTitle}</Text>
-          <Text style={styles.heroText}>{strings.heroText}</Text>
+          <Text style={themedStyles.heroTitle}>{strings.heroTitle}</Text>
+          <Text style={themedStyles.heroText}>{strings.heroText}</Text>
         </View>
 
-        <View style={styles.actionPanel}>
-          <View style={styles.segmentedControl}>
+        <View style={themedStyles.actionPanel}>
+          <View style={themedStyles.segmentedControl}>
             <TouchableOpacity
               style={[
-                styles.segmentButton,
-                actionMode === 'join' && styles.segmentButtonActive,
+                themedStyles.segmentButton,
+                actionMode === 'join' && themedStyles.segmentButtonActive,
               ]}
               activeOpacity={0.84}
               onPress={() => setActionMode('join')}
@@ -297,12 +300,12 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
               <MaterialCommunityIcons
                 name="login"
                 size={18}
-                color={actionMode === 'join' ? '#FFF' : NAVY}
+                color={actionMode === 'join' ? '#FFF' : colors.text}
               />
               <Text
                 style={[
-                  styles.segmentButtonText,
-                  actionMode === 'join' && styles.segmentButtonTextActive,
+                  themedStyles.segmentButtonText,
+                  actionMode === 'join' && themedStyles.segmentButtonTextActive,
                 ]}
               >
                 {strings.joinTitle}
@@ -310,8 +313,8 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
             </TouchableOpacity>
             <TouchableOpacity
               style={[
-                styles.segmentButton,
-                actionMode === 'create' && styles.segmentButtonActive,
+                themedStyles.segmentButton,
+                actionMode === 'create' && themedStyles.segmentButtonActive,
               ]}
               activeOpacity={0.84}
               onPress={() => setActionMode('create')}
@@ -319,12 +322,12 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
               <MaterialCommunityIcons
                 name="plus-circle-outline"
                 size={18}
-                color={actionMode === 'create' ? '#FFF' : NAVY}
+                color={actionMode === 'create' ? '#FFF' : colors.text}
               />
               <Text
                 style={[
-                  styles.segmentButtonText,
-                  actionMode === 'create' && styles.segmentButtonTextActive,
+                  themedStyles.segmentButtonText,
+                  actionMode === 'create' && themedStyles.segmentButtonTextActive,
                 ]}
               >
                 {strings.createTitle}
@@ -335,49 +338,49 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
           {actionMode === 'create' ? (
             <>
               <TextInput
-                style={[styles.input, styles.inviteInput]}
+                style={[themedStyles.input, themedStyles.inviteInput]}
                 value={groupName}
                 onChangeText={setGroupName}
                 placeholder={strings.groupNamePlaceholder}
-                placeholderTextColor="#98A2B3"
+                placeholderTextColor={colors.mutedText}
                 autoCapitalize="characters"
                 textAlign="center"
               />
               <TouchableOpacity
-                style={styles.primaryButton}
+                style={themedStyles.primaryButton}
                 onPress={handleCreateGroup}
                 disabled={saving}
               >
                 <MaterialCommunityIcons name="plus" size={18} color="#FFF" />
-                <Text style={styles.primaryButtonText}>{strings.create}</Text>
+                <Text style={themedStyles.primaryButtonText}>{strings.create}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
               <TextInput
-                style={[styles.input, styles.inviteInput]}
+                style={[themedStyles.input, themedStyles.inviteInput]}
                 value={inviteCode}
                 onChangeText={setInviteCode}
                 placeholder={strings.inviteCodePlaceholder}
-                placeholderTextColor="#98A2B3"
+                placeholderTextColor={colors.mutedText}
                 autoCapitalize="characters"
                 textAlign="center"
               />
               <TouchableOpacity
-                style={styles.primaryButton}
+                style={themedStyles.primaryButton}
                 onPress={handleJoinGroup}
                 disabled={saving}
               >
                 <MaterialCommunityIcons name="login" size={18} color="#FFF" />
-                <Text style={styles.primaryButtonText}>{strings.join}</Text>
+                <Text style={themedStyles.primaryButtonText}>{strings.join}</Text>
               </TouchableOpacity>
             </>
           )}
         </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{strings.myGroupsTitle}</Text>
-          <Text style={styles.sectionCaption}>
+        <View style={themedStyles.sectionHeader}>
+          <Text style={themedStyles.sectionTitle}>{strings.myGroupsTitle}</Text>
+          <Text style={themedStyles.sectionCaption}>
             {groups.length} {strings.groupsCount}
           </Text>
         </View>
@@ -392,28 +395,31 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
       inviteCode,
       saving,
       strings,
+      colors.mutedText,
+      colors.text,
+      themedStyles,
     ],
   );
 
   const renderEmpty = useCallback(
     () => (
-      <View style={styles.emptyCard}>
-        <View style={styles.emptyIcon}>
+      <View style={themedStyles.emptyCard}>
+        <View style={themedStyles.emptyIcon}>
           <MaterialCommunityIcons
             name="account-group-outline"
             size={24}
             color="#FFF"
           />
         </View>
-        <Text style={styles.emptyText}>{strings.emptyGroups}</Text>
+        <Text style={themedStyles.emptyText}>{strings.emptyGroups}</Text>
       </View>
     ),
-    [strings.emptyGroups],
+    [strings.emptyGroups, themedStyles],
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+    <SafeAreaView style={themedStyles.container} edges={[]}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <AppHeader
         topInsetHeight={insets.top}
         title={strings.title}
@@ -431,7 +437,7 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
         keyExtractor={group => group.id}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={themedStyles.content}
         refreshControl={
           <RefreshControl
             refreshing={loading}
@@ -446,8 +452,8 @@ const DevotionGroupsScreen = ({ navigation, route }: any) => {
       />
 
       {saving ? (
-        <View style={styles.savingOverlay}>
-          <ActivityIndicator color={GOLD} />
+        <View style={themedStyles.savingOverlay}>
+          <ActivityIndicator color={colors.accent} />
         </View>
       ) : null}
 
@@ -685,6 +691,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+});
+
+const mergeStyle = (...style: any[]) => StyleSheet.flatten(style);
+
+const createThemedStyles = (colors: AppTheme['colors']) => ({
+  ...styles,
+  container: mergeStyle(styles.container, {
+    backgroundColor: colors.background,
+  }),
+  actionPanel: mergeStyle(styles.actionPanel, {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+  }),
+  segmentedControl: mergeStyle(styles.segmentedControl, {
+    backgroundColor: colors.cardMuted,
+  }),
+  segmentButtonActive: mergeStyle(styles.segmentButtonActive, {
+    backgroundColor: colors.header,
+  }),
+  segmentButtonText: mergeStyle(styles.segmentButtonText, {
+    color: colors.text,
+  }),
+  input: mergeStyle(styles.input, {
+    backgroundColor: colors.cardMuted,
+    borderColor: colors.border,
+    color: colors.text,
+  }),
+  primaryButton: mergeStyle(styles.primaryButton, {
+    backgroundColor: colors.header,
+  }),
+  sectionTitle: mergeStyle(styles.sectionTitle, {
+    color: colors.text,
+  }),
+  sectionCaption: mergeStyle(styles.sectionCaption, {
+    color: colors.mutedText,
+  }),
+  groupCard: mergeStyle(styles.groupCard, {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+  }),
+  groupName: mergeStyle(styles.groupName, {
+    color: colors.text,
+  }),
+  emptyCard: mergeStyle(styles.emptyCard, {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+  }),
+  emptyText: mergeStyle(styles.emptyText, {
+    color: colors.mutedText,
+  }),
 });
 
 export default DevotionGroupsScreen;

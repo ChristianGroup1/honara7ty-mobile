@@ -12,7 +12,10 @@ import {
 import { StackScreenProps } from '@react-navigation/stack';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MemorizationHeader from './MemorizationHeader';
-import { memorizationStyles as styles } from './styles';
+import {
+  createThemedMemorizationStyles,
+  memorizationStyles as styles,
+} from './styles';
 import { MemorizationStackParamList, WordSlot } from './types';
 import {
   buildFullTextResultSlots,
@@ -20,39 +23,50 @@ import {
   normalizeArabicAnswer,
 } from './utils';
 import { getStrings } from '../../localization';
+import { useNightMode } from '../../lib/nightMode';
 
 type Props = StackScreenProps<MemorizationStackParamList, 'Recite'>;
 
 interface WordInputProps {
   index: number;
   slot: WordSlot;
+  hasNextInput: boolean;
   onFocus: (index: number) => void;
   onChangeText: (index: number, value: string) => void;
+  onSubmitEditing: (index: number) => void;
   inputRef: (ref: TextInput | null) => void;
   placeholder: string;
+  themedStyles: ReturnType<typeof createThemedMemorizationStyles>;
+  placeholderTextColor: string;
 }
 
 const WordInput = React.memo(
   ({
     index,
     slot,
+    hasNextInput,
     onFocus,
     onChangeText,
+    onSubmitEditing,
     inputRef,
     placeholder,
+    themedStyles,
+    placeholderTextColor,
   }: WordInputProps) => {
     return (
       <TextInput
         ref={inputRef}
-        style={styles.blankInput}
+        style={[styles.blankInput, themedStyles.input]}
         value={slot.userInput}
         onFocus={() => onFocus(index)}
         onChangeText={val => onChangeText(index, val)}
         placeholder={placeholder}
-        placeholderTextColor="#AAA"
+        placeholderTextColor={placeholderTextColor}
         textAlign="center"
         textAlignVertical="center"
-        returnKeyType="next"
+        returnKeyType="done"
+        blurOnSubmit={!hasNextInput}
+        onSubmitEditing={() => onSubmitEditing(index)}
       />
     );
   },
@@ -60,6 +74,11 @@ const WordInput = React.memo(
 
 const ReciteScreen = ({ navigation, route }: Props) => {
   const strings = getStrings().bibleMemorization.recite;
+  const { colors } = useNightMode();
+  const themedStyles = React.useMemo(
+    () => createThemedMemorizationStyles(colors),
+    [colors],
+  );
   const selection = route.params;
   const scrollRef = useRef<ScrollView | null>(null);
   const inputRefs = useRef<Array<TextInput | null>>([]);
@@ -99,6 +118,24 @@ const ReciteScreen = ({ navigation, route }: Props) => {
       inputRefs.current[index] = ref;
     },
     [],
+  );
+
+  const focusNextInput = useCallback(
+    (index: number) => {
+      const nextIndex = slots.findIndex(
+        (slot, slotIndex) => slotIndex > index && slot.hidden,
+      );
+
+      if (nextIndex === -1) {
+        inputRefs.current[index]?.blur();
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        inputRefs.current[nextIndex]?.focus();
+      });
+    },
+    [slots],
   );
 
   const checkAnswers = () => {
@@ -148,7 +185,7 @@ const ReciteScreen = ({ navigation, route }: Props) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, themedStyles.container]}>
       <MemorizationHeader
         title={strings.title}
         onBack={() => navigation.goBack()}
@@ -165,21 +202,21 @@ const ReciteScreen = ({ navigation, route }: Props) => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.infoCard}>
+          <View style={[styles.infoCard, themedStyles.cardMuted]}>
             <Text style={styles.refText}>
               {selection.bookLabel} - {selection.chapterLabel}
             </Text>
-            <Text style={styles.instructionText}>{strings.instruction}</Text>
+            <Text style={[styles.instructionText, themedStyles.mutedText]}>{strings.instruction}</Text>
           </View>
 
           <View style={styles.statusPillsRow}>
-            <View style={styles.statusPill}>
+            <View style={[styles.statusPill, themedStyles.card]}>
               <MaterialCommunityIcons
                 name="circle-slice-3"
                 size={16}
-                color="#0A1124"
+                color={colors.text}
               />
-              <Text style={styles.statusPillText}>
+              <Text style={[styles.statusPillText, themedStyles.primaryText]}>
                 {selection.difficulty === 'easy'
                   ? getStrings().bibleMemorization.difficultyLevels.easy
                   : selection.difficulty === 'medium'
@@ -189,13 +226,13 @@ const ReciteScreen = ({ navigation, route }: Props) => {
                   : getStrings().bibleMemorization.difficultyLevels.fullText}
               </Text>
             </View>
-            <View style={styles.statusPill}>
+            <View style={[styles.statusPill, themedStyles.card]}>
               <MaterialCommunityIcons
                 name="form-textbox"
                 size={16}
-                color="#0A1124"
+                color={colors.text}
               />
-              <Text style={styles.statusPillText}>
+              <Text style={[styles.statusPillText, themedStyles.primaryText]}>
                 {isFullTextMode
                   ? strings.fullTextWords(slots.length)
                   : strings.blanks(slots.filter(slot => slot.hidden).length)}
@@ -204,9 +241,9 @@ const ReciteScreen = ({ navigation, route }: Props) => {
           </View>
 
           {isFullTextMode ? (
-            <View style={styles.referenceVerseBox}>
-              <View style={styles.referenceVerseHeader}>
-                <Text style={styles.verseBoxTitle}>
+            <View style={[styles.referenceVerseBox, themedStyles.referenceVerseBox]}>
+              <View style={[styles.referenceVerseHeader, themedStyles.dividerBorder]}>
+                <Text style={[styles.verseBoxTitle, themedStyles.primaryText]}>
                   {strings.referenceTextTitle}
                 </Text>
                 <TouchableOpacity
@@ -233,21 +270,22 @@ const ReciteScreen = ({ navigation, route }: Props) => {
                 <Text
                   style={[
                     styles.revealedVerseText,
+                    themedStyles.primaryText,
                     isReferenceBlurred && styles.revealedVerseTextBlurred,
                   ]}
                 >
                   {selection.verseOriginal}
                 </Text>
                 {isReferenceBlurred ? (
-                  <View pointerEvents="none" style={styles.verseBlurOverlay} />
+                  <View pointerEvents="none" style={[styles.verseBlurOverlay, themedStyles.blurOverlay]} />
                 ) : null}
               </View>
             </View>
           ) : null}
 
-          <View style={styles.verseBox}>
-            <View style={styles.verseBoxHeader}>
-              <Text style={styles.verseBoxTitle}>{strings.verseTextTitle}</Text>
+          <View style={[styles.verseBox, themedStyles.card]}>
+            <View style={[styles.verseBoxHeader, themedStyles.dividerBorder]}>
+              <Text style={[styles.verseBoxTitle, themedStyles.primaryText]}>{strings.verseTextTitle}</Text>
               <MaterialCommunityIcons
                 name={isFullTextMode ? 'form-textbox' : 'feather'}
                 size={18}
@@ -256,18 +294,18 @@ const ReciteScreen = ({ navigation, route }: Props) => {
             </View>
             {isFullTextMode ? (
               <>
-                <Text style={styles.instructionText}>
+                <Text style={[styles.instructionText, themedStyles.mutedText]}>
                   {strings.fullTextInstruction}
                 </Text>
                 <TextInput
-                  style={styles.fullVerseInput}
+                  style={[styles.fullVerseInput, themedStyles.input]}
                   multiline
                   textAlignVertical="top"
                   value={fullVerseAnswer}
                   textAlign="right"
                   onChangeText={setFullVerseAnswer}
                   placeholder={strings.fullTextPlaceholder}
-                  placeholderTextColor="#98A2B3"
+                  placeholderTextColor={colors.mutedText}
                 />
               </>
             ) : (
@@ -278,13 +316,20 @@ const ReciteScreen = ({ navigation, route }: Props) => {
                       key={i}
                       index={i}
                       slot={slot}
+                      hasNextInput={slots.some(
+                        (candidate, candidateIndex) =>
+                          candidateIndex > i && candidate.hidden,
+                      )}
                       onFocus={scrollToFocusedInput}
                       onChangeText={handleInputChange}
+                      onSubmitEditing={focusNextInput}
                       inputRef={setInputRef(i)}
                       placeholder={strings.blankPlaceholder}
+                      themedStyles={themedStyles}
+                      placeholderTextColor={colors.mutedText}
                     />
                   ) : (
-                    <Text key={i} style={styles.wordText}>
+                    <Text key={i} style={[styles.wordText, themedStyles.primaryText]}>
                       {slot.word}{' '}
                     </Text>
                   ),
@@ -302,7 +347,7 @@ const ReciteScreen = ({ navigation, route }: Props) => {
             style={styles.ghostBtn}
             onPress={() => navigation.navigate('Pick')}
           >
-            <Text style={styles.ghostBtnText}>
+            <Text style={[styles.ghostBtnText, themedStyles.mutedText]}>
               {strings.chooseAnotherReference}
             </Text>
           </TouchableOpacity>

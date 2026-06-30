@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   FlatList,
   Platform,
@@ -16,13 +16,15 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { ARTICLES, CARD_ACCENTS } from './devotionData';
 import { getStrings } from '../../localization';
 import AppHeader, { AppHeaderAction } from '../shared/AppHeader';
-import { BG, NAVY } from '../shared/designTokens';
+import { useNightMode } from '../../lib/nightMode';
 
 type Props = { navigation: any };
 
 const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
   const strings = getStrings().devotion;
   const insets = useSafeAreaInsets();
+  const { colors } = useNightMode();
+  const themedStyles = useMemo(() => createThemedStyles(colors), [colors]);
 
 
   const renderItem = useCallback(({ item, index }: { item: any; index: number }) => {
@@ -30,7 +32,11 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
     return (
       <TouchableOpacity
         key={item.id}
-        style={[styles.articleCard, { borderRightColor: accent }]}
+        style={[
+          styles.articleCard,
+          themedStyles.articleCard,
+          { borderRightColor: accent },
+        ]}
         activeOpacity={0.82}
         onPress={() =>
           navigation.navigate('DevotionDetail', { articleId: item.id })
@@ -52,10 +58,13 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
 
         {/* Text */}
         <View style={styles.articleCardBody}>
-          <Text style={[styles.articleCardTitle, { color: NAVY }]}>
+          <Text style={[styles.articleCardTitle, themedStyles.titleText]}>
             {item.title}
           </Text>
-          <Text style={styles.articleCardSummary} numberOfLines={2}>
+          <Text
+            style={[styles.articleCardSummary, themedStyles.summaryText]}
+            numberOfLines={2}
+          >
             {item.summary}
           </Text>
         </View>
@@ -63,15 +72,15 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
         <MaterialCommunityIcons
           name="chevron-left"
           size={20}
-          color="#BCC0C8"
+          color={colors.mutedText}
         />
       </TouchableOpacity>
     );
-  }, [navigation]);
+  }, [colors.mutedText, navigation, themedStyles]);
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <StatusBar barStyle="light-content" backgroundColor={NAVY} />
+    <SafeAreaView style={[styles.container, themedStyles.container]} edges={[]}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.header} />
       <AppHeader
         topInsetHeight={insets?.top ?? 0}
         title={strings.guide.title}
@@ -102,12 +111,12 @@ const DevotionGuideScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BG,
+    backgroundColor: '#F2F4F8',
   },
 
   /* ── Creative Header ── */
   header: {
-    backgroundColor: NAVY,
+    backgroundColor: '#0A1124',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -158,7 +167,7 @@ const styles = StyleSheet.create({
   /* ── Wave decoration ── */
   wave: {
     height: 12,
-    backgroundColor: NAVY,
+    backgroundColor: '#0A1124',
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     marginBottom: 4,
@@ -213,5 +222,25 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
+
+const createThemedStyles = (
+  colors: ReturnType<typeof useNightMode>['colors'],
+) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+    },
+    articleCard: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+      shadowColor: colors.shadow,
+    },
+    titleText: {
+      color: colors.text,
+    },
+    summaryText: {
+      color: colors.mutedText,
+    },
+  });
 
 export default DevotionGuideScreen;

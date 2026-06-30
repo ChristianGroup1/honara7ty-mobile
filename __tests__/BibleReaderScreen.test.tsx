@@ -3,6 +3,8 @@ jest.mock('@react-native-clipboard/clipboard', () => ({
   setString: jest.fn(),
 }));
 
+const mockSetNightMode = jest.fn();
+
 jest.mock('react-native-safe-area-context', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -31,7 +33,7 @@ jest.mock('../components/shared/AppHeader', () => {
 jest.mock('../lib/nightMode', () => ({
   useNightMode: () => ({
     isNightMode: false,
-    setNightMode: jest.fn(),
+    setNightMode: mockSetNightMode,
     colors: {
       background: '#F2F4F8',
       card: '#FFFFFF',
@@ -257,9 +259,30 @@ test('bible reader persists reading settings', async () => {
       stripDiacritics: true,
       parallelLifeTranslation: true,
       inlineLifeTranslation: false,
-      isNightMode: false,
     }),
   );
+});
+
+test('bible reader ignores legacy night mode setting', async () => {
+  await AsyncStorage.setItem(
+    READING_SETTINGS_KEY,
+    JSON.stringify({
+      verseFontSize: 20,
+      verseTextColor: '#33506E',
+      stripDiacritics: true,
+      parallelLifeTranslation: true,
+      inlineLifeTranslation: true,
+      isNightMode: true,
+    }),
+  );
+
+  await ReactTestRenderer.act(async () => {
+    ReactTestRenderer.create(<BibleReaderScreen />);
+  });
+
+  await ReactTestRenderer.act(async () => {});
+
+  expect(mockSetNightMode).not.toHaveBeenCalled();
 });
 
 test('bible reader can show Book of Life for a pressed verse when enabled', async () => {
@@ -447,9 +470,6 @@ test('bible reader long press selects verses for copy and highlighting', async (
 
   expect(
     renderer!.root.findByProps({ testID: 'verse-selection-toolbar' }),
-  ).toBeTruthy();
-  expect(
-    renderer!.root.findByProps({ testID: 'selected-verse-check-1' }),
   ).toBeTruthy();
 
   const secondVerseButton = renderer!.root.findByProps({
