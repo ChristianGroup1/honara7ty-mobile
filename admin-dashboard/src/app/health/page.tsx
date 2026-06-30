@@ -648,7 +648,7 @@ export default function HealthPage() {
     <div className="animate-fade-in" style={{ direction: 'rtl' }}>
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+      <header className="page-header" style={{ marginBottom: '24px' }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '6px' }}>صحة التطبيق</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
@@ -1377,7 +1377,7 @@ export default function HealthPage() {
               تحليل عمق استخدام الميزات الروحية المصاحبة في التطبيق مثل دفتر الصلوات وسجل التأملات الشخصية.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '10px' }}>
+            <div className="responsive-2col" style={{ gap: '16px', marginTop: '10px' }}>
               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>طلبات الصلاة</span>
                 <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{totalPrayers}</span>
@@ -1623,7 +1623,7 @@ export default function HealthPage() {
 
       {/* ── Community Demographics ────────────────────────────────────────── */}
       <section style={{ marginBottom: '32px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+        <div className="responsive-2col">
 
           {/* Top Churches */}
           <div className="glass card">

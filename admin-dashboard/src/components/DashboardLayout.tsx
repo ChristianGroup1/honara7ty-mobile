@@ -4,19 +4,36 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Sidebar from './Sidebar';
-import { ShieldAlert, RefreshCw } from 'lucide-react';
+import { ShieldAlert, RefreshCw, Menu } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!sidebarOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [sidebarOpen]);
+
+  useEffect(() => {
     const checkUser = async () => {
-      // 1. Get current session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session) {
@@ -31,7 +48,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setUserEmail(session.user.email || '');
       setAuthenticated(true);
 
-      // 2. Check admin status in public.admin_users
       const { data: adminData, error: adminError } = await supabase
         .from('admin_users')
         .select('user_id')
@@ -41,7 +57,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (adminError || !adminData) {
         setIsAdmin(false);
         setLoading(false);
-        // Log out immediately if not admin
         await supabase.auth.signOut();
         router.replace('/login');
         return;
@@ -54,7 +69,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     checkUser();
   }, [router, pathname]);
 
-  // If we are on the login page, render children directly without auth wrap
   if (pathname === '/login') {
     return <>{children}</>;
   }
@@ -113,8 +127,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="dashboard-container">
-      <Sidebar userEmail={userEmail} />
+      {sidebarOpen ? (
+        <button
+          type="button"
+          className="sidebar-overlay"
+          aria-label="إغلاق القائمة"
+          onClick={() => setSidebarOpen(false)}
+        />
+      ) : null}
+
+      <Sidebar
+        userEmail={userEmail}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
       <main className="main-content">
+        <div className="mobile-topbar">
+          <button
+            type="button"
+            className="mobile-menu-btn"
+            aria-label="فتح القائمة"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu size={22} />
+          </button>
+          <div className="mobile-topbar-brand">
+            <ShieldAlert size={20} color="var(--primary)" />
+            <span>هنا راحتي — أدمن</span>
+          </div>
+        </div>
         {children}
       </main>
     </div>

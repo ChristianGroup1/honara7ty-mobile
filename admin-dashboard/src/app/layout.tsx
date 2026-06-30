@@ -1,10 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export const metadata: Metadata = {
   title: "هنا راحتي - لوحة التحكم والإحصائيات",
   description: "لوحة تحكم المشرفين لتطبيق هنا راحتي لإدارة الأنشطة والمستخدمين وإحصائيات القراءة والصلوات.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({

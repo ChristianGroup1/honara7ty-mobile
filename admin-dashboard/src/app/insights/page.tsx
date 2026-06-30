@@ -617,7 +617,7 @@ export default function InsightsPage() {
 
   return (
     <div className="animate-fade-in insights-page">
-      <header style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
+      <header className="page-header" style={{ marginBottom: '32px' }}>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '8px' }}>التحليلات المتقدمة</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>

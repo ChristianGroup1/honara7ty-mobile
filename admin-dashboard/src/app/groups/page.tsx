@@ -165,7 +165,7 @@ export default function GroupsPage() {
   return (
     <div className="animate-fade-in" style={{ direction: 'rtl' }}>
       {/* Header */}
-      <header style={{ marginBottom: '35px' }}>
+      <header className="page-header" style={{ marginBottom: '35px' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '6px' }}>مجموعات التفاعل خلوتي</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
           مراقبة مجموعات خلوتي النشطة، ومتابعة الكتب المشتركة ورموز الدعوة المخصصة لربط المشاركين.

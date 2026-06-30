@@ -13,13 +13,16 @@ import {
   ShieldAlert,
   Activity,
   BarChart3,
+  X,
 } from 'lucide-react';
 
 interface SidebarProps {
   userEmail: string;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function Sidebar({ userEmail }: SidebarProps) {
+export default function Sidebar({ userEmail, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -37,19 +40,31 @@ export default function Sidebar({ userEmail }: SidebarProps) {
     { name: 'الإشراف والمراجعة', href: '/moderation', icon: MessageSquare },
   ];
 
-  // Helper to extract email prefix for display
   const displayName = userEmail ? userEmail.split('@')[0] : 'مشرف';
 
   return (
-    <aside className="sidebar">
-      <div>
-        {/* Logo */}
-        <div className="sidebar-logo">
+    <aside className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
+      <div className="sidebar-mobile-header">
+        <div className="sidebar-logo sidebar-logo-compact">
+          <ShieldAlert size={22} color="var(--primary)" />
+          <span className="sidebar-logo-text">القائمة</span>
+        </div>
+        <button
+          type="button"
+          className="sidebar-close-btn"
+          aria-label="إغلاق القائمة"
+          onClick={onClose}
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <div className="sidebar-body">
+        <div className="sidebar-logo sidebar-logo-desktop">
           <ShieldAlert size={26} color="var(--primary)" />
           <span className="sidebar-logo-text">هنا راحتي — أدمن</span>
         </div>
 
-        {/* Menu Items */}
         <nav className="sidebar-menu">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -62,6 +77,7 @@ export default function Sidebar({ userEmail }: SidebarProps) {
                 href={item.href}
                 className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
                 style={{ direction: 'rtl', justifyContent: 'flex-start' }}
+                onClick={onClose}
               >
                 <Icon size={20} style={{ marginLeft: '12px' }} />
                 <span>{item.name}</span>
@@ -71,7 +87,6 @@ export default function Sidebar({ userEmail }: SidebarProps) {
         </nav>
       </div>
 
-      {/* Footer Info & Logout */}
       <div className="sidebar-footer">
         <div className="user-profile-badge" style={{ direction: 'rtl' }}>
           <div className="user-avatar">
