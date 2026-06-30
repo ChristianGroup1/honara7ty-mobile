@@ -12,6 +12,9 @@
     "start": "react-native start",
     "strongs:build": "node scripts/build-strongs-data.js",
     "strongs:translate-ar": "node scripts/translate-strongs-ar.js",
+    "admin:deploy": "bash scripts/deploy-admin-dashboard.sh --prod",
+    "admin:deploy:preview": "bash scripts/deploy-admin-dashboard.sh",
+    "admin:deploy:setup": "bash scripts/deploy-admin-dashboard.sh --setup",
     "test": "jest"
   },
   "dependencies": {
