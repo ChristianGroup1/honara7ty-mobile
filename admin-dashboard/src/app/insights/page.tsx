@@ -46,6 +46,13 @@ type InsightsSnapshot = {
   prayerRepeat: PrayerRepeatStats;
 };
 
+const FUNNEL_COLORS = ['#6366f1', '#3b82f6', '#f59e0b', '#10b981'];
+const XP_COLORS: Record<string, string> = {
+  beginner: '#14b8a6',
+  intermediate: '#6366f1',
+  elite: '#a855f7',
+};
+
 const emptySnapshot = (): InsightsSnapshot => ({
   registeredCount: 0,
   streak: {
@@ -75,47 +82,394 @@ const emptySnapshot = (): InsightsSnapshot => ({
   },
 });
 
-function MetricCard({
+function HeroMetric({
   label,
   value,
   hint,
   icon,
-  tone = 'primary',
+  color,
+  glow,
 }: {
   label: string;
   value: string | number;
   hint: string;
   icon: React.ReactNode;
-  tone?: 'primary' | 'success' | 'warning' | 'danger';
+  color: string;
+  glow: string;
 }) {
-  const tones = {
-    primary: 'rgba(99, 102, 241, 0.1)',
-    success: 'rgba(16, 185, 129, 0.1)',
-    warning: 'rgba(245, 158, 11, 0.1)',
-    danger: 'rgba(239, 68, 68, 0.1)',
-  };
-  const colors = {
-    primary: 'var(--primary)',
-    success: 'var(--success)',
-    warning: 'var(--warning)',
-    danger: 'var(--danger)',
-  };
+  return (
+    <div
+      className="glass insights-hero-metric"
+      style={{ color, borderColor: `${color}33`, background: glow }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div className="insights-hero-label">{label}</div>
+          <div className="insights-hero-value" style={{ color }}>{value}</div>
+          <div className="insights-hero-hint">{hint}</div>
+        </div>
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: 14,
+            background: `${color}22`,
+            color,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatTile({
+  value,
+  label,
+  color = 'var(--text-primary)',
+}: {
+  value: string | number;
+  label: string;
+  color?: string;
+}) {
+  return (
+    <div className="insights-stat-tile">
+      <div className="insights-stat-value" style={{ color }}>{value}</div>
+      <div className="insights-stat-label">{label}</div>
+    </div>
+  );
+}
+
+function GradientBar({
+  percent,
+  color,
+  label,
+  showBadge = true,
+}: {
+  percent: number;
+  color: string;
+  label?: string;
+  showBadge?: boolean;
+}) {
+  const width = Math.max(percent, percent > 0 ? 6 : 0);
+  return (
+    <div className="insights-bar-track" style={{ height: label ? 22 : 18 }}>
+      <div
+        className="insights-bar-fill"
+        style={{
+          width: `${width}%`,
+          background: `linear-gradient(90deg, ${color}cc, ${color})`,
+          boxShadow: `0 0 14px ${color}55`,
+        }}
+      />
+      {showBadge && percent >= 8 ? (
+        <span className="insights-bar-value-badge">{Math.round(percent)}%</span>
+      ) : null}
+    </div>
+  );
+}
+
+function DonutChart({
+  segments,
+  size = 180,
+  centerValue,
+  centerLabel,
+}: {
+  segments: Array<{ value: number; color: string; label: string }>;
+  size?: number;
+  centerValue: string;
+  centerLabel: string;
+}) {
+  const total = segments.reduce((sum, seg) => sum + seg.value, 0) || 1;
+  const stroke = 22;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
 
   return (
-    <div className="glass metric-card">
-      <div className="metric-info">
-        <span className="metric-label">{label}</span>
-        <span className="metric-value">{value}</span>
-        <span className="metric-trend trend-up">
-          <span>{hint}</span>
-        </span>
+    <div className="insights-donut-wrap">
+      <div style={{ position: 'relative', width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={stroke}
+          />
+          {segments.map((seg, index) => {
+            const fraction = seg.value / total;
+            const dash = fraction * circumference;
+            const currentOffset = offset;
+            offset += dash;
+            return (
+              <circle
+                key={index}
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="none"
+                stroke={seg.color}
+                strokeWidth={stroke}
+                strokeDasharray={`${dash} ${circumference - dash}`}
+                strokeDashoffset={-currentOffset}
+                strokeLinecap="round"
+                transform={`rotate(-90 ${size / 2} ${size / 2})`}
+                style={{ filter: `drop-shadow(0 0 6px ${seg.color}66)` }}
+              />
+            );
+          })}
+        </svg>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+          }}
+        >
+          <span style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1, color: 'var(--text-primary)' }}>
+            {centerValue}
+          </span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 4, maxWidth: 90 }}>
+            {centerLabel}
+          </span>
+        </div>
       </div>
-      <div
-        className="metric-icon-wrapper"
-        style={{ background: tones[tone], color: colors[tone] }}
-      >
-        {icon}
+      <div className="insights-legend">
+        {segments.map((seg, index) => (
+          <div key={index} className="insights-legend-item">
+            <span className="insights-legend-dot" style={{ background: seg.color }} />
+            <span style={{ color: 'var(--text-secondary)' }}>{seg.label}</span>
+            <span className="insights-legend-value" style={{ color: seg.color }}>
+              {seg.value}
+            </span>
+          </div>
+        ))}
       </div>
+    </div>
+  );
+}
+
+function WeekdayChart({ cells, maxValue }: { cells: WeekdayHeatmapCell[]; maxValue: number }) {
+  const barW = 56;
+  const gap = 24;
+  const startX = 50;
+  const chartH = 200;
+  const svgWidth = startX + cells.length * (barW + gap) + 30;
+  const peakIndex = cells.reduce(
+    (best, cell, index) => (cell.completions > cells[best].completions ? index : best),
+    0,
+  );
+
+  return (
+    <div className="insights-chart-wrap">
+      <svg viewBox={`0 0 ${svgWidth} ${chartH + 50}`} style={{ width: '100%', minWidth: svgWidth }}>
+        <defs>
+          <linearGradient id="weekday-bar-grad" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stopColor="#10b981" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="#34d399" />
+          </linearGradient>
+          <linearGradient id="weekday-peak-grad" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#a855f7" />
+          </linearGradient>
+        </defs>
+
+        {[0, 25, 50, 75, 100].map(pct => {
+          const val = Math.round((pct / 100) * maxValue);
+          const y = 16 + ((100 - pct) / 100) * 150;
+          return (
+            <g key={pct}>
+              <line x1="44" x2={svgWidth - 10} y1={y} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+              <text x="38" y={y + 4} textAnchor="end" className="chart-axis-text" style={{ fontSize: 10 }}>
+                {val}
+              </text>
+            </g>
+          );
+        })}
+
+        {cells.map((cell, index) => {
+          const barH = maxValue > 0 ? Math.max(6, (cell.completions / maxValue) * 150) : 6;
+          const bx = startX + index * (barW + gap);
+          const isPeak = index === peakIndex;
+          const fill = isPeak ? 'url(#weekday-peak-grad)' : 'url(#weekday-bar-grad)';
+
+          return (
+            <g key={cell.dayIndex}>
+              <rect x={bx} y={16} width={barW} height={150} rx="8" fill="rgba(255,255,255,0.03)" />
+              <rect
+                x={bx}
+                y={166 - barH}
+                width={barW}
+                height={barH}
+                rx="8"
+                fill={fill}
+                opacity={isPeak ? 1 : 0.85}
+              />
+              {isPeak ? (
+                <rect
+                  x={bx}
+                  y={166 - barH}
+                  width={barW}
+                  height={barH}
+                  rx="8"
+                  fill="none"
+                  stroke="#a855f7"
+                  strokeWidth="2"
+                  opacity="0.6"
+                />
+              ) : null}
+              <text
+                x={bx + barW / 2}
+                y={Math.max(30, 166 - barH - 10)}
+                textAnchor="middle"
+                style={{ fontSize: 14, fontWeight: 800, fill: isPeak ? '#c4b5fd' : '#6ee7b7' }}
+              >
+                {cell.completions}
+              </text>
+              <text
+                x={bx + barW / 2}
+                y={182}
+                textAnchor="middle"
+                className="chart-axis-text"
+                style={{ fontSize: 11, fontWeight: isPeak ? 800 : 600, fill: isPeak ? '#e9d5ff' : 'var(--text-secondary)' }}
+              >
+                {cell.dayName}
+              </text>
+              <text
+                x={bx + barW / 2}
+                y={198}
+                textAnchor="middle"
+                className="chart-axis-text"
+                style={{ fontSize: 10, fill: 'var(--text-muted)' }}
+              >
+                {cell.share}%
+              </text>
+              {isPeak ? (
+                <text x={bx + barW / 2} y={214} textAnchor="middle" style={{ fontSize: 9, fill: '#a855f7', fontWeight: 700 }}>
+                  الأعلى
+                </text>
+              ) : null}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function FunnelChart({ steps }: { steps: FunnelStep[] }) {
+  return (
+    <div style={{ marginTop: 8 }}>
+      {steps.map((step, index) => {
+        const color = FUNNEL_COLORS[index] ?? 'var(--primary)';
+        const dropoff =
+          index > 0 && steps[index - 1].count > 0
+            ? Math.round(((steps[index - 1].count - step.count) / steps[index - 1].count) * 100)
+            : 0;
+
+        return (
+          <div key={step.key} className="insights-funnel-step">
+            <div
+              className="insights-funnel-index"
+              style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}
+            >
+              {index + 1}
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: 8 }}>{step.label}</div>
+              <GradientBar percent={step.rateFromRegistered} color={color} showBadge={step.rateFromRegistered >= 10} />
+              <div className="insights-funnel-meta">
+                {step.rateFromRegistered}% من المسجلين
+                {index > 0 ? ` · ${step.rateFromPrevious}% من الخطوة السابقة` : ''}
+                {dropoff > 0 ? ` · تسرب ${dropoff}%` : ''}
+              </div>
+            </div>
+            <div>
+              <div className="insights-funnel-count" style={{ color }}>{step.count}</div>
+              <div className="insights-funnel-meta">مستخدم</div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function GroupBarList({
+  groups,
+  maxCompletions,
+  variant,
+}: {
+  groups: GroupHealthRow[];
+  maxCompletions: number;
+  variant: 'top' | 'inactive';
+}) {
+  if (!groups.length) {
+    return (
+      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '8px 0' }}>
+        {variant === 'top' ? 'لا توجد بيانات مجموعات.' : 'لا توجد مجموعات خاملة حالياً.'}
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      {groups.map((group, index) => {
+        const barPercent =
+          variant === 'top' && maxCompletions > 0
+            ? (group.completionsLast7Days / maxCompletions) * 100
+            : 0;
+
+        return (
+          <div key={group.id} className="insights-group-row">
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.92rem', marginBottom: 6 }}>
+                {variant === 'top'
+                  ? `${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`} ${group.name}`
+                  : group.name}
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginRight: 8 }}>
+                  · {group.memberCount} عضو
+                </span>
+              </div>
+              {variant === 'top' ? (
+                <GradientBar
+                  percent={barPercent}
+                  color={index === 0 ? '#10b981' : index === 1 ? '#6366f1' : '#3b82f6'}
+                  showBadge={false}
+                />
+              ) : (
+                <span className="badge badge-warning">
+                  {group.inactiveDays === null ? 'بدون نشاط' : `خامل منذ ${group.inactiveDays} يوم`}
+                </span>
+              )}
+            </div>
+            <div style={{ textAlign: 'left', minWidth: 72 }}>
+              {variant === 'top' ? (
+                <>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--success)', lineHeight: 1 }}>
+                    {group.completionsLast7Days}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>خلوة/٧ أيام</div>
+                </>
+              ) : null}
+              <Link href={`/groups/${group.id}`} style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none' }}>
+                التفاصيل ←
+              </Link>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -136,7 +490,7 @@ function SectionCard({
           <span>{title}</span>
         </div>
         {subtitle ? (
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', marginTop: '-8px', marginBottom: '16px' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '-12px', marginBottom: '20px' }}>
             {subtitle}
           </p>
         ) : null}
@@ -243,13 +597,18 @@ export default function InsightsPage() {
     [snapshot.weekdayHeatmap],
   );
 
+  const maxGroupCompletions = useMemo(
+    () => Math.max(...snapshot.topGroups.map(group => group.completionsLast7Days), 1),
+    [snapshot.topGroups],
+  );
+
   if (loading) {
     return (
-      <div style={{ padding: '20px', direction: 'rtl' }}>
-        <div style={{ height: '32px', width: '260px', background: 'var(--bg-tertiary)', borderRadius: '6px', marginBottom: '24px' }} className="animate-pulse" />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+      <div className="insights-page" style={{ padding: '20px' }}>
+        <div style={{ height: '36px', width: '280px', background: 'var(--bg-tertiary)', borderRadius: '8px', marginBottom: '28px' }} className="animate-pulse" />
+        <div className="insights-metrics-grid">
           {[1, 2, 3, 4].map(item => (
-            <div key={item} style={{ height: '110px', background: 'var(--bg-secondary)', borderRadius: '12px' }} className="animate-pulse" />
+            <div key={item} style={{ height: '130px', background: 'var(--bg-secondary)', borderRadius: '16px' }} className="animate-pulse" />
           ))}
         </div>
       </div>
@@ -257,11 +616,11 @@ export default function InsightsPage() {
   }
 
   return (
-    <div className="animate-fade-in" style={{ direction: 'rtl' }}>
-      <header style={{ marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
+    <div className="animate-fade-in insights-page">
+      <header style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '6px' }}>التحليلات المتقدمة</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '8px' }}>التحليلات المتقدمة</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
             مؤشرات الالتزام، التحويل، عمق القراءة، وصحة المجموعات — آخر تحديث {refreshedAt.toLocaleTimeString('ar-EG')}
           </p>
         </div>
@@ -272,12 +631,13 @@ export default function InsightsPage() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '10px 14px',
+            padding: '10px 16px',
             borderRadius: '10px',
             border: '1px solid var(--border-color)',
             background: 'transparent',
             color: 'var(--text-primary)',
             cursor: 'pointer',
+            fontWeight: 600,
           }}
         >
           <RefreshCw size={16} />
@@ -288,47 +648,51 @@ export default function InsightsPage() {
       {error ? (
         <div
           style={{
-            marginBottom: '20px',
-            padding: '12px 14px',
-            borderRadius: '10px',
+            marginBottom: '24px',
+            padding: '14px 16px',
+            borderRadius: '12px',
             background: 'rgba(239,68,68,0.08)',
             border: '1px solid rgba(239,68,68,0.2)',
             color: 'var(--danger)',
-            fontSize: '0.85rem',
+            fontSize: '0.88rem',
           }}
         >
           {error}
         </div>
       ) : null}
 
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '28px' }}>
-        <MetricCard
+      <section className="insights-metrics-grid">
+        <HeroMetric
           label="Streak ٧+ أيام"
           value={snapshot.streak.activeStreak7Plus}
           hint={`متوسط streak الحالي: ${snapshot.streak.averageCurrentStreak} يوم`}
-          icon={<Flame size={22} />}
-          tone="warning"
+          icon={<Flame size={26} />}
+          color="#f59e0b"
+          glow="rgba(245,158,11,0.08)"
         />
-        <MetricCard
+        <HeroMetric
           label="Streak ٣٠+ يوم"
           value={snapshot.streak.activeStreak30Plus}
           hint={`متوسط أطول streak: ${snapshot.streak.averageLongestStreak} يوم`}
-          icon={<Flame size={22} />}
-          tone="success"
+          icon={<Flame size={26} />}
+          color="#10b981"
+          glow="rgba(16,185,129,0.08)"
         />
-        <MetricCard
-          label="مستخدمون بخلوة أولى"
+        <HeroMetric
+          label="خلوة أولى"
           value={snapshot.funnel[1]?.count ?? 0}
-          hint={`${snapshot.funnel[1]?.rateFromRegistered ?? 0}% من المسجلين`}
-          icon={<Activity size={22} />}
-          tone="primary"
+          hint={`${snapshot.funnel[1]?.rateFromRegistered ?? 0}% من ${snapshot.registeredCount} مسجل`}
+          icon={<Activity size={26} />}
+          color="#6366f1"
+          glow="rgba(99,102,241,0.08)"
         />
-        <MetricCard
-          label="طلبات صلاة متكررة"
+        <HeroMetric
+          label="تكرار الصلاة (+٣)"
           value={`${snapshot.prayerRepeat.repeatRate}%`}
-          hint={`${snapshot.prayerRepeat.usersWithMoreThan3} مستخدم سجّل +٣ طلبات`}
-          icon={<Heart size={22} />}
-          tone="danger"
+          hint={`${snapshot.prayerRepeat.usersWithMoreThan3} مستخدم من المسجلين`}
+          icon={<Heart size={26} />}
+          color="#ef4444"
+          glow="rgba(239,68,68,0.08)"
         />
       </section>
 
@@ -336,23 +700,12 @@ export default function InsightsPage() {
         title="🔥 Streak Analytics"
         subtitle="الأشخاص ذوو الـ streak النشط حالياً، مع متوسط طول الالتزام."
       >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.18)' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--warning)' }}>{snapshot.streak.activeStreak7Plus}</div>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>نشط ٧+ أيام</div>
-          </div>
-          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.18)' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--success)' }}>{snapshot.streak.activeStreak30Plus}</div>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>نشط ٣٠+ يوم</div>
-          </div>
-          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.18)' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary)' }}>{snapshot.streak.averageCurrentStreak}</div>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>متوسط streak الحالي</div>
-          </div>
-          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{snapshot.streak.usersWithAnyStreak}</div>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>لديهم streak نشط الآن</div>
-          </div>
+        <div className="insights-stat-grid">
+          <StatTile value={snapshot.streak.activeStreak7Plus} label="نشط ٧+ أيام" color="#f59e0b" />
+          <StatTile value={snapshot.streak.activeStreak30Plus} label="نشط ٣٠+ يوم" color="#10b981" />
+          <StatTile value={snapshot.streak.averageCurrentStreak} label="متوسط streak الحالي" color="#6366f1" />
+          <StatTile value={snapshot.streak.averageLongestStreak} label="متوسط أطول streak" color="#a855f7" />
+          <StatTile value={snapshot.streak.usersWithAnyStreak} label="لديهم streak نشط الآن" />
         </div>
       </SectionCard>
 
@@ -360,146 +713,76 @@ export default function InsightsPage() {
         title="📊 Funnel التحويل"
         subtitle={`من ${snapshot.registeredCount} مستخدم مسجل إلى التزام ٣٠ يوم متتالي.`}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {snapshot.funnel.map((step, index) => (
-            <div key={step.key}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', gap: '12px', flexWrap: 'wrap' }}>
-                <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>
-                  {index + 1}. {step.label}
-                </span>
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                  {step.count} مستخدم — {step.rateFromRegistered}% من المسجلين
-                  {index > 0 ? ` · ${step.rateFromPrevious}% من الخطوة السابقة` : ''}
-                </span>
-              </div>
-              <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '6px', height: '10px', overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${Math.max(step.rateFromRegistered, 4)}%`,
-                    height: '100%',
-                    background: index === 0 ? 'var(--primary)' : index === 1 ? '#3b82f6' : index === 2 ? 'var(--warning)' : 'var(--success)',
-                    borderRadius: '6px',
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+        <FunnelChart steps={snapshot.funnel} />
       </SectionCard>
 
       <SectionCard
         title="📅 Heatmap أيام الأسبوع"
-        subtitle="أيام الأسبوع الأكثر نشاطاً في إتمام الخلوة."
+        subtitle="أيام الأسبوع الأكثر نشاطاً في إتمام الخلوة — العمود الأعلى مميز بلون بنفسجي."
       >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(72px, 1fr))', gap: '10px' }}>
-          {snapshot.weekdayHeatmap.map(cell => (
-            <div
-              key={cell.dayIndex}
-              style={{
-                textAlign: 'center',
-                padding: '14px 8px',
-                borderRadius: '12px',
-                background: `rgba(16,185,129,${0.08 + (cell.completions / maxWeekday) * 0.28})`,
-                border: '1px solid rgba(16,185,129,0.18)',
-              }}
-            >
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>{cell.dayName}</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>{cell.completions}</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>{cell.share}%</div>
-            </div>
-          ))}
-        </div>
+        <WeekdayChart cells={snapshot.weekdayHeatmap} maxValue={maxWeekday} />
       </SectionCard>
 
-      <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '28px' }}>
+      <section className="insights-two-col">
         <div className="glass card">
           <div className="card-title"><span>👥 مجموعات الأعلى إنجازاً (٧ أيام)</span></div>
-          {snapshot.topGroups.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>لا توجد بيانات مجموعات.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
-              {snapshot.topGroups.map((group, index) => (
-                <div key={group.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>
-                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`} {group.name}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{group.memberCount} عضو</div>
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontWeight: 800, color: 'var(--success)' }}>{group.completionsLast7Days}</div>
-                    <Link href={`/groups/${group.id}`} style={{ fontSize: '0.72rem', color: 'var(--primary)', textDecoration: 'none' }}>التفاصيل</Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <GroupBarList groups={snapshot.topGroups} maxCompletions={maxGroupCompletions} variant="top" />
         </div>
-
         <div className="glass card">
           <div className="card-title"><span>💤 مجموعات خاملة (+١٤ يوم)</span></div>
-          {snapshot.inactiveGroups.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>لا توجد مجموعات خاملة حالياً.</p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
-              {snapshot.inactiveGroups.map(group => (
-                <div key={group.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{group.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{group.memberCount} عضو</div>
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <span className="badge badge-warning">
-                      {group.inactiveDays === null ? 'بدون نشاط' : `${group.inactiveDays} يوم`}
-                    </span>
-                    <div>
-                      <Link href={`/groups/${group.id}`} style={{ fontSize: '0.72rem', color: 'var(--primary)', textDecoration: 'none' }}>التفاصيل</Link>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <GroupBarList groups={snapshot.inactiveGroups} maxCompletions={0} variant="inactive" />
         </div>
       </section>
 
-      <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '28px' }}>
+      <section className="insights-two-col">
         <div className="glass card">
           <div className="card-title"><span>💎 توزيع مستويات XP</span></div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
-            {snapshot.xpTiers.map(tier => (
-              <div key={tier.key}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{tier.label}</span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{tier.count} ({tier.share}%)</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '8px' }}>
+            {snapshot.xpTiers.map(tier => {
+              const color = XP_COLORS[tier.key] ?? 'var(--primary)';
+              return (
+                <div key={tier.key}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>{tier.label}</span>
+                    <span style={{ fontSize: '1.3rem', fontWeight: 800, color }}>{tier.count}</span>
+                  </div>
+                  <GradientBar percent={tier.share} color={color} />
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 4 }}>{tier.share}% من النشطين</div>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '4px', height: '8px', overflow: 'hidden' }}>
-                  <div style={{ width: `${tier.share}%`, height: '100%', background: 'var(--primary)', borderRadius: '4px' }} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
         <div className="glass card">
           <div className="card-title"><span>📖 عمق القراءة</span></div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
-            <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(16,185,129,0.08)' }}>
-              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--success)' }}>{snapshot.readingDepth.avgChaptersPerSession}</div>
-              <div style={{ fontSize: '0.8rem' }}>متوسط إصحاحات/جلسة</div>
-            </div>
-            <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(99,102,241,0.08)' }}>
-              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--primary)' }}>{snapshot.readingDepth.withReadingShare}%</div>
-              <div style={{ fontSize: '0.8rem' }}>سجّلوا قراءة فعلية</div>
-            </div>
-            <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(239,68,68,0.08)' }}>
-              <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--danger)' }}>{snapshot.readingDepth.markOnlyShare}%</div>
-              <div style={{ fontSize: '0.8rem' }}>أتمّوا بدون قراءة مسجلة</div>
-            </div>
-            <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '1.6rem', fontWeight: 800 }}>{snapshot.readingDepth.markOnlyComplete}</div>
-              <div style={{ fontSize: '0.8rem' }}>جلسة بدون أدلة قراءة</div>
-            </div>
+          <DonutChart
+            centerValue={`${snapshot.readingDepth.withReadingShare}%`}
+            centerLabel="قراءة فعلية"
+            segments={[
+              {
+                value: snapshot.readingDepth.withReadingEvidence,
+                color: '#10b981',
+                label: 'قراءة مسجلة',
+              },
+              {
+                value: snapshot.readingDepth.markOnlyComplete,
+                color: '#ef4444',
+                label: 'أتمّ بدون قراءة',
+              },
+            ]}
+          />
+          <div className="insights-stat-grid" style={{ marginTop: 16 }}>
+            <StatTile
+              value={snapshot.readingDepth.avgChaptersPerSession}
+              label="متوسط إصحاحات/جلسة"
+              color="#10b981"
+            />
+            <StatTile
+              value={`${snapshot.readingDepth.markOnlyShare}%`}
+              label="أتمّ بدون قراءة"
+              color="#ef4444"
+            />
           </div>
         </div>
       </section>
@@ -508,22 +791,29 @@ export default function InsightsPage() {
         title="🙏 معدل تكرار الصلاة"
         subtitle="نسبة المستخدمين الذين سجّلوا أكثر من ٣ طلبات صلاة."
       >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--danger)' }}>{snapshot.prayerRepeat.repeatRate}%</div>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>من إجمالي المسجلين</div>
-          </div>
-          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{snapshot.prayerRepeat.usersWithMoreThan3}</div>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>سجّلوا أكثر من ٣ طلبات</div>
-          </div>
-          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{snapshot.prayerRepeat.usersWithPrayers}</div>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>لديهم طلبات صلاة</div>
-          </div>
-          <div style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)' }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{snapshot.prayerRepeat.totalPrayers}</div>
-            <div style={{ fontSize: '0.82rem', fontWeight: 700 }}>إجمالي طلبات الصلاة</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '40px', flexWrap: 'wrap' }}>
+          <DonutChart
+            size={200}
+            centerValue={`${snapshot.prayerRepeat.repeatRate}%`}
+            centerLabel="من المسجلين"
+            segments={[
+              {
+                value: snapshot.prayerRepeat.usersWithMoreThan3,
+                color: '#ef4444',
+                label: 'أكثر من ٣ طلبات',
+              },
+              {
+                value: Math.max(snapshot.registeredCount - snapshot.prayerRepeat.usersWithMoreThan3, 0),
+                color: 'rgba(255,255,255,0.08)',
+                label: 'أقل من ٣ أو بدون',
+              },
+            ]}
+          />
+          <div className="insights-stat-grid" style={{ flex: 1, minWidth: 240 }}>
+            <StatTile value={snapshot.prayerRepeat.usersWithMoreThan3} label="سجّلوا +٣ طلبات" color="#ef4444" />
+            <StatTile value={snapshot.prayerRepeat.usersWithPrayers} label="لديهم طلبات صلاة" color="#6366f1" />
+            <StatTile value={snapshot.prayerRepeat.totalPrayers} label="إجمالي الطلبات" />
+            <StatTile value={snapshot.registeredCount} label="إجمالي المسجلين" />
           </div>
         </div>
       </SectionCard>
@@ -534,7 +824,7 @@ export default function InsightsPage() {
           borderRadius: '12px',
           border: '1px dashed var(--border-color)',
           color: 'var(--text-muted)',
-          fontSize: '0.8rem',
+          fontSize: '0.82rem',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
