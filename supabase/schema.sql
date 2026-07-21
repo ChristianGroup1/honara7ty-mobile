@@ -192,6 +192,8 @@ CREATE TABLE IF NOT EXISTS public.prayer_notes (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID        NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
   content     TEXT        NOT NULL,
+  audio_uri   TEXT,
+  audio_duration_ms INTEGER,
   is_answered BOOLEAN     NOT NULL DEFAULT false,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -242,6 +244,8 @@ CREATE TABLE IF NOT EXISTS public.reflections (
   id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id    UUID        NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
   content    TEXT        NOT NULL,
+  audio_uri  TEXT,
+  audio_duration_ms INTEGER,
   date       DATE        NOT NULL,   -- YYYY-MM-DD (entry date)
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

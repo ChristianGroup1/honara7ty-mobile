@@ -64,6 +64,8 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newNote, setNewNote] = useState('');
+  const [audioUri, setAudioUri] = useState<string | null>(null);
+  const [audioDurationMs, setAudioDurationMs] = useState<number | null>(null);
   const [editItem, setEditItem] = useState<PrayerNote | null>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -162,18 +164,24 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
   const resetComposer = useCallback(() => {
     setEditItem(null);
     setNewNote('');
+    setAudioUri(null);
+    setAudioDurationMs(null);
     setShowModal(false);
   }, []);
 
   const openNew = useCallback(() => {
     setEditItem(null);
     setNewNote('');
+    setAudioUri(null);
+    setAudioDurationMs(null);
     setShowModal(true);
   }, []);
 
   const openEdit = useCallback((note: PrayerNote) => {
     setEditItem(note);
     setNewNote(note.content);
+    setAudioUri(note.audio_uri ?? null);
+    setAudioDurationMs(note.audio_duration_ms ?? null);
     setShowDetailModal(false);
     setShowModal(true);
   }, []);
@@ -189,7 +197,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
 
   const handleComposerSubmit = useCallback(async () => {
     const trimmed = newNote.trim();
-    if (!trimmed) return;
+    if (!trimmed && !audioUri) return;
     setSaving(true);
     const userId = await getCurrentUserId();
     if (!userId) {
@@ -202,19 +210,30 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         userId,
         note: editItem,
         content: trimmed,
+        audioUri,
+        audioDurationMs,
       });
       setNotes(result.data);
     } else {
       const result = await savePrayerNote({
         userId,
         content: trimmed,
+        audioUri,
+        audioDurationMs,
       });
       setNotes(result.data);
     }
 
     setSaving(false);
     resetComposer();
-  }, [editItem, getCurrentUserId, newNote, resetComposer]);
+  }, [
+    audioDurationMs,
+    audioUri,
+    editItem,
+    getCurrentUserId,
+    newNote,
+    resetComposer,
+  ]);
 
   const toggleAnswered = useCallback(
     async (note: PrayerNote) => {
@@ -289,6 +308,7 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
     ),
     [
       deleteNote,
+      colors.text,
       isNarrowWidth,
       openDetail,
       openEdit,
@@ -400,8 +420,14 @@ const PrayerNotesScreen: React.FC<any> = ({ navigation }) => {
         topInset={insets?.top ?? 0}
         editMode={Boolean(editItem)}
         text={newNote}
+        audioUri={audioUri}
+        audioDurationMs={audioDurationMs}
         saving={saving}
         onChangeText={setNewNote}
+        onChangeAudio={(nextAudioUri, nextDurationMs) => {
+          setAudioUri(nextAudioUri);
+          setAudioDurationMs(nextDurationMs);
+        }}
         onClose={resetComposer}
         onSave={handleComposerSubmit}
         themedStyles={themedStyles}

@@ -491,6 +491,8 @@ export async function flushOfflineQueue(): Promise<SyncResult> {
               .insert({
                 user_id: mutation.userId,
                 content: mutation.note.content,
+                audio_uri: mutation.note.audio_uri ?? null,
+                audio_duration_ms: mutation.note.audio_duration_ms ?? null,
                 is_answered: mutation.note.is_answered,
               })
               .select('*')
@@ -525,6 +527,8 @@ export async function flushOfflineQueue(): Promise<SyncResult> {
               .from('prayer_notes')
               .update({
                 content: mutation.note.content,
+                audio_uri: mutation.note.audio_uri ?? null,
+                audio_duration_ms: mutation.note.audio_duration_ms ?? null,
                 is_answered: mutation.note.is_answered,
               })
               .eq('id', mutation.note.id);
@@ -543,6 +547,8 @@ export async function flushOfflineQueue(): Promise<SyncResult> {
               .insert({
                 user_id: mutation.userId,
                 content: mutation.reflection.content,
+                audio_uri: mutation.reflection.audio_uri ?? null,
+                audio_duration_ms: mutation.reflection.audio_duration_ms ?? null,
                 date: mutation.reflection.date,
               })
               .select('*')
@@ -580,6 +586,8 @@ export async function flushOfflineQueue(): Promise<SyncResult> {
               .from('reflections')
               .update({
                 content: mutation.reflection.content,
+                audio_uri: mutation.reflection.audio_uri ?? null,
+                audio_duration_ms: mutation.reflection.audio_duration_ms ?? null,
                 date: mutation.reflection.date,
               })
               .eq('id', mutation.reflection.id);
@@ -726,6 +734,8 @@ export async function savePrayerNote(params: {
   userId: string;
   note?: PrayerNote | null;
   content: string;
+  audioUri?: string | null;
+  audioDurationMs?: number | null;
 }) {
   const key = deriveKey(params.userId);
   const notes = await getPrayerNotesCache(params.userId);
@@ -742,10 +752,14 @@ export async function savePrayerNote(params: {
     ? {
         ...current,
         content: encryptedContent,
+        audio_uri: params.audioUri ?? null,
+        audio_duration_ms: params.audioDurationMs ?? null,
       }
     : {
         id: makeLocalId(),
         content: encryptedContent,
+        audio_uri: params.audioUri ?? null,
+        audio_duration_ms: params.audioDurationMs ?? null,
         created_at: nowIso(),
         is_answered: false,
         pendingSync: true,
@@ -785,6 +799,8 @@ export async function togglePrayerNoteAnswered(params: {
     {
       ...params.note,
       content: plainContent,
+      audio_uri: params.note.audio_uri ?? null,
+      audio_duration_ms: params.note.audio_duration_ms ?? null,
       is_answered: !params.note.is_answered,
       pendingSync: true,
     },
@@ -881,6 +897,8 @@ export async function saveReflection(params: {
   userId: string;
   reflection?: Reflection | null;
   content: string;
+  audioUri?: string | null;
+  audioDurationMs?: number | null;
   date: string;
 }) {
   const key = deriveKey(params.userId);
@@ -899,11 +917,15 @@ export async function saveReflection(params: {
     ? {
         ...current,
         content: encryptedContent,
+        audio_uri: params.audioUri ?? null,
+        audio_duration_ms: params.audioDurationMs ?? null,
         date: params.date,
       }
     : {
         id: makeLocalId(),
         content: encryptedContent,
+        audio_uri: params.audioUri ?? null,
+        audio_duration_ms: params.audioDurationMs ?? null,
         date: params.date,
         created_at: nowIso(),
         pendingSync: true,

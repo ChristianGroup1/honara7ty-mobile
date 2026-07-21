@@ -15,6 +15,7 @@ import {
 import { spiritualReflectionStyles as styles } from './styles';
 import type { ThemedSpiritualReflectionStyles } from './styles';
 import { getStrings } from '../../localization';
+import VoiceMemoRecorder from '../shared/VoiceMemoRecorder';
 
 interface ReflectionEditorModalProps {
   visible: boolean;
@@ -22,9 +23,12 @@ interface ReflectionEditorModalProps {
   topInset: number;
   editMode: boolean;
   text: string;
+  audioUri?: string | null;
+  audioDurationMs?: number | null;
   saving: boolean;
   onClose: () => void;
   onChangeText: (value: string) => void;
+  onChangeAudio: (audioUri: string | null, durationMs: number | null) => void;
   onSave: () => void;
   themedStyles: ThemedSpiritualReflectionStyles;
   placeholderTextColor: string;
@@ -36,9 +40,12 @@ const ReflectionEditorModal = ({
   topInset,
   editMode,
   text,
+  audioUri,
+  audioDurationMs,
   saving,
   onClose,
   onChangeText,
+  onChangeAudio,
   onSave,
   themedStyles,
   placeholderTextColor,
@@ -89,6 +96,13 @@ const ReflectionEditorModal = ({
                   onChangeText={onChangeText}
                   textAlign="right"
                   textAlignVertical="top"
+                />
+                <VoiceMemoRecorder
+                  audioUri={audioUri}
+                  durationMs={audioDurationMs}
+                  onChange={onChangeAudio}
+                  disabled={saving}
+                  labels={strings.voice}
                 />
               </ScrollView>
 

@@ -30,4 +30,14 @@ export const spiritualReflectionStrings = {
     addReflection: 'إضافة التأمل',
     add: 'إضافة',
   },
+  voice: {
+    add: 'تسجيل صوتي',
+    recording: 'جاري التسجيل',
+    play: 'تشغيل التسجيل',
+    stop: 'إيقاف',
+    delete: 'حذف',
+    permissionDenied: 'يحتاج التطبيق إذن الميكروفون لتسجيل الصوت.',
+    error: 'تعذر التعامل مع التسجيل الصوتي.',
+    fallbackTitle: 'تسجيل صوتي',
+  },
 } as const;
