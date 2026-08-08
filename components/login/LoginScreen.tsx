@@ -90,10 +90,12 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
   };
 
   useEffect(() => {
-    configureGoogleSignIn();
-
-    // Check if user is already signed in
-    checkUserSignedIn();
+    if (Platform.OS === 'android') {
+      configureGoogleSignIn();
+      checkUserSignedIn();
+    } else {
+      setInitializing(false);
+    }
   }, []);
 
   const checkUserSignedIn = async () => {
@@ -311,19 +313,23 @@ const LoginUI: React.FC<any> = ({ navigation }) => {
           )}
         </TouchableOpacity>
 
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>{strings.common.or}</Text>
-          <View style={styles.dividerLine} />
-        </View>
-        <TouchableOpacity
-          style={styles.googleButton}
-          onPress={handleGoogleSignIn}
-          disabled={loading}
-        >
-          <GoogleIcon width={20} height={20} style={styles.googleIcon} />
-          <Text style={styles.googleText}>{strings.login.googleButton}</Text>
-        </TouchableOpacity>
+        {Platform.OS === 'android' ? (
+          <>
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>{strings.common.or}</Text>
+              <View style={styles.dividerLine} />
+            </View>
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleSignIn}
+              disabled={loading}
+            >
+              <GoogleIcon width={20} height={20} style={styles.googleIcon} />
+              <Text style={styles.googleText}>{strings.login.googleButton}</Text>
+            </TouchableOpacity>
+          </>
+        ) : null}
 
         <View style={styles.footerContainer}>
           <TouchableOpacity onPress={() => navigation.navigate('SignupStep1')}>

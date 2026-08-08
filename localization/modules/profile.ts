@@ -14,6 +14,14 @@ export const profileStrings = {
   logoutMessage: 'هل أنت متأكد أنك تريد تسجيل الخروج؟',
   cancel: 'إلغاء',
   logout: 'خروج',
+  deleteAccount: 'حذف الحساب نهائياً',
+  deleteAccountTitle: 'حذف الحساب؟',
+  deleteAccountMessage:
+    'سيتم حذف حسابك وبياناتك نهائياً، ولا يمكن التراجع عن هذه الخطوة.',
+  deleteAccountConfirm: 'حذف نهائي',
+  deleteAccountErrorTitle: 'تعذّر حذف الحساب',
+  deleteAccountErrorMessage:
+    'حدث خطأ أثناء حذف الحساب. تحقق من اتصالك وحاول مرة أخرى.',
   noSessionTitle: 'لا توجد جلسة نشطة',
   noSessionMessage: 'سجّل الدخول أولاً للوصول إلى الملف الشخصي.',
   title: 'الملف الشخصي',

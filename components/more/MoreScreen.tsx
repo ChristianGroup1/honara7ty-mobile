@@ -8,6 +8,7 @@ import {
   ScrollView,
   StatusBar,
   Platform,
+  Linking,
 } from 'react-native';
 import {
   SafeAreaView,
@@ -29,6 +30,8 @@ import {
 } from '../../lib/focusMode';
 import { syncDevotionReminderSchedule } from '../../lib/devotionReminder';
 import supabase from '../../lib/supbase';
+
+const PRIVACY_POLICY_URL = 'https://honara7ty.space/privacy';
 
 const MoreScreen = ({ navigation }: any) => {
   const strings = getStrings().more;
@@ -163,6 +166,19 @@ const MoreScreen = ({ navigation }: any) => {
     });
   };
 
+  const handlePrivacyPolicyPress = async () => {
+    try {
+      await Linking.openURL(PRIVACY_POLICY_URL);
+    } catch {
+      setAlertConfig({
+        visible: true,
+        title: strings.privacy.openErrorTitle,
+        message: strings.privacy.openErrorMessage,
+        type: 'error',
+      });
+    }
+  };
+
   return (
     <SafeAreaView style={themedStyles.container} edges={[]}>
       <StatusBar barStyle="light-content" backgroundColor={colors.header} />
@@ -242,6 +258,34 @@ const MoreScreen = ({ navigation }: any) => {
             />
           </TouchableOpacity>
         ))}
+
+        <TouchableOpacity
+          style={themedStyles.row}
+          activeOpacity={0.8}
+          onPress={handlePrivacyPolicyPress}
+          accessibilityRole="link"
+        >
+          <View style={themedStyles.iconCircle}>
+            <MaterialCommunityIcons
+              name="shield-lock-outline"
+              size={24}
+              color="#FFF"
+            />
+          </View>
+          <View style={themedStyles.rowBody}>
+            <Text style={themedStyles.rowTitle}>
+              {strings.items.privacyPolicy.title}
+            </Text>
+            <Text style={themedStyles.rowSub}>
+              {strings.items.privacyPolicy.subtitle}
+            </Text>
+          </View>
+          <MaterialCommunityIcons
+            name="open-in-new"
+            size={21}
+            color={colors.mutedText}
+          />
+        </TouchableOpacity>
       </ScrollView>
 
       <CustomAlert {...alertConfig} onDismiss={hideAlert} />
