@@ -65,6 +65,8 @@ const SpiritualReflectionScreen = ({ navigation, route }: any) => {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState<Reflection | null>(null);
   const [text, setText] = useState('');
+  const [audioUri, setAudioUri] = useState<string | null>(null);
+  const [audioDurationMs, setAudioDurationMs] = useState<number | null>(null);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState<{
     visible: boolean;
@@ -173,6 +175,8 @@ const SpiritualReflectionScreen = ({ navigation, route }: any) => {
   const openNew = useCallback(() => {
     setEditItem(null);
     setText('');
+    setAudioUri(null);
+    setAudioDurationMs(null);
     setShowModal(true);
   }, []);
 
@@ -189,12 +193,16 @@ const SpiritualReflectionScreen = ({ navigation, route }: any) => {
     lastInitialReflectionTextRef.current = initialReflectionText;
     setEditItem(null);
     setText(initialReflectionText);
+    setAudioUri(null);
+    setAudioDurationMs(null);
     setShowModal(true);
   }, [route?.params?.initialReflectionText]);
 
   const openEdit = useCallback((item: Reflection) => {
     setEditItem(item);
     setText(item.content);
+    setAudioUri(item.audio_uri ?? null);
+    setAudioDurationMs(item.audio_duration_ms ?? null);
     setShowModal(true);
   }, []);
 
@@ -210,7 +218,7 @@ const SpiritualReflectionScreen = ({ navigation, route }: any) => {
 
   const handleSave = useCallback(async () => {
     const trimmed = text.trim();
-    if (!trimmed) {
+    if (!trimmed && !audioUri) {
       return;
     }
     setSaving(true);
@@ -224,13 +232,15 @@ const SpiritualReflectionScreen = ({ navigation, route }: any) => {
       userId,
       reflection: editItem,
       content: trimmed,
+      audioUri,
+      audioDurationMs,
       date: editItem?.date ?? new Date().toISOString().split('T')[0],
     });
 
     setSaving(false);
     setShowModal(false);
     setReflections(result.data);
-  }, [editItem, getCurrentUserId, text]);
+  }, [audioDurationMs, audioUri, editItem, getCurrentUserId, text]);
 
   const deleteReflection = useCallback(
     (item: Reflection) => {
@@ -385,9 +395,15 @@ const SpiritualReflectionScreen = ({ navigation, route }: any) => {
         topInset={insets.top}
         editMode={Boolean(editItem)}
         text={text}
+        audioUri={audioUri}
+        audioDurationMs={audioDurationMs}
         saving={saving}
         onClose={() => setShowModal(false)}
         onChangeText={setText}
+        onChangeAudio={(nextAudioUri, nextDurationMs) => {
+          setAudioUri(nextAudioUri);
+          setAudioDurationMs(nextDurationMs);
+        }}
         onSave={handleSave}
         themedStyles={themedStyles}
         placeholderTextColor={colors.mutedText}

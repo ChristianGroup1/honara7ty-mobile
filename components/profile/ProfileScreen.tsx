@@ -22,6 +22,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import supabase from '../../lib/supbase';
 import { logoutCurrentUser } from '../../lib/logout';
+import { deleteCurrentAccount } from '../../lib/deleteAccount';
 
 import CustomAlert, { AlertButton, AlertConfig } from '../shared/CustomAlert';
 import CustomInput from '../shared/CustomInput';
@@ -111,6 +112,7 @@ const ProfileScreen = ({ navigation }: any) => {
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [currentDevotionTime, setCurrentDevotionTime] =
     useState<string>('07:00');
   const [xpSummary, setXpSummary] = useState<XpSummary | null>(null);
@@ -398,6 +400,43 @@ const ProfileScreen = ({ navigation }: any) => {
                 undefined,
                 'error',
               );
+            }
+          },
+        },
+      ],
+      'warning',
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    showAlert(
+      strings.deleteAccountTitle,
+      strings.deleteAccountMessage,
+      [
+        { text: strings.cancel, style: 'cancel' },
+        {
+          text: strings.deleteAccountConfirm,
+          style: 'destructive',
+          onPress: async () => {
+            setDeletingAccount(true);
+            try {
+              await deleteCurrentAccount();
+              sessionUserRef.current = null;
+              const parentNavigation = navigation.getParent?.();
+              const targetNavigation = parentNavigation ?? navigation;
+              targetNavigation.reset({
+                index: 0,
+                routes: [{ name: 'Welcome' }],
+              });
+            } catch (err: any) {
+              showAlert(
+                strings.deleteAccountErrorTitle,
+                err?.message ?? strings.deleteAccountErrorMessage,
+                undefined,
+                'error',
+              );
+            } finally {
+              setDeletingAccount(false);
             }
           },
         },
@@ -724,6 +763,27 @@ const ProfileScreen = ({ navigation }: any) => {
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <MaterialCommunityIcons name="logout" size={20} color="#FFF" />
           <Text style={styles.logoutText}>{strings.logout}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.deleteAccountBtn}
+          onPress={handleDeleteAccount}
+          disabled={deletingAccount}
+        >
+          {deletingAccount ? (
+            <ActivityIndicator color="#E74C3C" />
+          ) : (
+            <>
+              <MaterialCommunityIcons
+                name="account-remove-outline"
+                size={20}
+                color="#E74C3C"
+              />
+              <Text style={styles.deleteAccountText}>
+                {strings.deleteAccount}
+              </Text>
+            </>
+          )}
         </TouchableOpacity>
       </ScrollView>
 
@@ -1061,6 +1121,18 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   logoutText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  deleteAccountBtn: {
+    borderWidth: 1.5,
+    borderColor: '#E74C3C',
+    borderRadius: 18,
+    paddingVertical: 15,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  deleteAccountText: { color: '#E74C3C', fontSize: 15, fontWeight: '800' },
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',

@@ -66,8 +66,8 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>يحتاج التطبيق إذن الميكروفون لتسجيل طلبات الصلاة واليوميات الصوتية.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

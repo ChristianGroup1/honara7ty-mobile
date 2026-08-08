@@ -15,6 +15,7 @@ import {
 import { prayerNotesStyles as styles } from './styles';
 import type { ThemedPrayerNotesStyles } from './styles';
 import { getStrings } from '../../localization';
+import VoiceMemoRecorder from '../shared/VoiceMemoRecorder';
 
 interface PrayerEditorModalProps {
   visible: boolean;
@@ -22,9 +23,12 @@ interface PrayerEditorModalProps {
   topInset: number;
   editMode: boolean;
   text: string;
+  audioUri?: string | null;
+  audioDurationMs?: number | null;
   saving: boolean;
   onClose: () => void;
   onChangeText: (value: string) => void;
+  onChangeAudio: (audioUri: string | null, durationMs: number | null) => void;
   onSave: () => void;
   themedStyles: ThemedPrayerNotesStyles;
   placeholderTextColor: string;
@@ -36,9 +40,12 @@ const PrayerEditorModal = ({
   topInset,
   editMode,
   text,
+  audioUri,
+  audioDurationMs,
   saving,
   onClose,
   onChangeText,
+  onChangeAudio,
   onSave,
   themedStyles,
   placeholderTextColor,
@@ -88,6 +95,13 @@ const PrayerEditorModal = ({
                   onChangeText={onChangeText}
                   textAlign="right"
                   textAlignVertical="top"
+                />
+                <VoiceMemoRecorder
+                  audioUri={audioUri}
+                  durationMs={audioDurationMs}
+                  onChange={onChangeAudio}
+                  disabled={saving}
+                  labels={strings.voice}
                 />
               </ScrollView>
 

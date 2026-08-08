@@ -13,6 +13,7 @@ import {
 } from './styles';
 import { PrayerNote } from './types';
 import { getStrings } from '../../localization';
+import VoiceMemoRecorder from '../shared/VoiceMemoRecorder';
 
 interface PrayerDetailModalProps {
   visible: boolean;
@@ -67,6 +68,15 @@ const PrayerDetailModal = ({
             <Text style={[styles.cardText, themedStyles.cardText]}>
               {detailItem?.content ?? ''}
             </Text>
+            {detailItem?.audio_uri ? (
+              <VoiceMemoRecorder
+                audioUri={detailItem.audio_uri}
+                durationMs={detailItem.audio_duration_ms}
+                onChange={() => undefined}
+                labels={strings.voice}
+                readOnly
+              />
+            ) : null}
           </ScrollView>
 
           <View

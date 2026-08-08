@@ -14,7 +14,9 @@ import {
   Activity,
   BarChart3,
   X,
+  Bell,
 } from 'lucide-react';
+
 
 interface SidebarProps {
   userEmail: string;
@@ -38,7 +40,9 @@ export default function Sidebar({ userEmail, isOpen = false, onClose }: SidebarP
     { name: 'إدارة المستخدمين', href: '/users', icon: Users },
     { name: 'مجموعات التفاعل', href: '/groups', icon: Layers },
     { name: 'الإشراف والمراجعة', href: '/moderation', icon: MessageSquare },
+    { name: 'إشعارات جماعية', href: '/notifications', icon: Bell },
   ];
+
 
   const displayName = userEmail ? userEmail.split('@')[0] : 'مشرف';
 

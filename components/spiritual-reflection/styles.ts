@@ -184,6 +184,22 @@ export const spiritualReflectionStyles = StyleSheet.create({
     lineHeight: 24,
     textAlign: 'left',
   },
+  voicePill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#78A1BD',
+  },
+  voicePillText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
   actionGroup: {
     flexDirection: 'row',
     justifyContent: 'space-between',

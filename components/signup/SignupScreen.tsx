@@ -324,20 +324,26 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
           )}
         </TouchableOpacity>
 
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>{strings.common.or}</Text>
-          <View style={styles.dividerLine} />
-        </View>
+        {Platform.OS === 'android' ? (
+          <>
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>{strings.common.or}</Text>
+              <View style={styles.dividerLine} />
+            </View>
 
-        <TouchableOpacity
-          style={styles.googleButton}
-          onPress={handleGoogleSignUp}
-          disabled={loading}
-        >
-          <GoogleIcon width={20} height={20} style={styles.googleIcon} />
-          <Text style={styles.googleText}>{strings.signup.googleButton}</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleSignUp}
+              disabled={loading}
+            >
+              <GoogleIcon width={20} height={20} style={styles.googleIcon} />
+              <Text style={styles.googleText}>
+                {strings.signup.googleButton}
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : null}
 
         <View style={styles.footerContainer}>
           <TouchableOpacity onPress={() => navigation.goBack()}>

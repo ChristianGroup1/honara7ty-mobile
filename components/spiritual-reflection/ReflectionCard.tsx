@@ -7,6 +7,7 @@ import {
 } from './styles';
 import { Reflection } from './types';
 import { formatDate, PREVIEW_LIMIT } from './utils';
+import { getStrings } from '../../localization';
 
 interface ReflectionCardProps {
   item: Reflection;
@@ -25,8 +26,11 @@ const ReflectionCard = ({
   onDelete,
   themedStyles,
 }: ReflectionCardProps) => {
+  const strings = getStrings().spiritualReflection;
   const preview =
-    item.content.length > PREVIEW_LIMIT
+    item.content.trim().length === 0 && item.audio_uri
+      ? strings.voice.fallbackTitle
+      : item.content.length > PREVIEW_LIMIT
       ? `${item.content.slice(0, PREVIEW_LIMIT).trimEnd()}…`
       : item.content;
 
@@ -53,6 +57,12 @@ const ReflectionCard = ({
         <Text style={[styles.cardContent, themedStyles.cardContent]}>
           {preview}
         </Text>
+        {item.audio_uri ? (
+          <View style={styles.voicePill}>
+            <MaterialCommunityIcons name="microphone" size={14} color="#FFF" />
+            <Text style={styles.voicePillText}>{strings.voice.fallbackTitle}</Text>
+          </View>
+        ) : null}
       </View>
 
       <View

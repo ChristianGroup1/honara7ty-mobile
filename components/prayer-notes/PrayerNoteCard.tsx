@@ -7,6 +7,7 @@ import {
   ThemedPrayerNotesStyles,
 } from './styles';
 import { PrayerNote } from './types';
+import { getStrings } from '../../localization';
 
 interface PrayerNoteCardProps {
   item: PrayerNote;
@@ -29,8 +30,11 @@ const PrayerNoteCard = ({
   themedStyles,
   answeredActionColor,
 }: PrayerNoteCardProps) => {
+  const strings = getStrings().prayerNotes;
   const preview =
-    item.content.length > PREVIEW_CHARS
+    item.content.trim().length === 0 && item.audio_uri
+      ? strings.voice.fallbackTitle
+      : item.content.length > PREVIEW_CHARS
       ? `${item.content.slice(0, PREVIEW_CHARS).trimEnd()}…`
       : item.content;
   const actionBorderStyle = item.is_answered
@@ -88,6 +92,12 @@ const PrayerNoteCard = ({
         <Text style={[styles.cardText, themedStyles.cardText]} numberOfLines={4}>
           {preview}
         </Text>
+        {item.audio_uri ? (
+          <View style={styles.voicePill}>
+            <MaterialCommunityIcons name="microphone" size={14} color="#FFF" />
+            <Text style={styles.voicePillText}>{strings.voice.fallbackTitle}</Text>
+          </View>
+        ) : null}
       </TouchableOpacity>
 
       <View

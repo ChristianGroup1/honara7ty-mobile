@@ -19,6 +19,11 @@ export const moreStrings = {
     iosGuideMessage:
       'آبل لا تسمح بتفعيل وضع عدم الإزعاج تلقائياً، ولكن يمكنك إعداد "Focus Mode" مخصص للخلوة في إعدادات الهاتف والسماح لتطبيق "هنا راحتي" فقط بإرسال الإشعارات.',
   },
+  privacy: {
+    openErrorTitle: 'تعذّر فتح سياسة الخصوصية',
+    openErrorMessage:
+      'تحقق من اتصالك بالإنترنت ثم حاول فتح سياسة الخصوصية مرة أخرى.',
+  },
   items: {
     aboutIdea: {
       title: 'عن الفكره',
@@ -51,6 +56,10 @@ export const moreStrings = {
     weeklyReport: {
       title: 'أسبوعك مع ربنا',
       subtitle: 'ملخص أسبوعي لخلوتك وقراءتك وصلواتك',
+    },
+    privacyPolicy: {
+      title: 'سياسة الخصوصية',
+      subtitle: 'اعرف كيف نجمع بياناتك ونستخدمها ونحميها',
     },
   },
 } as const;
