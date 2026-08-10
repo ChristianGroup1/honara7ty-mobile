@@ -115,6 +115,7 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				C2E713D640BC03ECACC8A32F /* [CP] Embed Pods Frameworks */,
 				031F8602C4F792981AC9224B /* [CP] Copy Pods Resources */,
+				A7D54E61C3F24B749BE21001 /* Generate Hermes dSYM */,
 				CB130EC3059A47EE92174C72 /* Upload Debug Symbols to Sentry */,
 				C0BB236073255BA27AECACB0 /* [CP-User] [RNFB] Core Configuration */,
 				9B645A8CC300143C81FAF680 /* [CP-User] [RNFB] Crashlytics Configuration */,
@@ -179,6 +180,23 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		A7D54E61C3F24B749BE21001 /* Generate Hermes dSYM */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermesvm.framework/hermesvm",
+			);
+			name = "Generate Hermes dSYM";
+			outputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/hermesvm.framework.dSYM/Contents/Resources/DWARF/hermesvm",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh \"${PROJECT_DIR}/../scripts/generate-hermes-dsym.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -357,6 +375,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = honara7ty/honara7ty.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = VVMYX2F27P;
 				INFOPLIST_FILE = honara7ty/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -485,6 +504,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
