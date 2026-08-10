@@ -68,6 +68,10 @@
 	</dict>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>يحتاج التطبيق إذن الميكروفون لتسجيل طلبات الصلاة واليوميات الصوتية.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>يحتاج التطبيق إلى الوصول لمكتبة الصور حتى تتمكن من حفظ ومشاركة صور وتصاميم الآيات التي تنشئها داخل التطبيق.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>يحتاج التطبيق إلى إضافة صور إلى مكتبة الصور حتى تتمكن من حفظ تصاميم الآيات التي تنشئها داخل التطبيق.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
