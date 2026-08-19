@@ -154,6 +154,7 @@ jest.mock('@notifee/react-native', () => {
 jest.mock('@react-native-firebase/analytics', () => {
   const analytics = jest.fn(() => ({
     setAnalyticsCollectionEnabled: jest.fn().mockResolvedValue(undefined),
+    setConsent: jest.fn().mockResolvedValue(undefined),
     setUserId: jest.fn().mockResolvedValue(undefined),
     logScreenView: jest.fn().mockResolvedValue(undefined),
     logEvent: jest.fn().mockResolvedValue(undefined),
@@ -164,6 +165,23 @@ jest.mock('@react-native-firebase/analytics', () => {
     default: analytics,
   };
 });
+
+jest.mock('react-native-permissions', () => ({
+  RESULTS: {
+    UNAVAILABLE: 'unavailable',
+    DENIED: 'denied',
+    BLOCKED: 'blocked',
+    GRANTED: 'granted',
+    LIMITED: 'limited',
+  },
+  PERMISSIONS: {
+    IOS: {
+      APP_TRACKING_TRANSPARENCY: 'ios.permission.APP_TRACKING_TRANSPARENCY',
+    },
+  },
+  check: jest.fn().mockResolvedValue('granted'),
+  request: jest.fn().mockResolvedValue('granted'),
+}));
 
 jest.mock('@react-native-firebase/crashlytics', () => {
   const crashlytics = jest.fn(() => ({

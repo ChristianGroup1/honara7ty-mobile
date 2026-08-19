@@ -1,4 +1,3 @@
-import { Platform } from 'react-native';
 import { check, PERMISSIONS, request, RESULTS } from 'react-native-permissions';
 
 function isTrackingAuthorized(status: string) {
@@ -6,7 +5,15 @@ function isTrackingAuthorized(status: string) {
 }
 
 export async function resolveTrackingConsent() {
-  if (Platform.OS !== 'ios') {
+  const platformOs = (() => {
+    try {
+      return require('react-native')?.Platform?.OS;
+    } catch {
+      return undefined;
+    }
+  })();
+
+  if (platformOs !== 'ios') {
     return true;
   }
 

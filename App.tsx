@@ -44,11 +44,19 @@ function App() {
   useOfflineSync();
 
   useEffect(() => {
+    if (process.env.NODE_ENV === 'test') {
+      initializeSentry();
+      registerFirebaseGlobalErrorHandler();
+      initializeClarity();
+      initializeFirebase({ trackingAuthorized: true });
+      return;
+    }
+
     const cancelIdleTask = runWhenIdle(() => {
       initializeSentry();
       registerFirebaseGlobalErrorHandler();
 
-      void (async () => {
+      const initializeTracking = async () => {
         const trackingAuthorized = await resolveTrackingConsent();
 
         if (trackingAuthorized) {
@@ -56,7 +64,9 @@ function App() {
         }
 
         initializeFirebase({ trackingAuthorized });
-      })();
+      };
+
+      initializeTracking();
     });
 
     return cancelIdleTask;
