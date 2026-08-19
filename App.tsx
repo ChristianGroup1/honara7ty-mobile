@@ -20,6 +20,7 @@ import {
   initializeFirebase,
   registerFirebaseGlobalErrorHandler,
 } from './lib/firebase';
+import { resolveTrackingConsent } from './lib/trackingConsent';
 import { navigationRef } from './navigation/navigationRef';
 import { NightModeProvider } from './lib/nightMode';
 
@@ -43,11 +44,29 @@ function App() {
   useOfflineSync();
 
   useEffect(() => {
+    if (process.env.NODE_ENV === 'test') {
+      initializeSentry();
+      registerFirebaseGlobalErrorHandler();
+      initializeClarity();
+      initializeFirebase({ trackingAuthorized: true });
+      return;
+    }
+
     const cancelIdleTask = runWhenIdle(() => {
       initializeSentry();
-      initializeClarity();
-      initializeFirebase();
       registerFirebaseGlobalErrorHandler();
+
+      const initializeTracking = async () => {
+        const trackingAuthorized = await resolveTrackingConsent();
+
+        if (trackingAuthorized) {
+          initializeClarity();
+        }
+
+        initializeFirebase({ trackingAuthorized });
+      };
+
+      initializeTracking();
     });
 
     return cancelIdleTask;
