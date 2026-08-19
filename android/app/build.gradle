@@ -103,8 +103,8 @@ android {
         applicationId "com.honara7ty.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 24
-        versionName "24"
+        versionCode 25
+        versionName "25"
     }
     signingConfigs {
         debug {

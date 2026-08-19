@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   PermissionsAndroid,
@@ -68,24 +74,35 @@ const VoiceMemoRecorder = ({
   const [playing, setPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const recordingRef = useRef(false);
+  const recordingMsRef = useRef(0);
+  const recordingStartedAtRef = useRef<number | null>(null);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const displayDuration = useMemo(
-    () => formatDuration(recording ? recordingMs : durationMs),
+    () => formatDuration(recording ? recordingMs : durationMs ?? recordingMs),
     [durationMs, recording, recordingMs],
   );
 
-  useEffect(
-    () => () => {
+  const clearRecordingTimer = useCallback(() => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearRecordingTimer();
       Sound.removeRecordBackListener();
       Sound.removePlayBackListener();
       Sound.removePlaybackEndListener();
       Sound.stopPlayer().catch(() => undefined);
-      if (recording) {
+      if (recordingRef.current) {
         Sound.stopRecorder().catch(() => undefined);
       }
-    },
-    [recording],
-  );
+    };
+  }, [clearRecordingTimer]);
 
   const startRecording = useCallback(async () => {
     setBusy(true);
@@ -100,36 +117,69 @@ const VoiceMemoRecorder = ({
       await Sound.stopPlayer().catch(() => undefined);
       setPlaying(false);
       setRecordingMs(0);
+      recordingMsRef.current = 0;
+      recordingStartedAtRef.current = null;
+      clearRecordingTimer();
+      Sound.removeRecordBackListener();
       Sound.addRecordBackListener((event: RecordBackType) => {
-        setRecordingMs(event.currentPosition);
+        const nextPosition = Math.max(0, event.currentPosition ?? 0);
+        recordingMsRef.current = Math.max(
+          recordingMsRef.current,
+          nextPosition,
+        );
+        setRecordingMs(recordingMsRef.current);
       });
       await Sound.startRecorder(undefined, {
         AudioChannels: 1,
         AudioSamplingRate: 44100,
         AudioEncodingBitRate: 128000,
       });
+      recordingStartedAtRef.current = Date.now();
+      recordingRef.current = true;
       setRecording(true);
+      recordingTimerRef.current = setInterval(() => {
+        const startedAt = recordingStartedAtRef.current;
+        if (!recordingRef.current || startedAt === null) {
+          return;
+        }
+        const elapsed = Date.now() - startedAt;
+        recordingMsRef.current = Math.max(recordingMsRef.current, elapsed);
+        setRecordingMs(recordingMsRef.current);
+      }, 250);
     } catch {
+      clearRecordingTimer();
+      Sound.removeRecordBackListener();
+      recordingRef.current = false;
+      recordingStartedAtRef.current = null;
+      setRecording(false);
       setError(labels.error);
     } finally {
       setBusy(false);
     }
-  }, [labels]);
+  }, [clearRecordingTimer, labels]);
 
   const stopRecording = useCallback(async () => {
     setBusy(true);
     setError(null);
     try {
       const uri = await Sound.stopRecorder();
+      const startedAt = recordingStartedAtRef.current;
+      const elapsed = startedAt === null ? 0 : Date.now() - startedAt;
+      const finalDurationMs = Math.max(recordingMsRef.current, elapsed);
+      clearRecordingTimer();
       Sound.removeRecordBackListener();
+      recordingRef.current = false;
+      recordingStartedAtRef.current = null;
+      recordingMsRef.current = finalDurationMs;
+      setRecordingMs(finalDurationMs);
       setRecording(false);
-      onChange(uri, recordingMs);
+      onChange(uri, finalDurationMs);
     } catch {
       setError(labels.error);
     } finally {
       setBusy(false);
     }
-  }, [labels.error, onChange, recordingMs]);
+  }, [clearRecordingTimer, labels.error, onChange]);
 
   const stopPlayback = useCallback(async () => {
     setBusy(true);
@@ -172,6 +222,7 @@ const VoiceMemoRecorder = ({
       await stopPlayback();
     }
     onChange(null, null);
+    recordingMsRef.current = 0;
     setRecordingMs(0);
     setError(null);
   }, [onChange, playing, stopPlayback]);
