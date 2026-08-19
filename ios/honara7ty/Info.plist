@@ -68,6 +68,8 @@
 	</dict>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>يحتاج التطبيق إذن الميكروفون لتسجيل طلبات الصلاة واليوميات الصوتية.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>نستخدم هذا الإذن لتحسين التحليلات وقياس الأداء وتقديم تجربة أكثر ملاءمة لك.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
