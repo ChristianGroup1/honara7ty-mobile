@@ -30,10 +30,12 @@ import { authPaperTheme, AUTH_GOLD } from '../auth/theme';
 import AuthScreenShell from '../auth/AuthScreenShell';
 import { authStrings } from '../auth/strings';
 import GoogleIcon from '../../assets/images/google-icon.svg';
+import {
+  buildSignupMetadata,
+  getOptionalPhoneError,
+} from '../../lib/signupMetadata';
 
 type Props = { navigation: any };
-
-const PHONE_REGEX = /^\+?[0-9]{9,15}$/;
 
 const SignupUI: React.FC<Props> = ({ navigation }) => {
   const strings = authStrings;
@@ -97,11 +99,12 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
       errors.email = strings.signup.emailInvalid;
       hasError = true;
     }
-    if (!trimmedPhone) {
-      errors.phone = strings.signup.phoneRequired;
-      hasError = true;
-    } else if (!PHONE_REGEX.test(trimmedPhone)) {
-      errors.phone = strings.signup.phoneInvalid;
+    const phoneError = getOptionalPhoneError(
+      trimmedPhone,
+      strings.signup.phoneInvalid,
+    );
+    if (phoneError) {
+      errors.phone = phoneError;
       hasError = true;
     }
     if (!password) {
@@ -128,12 +131,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         email: trimmedEmail,
         password,
         options: {
-          data: {
-            full_name: trimmedName,
-            phone: trimmedPhone,
-            profile_completed: false,
-            onboarding_completed: false,
-          },
+          data: buildSignupMetadata(trimmedName, trimmedPhone),
         },
       });
 
@@ -268,6 +266,7 @@ const SignupUI: React.FC<Props> = ({ navigation }) => {
         <CustomInput
           fieldLabel={strings.signup.phone}
           placeholder={strings.signup.phonePlaceholder}
+          badge={strings.signup.optional}
           icon="phone-outline"
           keyboardType="phone-pad"
           value={formData.phone}

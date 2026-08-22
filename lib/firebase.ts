@@ -14,33 +14,27 @@ type ErrorUtilsLike = {
   setGlobalHandler?: (handler: GlobalErrorHandler) => void;
 };
 
-export function initializeFirebase(options?: { trackingAuthorized?: boolean }) {
+export function initializeFirebase() {
   if (isFirebaseInitialized) {
     return;
   }
 
   isFirebaseInitialized = true;
-  const trackingAuthorized = options?.trackingAuthorized ?? true;
 
   void analytics()
-    .setAnalyticsCollectionEnabled(trackingAuthorized)
+    .setAnalyticsCollectionEnabled(true)
     .catch(error => {
       if (__DEV__) {
-        console.warn(
-          `Failed to ${
-            trackingAuthorized ? 'enable' : 'disable'
-          } Firebase Analytics`,
-          error,
-        );
+        console.warn('Failed to enable Firebase Analytics', error);
       }
     });
 
   void analytics()
     .setConsent({
-      analytics_storage: trackingAuthorized,
-      ad_storage: trackingAuthorized,
-      ad_user_data: trackingAuthorized,
-      ad_personalization: trackingAuthorized,
+      analytics_storage: true,
+      ad_storage: false,
+      ad_user_data: false,
+      ad_personalization: false,
     })
     .catch(error => {
       if (__DEV__) {

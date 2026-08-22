@@ -166,23 +166,6 @@ jest.mock('@react-native-firebase/analytics', () => {
   };
 });
 
-jest.mock('react-native-permissions', () => ({
-  RESULTS: {
-    UNAVAILABLE: 'unavailable',
-    DENIED: 'denied',
-    BLOCKED: 'blocked',
-    GRANTED: 'granted',
-    LIMITED: 'limited',
-  },
-  PERMISSIONS: {
-    IOS: {
-      APP_TRACKING_TRANSPARENCY: 'ios.permission.APP_TRACKING_TRANSPARENCY',
-    },
-  },
-  check: jest.fn().mockResolvedValue('granted'),
-  request: jest.fn().mockResolvedValue('granted'),
-}));
-
 jest.mock('@react-native-firebase/crashlytics', () => {
   const crashlytics = jest.fn(() => ({
     setCrashlyticsCollectionEnabled: jest.fn().mockResolvedValue(undefined),

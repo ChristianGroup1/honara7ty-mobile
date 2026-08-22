@@ -72,8 +72,6 @@
 	<string>يحتاج التطبيق إلى حفظ الصور التي تنشئها أو تشاركها في مكتبة الصور.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>يحتاج التطبيق إلى الوصول إلى مكتبة الصور لاختيار الصور ومشاركتها.</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>نستخدم هذا الإذن لتحسين التحليلات وقياس الأداء وتقديم تجربة أكثر ملاءمة لك.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

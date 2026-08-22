@@ -4,17 +4,12 @@ require Pod::Executable.execute_command('node', ['-p',
     "react-native/scripts/react_native_pods.rb",
     {paths: [process.argv[1]]},
   )', __dir__]).strip
-require Pod::Executable.execute_command('node', ['-p',
-  'require.resolve(
-    "react-native-permissions/scripts/setup.rb",
-    {paths: [process.argv[1]]},
-  )', __dir__]).strip
-
 platform :ios, '18.0'
 prepare_react_native_project!
-setup_permissions([
-  'AppTrackingTransparency',
-])
+
+# Keep Firebase Analytics limited to first-party analytics. The app does not
+# use advertising identifiers or cross-app tracking.
+$RNFirebaseAnalyticsWithoutAdIdSupport = true
 
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
