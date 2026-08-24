@@ -19,6 +19,7 @@ import PrayerNotesScreen from '../components/prayer-notes/PrayerNotesScreen';
 import SpiritualReflectionScreen from '../components/spiritual-reflection/SpiritualReflectionScreen';
 import BibleMemorizationScreen from '../components/bible-memorization/BibleMemorizationScreen';
 import BadgesScreen from '../components/badges/BadgesScreen';
+import JourneyMapScreen from '../components/journey-map/JourneyMapScreen';
 import LockScreenVerseScreen from '../components/lock-screen-verse/LockScreenVerseScreen';
 import DevotionGuideScreen from '../components/devotion/DevotionGuideScreen';
 import DevotionDetailScreen from '../components/devotion/DevotionDetailScreen';
@@ -183,6 +184,11 @@ const MainTabNavigator = () => {
       <Tab.Screen
         name="Badges"
         component={BadgesScreen}
+        options={hiddenTabScreenOptions}
+      />
+      <Tab.Screen
+        name="JourneyMap"
+        component={JourneyMapScreen}
         options={hiddenTabScreenOptions}
       />
       <Tab.Screen

@@ -91,6 +91,12 @@ const MoreScreen = ({ navigation }: any) => {
       subtitle: strings.items.devotionCalendar.subtitle,
     },
     {
+      key: 'JourneyMap',
+      icon: 'map-marker-path',
+      title: strings.items.journeyMap.title,
+      subtitle: strings.items.journeyMap.subtitle,
+    },
+    {
       key: 'WeeklyReport',
       icon: 'chart-box-outline',
       title: strings.items.weeklyReport.title,

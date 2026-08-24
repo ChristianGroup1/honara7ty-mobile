@@ -18,6 +18,7 @@ import { notificationPermissionStrings } from './modules/notificationPermission'
 import { devotionGroupsStrings } from './modules/devotionGroups';
 import { lockScreenVerseStrings } from './modules/lockScreenVerse';
 import { weeklyReportStrings } from './modules/weeklyReport';
+import { journeyMapStrings } from './modules/journeyMap';
 
 const locales = {
   ar: {
@@ -41,6 +42,7 @@ const locales = {
     devotionGroups: devotionGroupsStrings,
     lockScreenVerse: lockScreenVerseStrings,
     weeklyReport: weeklyReportStrings,
+    journeyMap: journeyMapStrings,
   },
 } as const;
 

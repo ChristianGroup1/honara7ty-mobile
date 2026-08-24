@@ -13,6 +13,7 @@ export { default as DailyNotificationsScreen } from '../components/daily-notific
 export { default as BibleReaderScreen } from '../components/bible-reader/BibleReaderScreen';
 export { default as BibleMemorizationScreen } from '../components/bible-memorization/BibleMemorizationScreen';
 export { default as BadgesScreen } from '../components/badges/BadgesScreen';
+export { default as JourneyMapScreen } from '../components/journey-map/JourneyMapScreen';
 export { default as LockScreenVerseScreen } from '../components/lock-screen-verse/LockScreenVerseScreen';
 export { default as MoreScreen } from '../components/more/MoreScreen';
 export { default as ProfileScreen } from '../components/profile/ProfileScreen';

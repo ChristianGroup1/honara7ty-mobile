@@ -49,6 +49,10 @@ export const moreStrings = {
       title: 'متابعة وقتك مع الله',
       subtitle: 'راجع الأيام التي التزمت فيها',
     },
+    journeyMap: {
+      title: 'خريطة الرحلة',
+      subtitle: 'امشِ على درب بولس في رحلته الأولى',
+    },
     devotionGroups: {
       title: 'مجموعات الخلوة',
       subtitle: 'تابع خلوة أعضاء مجموعة الخلوة',
