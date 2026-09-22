@@ -101,6 +101,7 @@ const getRangeLabel = (range: string) => {
 
 export default function HealthPage() {
   const [loading, setLoading] = useState(true);
+  const [showDetails, setShowDetails] = useState(false);
   const [refreshedAt, setRefreshedAt] = useState<Date>(new Date());
 
   const [totalUsers, setTotalUsers] = useState(0);
@@ -692,7 +693,7 @@ export default function HealthPage() {
   // ─── UI ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="animate-fade-in health-page" style={{ direction: 'rtl' }}>
+    <div className={`animate-fade-in health-page ${showDetails ? 'details-open' : ''}`} style={{ direction: 'rtl' }}>
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <header className="page-header" style={{ marginBottom: '24px' }}>
@@ -830,6 +831,14 @@ export default function HealthPage() {
                   </div>
                 ))}
               </div>
+              <button
+                type="button"
+                className="btn-overview-secondary"
+                style={{ marginTop: '18px', cursor: 'pointer' }}
+                onClick={() => setShowDetails(current => !current)}
+              >
+                {showDetails ? 'إخفاء التفاصيل' : 'عرض كل التفاصيل والمؤشرات'}
+              </button>
             </>
           );
         })()}

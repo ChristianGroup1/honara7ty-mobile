@@ -806,11 +806,11 @@ button, input, select, textarea {
 
 /* Health is also a decision page. Its historical charts remain in advanced
    analytics so the next action is clear instead of buried in measurements. */
-.health-page > section:not(.health-executive) {
+.health-page:not(.details-open) > section:not(.health-executive) {
   display: none;
 }
 
-.health-page .health-controls > div {
+.health-page:not(.details-open) .health-controls > div {
   display: none;
 }
 
