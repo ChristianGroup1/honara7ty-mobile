@@ -764,6 +764,46 @@ button, input, select, textarea {
   font-size: 0.85rem;
 }
 
+/* The homepage is intentionally a decision view. Detailed charts live in
+   "صحة التطبيق" and "التحليلات المتقدمة" so an admin can see the status first. */
+.dashboard-page > section:not(.dashboard-executive) {
+  display: none;
+}
+
+.btn-overview-primary,
+.btn-overview-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  transition: var(--transition-fast);
+}
+
+.btn-overview-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-overview-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-overview-secondary {
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+.btn-overview-secondary:hover {
+  border-color: var(--border-focus);
+  background: var(--bg-tertiary);
+}
+
 /* Mobile top bar & sidebar drawer */
 .mobile-topbar {
   display: none;
@@ -2006,4 +2046,3 @@ button, input, select, textarea {
 @media (max-width: 540px) {
   .notif-drawer { max-width: 100%; }
 }
-

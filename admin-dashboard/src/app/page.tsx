@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
 import { 
@@ -24,6 +25,12 @@ interface MetricStats {
   totalGroups: number;
   devotionCompletionRate: number;
   completionRateChange: number;
+}
+
+interface ProductEngagement {
+  dau: number;
+  wau: number;
+  mau: number;
 }
 
 interface BibleBookStat {
@@ -82,6 +89,7 @@ const getCairoDate = (date = new Date()) => {
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [engagement, setEngagement] = useState<ProductEngagement>({ dau: 0, wau: 0, mau: 0 });
   const [metrics, setMetrics] = useState<MetricStats>({
     totalUsers: 0,
     totalChaptersRead: 0,
@@ -188,6 +196,16 @@ export default function DashboardPage() {
           completionRateChange
         });
 
+        // The compact home view only renders these core health indicators.
+        const { data: productMetrics } = await supabase.rpc('get_product_engagement_metrics');
+        if (productMetrics?.[0]) {
+          const product = productMetrics[0];
+          setEngagement({
+            dau: Number(product.dau_users ?? 0),
+            wau: Number(product.wau_users ?? 0),
+            mau: Number(product.mau_users ?? 0),
+          });
+        }
         // 6. Fetch profiles to aggregate church and demographic statistics
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
@@ -413,6 +431,7 @@ export default function DashboardPage() {
 
         setRecentActivities(activities.sort((left, right) => right.timestamp - left.timestamp).slice(0, 5));
 
+
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
         setDashboardError(
@@ -456,7 +475,7 @@ export default function DashboardPage() {
   }).join(' ');
 
   return (
-    <div className="animate-fade-in" style={{ direction: 'rtl' }}>
+    <div className="animate-fade-in dashboard-page" style={{ direction: 'rtl' }}>
       {/* Title */}
       <header className="page-header" style={{ marginBottom: '35px' }}>
         <div>
@@ -495,6 +514,42 @@ export default function DashboardPage() {
           تعذر تحديث كل بيانات اللوحة: {dashboardError}
         </div>
       ) : null}
+
+      <section className="dashboard-executive">
+        {(() => {
+          const hasData = metrics.totalUsers > 0;
+          const isHealthy = hasData && metrics.devotionCompletionRate >= 30 && engagement.wau > 0;
+          const status = !hasData
+            ? { title: 'لا توجد بيانات كافية للحكم', message: 'ابدأ بمتابعة التسجيلات وأول خلوة للمستخدمين.', color: 'var(--warning)' }
+            : isHealthy
+              ? { title: 'التطبيق يتحرك بشكل جيد', message: 'يوجد تفاعل أسبوعي ونسبة خلوة يومية مقبولة. راقب النمو أسبوعياً.', color: 'var(--success)' }
+              : { title: 'التطبيق يحتاج متابعة', message: 'التفاعل اليومي أو الأسبوعي منخفض. راجع المستخدمين الخاملين وأرسل تنبيهاً مناسباً.', color: 'var(--warning)' };
+
+          return (
+            <>
+              <div className="glass" style={{ padding: '24px', borderRadius: '18px', borderRight: `5px solid ${status.color}`, marginBottom: '20px' }}>
+                <div style={{ color: status.color, fontSize: '0.82rem', fontWeight: 800, marginBottom: '6px' }}>القرار السريع</div>
+                <h2 style={{ fontSize: '1.45rem', marginBottom: '8px' }}>{status.title}</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{status.message}</p>
+              </div>
+
+              <div className="insights-stat-grid" style={{ marginBottom: '20px' }}>
+                <div className="insights-stat-tile"><div className="insights-stat-value">{metrics.totalUsers}</div><div className="insights-stat-label">إجمالي المستخدمين</div></div>
+                <div className="insights-stat-tile"><div className="insights-stat-value" style={{ color: 'var(--success)' }}>{engagement.wau}</div><div className="insights-stat-label">نشطون خلال ٧ أيام</div></div>
+                <div className="insights-stat-tile"><div className="insights-stat-value" style={{ color: metrics.devotionCompletionRate >= 30 ? 'var(--success)' : 'var(--warning)' }}>{metrics.devotionCompletionRate}%</div><div className="insights-stat-label">إتمام الخلوة اليوم</div></div>
+                <div className="insights-stat-tile"><div className="insights-stat-value">{engagement.mau}</div><div className="insights-stat-label">نشطون خلال ٣٠ يوماً</div></div>
+              </div>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                <Link href="/health" className="btn-overview-primary">افهم حالة التطبيق</Link>
+                <Link href="/insights" className="btn-overview-secondary">التحليلات التفصيلية</Link>
+                <Link href="/users" className="btn-overview-secondary">المستخدمون والمتابعة</Link>
+                <Link href="/notifications" className="btn-overview-secondary">إرسال تنبيه</Link>
+              </div>
+            </>
+          );
+        })()}
+      </section>
 
       {/* Metrics Cards Grid */}
       <section className="metrics-grid">
