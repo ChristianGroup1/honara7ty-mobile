@@ -9,7 +9,6 @@ import {
   Layers, 
   CheckCircle, 
   Calendar,
-  MessageSquare,
   Sparkles,
   UserPlus,
   ArrowUpRight,
@@ -46,6 +45,7 @@ interface RecentActivityItem {
   content: string;
   time: string;
   dateStr?: string;
+  timestamp: number;
 }
 
 // Arabic mapping for common Bible book IDs
@@ -68,8 +68,20 @@ const getBookName = (id: string): string => {
   return bookIdToName[id] || `سفر ${id}`;
 };
 
+const getCairoDate = (date = new Date()) => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+};
+
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<MetricStats>({
     totalUsers: 0,
     totalChaptersRead: 0,
@@ -111,6 +123,7 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        setDashboardError(null);
 
         // 1. Fetch total users (profiles count)
         const { count: usersCount, error: usersError } = await supabase
@@ -132,34 +145,37 @@ export default function DashboardPage() {
         const totalGroups = groupsCount || 0;
 
         // 4. Fetch today's devotion log completion
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getCairoDate();
         const { data: todayLogs, error: todayLogsError } = await supabase
           .from('devotion_log')
           .select('completed')
           .eq('date', todayStr);
 
+        if (usersError || readingError || groupsError || todayLogsError) {
+          throw usersError || readingError || groupsError || todayLogsError;
+        }
+
         let todayRate = 0;
-        if (todayLogs && todayLogs.length > 0) {
+        if (totalUsers > 0 && todayLogs && todayLogs.length > 0) {
           const completedCount = todayLogs.filter(log => log.completed).length;
-          todayRate = Math.round((completedCount / todayLogs.length) * 100);
-        } else {
-          // If no logs, fallback to a sensible estimate or 0
-          todayRate = 0;
+          todayRate = Math.round((completedCount / totalUsers) * 100);
         }
 
         // 5. Fetch yesterday's devotion log completion for trend comparison
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
-        const { data: yesterdayLogs } = await supabase
+        const yesterdayStr = getCairoDate(yesterday);
+        const { data: yesterdayLogs, error: yesterdayLogsError } = await supabase
           .from('devotion_log')
           .select('completed')
           .eq('date', yesterdayStr);
 
+        if (yesterdayLogsError) throw yesterdayLogsError;
+
         let yesterdayRate = 0;
-        if (yesterdayLogs && yesterdayLogs.length > 0) {
+        if (totalUsers > 0 && yesterdayLogs && yesterdayLogs.length > 0) {
           const completedCount = yesterdayLogs.filter(log => log.completed).length;
-          yesterdayRate = Math.round((completedCount / yesterdayLogs.length) * 100);
+          yesterdayRate = Math.round((completedCount / totalUsers) * 100);
         }
 
         const completionRateChange = yesterdayRate > 0 ? (todayRate - yesterdayRate) : 0;
@@ -168,14 +184,16 @@ export default function DashboardPage() {
           totalUsers,
           totalChaptersRead: totalChapters,
           totalGroups,
-          devotionCompletionRate: todayRate || 65, // display a nice mockup rate if database is fresh
-          completionRateChange: completionRateChange || +4
+          devotionCompletionRate: todayRate,
+          completionRateChange
         });
 
         // 6. Fetch profiles to aggregate church and demographic statistics
-        const { data: profilesData } = await supabase
+        const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, church, updated_at, birth_date, gender');
+
+        if (profilesError) throw profilesError;
 
         const churchMap: Record<string, number> = {};
         let male = 0;
@@ -201,10 +219,14 @@ export default function DashboardPage() {
 
             // Age
             if (p.birth_date) {
-              const birthYear = parseInt(p.birth_date.split('-')[0]);
-              if (!isNaN(birthYear)) {
-                const currentYear = new Date().getFullYear();
-                const age = currentYear - birthYear;
+              const birthDate = new Date(`${p.birth_date}T00:00:00`);
+              if (!Number.isNaN(birthDate.getTime())) {
+                const now = new Date();
+                let age = now.getFullYear() - birthDate.getFullYear();
+                const birthdayHasPassed =
+                  now.getMonth() > birthDate.getMonth() ||
+                  (now.getMonth() === birthDate.getMonth() && now.getDate() >= birthDate.getDate());
+                if (!birthdayHasPassed) age -= 1;
                 if (age < 18) ageCount[0] += 1;
                 else if (age <= 25) ageCount[1] += 1;
                 else if (age <= 35) ageCount[2] += 1;
@@ -218,36 +240,25 @@ export default function DashboardPage() {
           .map(([name, count]) => ({ name, count }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 5);
-        setChurchStats(sortedChurches.length > 0 ? sortedChurches : [
-          { name: 'الأرثوذكسية', count: 42 },
-          { name: 'الإنجيلية', count: 18 },
-          { name: 'الكاثوليكية', count: 7 },
-          { name: 'أخرى', count: 3 }
-        ]);
+        setChurchStats(sortedChurches);
 
-        const totalP = profilesData?.length || 0;
         setDemographics({
-          gender: totalP > 0 ? { male, female, unknown: unknownGender } : { male: 28, female: 35, unknown: 7 },
-          ageBrackets: totalP > 0 ? [
+          gender: { male, female, unknown: unknownGender },
+          ageBrackets: [
             { label: 'تحت ١٨ سنة', count: ageCount[0] },
             { label: '١٨ - ٢٥ سنة', count: ageCount[1] },
             { label: '٢٦ - ٣٥ سنة', count: ageCount[2] },
             { label: '٣٦ - ٥٠ سنة', count: ageCount[3] },
             { label: 'فوق ٥٠ سنة', count: ageCount[4] }
-          ] : [
-            { label: 'تحت ١٨ سنة', count: 12 },
-            { label: '١٨ - ٢٥ سنة', count: 24 },
-            { label: '٢٦ - ٣٥ سنة', count: 19 },
-            { label: '٣٦ - ٥٠ سنة', count: 11 },
-            { label: 'فوق ٥٠ سنة', count: 4 }
           ]
         });
 
         // 7. Fetch reading logs to aggregate top Bible books read & testament split
-        const { data: readingLogs } = await supabase
+        const { data: readingLogs, error: readingLogsError } = await supabase
           .from('reading_log')
-          .select('book_id')
-          .limit(300);
+          .select('book_id');
+
+        if (readingLogsError) throw readingLogsError;
 
         const bookMap: Record<string, number> = {};
         let oldTestament = 0;
@@ -275,20 +286,14 @@ export default function DashboardPage() {
           }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 5);
-        setTopBooks(sortedBooks.length > 0 ? sortedBooks : [
-          { bookId: '19', bookName: 'المزامير', count: 68 },
-          { bookId: '43', bookName: 'يوحنا', count: 54 },
-          { bookId: '40', bookName: 'متى', count: 42 },
-          { bookId: '1', bookName: 'التكوين', count: 31 },
-          { bookId: '44', bookName: 'أعمال الرسل', count: 25 }
-        ]);
+        setTopBooks(sortedBooks);
 
         const totalT = oldTestament + newTestament;
         setTestamentSplit({
-          oldTestament: totalT > 0 ? oldTestament : 124,
-          newTestament: totalT > 0 ? newTestament : 156,
-          oldPercent: totalT > 0 ? Math.round((oldTestament / totalT) * 100) : 44,
-          newPercent: totalT > 0 ? Math.round((newTestament / totalT) * 100) : 56
+          oldTestament,
+          newTestament,
+          oldPercent: totalT > 0 ? Math.round((oldTestament / totalT) * 100) : 0,
+          newPercent: totalT > 0 ? Math.round((newTestament / totalT) * 100) : 0
         });
 
         // 8. Fetch last 7 days devotion completion rate trend
@@ -297,21 +302,20 @@ export default function DashboardPage() {
         for (let i = 6; i >= 0; i--) {
           const d = new Date();
           d.setDate(d.getDate() - i);
-          const dStr = d.toISOString().split('T')[0];
-          const dayName = daysArabic[d.getDay()];
+          const dStr = getCairoDate(d);
+          const dayName = daysArabic[new Date(`${dStr}T12:00:00`).getDay()];
 
-          const { data: dayLogs } = await supabase
+          const { data: dayLogs, error: dayLogsError } = await supabase
             .from('devotion_log')
             .select('completed')
             .eq('date', dStr);
 
+          if (dayLogsError) throw dayLogsError;
+
           let rate = 0;
           if (dayLogs && dayLogs.length > 0) {
             const completedCount = dayLogs.filter(log => log.completed).length;
-            rate = Math.round((completedCount / dayLogs.length) * 100);
-          } else {
-            // Mock a nice trend value for display if no logs are populated
-            rate = 60 + Math.round(Math.sin(i) * 15) + (i * 2);
+            rate = totalUsers > 0 ? Math.round((completedCount / totalUsers) * 100) : 0;
           }
           trendList.push({ day: dayName, rate });
         }
@@ -330,17 +334,20 @@ export default function DashboardPage() {
               type: 'signup',
               content: p.church ? `انضم من كنيسة: ${p.church}` : 'انضم لتطبيق خلوتي',
               time: p.updated_at ? new Date(p.updated_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '14:30',
-              dateStr: p.updated_at ? p.updated_at.split('T')[0] : todayStr
+              dateStr: p.updated_at ? p.updated_at.split('T')[0] : todayStr,
+              timestamp: p.updated_at ? new Date(p.updated_at).getTime() : 0,
             });
           });
         }
 
         // Recent Prayer Notes
-        const { data: recentPrayers } = await supabase
+        const { data: recentPrayers, error: recentPrayersError } = await supabase
           .from('prayer_notes')
           .select('id, user_id, content, created_at')
           .order('created_at', { ascending: false })
           .limit(3);
+
+        if (recentPrayersError) throw recentPrayersError;
 
         if (recentPrayers) {
           recentPrayers.forEach(pr => {
@@ -351,17 +358,20 @@ export default function DashboardPage() {
               type: 'prayer',
               content: pr.content ? (pr.content.length > 40 ? pr.content.substring(0, 40) + '...' : pr.content) : '',
               time: new Date(pr.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-              dateStr: pr.created_at.split('T')[0]
+              dateStr: pr.created_at.split('T')[0],
+              timestamp: new Date(pr.created_at).getTime(),
             });
           });
         }
 
         // Recent Reflections
-        const { data: recentReflections } = await supabase
+        const { data: recentReflections, error: recentReflectionsError } = await supabase
           .from('reflections')
           .select('id, user_id, content, created_at')
           .order('created_at', { ascending: false })
           .limit(3);
+
+        if (recentReflectionsError) throw recentReflectionsError;
 
         if (recentReflections) {
           recentReflections.forEach(rf => {
@@ -372,15 +382,18 @@ export default function DashboardPage() {
               type: 'reflection',
               content: rf.content ? (rf.content.length > 40 ? rf.content.substring(0, 40) + '...' : rf.content) : '',
               time: new Date(rf.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
-              dateStr: rf.created_at.split('T')[0]
+              dateStr: rf.created_at.split('T')[0],
+              timestamp: new Date(rf.created_at).getTime(),
             });
           });
         }
 
         // 10. Fetch all prayer notes statistics for answered rate
-        const { data: prayersData } = await supabase
+        const { data: prayersData, error: prayersError } = await supabase
           .from('prayer_notes')
           .select('is_answered');
+
+        if (prayersError) throw prayersError;
 
         let totalPrayers = 0;
         let answeredPrayers = 0;
@@ -389,20 +402,24 @@ export default function DashboardPage() {
         if (prayersData) {
           totalPrayers = prayersData.length;
           answeredPrayers = prayersData.filter(p => p.is_answered).length;
-          answeredRate = totalPrayers > 0 ? Math.round((answeredPrayers / totalPrayers) * 100) : 48;
+          answeredRate = totalPrayers > 0 ? Math.round((answeredPrayers / totalPrayers) * 100) : 0;
         }
 
         setPrayersStat({
-          total: totalPrayers || 38,
-          answered: answeredPrayers || 18,
-          rate: answeredRate || 47
+          total: totalPrayers,
+          answered: answeredPrayers,
+          rate: answeredRate
         });
 
-        // Sort activities chronologically by date/time (mock sorted)
-        setRecentActivities(activities.slice(0, 5));
+        setRecentActivities(activities.sort((left, right) => right.timestamp - left.timestamp).slice(0, 5));
 
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
+        setDashboardError(
+          err instanceof Error
+            ? err.message
+            : 'تعذر تحميل بيانات لوحة التحكم. تأكد من صلاحيات الأدمن واتصال قاعدة البيانات.',
+        );
       } finally {
         setLoading(false);
       }
@@ -462,6 +479,23 @@ export default function DashboardPage() {
         </div>
       </header>
 
+      {dashboardError ? (
+        <div
+          role="alert"
+          style={{
+            marginBottom: '24px',
+            padding: '14px 16px',
+            borderRadius: '12px',
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.24)',
+            color: 'var(--danger)',
+            fontSize: '0.88rem',
+          }}
+        >
+          تعذر تحديث كل بيانات اللوحة: {dashboardError}
+        </div>
+      ) : null}
+
       {/* Metrics Cards Grid */}
       <section className="metrics-grid">
         {/* Total Users */}
@@ -512,7 +546,7 @@ export default function DashboardPage() {
         {/* Devotion Completion */}
         <div className="glass metric-card">
           <div className="metric-info">
-            <span className="metric-label">معدل الخلوة اليومية</span>
+            <span className="metric-label">إتمام الخلوة من المسجلين</span>
             <span className="metric-value">{metrics.devotionCompletionRate}%</span>
             <span className={`metric-trend ${metrics.completionRateChange >= 0 ? 'trend-up' : 'trend-down'}`}>
               <ArrowUpRight size={14} />
@@ -534,6 +568,11 @@ export default function DashboardPage() {
             <TrendingUp size={16} color="var(--primary)" />
           </div>
           <div className="chart-container">
+            {!trendData.some(item => item.rate > 0) ? (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', paddingTop: '90px', textAlign: 'center' }}>
+                لا توجد خلوات مسجلة خلال آخر ٧ أيام.
+              </p>
+            ) : null}
             <svg className="svg-chart" viewBox="0 0 460 250">
               <defs>
                 <linearGradient id="chart-gradient" x1="0" y1="0" x2="0" y2="1">
@@ -618,6 +657,11 @@ export default function DashboardPage() {
             <BookOpen size={16} color="var(--accent-teal)" />
           </div>
           <div className="chart-container">
+            {topBooks.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', paddingTop: '90px', textAlign: 'center' }}>
+                لا توجد قراءات مسجلة بعد.
+              </p>
+            ) : null}
             <svg className="svg-chart" viewBox="0 0 460 250">
               <defs>
                 <linearGradient id="bar-gradient" x1="0" y1="0" x2="1" y2="0">
@@ -859,6 +903,9 @@ export default function DashboardPage() {
               <Sparkles size={16} color="var(--warning)" />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px' }}>
+              {churchStats.length === 0 ? (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>لا توجد بيانات مستخدمين بعد.</p>
+              ) : null}
               {churchStats.map((ch, idx) => {
                 const totalC = churchStats.reduce((sum, item) => sum + item.count, 0);
                 const percent = Math.round((ch.count / (totalC || 1)) * 100);
@@ -895,6 +942,9 @@ export default function DashboardPage() {
             <Activity size={16} color="var(--accent-pink)" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {recentActivities.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>لا توجد أنشطة حديثة بعد.</p>
+            ) : null}
             {recentActivities.map((act) => {
               // Icon mapping
               let badgeColorClass = 'badge-primary';

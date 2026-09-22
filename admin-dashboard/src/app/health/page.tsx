@@ -38,6 +38,34 @@ interface TodayDevotionUser {
   church: string;
 }
 
+interface AdminInsightSnapshot {
+  dau_users: number;
+  wau_users: number;
+  mau_users: number;
+  inactive_7_days: number;
+  inactive_14_days: number;
+  inactive_30_days: number;
+  retention_7_eligible: number;
+  retention_7_returned: number;
+  retention_30_eligible: number;
+  retention_30_returned: number;
+  new_prayers_7_days: number;
+  unanswered_prayers_14_days: number;
+  reflections_7_days: number;
+  missing_name: number;
+  missing_church: number;
+  missing_birth_date: number;
+}
+
+const emptyInsightSnapshot: AdminInsightSnapshot = {
+  dau_users: 0, wau_users: 0, mau_users: 0,
+  inactive_7_days: 0, inactive_14_days: 0, inactive_30_days: 0,
+  retention_7_eligible: 0, retention_7_returned: 0,
+  retention_30_eligible: 0, retention_30_returned: 0,
+  new_prayers_7_days: 0, unanswered_prayers_14_days: 0,
+  reflections_7_days: 0, missing_name: 0, missing_church: 0, missing_birth_date: 0,
+};
+
 const DAY_NAMES = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
 function statusColor(rate: number) {
@@ -133,6 +161,8 @@ export default function HealthPage() {
   const [dauMauRatio, setDauMauRatio] = useState(0);
   const [wauMauRatio, setWauMauRatio] = useState(0);
   const [zeroActivityCount, setZeroActivityCount] = useState(0);
+  const [insightSnapshot, setInsightSnapshot] = useState<AdminInsightSnapshot>(emptyInsightSnapshot);
+  const [insightSnapshotError, setInsightSnapshotError] = useState<string | null>(null);
 
   // Community Demographics & Memorization Metrics
   const [topChurches, setTopChurches] = useState<{ name: string; count: number }[]>([]);
@@ -469,6 +499,22 @@ export default function HealthPage() {
         setZeroActivityCount(Math.max(0, tot - actCount));
       }
 
+      // ── 5e. Accurate cross-feature activity, retention, and data quality ──
+      const { data: snapshotData, error: snapshotError } = await supabase
+        .rpc('get_admin_insight_snapshot');
+      if (snapshotError) {
+        setInsightSnapshotError('شغّل ملف الهجرة الجديد لإظهار مؤشرات الاحتفاظ والخمول وجودة البيانات.');
+      } else if (snapshotData?.[0]) {
+        const row = snapshotData[0] as AdminInsightSnapshot;
+        setInsightSnapshot({
+          ...emptyInsightSnapshot,
+          ...Object.fromEntries(
+            Object.entries(row).map(([key, value]) => [key, Number(value ?? 0)]),
+          ),
+        });
+        setInsightSnapshotError(null);
+      }
+
       // ── 6. Group Advantage vs Solo Completion rates (today) ──────────────
       const { data: groupMembers } = await supabase
         .from('devotion_group_members')
@@ -489,14 +535,15 @@ export default function HealthPage() {
       setGroupCompRate(groupRate);
       setSoloCompRate(soloRate);
 
-      // ── 7. Churn Analysis: Inactive > 14 days ──────────────────────────────
-      const fourteenDaysAgo = new Date();
-      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-      const inactiveUsers = (allProfiles ?? []).filter(p => {
-        if (!p.updated_at) return true;
-        return new Date(p.updated_at) < fourteenDaysAgo;
-      });
-      setInactiveCount(inactiveUsers.length);
+      // Legacy fallback until the accurate multi-feature activity RPC is installed.
+      if (!snapshotData?.[0]) {
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+        const inactiveUsers = (allProfiles ?? []).filter(p => !p.updated_at || new Date(p.updated_at) < fourteenDaysAgo);
+        setInactiveCount(inactiveUsers.length);
+      } else {
+        setInactiveCount(Number(snapshotData[0].inactive_14_days ?? 0));
+      }
 
       // ── 8. Advanced Spiritual Insights: Prayers ───────────────────────────
       const { data: prayersData } = await supabase
@@ -1179,6 +1226,70 @@ export default function HealthPage() {
             </p>
           </div>
 
+        </div>
+      </section>
+
+      <section style={{ marginTop: '32px' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '16px' }}>
+          الاحتفاظ، الخمول، وجودة البيانات
+        </h2>
+        {insightSnapshotError ? (
+          <div role="alert" className="badge badge-warning" style={{ marginBottom: '16px', whiteSpace: 'normal', lineHeight: 1.5 }}>
+            {insightSnapshotError}
+          </div>
+        ) : null}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+          {[
+            { label: 'نشط يومياً DAU', value: insightSnapshot.dau_users, note: 'أي تفاعل مسجل اليوم' },
+            { label: 'نشط أسبوعياً WAU', value: insightSnapshot.wau_users, note: 'أي تفاعل خلال ٧ أيام' },
+            { label: 'نشط شهرياً MAU', value: insightSnapshot.mau_users, note: 'أي تفاعل خلال ٣٠ يوماً' },
+            { label: 'خامل ٧ أيام', value: insightSnapshot.inactive_7_days, note: 'لم يسجل نشاطاً حديثاً' },
+            { label: 'خامل ١٤ يوماً', value: insightSnapshot.inactive_14_days, note: 'أولوية للمتابعة' },
+            { label: 'خامل ٣٠ يوماً', value: insightSnapshot.inactive_30_days, note: 'خطر تسرب مرتفع' },
+          ].map(item => (
+            <div key={item.label} className="glass card" style={{ padding: '16px', borderRadius: '12px' }}>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>{item.label}</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, margin: '6px 0' }}>{item.value}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>{item.note}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginTop: '20px' }}>
+          <div className="glass card" style={{ padding: '20px', borderRadius: '14px' }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>الاحتفاظ الحقيقي بعد التسجيل</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: 1.5, marginBottom: '14px' }}>
+              يحسب عودة المستخدم لأي نشاط بين اليوم السابع والثالث عشر، وبين اليوم الثلاثين والسادس والثلاثين بعد إنشاء الحساب.
+            </p>
+            <div className="responsive-2col" style={{ gap: '12px' }}>
+              <div className="insights-stat-tile">
+                <div className="insights-stat-value">{insightSnapshot.retention_7_eligible > 0 ? Math.round((insightSnapshot.retention_7_returned / insightSnapshot.retention_7_eligible) * 100) : 0}%</div>
+                <div className="insights-stat-label">عودة بعد ٧ أيام · {insightSnapshot.retention_7_returned}/{insightSnapshot.retention_7_eligible}</div>
+              </div>
+              <div className="insights-stat-tile">
+                <div className="insights-stat-value">{insightSnapshot.retention_30_eligible > 0 ? Math.round((insightSnapshot.retention_30_returned / insightSnapshot.retention_30_eligible) * 100) : 0}%</div>
+                <div className="insights-stat-label">عودة بعد ٣٠ يوماً · {insightSnapshot.retention_30_returned}/{insightSnapshot.retention_30_eligible}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="glass card" style={{ padding: '20px', borderRadius: '14px' }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>تنبيهات الصلاة والتفاعل الكتابي</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.86rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>طلبات صلاة جديدة (٧ أيام)</span><strong>{insightSnapshot.new_prayers_7_days}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>طلبات غير مستجابة لأكثر من ١٤ يوماً</span><strong style={{ color: 'var(--warning)' }}>{insightSnapshot.unanswered_prayers_14_days}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>تأملات مكتوبة (٧ أيام)</span><strong>{insightSnapshot.reflections_7_days}</strong></div>
+            </div>
+          </div>
+
+          <div className="glass card" style={{ padding: '20px', borderRadius: '14px' }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>جودة ملفات المستخدمين</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.86rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>بدون اسم</span><strong>{insightSnapshot.missing_name}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>بدون كنيسة</span><strong>{insightSnapshot.missing_church}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>بدون تاريخ ميلاد</span><strong>{insightSnapshot.missing_birth_date}</strong></div>
+            </div>
+          </div>
         </div>
       </section>
 
