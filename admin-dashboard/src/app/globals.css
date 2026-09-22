@@ -804,6 +804,16 @@ button, input, select, textarea {
   background: var(--bg-tertiary);
 }
 
+/* Health is also a decision page. Its historical charts remain in advanced
+   analytics so the next action is clear instead of buried in measurements. */
+.health-page > section:not(.health-executive) {
+  display: none;
+}
+
+.health-page .health-controls > div {
+  display: none;
+}
+
 /* Mobile top bar & sidebar drawer */
 .mobile-topbar {
   display: none;

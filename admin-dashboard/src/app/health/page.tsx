@@ -692,7 +692,7 @@ export default function HealthPage() {
   // ─── UI ───────────────────────────────────────────────────────────────────
 
   return (
-    <div className="animate-fade-in" style={{ direction: 'rtl' }}>
+    <div className="animate-fade-in health-page" style={{ direction: 'rtl' }}>
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <header className="page-header" style={{ marginBottom: '24px' }}>
@@ -702,7 +702,7 @@ export default function HealthPage() {
             السؤال الوحيد المهم: <strong style={{ color: 'var(--text-primary)' }}>كام واحد أخد خلوته النهارده؟</strong>
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="health-controls" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           {/* Time Range Toggle */}
           <div style={{
             display: 'flex',
@@ -799,6 +799,41 @@ export default function HealthPage() {
           </button>
         </div>
       </header>
+
+      <section className="health-executive">
+        {(() => {
+          const needsAttention = todayRate < 20 || inactiveCount > 0 || insightSnapshot.unanswered_prayers_14_days > 0;
+          const status = totalUsers === 0
+            ? { title: 'لا توجد بيانات كافية بعد', message: 'ستظهر حالة التطبيق بعد تسجيل مستخدمين وبدء التفاعل.', color: 'var(--warning)' }
+            : needsAttention
+              ? { title: 'هناك أشياء تحتاج متابعة', message: 'ابدأ بالبند ذي الرقم الأكبر أدناه، ثم أرسل تنبيهاً أو راجع المستخدمين.', color: 'var(--warning)' }
+              : { title: 'لا توجد إشارة خطر واضحة اليوم', message: 'حافظ على المتابعة اليومية، وراجع التحليلات المتقدمة مرة أسبوعياً.', color: 'var(--success)' };
+          const actions = [
+            { label: 'إتمام الخلوة اليوم', value: `${todayRate}%`, detail: `${todayTook} من ${totalUsers} مستخدم`, color: todayRate >= 20 ? 'var(--success)' : 'var(--warning)' },
+            { label: 'خاملون أكثر من ١٤ يوماً', value: inactiveCount, detail: 'الأولوية للتنبيه والمتابعة', color: inactiveCount > 0 ? 'var(--warning)' : 'var(--success)' },
+            { label: 'طلبات صلاة متأخرة', value: insightSnapshot.unanswered_prayers_14_days, detail: 'غير مستجابة لأكثر من ١٤ يوماً', color: insightSnapshot.unanswered_prayers_14_days > 0 ? 'var(--warning)' : 'var(--success)' },
+          ];
+
+          return (
+            <>
+              <div className="glass" style={{ padding: '22px', borderRadius: '18px', borderRight: `5px solid ${status.color}`, marginBottom: '18px' }}>
+                <div style={{ color: status.color, fontSize: '0.8rem', fontWeight: 800, marginBottom: '6px' }}>صحة التطبيق الآن</div>
+                <h2 style={{ fontSize: '1.35rem', marginBottom: '7px' }}>{status.title}</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>{status.message}</p>
+              </div>
+              <div className="insights-stat-grid">
+                {actions.map(action => (
+                  <div key={action.label} className="insights-stat-tile" style={{ borderColor: `${action.color}44` }}>
+                    <div className="insights-stat-value" style={{ color: action.color }}>{action.value}</div>
+                    <div className="insights-stat-label">{action.label}</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', marginTop: '7px' }}>{action.detail}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          );
+        })()}
+      </section>
 
       {/* ── Custom Datepicker Panel ────────────────────────────────────────── */}
       {timeRange === 'custom' && (
