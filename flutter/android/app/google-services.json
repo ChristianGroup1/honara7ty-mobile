@@ -1,0 +1,99 @@
+{
+  "project_info": {
+    "project_number": "1027705052109",
+    "firebase_url": "https://honara7ty-default-rtdb.firebaseio.com",
+    "project_id": "honara7ty",
+    "storage_bucket": "honara7ty.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027705052109:android:f0bea8081f79d7b64c8284",
+        "android_client_info": {
+          "package_name": "com.example.honara7ty"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1027705052109-01t740t2u0idh9p6nes1n9u5h9fihsro.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.honara7ty",
+            "certificate_hash": "f0a0cf145cd2afeb45b83f583dbdd4d966fe8ceb"
+          }
+        },
+        {
+          "client_id": "1027705052109-rfuk5tpnamgp4ktq72uf2q9i86kmj9l5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.honara7ty",
+            "certificate_hash": "9531103b89b3ba0676e8d6cd5efb1528bc8a957d"
+          }
+        },
+        {
+          "client_id": "1027705052109-pjaag3am9jmrs01rc6ljrmi0han21vf4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxHQKl1wGOztrxxv7vW3eMXtk34_XOFE8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1027705052109-pjaag3am9jmrs01rc6ljrmi0han21vf4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1027705052109-8kidd0sfl49pnd5e8evimidn9pjnie8a.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.honara7ty"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1027705052109:android:4a47a8b6be1fc4e74c8284",
+        "android_client_info": {
+          "package_name": "com.honara7ty.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1027705052109-pjaag3am9jmrs01rc6ljrmi0han21vf4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxHQKl1wGOztrxxv7vW3eMXtk34_XOFE8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1027705052109-pjaag3am9jmrs01rc6ljrmi0han21vf4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1027705052109-8kidd0sfl49pnd5e8evimidn9pjnie8a.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.honara7ty"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

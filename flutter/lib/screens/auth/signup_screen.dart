@@ -9,8 +9,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../core/supabase_service.dart';
+import '../../features/auth/auth_errors.dart';
+import '../../features/auth/google_auth.dart';
+import '../../features/reminders/devotion_schedule.dart';
 import '../../providers/auth_provider.dart';
 import '../../routing/app_router.dart';
+import '../../widgets/auth_screen_shell.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_alert_dialog.dart';
 
@@ -88,6 +92,33 @@ class _SignupScreenState extends State<SignupScreen> {
     return errors.values.every((e) => e.isEmpty);
   }
 
+  Future<void> _handleGoogle() async {
+    setState(() => _loading = true);
+    try {
+      final user = await signInWithGoogle();
+      if (user == null || !mounted) return;
+      await context.read<AuthProvider>().refresh();
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      await showCustomAlert(
+        context: context,
+        title: AppStrings.signupSignUpErrorTitle,
+        message: localizeAuthError(error.message),
+        type: AlertType.error,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      await showCustomAlert(
+        context: context,
+        title: AppStrings.authGenericErrorTitle,
+        message: localizeAuthError(error.toString()),
+        type: AlertType.error,
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   Future<void> _handleRegister() async {
     if (!_validate()) return;
 
@@ -107,6 +138,8 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
 
       if (res.user != null) {
+        await DevotionSchedule.ensure();
+        if (!mounted) return;
         await context.read<AuthProvider>().refresh();
         if (mounted) {
           context.push(Routes.profileCompletion, extra: {
@@ -121,7 +154,7 @@ class _SignupScreenState extends State<SignupScreen> {
       await showCustomAlert(
         context: context,
         title: AppStrings.signupSignUpErrorTitle,
-        message: e.message,
+        message: localizeAuthError(e.message),
         type: AlertType.error,
       );
     } catch (e) {
@@ -129,7 +162,7 @@ class _SignupScreenState extends State<SignupScreen> {
       await showCustomAlert(
         context: context,
         title: AppStrings.authGenericErrorTitle,
-        message: e.toString(),
+        message: localizeAuthError(e.toString()),
         type: AlertType.error,
       );
     } finally {
@@ -139,72 +172,34 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.authNavy,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header row.
-              Row(
-                textDirection: TextDirection.rtl,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new,
-                        color: Colors.white, size: 20),
-                    onPressed: () => context.pop(),
-                  ),
-                  // Step indicator.
-                  Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 5,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.authGold,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                      Container(
-                        width: 18,
-                        height: 5,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Title.
-              const Text(
-                AppStrings.signupTitle,
-                textDirection: TextDirection.rtl,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Form card.
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  children: [
+    return AuthScreenShell(
+      title: AppStrings.signupTitle,
+      onBack: () => context.pop(),
+      headerExtras: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 36,
+            height: 5,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              color: AppColors.gold,
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+          Container(
+            width: 18,
+            height: 5,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
                     CustomTextField(
                       label: AppStrings.signupFullName,
                       placeholder: AppStrings.signupFullNamePlaceholder,
@@ -279,6 +274,15 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: OutlinedButton(
+                        onPressed: _loading ? null : _handleGoogle,
+                        child: const Text(AppStrings.signupGoogleButton),
+                      ),
+                    ),
                     const SizedBox(height: 20),
 
                     // Footer.
@@ -304,13 +308,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }

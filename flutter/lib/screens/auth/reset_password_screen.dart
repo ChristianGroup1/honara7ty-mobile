@@ -3,12 +3,18 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../features/auth/auth_errors.dart';
+import '../../core/deep_links.dart';
+import '../../providers/auth_provider.dart';
 
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../core/supabase_service.dart';
 import '../../routing/app_router.dart';
+import '../../widgets/auth_screen_shell.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_alert_dialog.dart';
 
@@ -69,7 +75,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       await showCustomAlert(
         context: context,
         title: AppStrings.authGenericErrorTitle,
-        message: e.message,
+        message: localizeAuthError(e.message),
         type: AlertType.error,
       );
     } finally {
@@ -77,61 +83,40 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
   }
 
+  void _goLogin() {
+    DeepLinks.finishRecovery();
+    context.read<AuthProvider>().refresh();
+    context.go(Routes.login);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.authNavy,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 16),
-              Text(
-                widget.linkValid
-                    ? AppStrings.resetPasswordNewPasswordTitle
-                    : AppStrings.resetPasswordInvalidLinkTitle,
-                textDirection: TextDirection.rtl,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
+    final auth = context.watch<AuthProvider>();
+    final linkValid = auth.status == AuthStatus.recoveryMode
+        ? auth.recoveryLinkValid
+        : widget.linkValid;
+    return AuthScreenShell(
+      title: linkValid
+          ? AppStrings.resetPasswordNewPasswordTitle
+          : AppStrings.resetPasswordInvalidLinkTitle,
+      child: _success
+          ? _SuccessView(onGoToLogin: _goLogin)
+          : linkValid
+              ? _ResetForm(
+                  passwordCtrl: _passwordCtrl,
+                  confirmCtrl: _confirmCtrl,
+                  passwordError: _passwordError,
+                  confirmError: _confirmError,
+                  loading: _loading,
+                  onPasswordChanged: (_) => setState(() => _passwordError = ''),
+                  onConfirmChanged: (_) => setState(() => _confirmError = ''),
+                  onSubmit: _handleReset,
+                  onGoToLogin: _goLogin,
+                )
+              : _InvalidLinkView(
+                  onGoToLogin: _goLogin,
+                  onGoToForgot: () => context.go(Routes.forgotPassword),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: _success
-                    ? _SuccessView(onGoToLogin: () => context.go(Routes.login))
-                    : widget.linkValid
-                        ? _ResetForm(
-                            passwordCtrl: _passwordCtrl,
-                            confirmCtrl: _confirmCtrl,
-                            passwordError: _passwordError,
-                            confirmError: _confirmError,
-                            loading: _loading,
-                            onPasswordChanged: (_) =>
-                                setState(() => _passwordError = ''),
-                            onConfirmChanged: (_) =>
-                                setState(() => _confirmError = ''),
-                            onSubmit: _handleReset,
-                            onGoToLogin: () => context.go(Routes.login),
-                          )
-                        : _InvalidLinkView(
-                            onGoToLogin: () => context.go(Routes.login),
-                            onGoToForgot: () =>
-                                context.go(Routes.forgotPassword),
-                          ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

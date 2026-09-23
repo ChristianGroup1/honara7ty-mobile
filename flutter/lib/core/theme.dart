@@ -7,7 +7,17 @@ class AppColors {
   // Brand palette
   static const Color navy = Color(0xFF0A1124);
   static const Color accent = Color(0xFF78A1BD);
-  static const Color gold = Color(0xFFFDFCF9);
+  static const Color gold = Color(0xFFE6D5A2);
+  static const headerGradientLight = [
+    Color(0xFF0A1124),
+    Color(0xFF16243F),
+    Color(0xFF33506E),
+  ];
+  static const headerGradientDark = [
+    Color(0xFF0B1224),
+    Color(0xFF111A2E),
+    Color(0xFF1D2940),
+  ];
 
   // Light theme
   static const Color lightBackground = Color(0xFFF2F4F8);

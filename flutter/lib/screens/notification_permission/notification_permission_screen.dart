@@ -7,6 +7,12 @@ import 'package:provider/provider.dart';
 
 import '../../core/strings.dart';
 import '../../core/theme.dart';
+import '../../core/push_tokens.dart';
+import '../../core/supabase_service.dart';
+import '../../features/reminders/devotion_reminder.dart';
+import '../../features/reminders/devotion_schedule.dart';
+import '../../features/reminders/notification_permission_flow.dart';
+import '../../providers/auth_provider.dart';
 import '../../routing/app_router.dart';
 
 class NotificationPermissionScreen extends StatelessWidget {
@@ -71,9 +77,15 @@ class NotificationPermissionScreen extends StatelessWidget {
               SizedBox(
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Request permission via flutter_local_notifications.
-                    context.go(Routes.mainTabs);
+                  onPressed: () async {
+                    await DevotionReminder.instance.requestPermission();
+                    final userId = supabase.auth.currentUser?.id;
+                    await markNotificationPermissionPromptSeen(userId);
+                    await DevotionSchedule.ensure();
+                    await PushTokens.register(userId);
+                    if (!context.mounted) return;
+                    await context.read<AuthProvider>().refresh();
+                    if (context.mounted) context.go(Routes.mainTabs);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accent,
@@ -93,7 +105,14 @@ class NotificationPermissionScreen extends StatelessWidget {
 
               // Skip button.
               TextButton(
-                onPressed: () => context.go(Routes.mainTabs),
+                onPressed: () async {
+                  await markNotificationPermissionPromptSeen(
+                    supabase.auth.currentUser?.id,
+                  );
+                  if (!context.mounted) return;
+                  await context.read<AuthProvider>().refresh();
+                  if (context.mounted) context.go(Routes.mainTabs);
+                },
                 child: Text(
                   AppStrings.notifPermissionSkip,
                   style: TextStyle(

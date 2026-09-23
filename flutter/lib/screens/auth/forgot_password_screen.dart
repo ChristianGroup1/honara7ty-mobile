@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../features/auth/auth_errors.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../core/supabase_service.dart';
-import '../../routing/app_router.dart';
+import '../../widgets/auth_screen_shell.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_alert_dialog.dart';
 
@@ -62,7 +63,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await showCustomAlert(
         context: context,
         title: AppStrings.authGenericErrorTitle,
-        message: e.message,
+        message: localizeAuthError(e.message),
         type: AlertType.error,
       );
     } finally {
@@ -72,56 +73,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.authNavy,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new,
-                      color: Colors.white, size: 20),
-                  onPressed: () => context.pop(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                AppStrings.forgotPasswordTitle,
-                textDirection: TextDirection.rtl,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: _sent ? _SentView(email: _emailCtrl.text.trim()) : _FormView(
-                  emailCtrl: _emailCtrl,
-                  emailError: _emailError,
-                  loading: _loading,
-                  onEmailChanged: (_) {
-                    if (_emailError.isNotEmpty) {
-                      setState(() => _emailError = '');
-                    }
-                  },
-                  onSend: _handleSend,
-                  onGoToLogin: () => context.pop(),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return AuthScreenShell(
+      title: AppStrings.forgotPasswordTitle,
+      onBack: () => context.pop(),
+      child: _sent
+          ? _SentView(email: _emailCtrl.text.trim())
+          : _FormView(
+              emailCtrl: _emailCtrl,
+              emailError: _emailError,
+              loading: _loading,
+              onEmailChanged: (_) {
+                if (_emailError.isNotEmpty) setState(() => _emailError = '');
+              },
+              onSend: _handleSend,
+              onGoToLogin: () => context.pop(),
+            ),
     );
   }
 }
@@ -148,12 +114,36 @@ class _FormView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          AppStrings.forgotPasswordInfoDescription,
-          textDirection: TextDirection.rtl,
-          style: TextStyle(color: Colors.grey, fontSize: 14, height: 1.5),
+        Container(
+          padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+          decoration: BoxDecoration(
+            color: AppColors.navy,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: const Column(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: Color(0x33FFFFFF),
+                child: Icon(Icons.forward_to_inbox, color: Colors.white, size: 20),
+              ),
+              SizedBox(height: 8),
+              Text(
+                AppStrings.forgotPasswordInfoTitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800),
+              ),
+              SizedBox(height: 8),
+              Text(
+                AppStrings.forgotPasswordInfoDescription,
+                textAlign: TextAlign.center,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(color: Colors.white, fontSize: 14, height: 1.55),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 18),
         CustomTextField(
           label: AppStrings.authEmail,
           placeholder: AppStrings.authEmailPlaceholder,
@@ -172,7 +162,8 @@ class _FormView extends StatelessWidget {
               backgroundColor: AppColors.navy,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                  borderRadius: BorderRadius.circular(18)),
+            elevation: 4,
             ),
             child: loading
                 ? const CircularProgressIndicator(
@@ -218,9 +209,12 @@ class _SentView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(Icons.mark_email_read_outlined,
-            size: 56, color: AppColors.accent),
-        const SizedBox(height: 16),
+        const CircleAvatar(
+          radius: 50,
+          backgroundColor: AppColors.navy,
+          child: Icon(Icons.mark_email_read_outlined, size: 52, color: Colors.white),
+        ),
+        const SizedBox(height: 20),
         const Text(
           AppStrings.forgotPasswordResetSentTitle,
           textDirection: TextDirection.rtl,

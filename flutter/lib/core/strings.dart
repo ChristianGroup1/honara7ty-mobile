@@ -4,6 +4,7 @@
 class AppStrings {
   // ── Navigation ──
   static const navHome = 'الرئيسية';
+  static const navBible = 'الكتاب';
   static const navProfile = 'الملف الشخصي';
   static const navSettings = 'الإعدادات';
   static const navMore = 'المزيد';
@@ -142,53 +143,70 @@ class AppStrings {
   // ── Home ──
   static const homeGreetingMorning = 'صباح الخير';
   static const homeGreetingEvening = 'مساء الخير';
-  static const homeDailyQuestionTitle = 'قرأت الكتاب المقدس اليوم؟';
+  static const homeDailyQuestionLabel = 'سؤال اليوم ';
+  static const homeDailyQuestionTitle =
+      'هل خدت وقت تقرأ في الكتاب المقدس وتقعد مع ربنا النهارده؟';
+  static const homeAnswerNow = 'جاوب الآن';
+  static const homeAnsweredYes = 'حلو جدًا 👏💪، وقتك مع ربنا غالي 🙏';
+  static const homeAnsweredNo = 'لم تأخذ خلوتك بعد — لا يزال الوقت أمامك 💙';
+  static const homeDailyVerseEyebrow = 'آية اليوم';
+  static const homeDailyVerseTitle = 'كلمة تشجعك النهارده';
   static const homeYes = 'نعم ✓';
-  static const homeNo = 'لا';
+  static const homeNo = 'لا ✗';
   static const homeEditAnswer = 'تعديل الإجابة';
   static const homePrayerNotesTitle = 'طلبات الصلاة';
-  static const homePrayerNotesSubtitle = 'سجّل طلباتك وشارك أفكارك';
-  static const homeReflectionTitle = 'تأملات روحية';
-  static const homeReflectionSubtitle = 'اكتب تأملاتك اليومية';
+  static const homePrayerNotesSubtitle = 'شارك صلواتك وطلباتك';
+  static const homeReflectionTitle = 'اليوميات';
+  static const homeReflectionSubtitle = 'سجل خواطرك اليومية';
   static const homeLogoutTitle = 'تسجيل الخروج';
-  static const homeLogoutMessage = 'هل تريد تسجيل الخروج؟';
+  static const homeLogoutMessage = 'هل أنت متأكد أنك تريد تسجيل الخروج؟';
   static const homeCancel = 'إلغاء';
   static const homeLogout = 'خروج';
-  static const homeLater = 'لاحقًا';
-  static const homeCorrectStreakTitle = 'أحسنت! 🎉';
-  static const homeStartNowTitle = 'ابدأ الآن 📖';
+  static const homeLater = 'حسنا';
+  static const homeCorrectStreakTitle = 'حلو جدًا 👏💪، وقتك مع ربنا غالي 🙏';
+  static const homeStartNowTitle = 'لا بأس 💙';
   static const homeSavedOfflineMessage =
-      'تم الحفظ محليًا وسيتم المزامنة عند الاتصال بالإنترنت.';
-  static const homePermissionNoticeTitle = 'فعّل الإشعارات';
+      'تم حفظ التغيير على الجهاز، وسيتم إرساله تلقائياً عند عودة الإنترنت.';
+  static const homePermissionNoticeTitle = 'فعّل التذكير اليومي';
   static const homePermissionNoticeBody =
-      'احصل على تذكيرات قراءة الكتاب المقدس كل يوم.';
-  static const homePermissionEnable = 'تفعيل';
+      'لو الإشعارات مقفولة، مش هيوصلك تذكير بوقتك مع ربنا في المعاد المناسب.';
+  static const homePermissionEnable = 'تفعيل الإشعارات';
   static const homePermissionOpenSettings = 'فتح الإعدادات';
-  static const homeReadingSelectionRequiredTitle = 'اختر قراءتك';
+  static const homeReadingSelectionRequiredTitle = 'اختيار القراءة مطلوب';
   static const homeReadingSelectionRequiredMessage =
-      'الرجاء اختيار سفر وإصحاح للتسجيل.';
+      'لازم تختار سفر وإصحاح واحد على الأقل قبل الحفظ.';
 
   // ── More Screen ──
   static const moreTitle = 'المزيد';
   static const moreNightModeTitle = 'الوضع الليلي';
-  static const moreNightModeSubtitle = 'تفعيل المظهر الداكن';
-  static const moreDevotionGuideTitle = 'دليل القداسة';
-  static const moreDevotionGuideSubtitle = 'خطوات يومية للنمو الروحي';
-  static const moreAboutIdeaTitle = 'فكرة التطبيق';
-  static const moreAboutIdeaSubtitle = 'تعرف على القصة خلف التطبيق';
-  static const moreBibleMemorizationTitle = 'حفظ الآيات';
-  static const moreBibleMemorizationSubtitle = 'احفظ آيات الكتاب المقدس';
-  static const moreLockScreenVerseTitle = 'آية شاشة القفل';
-  static const moreLockScreenVerseSubtitle = 'اجعل آية خلفية شاشتك';
-  static const moreBadgesTitle = 'الأوسمة';
-  static const moreBadgesSubtitle = 'تابع تقدمك وإنجازاتك';
-  static const moreDevotionCalendarTitle = 'تقويم التقديس';
-  static const moreDevotionCalendarSubtitle = 'سجّل أيام قراءتك';
+  static const moreNightModeSubtitle = 'استخدم ألوان أهدأ ومريحة للقراءة ليلاً';
+  static const moreDevotionGuideTitle = 'شرح الخلوة';
+  static const moreDevotionGuideSubtitle = 'خطوات عملية لوقت هادئ مع الله';
+  static const moreAboutIdeaTitle = 'عن الفكره';
+  static const moreAboutIdeaSubtitle = 'تعرف على فكرة التطبيق';
+  static const moreBibleMemorizationTitle = 'حفظ الكتاب المقدس';
+  static const moreBibleMemorizationSubtitle = 'اختبر حفظك للآيات';
+  static const moreLockScreenVerseTitle = 'تصميم آية';
+  static const moreLockScreenVerseSubtitle = 'صمّم آية يومية واحفظها كخلفية';
+  static const moreBadgesTitle = 'شارات الثبات';
+  static const moreBadgesSubtitle = 'انظر إنجازاتك';
+  static const moreDevotionCalendarTitle = 'متابعة وقتك مع الله';
+  static const moreDevotionCalendarSubtitle = 'راجع الأيام التي التزمت فيها';
+  static const moreWeeklyReportTitle = 'أسبوعك مع ربنا';
+  static const moreWeeklyReportSubtitle = 'ملخص أسبوعي لخلوتك وقراءتك وصلواتك';
+  static const moreDailyReminderTitle = 'وقتك مع الله كل يوم';
+  static const moreDailyReminderSubtitle =
+      'اختر التوقيت الأنسب لك، وسنذكّرك يوميًا حتى يبقى وقتك مع الله جزءًا ثابتًا من يومك.';
 
   // ── Profile ──
   static const profileTitle = 'الملف الشخصي';
   static const profileEditButton = 'تعديل';
-  static const profileDevotionGroups = 'مجموعات التقديس';
+  static const profileName = 'الاسم';
+  static const profilePhone = 'الهاتف';
+  static const profileSave = 'حفظ التغييرات';
+  static const profileSaved = 'تم تحديث بياناتك';
+  static const profileDevotionGroups = 'مجموعات الخلوة';
+  static const morePrivacy = 'سياسة الخصوصية';
 
   // ── Daily Notifications / Settings ──
   static const dailyNotifTitle = 'الإعدادات';
@@ -198,22 +216,22 @@ class AppStrings {
   // ── Prayer Notes ──
   static const prayerNotesTitle = 'طلبات الصلاة';
   static const prayerNotesAddButton = 'إضافة طلب';
-  static const prayerNotesEmptyMessage = 'لا توجد طلبات صلاة بعد';
+  static const prayerNotesEmptyMessage = 'اضغط + لإنشاء طلبة صلاة.';
   static const prayerNotesAddFirst = 'أضف أول طلب صلاة لك';
 
   // ── Spiritual Reflection ──
-  static const reflectionTitle = 'التأملات الروحية';
+  static const reflectionTitle = 'التأمل الروحي';
   static const reflectionAddButton = 'تأمل جديد';
   static const reflectionEmptyMessage = 'لا توجد تأملات بعد';
 
   // ── Bible Memorization ──
-  static const memorizationTitle = 'حفظ الآيات';
+  static const memorizationTitle = 'حفظ الكتاب المقدس';
   static const memorizationPickVerse = 'اختر آية للحفظ';
   static const memorizationStartButton = 'ابدأ الحفظ';
 
   // ── Badges ──
-  static const badgesTitle = 'الأوسمة والإنجازات';
-  static const badgesStreakTitle = 'السلسلة الحالية';
+  static const badgesTitle = 'الإنجازات';
+  static const badgesStreakTitle = 'الثبات يصنع الأثر';
   static const badgesDays = 'يوم';
 
   // ── Lock Screen Verse ──
@@ -223,19 +241,19 @@ class AppStrings {
   static const lockScreenSave = 'حفظ كخلفية';
 
   // ── Devotion Guide ──
-  static const devotionGuideTitle = 'دليل القداسة';
+  static const devotionGuideTitle = 'شرح الخلوة';
 
   // ── Devotion Calendar ──
-  static const devotionCalendarTitle = 'تقويم التقديس';
+  static const devotionCalendarTitle = 'متابعة وقتك مع الله';
 
   // ── Devotion Groups ──
-  static const devotionGroupsTitle = 'مجموعات التقديس';
+  static const devotionGroupsTitle = 'مجموعات الخلوة';
   static const devotionGroupsCreate = 'إنشاء مجموعة';
   static const devotionGroupsJoin = 'انضمام لمجموعة';
   static const devotionGroupsEmpty = 'لم تنضم لأي مجموعة بعد';
 
   // ── About Idea ──
-  static const aboutIdeaTitle = 'فكرة التطبيق';
+  static const aboutIdeaTitle = 'عن الفكره';
 
   // ── Reading Plan ──
   static const readingPlanTitle = 'خطة القراءة';

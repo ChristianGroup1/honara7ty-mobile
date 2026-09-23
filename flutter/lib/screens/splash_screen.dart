@@ -4,7 +4,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../routing/app_router.dart';
 
@@ -15,11 +14,27 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _fadeController;
+  late final Animation<double> _fade;
+
   @override
   void initState() {
     super.initState();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _fade = CurvedAnimation(parent: _fadeController, curve: Curves.linear);
+    _fadeController.forward();
     _navigate();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
   }
 
   Future<void> _navigate() async {
@@ -45,53 +60,16 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.navy,
+      backgroundColor: const Color(0xFF0C1121),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // App logo placeholder – replace with actual asset.
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.15),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.accent.withOpacity(0.4),
-                  width: 2,
-                ),
-              ),
-              child: const Icon(
-                Icons.menu_book_rounded,
-                size: 52,
-                color: AppColors.accent,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'هنا راحتي',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'رفيقك الروحي اليومي',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.65),
-                fontSize: 15,
-              ),
-            ),
-            const SizedBox(height: 40),
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.accent),
-              strokeWidth: 2,
-            ),
-          ],
+        child: FadeTransition(
+          opacity: _fade,
+          child: Image.asset(
+            'assets/images/logo.png',
+            width: 220,
+            height: 220,
+            fit: BoxFit.contain,
+          ),
         ),
       ),
     );

@@ -32,6 +32,8 @@ import '../screens/devotion_groups/devotion_group_prayer_requests_screen.dart';
 import '../screens/about_idea/about_idea_screen.dart';
 import '../screens/reading_plan/reading_plan_suggestions_screen.dart';
 import '../screens/daily_notifications/daily_notifications_screen.dart';
+import '../screens/weekly_report/weekly_report_screen.dart';
+import '../screens/bible_reader/bible_reader_screen.dart';
 
 // Named route constants – mirrors navigation/types.ts
 class Routes {
@@ -61,12 +63,17 @@ class Routes {
   static const aboutIdea = '/about-idea';
   static const readingPlanSuggestions = '/reading-plan-suggestions';
   static const dailyNotifications = '/daily-notifications';
+  static const weeklyReport = '/weekly-report';
+  static const bibleReader = '/bible-reader';
 }
+
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 GoRouter buildRouter(BuildContext context) {
   final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: Routes.splash,
     refreshListenable: authProvider,
     redirect: (context, state) {
@@ -108,9 +115,21 @@ GoRouter buildRouter(BuildContext context) {
         if (location != Routes.onboarding) return Routes.onboarding;
         return null;
       }
+      if (status == AuthStatus.needsNotificationPermission) {
+        if (location != Routes.notificationPermission) {
+          return Routes.notificationPermission;
+        }
+        return null;
+      }
 
       // Fully authenticated – send to main tabs if landing on auth pages.
       if (status == AuthStatus.authenticated) {
+        final invite = authProvider.pendingDevotionGroupInviteCode;
+        if (invite != null &&
+            invite.isNotEmpty &&
+            !location.startsWith(Routes.devotionGroupInvite)) {
+          return '${Routes.devotionGroupInvite}?inviteCode=${Uri.encodeQueryComponent(invite)}';
+        }
         const authPages = {
           Routes.welcome,
           Routes.login,
@@ -147,8 +166,7 @@ GoRouter buildRouter(BuildContext context) {
       GoRoute(
         path: Routes.resetPassword,
         builder: (context, state) {
-          final linkValid =
-              state.uri.queryParameters['linkValid'] == 'true';
+          final linkValid = state.uri.queryParameters['linkValid'] == 'true';
           return ResetPasswordScreen(linkValid: linkValid);
         },
       ),
@@ -182,7 +200,9 @@ GoRouter buildRouter(BuildContext context) {
       ),
       GoRoute(
         path: Routes.spiritualReflection,
-        builder: (context, state) => const SpiritualReflectionScreen(),
+        builder: (context, state) => SpiritualReflectionScreen(
+          initialText: state.extra is String ? state.extra as String : null,
+        ),
       ),
       GoRoute(
         path: Routes.bibleMemorization,
@@ -202,7 +222,9 @@ GoRouter buildRouter(BuildContext context) {
       ),
       GoRoute(
         path: Routes.devotionDetail,
-        builder: (context, state) => const DevotionDetailScreen(),
+        builder: (context, state) => DevotionDetailScreen(
+          articleId: state.uri.queryParameters['articleId'] ?? '',
+        ),
       ),
       GoRoute(
         path: Routes.devotionCalendar,
@@ -251,6 +273,10 @@ GoRouter buildRouter(BuildContext context) {
         },
       ),
       GoRoute(
+        path: Routes.bibleReader,
+        builder: (context, state) => const BibleReaderScreen(),
+      ),
+      GoRoute(
         path: Routes.aboutIdea,
         builder: (context, state) => const AboutIdeaScreen(),
       ),
@@ -261,6 +287,10 @@ GoRouter buildRouter(BuildContext context) {
       GoRoute(
         path: Routes.dailyNotifications,
         builder: (context, state) => const DailyNotificationsScreen(),
+      ),
+      GoRoute(
+        path: Routes.weeklyReport,
+        builder: (context, state) => const WeeklyReportScreen(),
       ),
     ],
   );

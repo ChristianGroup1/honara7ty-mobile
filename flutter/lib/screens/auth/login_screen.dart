@@ -5,13 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import '../../features/auth/auth_errors.dart';
+import '../../features/auth/google_auth.dart';
+import '../../features/reminders/devotion_schedule.dart';
 
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../core/supabase_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../routing/app_router.dart';
+import '../../widgets/auth_screen_shell.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_alert_dialog.dart';
 
@@ -70,6 +73,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       if (res.user != null) {
         if (!mounted) return;
+        await DevotionSchedule.ensure();
+        if (!mounted) return;
         await context.read<AuthProvider>().refresh();
       }
     } on AuthException catch (e) {
@@ -77,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await showCustomAlert(
         context: context,
         title: AppStrings.loginSignInErrorTitle,
-        message: e.message,
+        message: localizeAuthError(e.message),
         type: AlertType.error,
       );
     } catch (e) {
@@ -85,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await showCustomAlert(
         context: context,
         title: AppStrings.authGenericErrorTitle,
-        message: e.toString(),
+        message: localizeAuthError(e.toString()),
         type: AlertType.error,
       );
     } finally {
@@ -96,23 +101,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleGoogleSignIn() async {
     setState(() => _loading = true);
     try {
-      final googleSignIn = GoogleSignIn(
-        scopes: ['email', 'profile'],
-      );
-      final account = await googleSignIn.signIn();
-      if (account == null) return; // User cancelled.
-
-      final auth = await account.authentication;
-      final idToken = auth.idToken;
-      if (idToken == null) return;
-
-      final res = await supabase.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: idToken,
-        accessToken: auth.accessToken,
-      );
-
-      if (res.user != null && mounted) {
+      final user = await signInWithGoogle();
+      if (user != null && mounted) {
         await context.read<AuthProvider>().refresh();
       }
     } on AuthException catch (e) {
@@ -120,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await showCustomAlert(
         context: context,
         title: AppStrings.authGenericErrorTitle,
-        message: e.message,
+        message: localizeAuthError(e.message),
         type: AlertType.error,
       );
     } catch (e) {
@@ -128,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await showCustomAlert(
         context: context,
         title: AppStrings.authGenericErrorTitle,
-        message: e.toString(),
+        message: localizeAuthError(e.toString()),
         type: AlertType.error,
       );
     } finally {
@@ -138,46 +128,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.authNavy,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Back button.
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new,
-                      color: Colors.white, size: 20),
-                  onPressed: () => context.pop(),
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Title.
-              const Text(
-                AppStrings.loginTitle,
-                textDirection: TextDirection.rtl,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              // Form card.
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  children: [
+    return AuthScreenShell(
+      title: AppStrings.loginTitle,
+      onBack: () => context.pop(),
+      child: Column(
+        children: [
                     CustomTextField(
                       label: AppStrings.authEmail,
                       placeholder: AppStrings.authEmailPlaceholder,
@@ -303,12 +258,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }

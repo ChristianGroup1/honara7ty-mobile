@@ -24,6 +24,12 @@
 				<string>honara7ty</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.496533823141-45ea5o2ud652e9gk3dmbfirtrt3t7f5l</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
@@ -50,6 +56,15 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>app-settings</string>
+		<string>prefs</string>
+		<string>App-prefs</string>
+		<string>shortcuts</string>
+	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>يحتاج التطبيق إذن الميكروفون لتسجيل الصوت.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

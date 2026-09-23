@@ -60,7 +60,8 @@ const _slides = [
 ];
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  const OnboardingScreen({super.key, this.inApp = false});
+  final bool inApp;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -72,6 +73,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _loading = false;
 
   Future<void> _complete() async {
+    if (widget.inApp) {
+      Navigator.maybePop(context);
+      return;
+    }
     setState(() => _loading = true);
     try {
       await supabase.auth.updateUser(
@@ -221,7 +226,8 @@ class _SlideView extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: slide.accent.withOpacity(0.12),
-              border: Border.all(color: slide.accent.withOpacity(0.4), width: 2),
+              border:
+                  Border.all(color: slide.accent.withOpacity(0.4), width: 2),
             ),
             child: Icon(
               _iconData(slide.icon),
