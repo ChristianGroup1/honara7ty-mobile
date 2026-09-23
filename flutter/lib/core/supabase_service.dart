@@ -6,8 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 const String _supabaseUrl = 'https://pphbwecwwotrfqjyrsai.supabase.co';
 const String _supabaseAnonKey =
-    '******'
-    '.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwaGJ3ZWN3d290cmZxanlyc2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyMTkxNzIsImV4cCI6MjA4Mjc5NTE3Mn0'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwaGJ3ZWN3d290cmZxanlyc2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyMTkxNzIsImV4cCI6MjA4Mjc5NTE3Mn0'
     '.WzIqb_CoAny83-QgyAxK4SWm_-xqUrh_9dITbkA_MYQ';
 
 /// Initialise Supabase.  Call once from [main] before [runApp].
