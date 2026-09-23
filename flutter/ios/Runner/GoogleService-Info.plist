@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>1027705052109-0bhuc5flfi433qc1k1bttj01ih7bafko.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.1027705052109-0bhuc5flfi433qc1k1bttj01ih7bafko</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>1027705052109-01t740t2u0idh9p6nes1n9u5h9fihsro.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDfMqJONr1ZEEDy15lvf_T_iNBqUpuNklU</string>
+	<key>GCM_SENDER_ID</key>
+	<string>1027705052109</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.honara7ty.app</string>
+	<key>PROJECT_ID</key>
+	<string>honara7ty</string>
+	<key>STORAGE_BUCKET</key>
+	<string>honara7ty.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:1027705052109:ios:a224cb3b3ba583224c8284</string>
+	<key>DATABASE_URL</key>
+	<string>https://honara7ty-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
