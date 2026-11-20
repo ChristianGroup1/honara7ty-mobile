@@ -35,8 +35,8 @@ export default function Sidebar({ userEmail, isOpen = false, onClose }: SidebarP
   };
 
   const navItems = [
-    { name: 'الرئيسية والإحصائيات', href: '/', icon: LayoutDashboard },
-    { name: 'صحة التطبيق', href: '/health', icon: Activity },
+    { name: 'نبض التطبيق', href: '/', icon: LayoutDashboard },
+    { name: 'صحة الخلوة', href: '/health', icon: Activity },
     { name: 'التحليلات المتقدمة', href: '/insights', icon: BarChart3 },
     { name: 'إدارة المستخدمين', href: '/users', icon: Users },
     { name: 'مجموعات التفاعل', href: '/groups', icon: Layers },
