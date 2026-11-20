@@ -83,9 +83,13 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       };
       final synced = await OfflineSync.saveProfile(user.id, profile);
+      // Profile done → keep onboarding pending so the 3 intro screens show next.
       await OfflineSync.saveAuthMetadata(
         user.id,
-        {'profile_completed': true},
+        {
+          'profile_completed': true,
+          'onboarding_completed': false,
+        },
       );
       if (!mounted) return;
       await context.read<AuthProvider>().refresh();

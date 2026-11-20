@@ -12,6 +12,7 @@ import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../routing/app_router.dart';
+import '../../screens/onboarding/onboarding_screen.dart';
 import '../../widgets/custom_alert_dialog.dart';
 
 typedef _MoreItem = ({
@@ -119,7 +120,17 @@ class MoreScreen extends StatelessWidget {
       colors: item.colors,
       title: item.title,
       subtitle: item.subtitle,
-      onTap: () => context.push(item.route));
+      onTap: () {
+        if (item.route == Routes.aboutIdea) {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const OnboardingScreen(inApp: true),
+            ),
+          );
+          return;
+        }
+        context.push(item.route);
+      });
 
   Widget _pair(Widget right, Widget left) => Padding(
         padding: const EdgeInsets.only(bottom: 12),

@@ -58,6 +58,7 @@ dependencies:
   audioplayers: ^6.7.1
   path_provider: ^2.1.5
   gal: ^3.0.1
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:

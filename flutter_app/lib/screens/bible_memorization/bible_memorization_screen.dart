@@ -35,7 +35,9 @@ class _BibleMemorizationScreenState extends State<BibleMemorizationScreen> {
   String _fillLevel = 'medium';
   static const _fillLevels = {'easy', 'medium', 'hard'};
   static const _orderChunk = 12;
-  bool _stats = false, _reciting = false, _result = false;
+  /// 0 = التسميع (picker), 1 = الإحصائيات
+  var _mainTab = 0;
+  bool _reciting = false, _result = false;
   List<_Word> _words = [];
   String _fullAnswer = '';
   int _orderMistakes = 0, _orderPlaced = 0;
@@ -311,9 +313,9 @@ class _BibleMemorizationScreenState extends State<BibleMemorizationScreen> {
       _fullBlurred = false;
       _activeBlank = _difficulty == 'choice' ? _firstBlank(built) : null;
       _started = DateTime.now();
+      _mainTab = 0;
       _reciting = true;
       _result = false;
-      _stats = false;
     });
     if (_difficulty == 'order') _refillOrderPool();
     if (_difficulty == 'letters') _skipEmptyLetters();
@@ -518,13 +520,12 @@ class _BibleMemorizationScreenState extends State<BibleMemorizationScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeProvider>().isNightMode;
-    final title = _stats
-        ? 'الإحصائيات'
-        : _reciting
-            ? 'التسميع'
-            : _result
-                ? 'النتيجة'
-                : 'حفظ الكتاب المقدس';
+    final inSession = _reciting || _result;
+    final title = _reciting
+        ? 'التسميع'
+        : _result
+            ? 'النتيجة'
+            : 'حفظ الكتاب المقدس';
 
     return Scaffold(
       backgroundColor: youthBg(isDark),
@@ -538,9 +539,10 @@ class _BibleMemorizationScreenState extends State<BibleMemorizationScreen> {
                 eyebrow: 'ذاكرة القلب',
                 title: title,
                 onBack: () {
-                  if (_stats || _reciting || _result) {
+                  if (inSession) {
                     setState(() {
-                      _stats = _reciting = _result = false;
+                      _reciting = false;
+                      _result = false;
                     });
                   } else {
                     Navigator.maybePop(context);
@@ -553,15 +555,24 @@ class _BibleMemorizationScreenState extends State<BibleMemorizationScreen> {
                   bg: const Color(0xFFF5F3FF),
                 ),
               ),
+              if (!inSession)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+                  child: _MemorizationTabs(
+                    dark: isDark,
+                    index: _mainTab,
+                    onChanged: (index) => setState(() => _mainTab = index),
+                  ),
+                ),
               Expanded(
                 child: _books.isEmpty
                     ? const Center(child: CircularProgressIndicator())
-                    : _stats
-                        ? _statsView(isDark)
-                        : _result
-                            ? _resultView(isDark)
-                            : _reciting
-                                ? _reciteView(isDark)
+                    : _result
+                        ? _resultView(isDark)
+                        : _reciting
+                            ? _reciteView(isDark)
+                            : _mainTab == 1
+                                ? _statsView(isDark)
                                 : _picker(isDark),
               ),
             ],
@@ -1213,18 +1224,6 @@ class _BibleMemorizationScreenState extends State<BibleMemorizationScreen> {
           icon: Icons.psychology_rounded,
           onTap: _canStart ? _start : null,
         ),
-        const SizedBox(height: 10),
-        TextButton.icon(
-          onPressed: () => setState(() => _stats = true),
-          icon: const Icon(Icons.insights_outlined),
-          label: const Text(
-            'إحصائياتي',
-            style: TextStyle(
-              fontFamily: AppFonts.ui,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -1797,12 +1796,14 @@ class _BibleMemorizationScreenState extends State<BibleMemorizationScreen> {
           if (!_words[i].hidden)
             Text(_words[i].text, style: _wordStyle(text))
           else if (_fadeChecked)
-            Text(
-              _words[i].correct == true
-                  ? _words[i].text
-                  : '${_words[i].answer.isEmpty ? '—' : _words[i].answer} ← ${_words[i].text}',
-              style: _wordStyle(_words[i].correct == true ? good : bad),
-            )
+            _words[i].correct == true
+                ? Text(_words[i].text, style: _wordStyle(good))
+                : _WrongToCorrectInline(
+                    wrong: _words[i].answer.trim().isEmpty
+                        ? '—'
+                        : _words[i].answer.trim(),
+                    correct: _words[i].text,
+                  )
           else
             SizedBox(
               key: ValueKey('fade-$_fadeRound-$i'),
@@ -1891,55 +1892,123 @@ class _BibleMemorizationScreenState extends State<BibleMemorizationScreen> {
   }
 
   Widget _resultView(bool isDark) {
+    final text = isDark ? AppColors.darkText : const Color(0xFF0F172A);
+    final muted = isDark ? AppColors.darkMutedText : const Color(0xFF64748B);
+    final graded = _words.where((w) => w.hidden && w.correct != null).toList();
+    final mistakeCount = graded.where((w) => w.correct == false).length;
+    final pct = _total == 0 ? 0 : ((_score / _total) * 100).round();
+    final perfect = _total > 0 && _score == _total;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
       children: [
-        YouthHeroBanner(
-          badge: 'نتيجة التسميع',
-          title: _score == _total ? 'ممتاز جدًا!' : 'أحسنت المحاولة',
-          body: switch (_difficulty) {
+        _ResultScoreCard(
+          perfect: perfect,
+          scoreLabel: _arabicDigits(_score),
+          totalLabel: _arabicDigits(_total),
+          percentLabel: _arabicDigits(pct),
+          title: perfect ? 'ممتاز جدًا!' : 'أحسنت المحاولة',
+          subtitle: switch (_difficulty) {
             'order' =>
               'رتّبت ${_arabicDigits(_total)} كلمة بـ ${_arabicDigits(_orderMistakes)} غلطة',
-            _ => 'النتيجة: $_score من $_total كلمة صحيحة',
+            _ =>
+              'صحّحت ${_arabicDigits(_score)} من ${_arabicDigits(_total)} كلمة',
           },
-          icon: Icons.emoji_events_rounded,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         YouthSoftCard(
           dark: isDark,
-          child: !_words.any((w) => w.hidden)
-              ? Text(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'الآية كاملة',
+                      style: TextStyle(
+                        fontFamily: AppFonts.ui,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: text,
+                      ),
+                    ),
+                  ),
+                  if (mistakeCount > 0)
+                    Text(
+                      '${_arabicDigits(mistakeCount)} غلط',
+                      style: TextStyle(
+                        fontFamily: AppFonts.ui,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: muted,
+                      ),
+                    ),
+                ],
+              ),
+              if (graded.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'الغلط يظهر جوّه الآية: إجابتك ثم السهم ثم الصح',
+                  style: TextStyle(
+                    fontFamily: AppFonts.ui,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: muted,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              if (graded.isEmpty)
+                Text(
                   _text,
-                  style: _wordStyle(
-                    isDark ? AppColors.darkText : const Color(0xFF0F172A),
-                  ).copyWith(height: 1.9),
+                  style: _wordStyle(text).copyWith(height: 1.9),
                 )
-              : Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: _words
-                      .where((w) => w.hidden)
-                      .map(
-                        (w) => Chip(
-                          backgroundColor: w.correct == true
-                              ? const Color(0xFFD1FAE5)
-                              : const Color(0xFFFEE2E2),
-                          label: Text(
-                            w.correct == true
-                                ? w.text
-                                : '${w.answer.isEmpty ? '—' : w.answer} ← ${w.text}',
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.start,
+                  children: [
+                    for (final w in _words)
+                      if (!w.hidden)
+                        Text(w.text, style: _wordStyle(text))
+                      else if (w.correct == true)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(10),
+                            border:
+                                Border.all(color: const Color(0xFFA7F3D0)),
+                          ),
+                          child: Text(
+                            w.text,
                             style: const TextStyle(
                               fontFamily: AppFonts.ui,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF047857),
                             ),
                           ),
+                        )
+                      else
+                        _WrongToCorrectInline(
+                          wrong: w.answer.trim().isEmpty
+                              ? '—'
+                              : w.answer.trim(),
+                          correct: w.text,
                         ),
-                      )
-                      .toList(),
+                  ],
                 ),
+            ],
+          ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         YouthPrimaryButton(
           label: 'حاول مرة أخرى',
           icon: Icons.refresh_rounded,
@@ -2623,6 +2692,92 @@ class _InsightChip extends StatelessWidget {
   }
 }
 
+class _MemorizationTabs extends StatelessWidget {
+  const _MemorizationTabs({
+    required this.dark,
+    required this.index,
+    required this.onChanged,
+  });
+
+  final bool dark;
+  final int index;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final soft = dark ? AppColors.darkCardMuted : const Color(0xFFF1F5F9);
+    final card = dark ? AppColors.darkCard : Colors.white;
+    final text = dark ? AppColors.darkText : const Color(0xFF0F172A);
+    final muted = dark ? AppColors.darkMutedText : const Color(0xFF64748B);
+
+    Widget tab({
+      required int value,
+      required String label,
+      required IconData icon,
+    }) {
+      final selected = index == value;
+      return Expanded(
+        child: Material(
+          color: selected ? card : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          child: InkWell(
+            onTap: () => onChanged(value),
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: 16,
+                    color: selected ? const Color(0xFF7C3AED) : muted,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: AppFonts.ui,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: selected ? text : muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: soft,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: dark ? AppColors.darkBorder : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        children: [
+          tab(
+            value: 0,
+            label: 'التسميع',
+            icon: Icons.psychology_rounded,
+          ),
+          tab(
+            value: 1,
+            label: 'الإحصائيات',
+            icon: Icons.insights_rounded,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DifficultyRow extends StatelessWidget {
   const _DifficultyRow({
     required this.isDark,
@@ -2840,6 +2995,212 @@ class _MemorizationBookArrow extends StatelessWidget {
           disabledForegroundColor: Colors.white30,
         ),
         icon: Icon(icon, size: 14, textDirection: TextDirection.ltr),
+      ),
+    );
+  }
+}
+
+class _ResultScoreCard extends StatelessWidget {
+  const _ResultScoreCard({
+    required this.perfect,
+    required this.scoreLabel,
+    required this.totalLabel,
+    required this.percentLabel,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final bool perfect;
+  final String scoreLabel;
+  final String totalLabel;
+  final String percentLabel;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: perfect
+              ? const [Color(0xFF064E3B), Color(0xFF0F172A)]
+              : const [Color(0xFF0F172A), Color(0xFF1E293B)],
+        ),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(
+          color: perfect ? const Color(0xFF34D399) : const Color(0xFF334155),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.16),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        perfect
+                            ? Icons.emoji_events_rounded
+                            : Icons.fact_check_rounded,
+                        size: 13,
+                        color: const Color(0xFFFCD34D),
+                      ),
+                      const SizedBox(width: 5),
+                      const Text(
+                        'نتيجة التسميع',
+                        style: TextStyle(
+                          fontFamily: AppFonts.ui,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFFFCD34D),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: AppFonts.ui,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontFamily: AppFonts.ui,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withValues(alpha: 0.72),
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 86,
+            height: 86,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.08),
+              border: Border.all(
+                color: perfect
+                    ? const Color(0xFF34D399)
+                    : const Color(0xFFFBBF24),
+                width: 3,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$scoreLabel/$totalLabel',
+                  style: const TextStyle(
+                    fontFamily: AppFonts.ui,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  '$percentLabel%',
+                  style: TextStyle(
+                    fontFamily: AppFonts.ui,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: perfect
+                        ? const Color(0xFF6EE7B7)
+                        : const Color(0xFFFCD34D),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Wrong answer → arrow → correct word (RTL: wrong first, then correct).
+class _WrongToCorrectInline extends StatelessWidget {
+  const _WrongToCorrectInline({
+    required this.wrong,
+    required this.correct,
+  });
+
+  final String wrong;
+  final String correct;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1F2),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        textDirection: TextDirection.rtl,
+        children: [
+          Text(
+            wrong,
+            style: const TextStyle(
+              fontFamily: AppFonts.ui,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFFDC2626),
+              decoration: TextDecoration.lineThrough,
+              decorationColor: Color(0xFFDC2626),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 5),
+            child: Icon(
+              Icons.arrow_back_rounded,
+              size: 14,
+              color: Color(0xFFEF4444),
+              textDirection: TextDirection.ltr,
+            ),
+          ),
+          Text(
+            correct,
+            style: const TextStyle(
+              fontFamily: AppFonts.ui,
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF059669),
+            ),
+          ),
+        ],
       ),
     );
   }

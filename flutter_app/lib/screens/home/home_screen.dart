@@ -23,6 +23,7 @@ import '../../features/journal/reflections_service.dart';
 import '../../features/reading/active_reading_plan_service.dart';
 import '../../features/reading/bible_catalog.dart';
 import '../../features/reading/bible_tools.dart';
+import '../../features/reading/daily_verse.dart';
 import '../../features/reminders/devotion_reminder.dart';
 import '../../features/reminders/notification_permission_flow.dart';
 import '../../providers/auth_provider.dart';
@@ -49,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? _suggestedBook;
   int? _suggestedChapter;
   var _firstReading = true;
+  DailyVerse _dailyVerse = fallbackDailyVerseForToday();
   var _focusActive = false;
   var _promptSeen = false;
   int _prayerCount = 0;
@@ -75,7 +77,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       _refreshFocus();
       _loadJournalCounts();
+      _refreshDailyVerse();
     }
+  }
+
+  Future<void> _refreshDailyVerse() async {
+    try {
+      final verse = await pickDailyVerseFromReadingBook(
+        preferredBookName: _suggestedBook,
+      );
+      if (!mounted) return;
+      setState(() => _dailyVerse = verse);
+    } catch (_) {}
   }
 
   Future<void> _refreshFocus() async {
@@ -126,6 +139,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         planChapters = plan.chaptersForDay(book?.chapters ?? 150);
       }
     } catch (_) {}
+    DailyVerse dailyVerse = fallbackDailyVerseForToday();
+    try {
+      dailyVerse = await pickDailyVerseFromReadingBook(
+        preferredBookName: suggestedBook,
+      );
+    } catch (_) {}
     if (!mounted) return;
     setState(() {
       _user = session?.user;
@@ -139,6 +158,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _firstReading = firstReading;
       _plan = plan;
       _planChapters = planChapters;
+      _dailyVerse = dailyVerse;
       _loading = false;
     });
     _loadJournalCounts();
@@ -190,7 +210,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final box = context.findRenderObject() as RenderBox?;
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png', name: 'verse.png')],
-        text: 'آية اليوم من تطبيق هنا راحتي',
+        text:
+            '${_dailyVerse.text}\n${_dailyVerse.reference}\n\nآية اليوم من تطبيق هنا راحتي',
         sharePositionOrigin: box == null
             ? null
             : box.localToGlobal(Offset.zero) & box.size,
@@ -271,6 +292,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         title: completed
             ? AppStrings.homeCorrectStreakTitle
             : AppStrings.homeStartNowTitle,
+        message: completed ? null : AppStrings.homeStartNowMessage,
         type: completed ? AlertType.success : AlertType.info,
       );
       return true;
@@ -493,6 +515,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   const SizedBox(height: 14),
                   _DailyVerseCard(
                     boundaryKey: _verseKey,
+                    verse: _dailyVerse,
                     onTap: () => context.push(Routes.lockScreenVerse),
                     onShare: _shareVerse,
                   ),
@@ -687,37 +710,18 @@ class _HomeHeader extends StatelessWidget {
 class _DailyVerseCard extends StatelessWidget {
   const _DailyVerseCard({
     required this.boundaryKey,
+    required this.verse,
     required this.onTap,
     required this.onShare,
   });
 
   final GlobalKey boundaryKey;
+  final DailyVerse verse;
   final VoidCallback onShare;
   final VoidCallback onTap;
 
-  static const _verses = [
-    ('سِرَاجٌ لِرِجْلِي كَلَامُكَ وَنُورٌ لِسَبِيلِي.', 'مزمور ١١٩: ١٠٥'),
-    (
-      'لَا تَخَفْ لِأَنِّي مَعَكَ. لَا تَتَلَفَّتْ لِأَنِّي إِلَهُكَ.',
-      'إشعياء ٤١: ١٠'
-    ),
-    (
-      'لَا تَهْتَمُّوا بِشَيْءٍ، بَلْ فِي كُلِّ شَيْءٍ بِالصَّلَاةِ وَالدُّعَاءِ.',
-      'فيلبي ٤: ٦'
-    ),
-    ('سَلَامًا أَتْرُكُ لَكُمْ. سَلَامِي أُعْطِيكُمْ.', 'يوحنا ١٤: ٢٧'),
-    ('الرَّبُّ رَاعِيَّ فَلَا يُعْوِزُنِي شَيْءٌ.', 'مزمور ٢٣: ١'),
-    ('تَوَكَّلْ عَلَى الرَّبِّ بِكُلِّ قَلْبِكَ.', 'أمثال ٣: ٥'),
-    (
-      'كُلَّ الْأَشْيَاءِ تَعْمَلُ مَعًا لِلْخَيْرِ لِلَّذِينَ يُحِبُّونَ اللهَ.',
-      'رومية ٨: ٢٨'
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final day = DateTime.now().difference(DateTime(DateTime.now().year)).inDays;
-    final verse = _verses[day.abs() % _verses.length];
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(20),
@@ -796,7 +800,7 @@ class _DailyVerseCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  '“${verse.$1}”',
+                  '“${verse.text}”',
                   textDirection: TextDirection.rtl,
                   textAlign: TextAlign.right,
                   style: verseStyle(
@@ -806,7 +810,7 @@ class _DailyVerseCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  '– ${verse.$2}',
+                  '– ${verse.reference}',
                   textDirection: TextDirection.rtl,
                   textAlign: TextAlign.right,
                   style: TextStyle(
@@ -1254,7 +1258,7 @@ class _QuickActionsGrid extends StatelessWidget {
     (
       icon: Icons.settings_outlined,
       label: AppStrings.homeQuickDevotionSettings,
-      route: Routes.dailyNotifications,
+      route: '${Routes.mainTabs}?tab=2',
       colors: AppColors.settingsGradient,
     ),
     (
@@ -1281,7 +1285,13 @@ class _QuickActionsGrid extends StatelessWidget {
           color: cardColor,
           borderRadius: BorderRadius.circular(20),
           child: InkWell(
-            onTap: () => context.push(a.route),
+            onTap: () {
+              if (a.route.startsWith(Routes.mainTabs)) {
+                context.go(a.route);
+              } else {
+                context.push(a.route);
+              }
+            },
             borderRadius: BorderRadius.circular(20),
             child: Container(
               decoration: BoxDecoration(
@@ -1861,7 +1871,10 @@ class _DevotionAnswerSheetState extends State<_DevotionAnswerSheet> {
                   children: [
                 Text('هل أتممت خلوتك اليوم؟', style: _font(12, _text)),
                 const SizedBox(height: 4),
-                Text('تثبيت أمانتك في متابعة الأيام',
+                Text(
+                    _completed
+                        ? 'تثبيت أمانتك في متابعة الأيام'
+                        : 'مافيش مشكلة — لسه في وقت قدامك',
                     style: _font(10, _caption, FontWeight.w400)),
               ])),
           const SizedBox(width: 8),
@@ -1877,6 +1890,62 @@ class _DevotionAnswerSheetState extends State<_DevotionAnswerSheet> {
                 _completionChoice(false)
               ])),
         ]),
+      );
+
+  Widget _notYetEncourageCard() => Container(
+        margin: const EdgeInsets.only(top: 16),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+            colors: _dark
+                ? const [Color(0xFF1E293B), Color(0xFF0F172A)]
+                : const [Color(0xFFEFF6FF), Color(0xFFF0F9FF)],
+          ),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: _dark ? const Color(0xFF334155) : const Color(0xFFBFDBFE),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: _dark
+                        ? const Color(0xFF1D4ED8).withValues(alpha: 0.25)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.wb_twilight_rounded,
+                    color: _dark
+                        ? const Color(0xFF93C5FD)
+                        : const Color(0xFF2563EB),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    AppStrings.homeDevotionNotYetTitle,
+                    style: _font(15, _text, FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              AppStrings.homeDevotionNotYetBody,
+              style: _font(13, _caption, FontWeight.w500).copyWith(height: 1.55),
+            ),
+          ],
+        ),
       );
 
   Widget _testamentTab(bool oldTestament) {
@@ -2339,7 +2408,8 @@ class _DevotionAnswerSheetState extends State<_DevotionAnswerSheet> {
                                   _added[index].chapters,
                                   () =>
                                       setState(() => _added.removeAt(index))),
-                          ],
+                          ] else
+                            _notYetEncourageCard(),
                         ]),
                   )),
                   Container(
@@ -2353,7 +2423,8 @@ class _DevotionAnswerSheetState extends State<_DevotionAnswerSheet> {
                       child: FilledButton(
                         onPressed: _canSave ? _save : null,
                         style: FilledButton.styleFrom(
-                            backgroundColor: _navy,
+                            backgroundColor:
+                                _completed ? _navy : const Color(0xFF2563EB),
                             foregroundColor: Colors.white,
                             minimumSize: const Size.fromHeight(48),
                             padding: const EdgeInsets.symmetric(
@@ -2365,13 +2436,21 @@ class _DevotionAnswerSheetState extends State<_DevotionAnswerSheet> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Flexible(
-                                  child: Text('تأكيد وحفظ القراءة',
+                                  child: Text(
+                                      _completed
+                                          ? 'تأكيد وحفظ القراءة'
+                                          : AppStrings.homeDevotionNotYetSave,
                                       style: _font(
                                           14,
                                           _canSave ? Colors.white : _caption,
                                           FontWeight.w800))),
                               const SizedBox(width: 8),
-                              const Icon(Icons.check_rounded, size: 18),
+                              Icon(
+                                _completed
+                                    ? Icons.check_rounded
+                                    : Icons.wb_sunny_rounded,
+                                size: 18,
+                              ),
                             ]),
                       ),
                     ),

@@ -57,6 +57,34 @@ interface AdminInsightSnapshot {
   missing_birth_date: number;
 }
 
+interface AppOpenVersion {
+  app_version: string;
+  build_number: string;
+  platform: string;
+  users_7_days: number;
+  opens_7_days: number;
+}
+
+interface AppOpenStats {
+  opened_today: number;
+  opened_7_days: number;
+  opened_30_days: number;
+  versions: AppOpenVersion[];
+}
+
+const emptyAppOpenStats: AppOpenStats = {
+  opened_today: 0,
+  opened_7_days: 0,
+  opened_30_days: 0,
+  versions: [],
+};
+
+function platformLabel(platform: string) {
+  if (platform === 'ios') return 'iOS';
+  if (platform === 'android') return 'Android';
+  return 'أخرى';
+}
+
 const emptyInsightSnapshot: AdminInsightSnapshot = {
   dau_users: 0, wau_users: 0, mau_users: 0,
   inactive_7_days: 0, inactive_14_days: 0, inactive_30_days: 0,
@@ -164,6 +192,8 @@ export default function HealthPage() {
   const [zeroActivityCount, setZeroActivityCount] = useState(0);
   const [insightSnapshot, setInsightSnapshot] = useState<AdminInsightSnapshot>(emptyInsightSnapshot);
   const [insightSnapshotError, setInsightSnapshotError] = useState<string | null>(null);
+  const [appOpenStats, setAppOpenStats] = useState<AppOpenStats>(emptyAppOpenStats);
+  const [appOpenError, setAppOpenError] = useState<string | null>(null);
 
   // Community Demographics & Memorization Metrics
   const [topChurches, setTopChurches] = useState<{ name: string; count: number }[]>([]);
@@ -514,6 +544,32 @@ export default function HealthPage() {
           ),
         });
         setInsightSnapshotError(null);
+      }
+
+      const { data: appOpenData, error: appOpenRpcError } = await supabase
+        .rpc('get_app_open_stats');
+      if (appOpenRpcError) {
+        setAppOpenError('شغّل هجرة فتح التطبيق لإظهار عدد الفتحات والنسخ.');
+        setAppOpenStats(emptyAppOpenStats);
+      } else {
+        const raw = (appOpenData ?? {}) as Partial<AppOpenStats> & { versions?: unknown };
+        const versions = Array.isArray(raw.versions) ? raw.versions : [];
+        setAppOpenStats({
+          opened_today: Number(raw.opened_today ?? 0),
+          opened_7_days: Number(raw.opened_7_days ?? 0),
+          opened_30_days: Number(raw.opened_30_days ?? 0),
+          versions: versions.map((item) => {
+            const row = item as Partial<AppOpenVersion>;
+            return {
+              app_version: String(row.app_version ?? ''),
+              build_number: String(row.build_number ?? ''),
+              platform: String(row.platform ?? 'other'),
+              users_7_days: Number(row.users_7_days ?? 0),
+              opens_7_days: Number(row.opens_7_days ?? 0),
+            };
+          }),
+        });
+        setAppOpenError(null);
       }
 
       // ── 6. Group Advantage vs Solo Completion rates (today) ──────────────
@@ -1334,6 +1390,53 @@ export default function HealthPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>بدون تاريخ ميلاد</span><strong>{insightSnapshot.missing_birth_date}</strong></div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section style={{ marginTop: '32px' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '16px' }}>
+          فتح التطبيق
+        </h2>
+        {appOpenError ? (
+          <div role="alert" className="badge badge-warning" style={{ marginBottom: '16px', whiteSpace: 'normal', lineHeight: 1.5 }}>
+            {appOpenError}
+          </div>
+        ) : null}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px' }}>
+          {[
+            { label: 'فتحوا اليوم', value: appOpenStats.opened_today, note: 'حسابات مسجّلة، بتوقيت القاهرة' },
+            { label: 'فتحوا خلال ٧ أيام', value: appOpenStats.opened_7_days, note: 'مستخدم مختلف مرة واحدة على الأقل' },
+            { label: 'فتحوا خلال ٣٠ يوماً', value: appOpenStats.opened_30_days, note: 'مستخدم مختلف مرة واحدة على الأقل' },
+          ].map(item => (
+            <div key={item.label} className="glass card" style={{ padding: '16px', borderRadius: '12px' }}>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>{item.label}</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, margin: '6px 0' }}>{item.value}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>{item.note}</div>
+            </div>
+          ))}
+        </div>
+        <div className="glass card" style={{ padding: '20px', borderRadius: '14px', marginTop: '16px' }}>
+          <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>النسخ خلال ٧ أيام</h3>
+          {appOpenStats.versions.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', margin: 0 }}>
+              لسه مفيش فتحات مسجّلة. الرقم يظهر بعد ما المستخدم يسجّل دخوله ويفتح التطبيق.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.86rem' }}>
+              {appOpenStats.versions.map(version => (
+                <div
+                  key={`${version.platform}-${version.app_version}-${version.build_number}`}
+                  style={{ display: 'flex', justifyContent: 'space-between', gap: '12px' }}
+                >
+                  <span>
+                    {version.app_version}
+                    {version.build_number ? ` (${version.build_number})` : ''} · {platformLabel(version.platform)}
+                  </span>
+                  <strong>{version.users_7_days} مستخدم · {version.opens_7_days} فتحة</strong>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

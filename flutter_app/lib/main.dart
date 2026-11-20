@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'core/app_open_log.dart';
 import 'core/deep_links.dart';
 import 'core/offline_sync.dart';
 import 'core/push_tokens.dart';
@@ -86,7 +87,10 @@ class _HonaraAppState extends State<HonaraApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _isAppActive = state == AppLifecycleState.resumed;
-    if (_isAppActive) _flushOfflineChanges();
+    if (_isAppActive) {
+      _flushOfflineChanges();
+      unawaited(AppOpenLog.record());
+    }
   }
 
   void _handleConnectivityChange(List<ConnectivityResult> results) {
@@ -125,6 +129,7 @@ class _HonaraAppState extends State<HonaraApp> with WidgetsBindingObserver {
     if (userId != null && userId != _trackedUser) {
       _trackedUser = userId;
       setTelemetryUser(userId);
+      unawaited(AppOpenLog.record());
     }
 
     return MaterialApp.router(

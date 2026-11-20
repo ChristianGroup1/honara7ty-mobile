@@ -189,6 +189,38 @@ class OfflineSync {
         item['date'] == next['date'];
   }
 
+  static Future<void> queueAppOpen({
+    required String userId,
+    required String openedOn,
+    required String appVersion,
+    required String buildNumber,
+    required String platform,
+    required int count,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final queue = _read(prefs.getString(_queueKey));
+    var total = count;
+    for (final item in queue) {
+      if (item['kind'] == 'app-open' &&
+          item['userId'] == userId &&
+          item['openedOn'] == openedOn &&
+          item['appVersion'] == appVersion &&
+          item['buildNumber'] == buildNumber &&
+          item['platform'] == platform) {
+        total += (item['count'] as num?)?.toInt() ?? 1;
+      }
+    }
+    await _enqueue({
+      'kind': 'app-open',
+      'userId': userId,
+      'openedOn': openedOn,
+      'appVersion': appVersion,
+      'buildNumber': buildNumber,
+      'platform': platform,
+      'count': total,
+    });
+  }
+
   static Future<void> queueDelete({
     required String kind,
     required String userId,
@@ -311,6 +343,15 @@ class OfflineSync {
               : null;
           await ActiveReadingPlanService().save(plan);
           return true;
+        case 'app-open':
+          await supabase.rpc('record_app_open', params: {
+            'p_app_version': item['appVersion'],
+            'p_build_number': item['buildNumber'] ?? '',
+            'p_platform': item['platform'],
+            'p_opened_on': item['openedOn'],
+            'p_count': item['count'] ?? 1,
+          });
+          return true;
       }
     } catch (error) {
       debugPrint('Offline sync kept ${item['kind']}: $error');
@@ -338,6 +379,12 @@ class OfflineSync {
           next['kind'] == 'profile-upsert' ||
           next['kind'] == 'auth-metadata-update') {
         return false;
+      }
+      if (next['kind'] == 'app-open') {
+        return item['openedOn'] != next['openedOn'] ||
+            item['appVersion'] != next['appVersion'] ||
+            item['buildNumber'] != next['buildNumber'] ||
+            item['platform'] != next['platform'];
       }
       return false;
     }).toList();

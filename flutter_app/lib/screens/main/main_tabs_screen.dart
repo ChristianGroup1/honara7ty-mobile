@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../features/updates/soft_update_prompt.dart';
 import '../../providers/theme_provider.dart';
 import '../../routing/app_router.dart';
 import '../../widgets/youth_screen_shell.dart';
@@ -21,6 +22,7 @@ class MainTabsScreen extends StatefulWidget {
 
 class _MainTabsScreenState extends State<MainTabsScreen> {
   late int _currentIndex = widget.initialIndex.clamp(0, 3);
+  var _softUpdateChecked = false;
 
   late final List<Widget> _tabs = [
     const HomeScreen(),
@@ -28,6 +30,20 @@ class _MainTabsScreenState extends State<MainTabsScreen> {
     const DailyNotificationsScreen(showBack: false),
     MoreScreen(onHome: _showHome),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _offerSoftUpdate());
+  }
+
+  Future<void> _offerSoftUpdate() async {
+    if (_softUpdateChecked || !mounted) return;
+    _softUpdateChecked = true;
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+    await maybeShowSoftUpdatePrompt(context);
+  }
 
   void _showHome() => _openTab(0);
 

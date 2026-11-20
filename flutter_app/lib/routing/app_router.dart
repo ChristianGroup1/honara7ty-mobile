@@ -30,7 +30,6 @@ import '../screens/devotion_groups/devotion_group_invite_screen.dart';
 import '../screens/devotion_groups/devotion_group_details_screen.dart';
 import '../screens/devotion_groups/devotion_group_member_details_screen.dart';
 import '../screens/devotion_groups/devotion_group_prayer_requests_screen.dart';
-import '../screens/about_idea/about_idea_screen.dart';
 import '../screens/daily_notifications/daily_notifications_screen.dart';
 import '../screens/weekly_report/weekly_report_screen.dart';
 import '../screens/bible_reader/bible_reader_screen.dart';
@@ -79,7 +78,8 @@ GoRouter buildRouter(BuildContext context) {
     refreshListenable: authProvider,
     redirect: (context, state) {
       final status = authProvider.status;
-      final location = state.uri.toString();
+      final location = state.uri.path;
+      final fullLocation = state.uri.toString();
 
       // Always allow splash on startup.
       if (status == AuthStatus.splash) {
@@ -118,6 +118,7 @@ GoRouter buildRouter(BuildContext context) {
         return null;
       }
       if (status == AuthStatus.needsOnboarding) {
+        // Allow /onboarding and /onboarding?preview=… while onboarding is pending.
         if (location != Routes.onboarding) return Routes.onboarding;
         return null;
       }
@@ -133,7 +134,7 @@ GoRouter buildRouter(BuildContext context) {
         final invite = authProvider.pendingDevotionGroupInviteCode;
         if (invite != null &&
             invite.isNotEmpty &&
-            !location.startsWith(Routes.devotionGroupInvite)) {
+            !fullLocation.startsWith(Routes.devotionGroupInvite)) {
           return '${Routes.devotionGroupInvite}?inviteCode=${Uri.encodeQueryComponent(invite)}';
         }
         const authPages = {
@@ -173,7 +174,10 @@ GoRouter buildRouter(BuildContext context) {
       ),
       GoRoute(
         path: Routes.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
+        builder: (context, state) => OnboardingScreen(
+          inApp: state.uri.queryParameters['preview'] == 'true' ||
+              state.extra == true,
+        ),
       ),
       GoRoute(
         path: Routes.profileCompletion,
@@ -189,7 +193,10 @@ GoRouter buildRouter(BuildContext context) {
       ),
       GoRoute(
         path: Routes.notificationPermission,
-        builder: (context, state) => const NotificationPermissionScreen(),
+        builder: (context, state) => NotificationPermissionScreen(
+          inApp: state.uri.queryParameters['preview'] == 'true' ||
+              state.extra == true,
+        ),
       ),
       GoRoute(
         path: Routes.mainTabs,
@@ -291,7 +298,7 @@ GoRouter buildRouter(BuildContext context) {
       ),
       GoRoute(
         path: Routes.aboutIdea,
-        builder: (context, state) => const AboutIdeaScreen(),
+        builder: (context, state) => const OnboardingScreen(inApp: true),
       ),
       GoRoute(
         path: Routes.dailyNotifications,

@@ -6,7 +6,7 @@ class AppStrings {
   static const navHome = 'الرئيسية';
   static const navBible = 'الكتاب المقدس';
   static const navProfile = 'الملف الشخصي';
-  static const navSettings = 'الإعدادات';
+  static const navSettings = 'إعدادات الخلوة';
   static const navMore = 'المزيد';
 
   // ── Auth – Common ──
@@ -138,12 +138,11 @@ class AppStrings {
   static const profileSubmit = 'إنشاء الحساب';
 
   // ── Notification Permission ──
-  static const notifPermissionTitle = 'تفعيل الإشعارات';
+  static const notifPermissionTitle = 'خلّي التذكير يساعدك';
   static const notifPermissionSubtitle =
-      'ابق على تواصل مع تذكيرات قراءة الكتاب المقدس وصلواتك اليومية.';
-  static const notifPermissionAllow = 'السماح بالإشعارات';
+      'فعّل الإشعارات وهنذكّرك بميعاد خلوتك بلُطف — قراءة وصلاة في وقتك.';
+  static const notifPermissionAllow = 'تفعيل التذكير';
   static const notifPermissionSkip = 'تخطي الآن';
-
   // ── Home ──
   static const homeGreetingMorning = 'صباح الخير';
   static const homeGreetingEvening = 'مساء الخير';
@@ -153,6 +152,10 @@ class AppStrings {
   static const homeAnswerNow = 'جاوب الآن';
   static const homeAnsweredYes = 'حلو جدًا 👏💪، وقتك مع ربنا غالي 🙏';
   static const homeAnsweredNo = 'لم تأخذ خلوتك بعد — لا يزال الوقت أمامك 💙';
+  static const homeDevotionNotYetTitle = 'لسه في وقت يا بطل';
+  static const homeDevotionNotYetBody =
+      'اليوم لسه ما خلصش. خد دقيقة دلوقتي مع ربنا — قراءة بسيطة وصلاة، والبركة هتفرق في يومك.';
+  static const homeDevotionNotYetSave = 'تمام، هحاول اليوم';
   static const homeDailyVerseEyebrow = 'آية اليوم';
   static const homeDailyVerseTitle = 'كلمة تشجعك النهارده';
   static const homeYes = 'نعم ✓';
@@ -187,7 +190,9 @@ class AppStrings {
   static const homeLogout = 'خروج';
   static const homeLater = 'حسنا';
   static const homeCorrectStreakTitle = 'حلو جدًا 👏💪، وقتك مع ربنا غالي 🙏';
-  static const homeStartNowTitle = 'لا بأس 💙';
+  static const homeStartNowTitle = 'لا بأس… ولسه في وقت 💙';
+  static const homeStartNowMessage =
+      'اليوم لسه قدامك. خد دقيقة دلوقتي مع ربنا — قراءة بسيطة وصلاة، وده يكفي تبدأ بيها.';
   static const homeSavedOfflineMessage =
       'تم حفظ التغيير على الجهاز، وسيتم إرساله تلقائياً عند عودة الإنترنت.';
   static const homePermissionNoticeTitle = 'فعّل التذكير اليومي';
@@ -208,7 +213,9 @@ class AppStrings {
   static const moreDevotionGuideTitle = 'شرح الخلوة';
   static const moreDevotionGuideSubtitle = 'خطوات عملية لوقت هادئ مع الله';
   static const moreAboutIdeaTitle = 'عن الفكرة';
-  static const moreAboutIdeaSubtitle = 'تعرف على فكرة التطبيق';
+  static const moreAboutIdeaSubtitle = 'شاشات التعريف وفكرة التطبيق';
+  static const moreOnboardingTitle = 'عن الفكرة';
+  static const moreOnboardingSubtitle = 'شاشات التعريف وفكرة التطبيق';
   static const moreBibleMemorizationTitle = 'حفظ الكتاب المقدس';
   static const moreBibleMemorizationSubtitle = 'اختبر حفظك للآيات';
   static const moreLockScreenVerseTitle = 'تصميم آية';
@@ -223,6 +230,12 @@ class AppStrings {
   static const moreDailyReminderSubtitle =
       'اختر التوقيت الأنسب لك، وسنذكّرك يوميًا حتى يبقى وقتك مع الله جزءًا ثابتًا من يومك.';
 
+  // ── Soft optional update ──
+  static const updateAvailableTitle = 'تحديث اختياري';
+  static const updateNow = 'حدّث الآن';
+  static const updateLater = 'لاحقاً';
+  static const updateSkipVersion = 'تخطّي النسخة دي';
+
   // ── Profile ──
   static const profileTitle = 'الملف الشخصي';
   static const profileEditButton = 'تعديل';
@@ -234,7 +247,7 @@ class AppStrings {
   static const morePrivacy = 'سياسة الخصوصية';
 
   // ── Daily Notifications / Settings ──
-  static const dailyNotifTitle = 'الإعدادات';
+  static const dailyNotifTitle = 'إعدادات الخلوة';
   static const dailyNotifReminderTitle = 'تذكير القراءة';
   static const dailyNotifReminderSubtitle = 'اختر وقت تذكيرك اليومي';
 
