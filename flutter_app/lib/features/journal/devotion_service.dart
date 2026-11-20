@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/offline_sync.dart';
+import '../../core/remote_timeout.dart';
 import '../../core/supabase_service.dart';
 import '../reading/bible_catalog.dart';
 
@@ -21,30 +22,30 @@ class DevotionService {
   Future<Map<String, bool>> month(DateTime month) async {
     final key = 'devotion_month_${userId}_${month.year}_${month.month}';
     final prefs = await SharedPreferences.getInstance();
-    try {
-      final rows = await client
-          .from('devotion_log')
-          .select('date, completed')
-          .eq('user_id', userId)
-          .gte('date', dateKey(DateTime(month.year, month.month)))
-          .lt('date', dateKey(DateTime(month.year, month.month + 1)));
+    final rows = await tryRemote(() => client
+        .from('devotion_log')
+        .select('date, completed')
+        .eq('user_id', userId)
+        .gte('date', dateKey(DateTime(month.year, month.month)))
+        .lt('date', dateKey(DateTime(month.year, month.month + 1))));
+    if (rows != null) {
       final result = {
-        for (final row in rows) row['date'] as String: row['completed'] == true
+        for (final row in rows as List)
+          (row as Map)['date'] as String: row['completed'] == true
       };
       await prefs.setString(key, jsonEncode(result));
       return _withPending(result, month);
-    } catch (_) {
-      final raw = prefs.getString(key);
-      if (raw == null) return _withPending({}, month);
-      final decoded = jsonDecode(raw) as Map;
-      return _withPending(
-        {
-          for (final entry in decoded.entries)
-            entry.key.toString(): entry.value == true
-        },
-        month,
-      );
     }
+    final raw = prefs.getString(key);
+    if (raw == null) return _withPending({}, month);
+    final decoded = jsonDecode(raw) as Map;
+    return _withPending(
+      {
+        for (final entry in decoded.entries)
+          entry.key.toString(): entry.value == true
+      },
+      month,
+    );
   }
 
   Future<Map<String, bool>> _withPending(
@@ -117,25 +118,24 @@ class DevotionService {
   Future<List<Map<String, dynamic>>> completedLogs() async {
     final key = 'devotion_completed_$userId';
     final prefs = await SharedPreferences.getInstance();
-    try {
-      final rows = await client
-          .from('devotion_log')
-          .select(
-              'date, completed, reading_book, reading_chapter, chapters_read, selected_chapters, reading_entries')
-          .eq('user_id', userId)
-          .eq('completed', true);
+    final rows = await tryRemote(() => client
+        .from('devotion_log')
+        .select(
+            'date, completed, reading_book, reading_chapter, chapters_read, selected_chapters, reading_entries')
+        .eq('user_id', userId)
+        .eq('completed', true));
+    if (rows != null) {
       final result = [
         for (final row in rows as List) Map<String, dynamic>.from(row as Map)
       ];
       await prefs.setString(key, jsonEncode(result));
       return _withPendingLogs(result);
-    } catch (_) {
-      final raw = prefs.getString(key);
-      if (raw == null) return _withPendingLogs([]);
-      final decoded = jsonDecode(raw) as List;
-      return _withPendingLogs(
-          [for (final row in decoded) Map<String, dynamic>.from(row as Map)]);
     }
+    final raw = prefs.getString(key);
+    if (raw == null) return _withPendingLogs([]);
+    final decoded = jsonDecode(raw) as List;
+    return _withPendingLogs(
+        [for (final row in decoded) Map<String, dynamic>.from(row as Map)]);
   }
 
   Future<List<Map<String, dynamic>>> _withPendingLogs(

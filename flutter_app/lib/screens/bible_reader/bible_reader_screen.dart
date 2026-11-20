@@ -132,7 +132,8 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
             .toList(),
       );
     }).toList();
-    final annotations = await _notes.load();
+    // Open from local cache first so Bible works offline; sync marks later.
+    final annotations = await _notes.load(refreshRemote: false);
     final prefs = await BibleReaderPrefs.load();
     final saved = books.cast<_Book?>().firstWhere(
           (book) => book!.id == prefs.bookId,
@@ -151,6 +152,8 @@ class _BibleReaderScreenState extends State<BibleReaderScreen> {
       _annotations = annotations;
     });
     await _loadLife();
+    final remoteNotes = await _notes.load();
+    if (mounted) setState(() => _annotations = remoteNotes);
   }
 
   Future<void> _remember() async {

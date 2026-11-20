@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/offline_sync.dart';
+import '../../core/remote_timeout.dart';
 import '../../core/supabase_service.dart';
 import 'bible_catalog.dart';
 
@@ -86,44 +87,40 @@ class ActiveReadingPlanService {
 
     ActiveReadingPlan? remote = _fromMeta(user.userMetadata);
 
-    try {
-      final row = await supabase
+    final row = await tryRemote(() => supabase
+        .from('profiles')
+        .select('active_reading_plan')
+        .eq('id', user.id)
+        .maybeSingle());
+    final planJson = row?['active_reading_plan'];
+    if (planJson is Map) {
+      remote = ActiveReadingPlan.fromJson(
+        Map<String, dynamic>.from(planJson),
+      );
+    } else if (remote == null) {
+      final legacy = await tryRemote(() => supabase
           .from('profiles')
-          .select('active_reading_plan')
+          .select('reading_book, reading_chapter, daily_chapters_target')
           .eq('id', user.id)
-          .maybeSingle();
-      final planJson = row?['active_reading_plan'];
-      if (planJson is Map) {
-        remote = ActiveReadingPlan.fromJson(
-          Map<String, dynamic>.from(planJson),
+          .maybeSingle());
+      if (legacy?['reading_book'] != null) {
+        final catalog = await loadBibleCatalog();
+        final matched = findBibleBook(
+          catalog,
+          id: local?.bookId,
+          name: '${legacy!['reading_book']}',
+        );
+        remote = ActiveReadingPlan(
+          bookId: matched?.id ?? local?.bookId ?? '1',
+          bookName: matched?.name ?? '${legacy['reading_book']}',
+          startChapter: (legacy['reading_chapter'] as num?)?.toInt() ?? 1,
+          chaptersPerDay:
+              (legacy['daily_chapters_target'] as num?)?.toInt() ?? 1,
+          days: local?.days ?? 30,
+          completedDays: local?.completedDays ?? 0,
+          lastCompletedDate: local?.lastCompletedDate,
         );
       }
-    } catch (_) {
-      try {
-        final row = await supabase
-            .from('profiles')
-            .select('reading_book, reading_chapter, daily_chapters_target')
-            .eq('id', user.id)
-            .maybeSingle();
-        if (remote == null && row?['reading_book'] != null) {
-          final catalog = await loadBibleCatalog();
-          final matched = findBibleBook(
-            catalog,
-            id: local?.bookId,
-            name: '${row!['reading_book']}',
-          );
-          remote = ActiveReadingPlan(
-            bookId: matched?.id ?? local?.bookId ?? '1',
-            bookName: matched?.name ?? '${row['reading_book']}',
-            startChapter: (row['reading_chapter'] as num?)?.toInt() ?? 1,
-            chaptersPerDay:
-                (row['daily_chapters_target'] as num?)?.toInt() ?? 1,
-            days: local?.days ?? 30,
-            completedDays: local?.completedDays ?? 0,
-            lastCompletedDate: local?.lastCompletedDate,
-          );
-        }
-      } catch (_) {}
     }
 
     if (remote != null) {

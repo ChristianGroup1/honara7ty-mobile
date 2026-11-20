@@ -10,6 +10,7 @@ import '../features/reading/active_reading_plan_service.dart';
 import '../features/reading/reading_log_service.dart';
 import '../features/reading/verse_annotations.dart';
 import 'content_crypto.dart';
+import 'remote_timeout.dart';
 import 'supabase_service.dart';
 
 const _queueKey = 'offline_sync_queue_v1';
@@ -18,13 +19,14 @@ const offlineSavedMessage =
 
 class OfflineSync {
   static Future<void> flush() async {
+    await _flushLoginReports();
     final user = supabase.auth.currentUser;
     if (user == null) return;
-    await PrayerNotesService().syncPending();
-    await ReflectionsService().syncPending();
-    await ReadingLogService().syncPending();
-    await ActiveReadingPlanService().syncPending();
-    await VerseAnnotationStore().syncPending();
+    await tryRemote(() => PrayerNotesService().syncPending());
+    await tryRemote(() => ReflectionsService().syncPending());
+    await tryRemote(() => ReadingLogService().syncPending());
+    await tryRemote(() => ActiveReadingPlanService().syncPending());
+    await tryRemote(() => VerseAnnotationStore().syncPending());
     final prefs = await SharedPreferences.getInstance();
     final queue = _read(prefs.getString(_queueKey));
     final remaining = <Map<String, dynamic>>[];
@@ -33,7 +35,7 @@ class OfflineSync {
         remaining.add(item);
         continue;
       }
-      final synced = await _apply(item);
+      final synced = await tryRemote(() => _apply(item)) ?? false;
       if (!synced) remaining.add(item);
     }
     await prefs.setString(_queueKey, jsonEncode(remaining));
@@ -188,6 +190,66 @@ class OfflineSync {
         item['chapter'] == next['chapter'] &&
         item['date'] == next['date'];
   }
+
+  static Future<void> _flushLoginReports() async {
+    final prefs = await SharedPreferences.getInstance();
+    final queue = _read(prefs.getString(_queueKey));
+    final remaining = <Map<String, dynamic>>[];
+    for (final item in queue) {
+      if (item['kind'] != 'support-login-report') {
+        remaining.add(item);
+        continue;
+      }
+      final synced = await tryRemote(() => _apply(item)) ?? false;
+      if (!synced) remaining.add(item);
+    }
+    await prefs.setString(_queueKey, jsonEncode(remaining));
+  }
+
+  static Future<void> queueSupportTicket({
+    required String userId,
+    required String ticketId,
+    required String messageId,
+    required String subject,
+    required String? email,
+    required String body,
+  }) =>
+      _enqueue({
+        'kind': 'support-ticket-create',
+        'userId': userId,
+        'ticketId': ticketId,
+        'messageId': messageId,
+        'subject': subject,
+        'email': email,
+        'body': body,
+      });
+
+  static Future<void> queueSupportMessage({
+    required String userId,
+    required String ticketId,
+    required String messageId,
+    required String body,
+  }) =>
+      _enqueue({
+        'kind': 'support-message',
+        'userId': userId,
+        'ticketId': ticketId,
+        'messageId': messageId,
+        'body': body,
+      });
+
+  static Future<void> queueLoginReport({
+    required String reportId,
+    required String email,
+    required String body,
+  }) =>
+      _enqueue({
+        'kind': 'support-login-report',
+        'userId': '',
+        'reportId': reportId,
+        'email': email,
+        'body': body,
+      });
 
   static Future<void> queueAppOpen({
     required String userId,
@@ -352,6 +414,37 @@ class OfflineSync {
             'p_count': item['count'] ?? 1,
           });
           return true;
+        case 'support-ticket-create':
+          await _insertIgnoringDuplicate('support_tickets', {
+            'id': item['ticketId'],
+            'user_id': item['userId'],
+            'contact_email': item['email'],
+            'subject': item['subject'],
+            'status': 'open',
+            'source': 'app',
+          });
+          await _insertIgnoringDuplicate('support_messages', {
+            'id': item['messageId'],
+            'ticket_id': item['ticketId'],
+            'author_id': item['userId'],
+            'body': item['body'],
+          });
+          return true;
+        case 'support-message':
+          await _insertIgnoringDuplicate('support_messages', {
+            'id': item['messageId'],
+            'ticket_id': item['ticketId'],
+            'author_id': item['userId'],
+            'body': item['body'],
+          });
+          return true;
+        case 'support-login-report':
+          await supabase.rpc('submit_login_report', params: {
+            'p_email': item['email'],
+            'p_message': item['body'],
+            'p_id': item['reportId'],
+          });
+          return true;
       }
     } catch (error) {
       debugPrint('Offline sync kept ${item['kind']}: $error');
@@ -386,10 +479,30 @@ class OfflineSync {
             item['buildNumber'] != next['buildNumber'] ||
             item['platform'] != next['platform'];
       }
+      if (next['kind'] == 'support-ticket-create') {
+        return item['ticketId'] != next['ticketId'];
+      }
+      if (next['kind'] == 'support-message') {
+        return item['messageId'] != next['messageId'];
+      }
+      if (next['kind'] == 'support-login-report') {
+        return item['reportId'] != next['reportId'];
+      }
       return false;
     }).toList();
     queue.add(next);
     await prefs.setString(_queueKey, jsonEncode(queue));
+  }
+
+  static Future<void> _insertIgnoringDuplicate(
+    String table,
+    Map<String, dynamic> row,
+  ) async {
+    try {
+      await supabase.from(table).insert(row);
+    } on PostgrestException catch (error) {
+      if (error.code != '23505') rethrow;
+    }
   }
 
   static Future<void> _drop(String kind, String userId, {String? date}) async {

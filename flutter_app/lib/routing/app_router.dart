@@ -34,6 +34,8 @@ import '../screens/daily_notifications/daily_notifications_screen.dart';
 import '../screens/weekly_report/weekly_report_screen.dart';
 import '../screens/bible_reader/bible_reader_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/support/support_ticket_screen.dart';
+import '../screens/support/support_tickets_screen.dart';
 
 // Named route constants – mirrors navigation/types.ts
 class Routes {
@@ -65,6 +67,7 @@ class Routes {
   static const bibleReader = '/bible-reader';
   static const profile = '/profile';
   static const home = '/home';
+  static const supportTickets = '/support';
 }
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -311,6 +314,18 @@ GoRouter buildRouter(BuildContext context) {
       GoRoute(
         path: Routes.profile,
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: Routes.supportTickets,
+        builder: (context, state) => const SupportTicketsScreen(),
+        routes: [
+          GoRoute(
+            path: ':id',
+            builder: (context, state) => SupportTicketScreen(
+              ticketId: state.pathParameters['id'] ?? '',
+            ),
+          ),
+        ],
       ),
     ],
   );

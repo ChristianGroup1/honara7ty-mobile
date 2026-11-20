@@ -15,6 +15,7 @@ import {
   BarChart3,
   X,
   Bell,
+  LifeBuoy,
 } from 'lucide-react';
 
 
@@ -40,6 +41,7 @@ export default function Sidebar({ userEmail, isOpen = false, onClose }: SidebarP
     { name: 'إدارة المستخدمين', href: '/users', icon: Users },
     { name: 'مجموعات التفاعل', href: '/groups', icon: Layers },
     { name: 'الإشراف والمراجعة', href: '/moderation', icon: MessageSquare },
+    { name: 'تذاكر المساعدة', href: '/tickets', icon: LifeBuoy },
     { name: 'إشعارات جماعية', href: '/notifications', icon: Bell },
   ];
 

@@ -9,10 +9,12 @@ import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/journal_remote.dart';
 import '../../core/offline_sync.dart';
+import '../../core/remote_timeout.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../core/supabase_service.dart';
@@ -101,15 +103,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     bool? answer;
     final userId = session?.user.id;
     if (userId != null) {
-      try {
-        final row = await supabase
-            .from('devotion_log')
-            .select('completed')
-            .eq('user_id', userId)
-            .eq('date', DevotionService.dateKey(DateTime.now()))
-            .maybeSingle();
-        if (row != null) answer = row['completed'] == true;
-      } catch (_) {}
+      final date = DevotionService.dateKey(DateTime.now());
+      final cacheKey = 'devotion_today_${userId}_$date';
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.containsKey(cacheKey)) {
+        answer = prefs.getBool(cacheKey);
+      }
+      final pending = await OfflineSync.pendingDevotion(userId);
+      if (pending.containsKey(date)) {
+        answer = pending[date]!['completed'] == true;
+      }
+      final row = await tryRemote(() => supabase
+          .from('devotion_log')
+          .select('completed')
+          .eq('user_id', userId)
+          .eq('date', date)
+          .maybeSingle());
+      if (row != null) {
+        final completed = row['completed'] == true;
+        answer = completed;
+        await prefs.setBool(cacheKey, completed);
+      }
     }
     var notificationsOn = true;
     var promptSeen = false;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -44,15 +46,50 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 1700));
     if (!mounted) return;
 
-    final status = context.read<AuthProvider>().status;
+    final auth = context.read<AuthProvider>();
+    // Never bounce login↔splash while auth is still resolving locally.
+    var status = auth.status;
+    if (status == AuthStatus.splash) {
+      final ready = await _waitUntilNotSplash(auth);
+      if (!mounted) return;
+      status = ready;
+    }
+
     final destination = switch (status) {
       AuthStatus.recoveryMode => Routes.resetPassword,
       AuthStatus.needsProfileCompletion => Routes.profileCompletion,
       AuthStatus.needsOnboarding => Routes.onboarding,
+      AuthStatus.needsNotificationPermission => Routes.notificationPermission,
       AuthStatus.authenticated => Routes.mainTabs,
+      AuthStatus.splash =>
+        auth.user != null ? Routes.mainTabs : Routes.login,
       _ => Routes.login,
     };
     if (mounted) context.go(destination);
+  }
+
+  Future<AuthStatus> _waitUntilNotSplash(AuthProvider auth) async {
+    if (auth.status != AuthStatus.splash) return auth.status;
+    final completer = Completer<AuthStatus>();
+    void listener() {
+      if (auth.status != AuthStatus.splash && !completer.isCompleted) {
+        completer.complete(auth.status);
+      }
+    }
+
+    auth.addListener(listener);
+    try {
+      return await completer.future.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          // Force leave splash so the router does not bounce back here.
+          auth.hideSplash();
+          return auth.status;
+        },
+      );
+    } finally {
+      auth.removeListener(listener);
+    }
   }
 
   @override

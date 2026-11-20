@@ -19,6 +19,7 @@ import '../../widgets/auth_screen_shell.dart';
 import '../../widgets/auth_action_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_alert_dialog.dart';
+import '../support/login_problem_sheet.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -253,6 +254,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 18),
+          GestureDetector(
+            onTap: () => showLoginProblemSheet(
+              context,
+              email: _emailCtrl.text.trim(),
+            ),
+            child: const Text(
+              AppStrings.loginReportProblem,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: AppFonts.ui,
+                color: Color(0xFF0284C7),
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
           ),
         ],
       ),

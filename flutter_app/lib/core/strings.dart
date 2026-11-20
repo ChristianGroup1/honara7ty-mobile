@@ -226,6 +226,9 @@ class AppStrings {
   static const moreDevotionCalendarSubtitle = 'راجع الأيام التي التزمت فيها';
   static const moreWeeklyReportTitle = 'أسبوعك مع ربنا';
   static const moreWeeklyReportSubtitle = 'ملخص أسبوعي لخلوتك وقراءتك وصلواتك';
+  static const moreSupportTitle = 'المساعدة';
+  static const moreSupportSubtitle = 'افتح تذكرة وتابع الرد';
+  static const loginReportProblem = 'في مشكلة بتسجيل الدخول؟ أبلغنا';
   static const moreDailyReminderTitle = 'وقتك مع الله كل يوم';
   static const moreDailyReminderSubtitle =
       'اختر التوقيت الأنسب لك، وسنذكّرك يوميًا حتى يبقى وقتك مع الله جزءًا ثابتًا من يومك.';

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/offline_sync.dart';
+import '../../core/remote_timeout.dart';
 import '../../core/supabase_service.dart';
 
 class VerseAnnotation {
@@ -57,21 +58,17 @@ class VerseAnnotationStore {
     final user = supabase.auth.currentUser;
     if (user == null) return local;
 
-    try {
-      final fromTable = await _loadFromTable(user.id);
-      if (fromTable != null) {
-        await _writeLocal(fromTable);
-        return fromTable;
-      }
-    } catch (_) {}
+    final fromTable = await tryRemote(() => _loadFromTable(user.id));
+    if (fromTable != null) {
+      await _writeLocal(fromTable);
+      return fromTable;
+    }
 
-    try {
-      final fromBlob = await _loadFromReflectionBlob(user.id);
-      if (fromBlob != null) {
-        await _writeLocal(fromBlob);
-        return fromBlob;
-      }
-    } catch (_) {}
+    final fromBlob = await tryRemote(() => _loadFromReflectionBlob(user.id));
+    if (fromBlob != null) {
+      await _writeLocal(fromBlob);
+      return fromBlob;
+    }
 
     return local;
   }

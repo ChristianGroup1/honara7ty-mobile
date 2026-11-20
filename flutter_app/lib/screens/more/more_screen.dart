@@ -277,6 +277,50 @@ class MoreScreen extends StatelessWidget {
                       side: BorderSide(color: border)),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(AppRadius.xxl),
+                    onTap: () => context.push(Routes.supportTickets),
+                    child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              gradient: const LinearGradient(
+                                begin: Alignment.bottomLeft,
+                                end: Alignment.topRight,
+                                colors: AppColors.settingsGradient,
+                              ),
+                            ),
+                            child: const Icon(Icons.support_agent_rounded,
+                                color: Colors.white, size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                Text(AppStrings.moreSupportTitle,
+                                    style:
+                                        _moreFont(14, text, FontWeight.w900)),
+                                Text(AppStrings.moreSupportSubtitle,
+                                    style:
+                                        _moreFont(11, muted, FontWeight.w400)),
+                              ])),
+                          const SizedBox(width: 8),
+                          Icon(Icons.chevron_left_rounded,
+                              color: muted, size: 20),
+                        ])),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Material(
+                  color: card,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.xxl),
+                      side: BorderSide(color: border)),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(AppRadius.xxl),
                     onTap: () => launchUrl(
                         Uri.parse('https://honara7ty.space/privacy'),
                         mode: LaunchMode.externalApplication),

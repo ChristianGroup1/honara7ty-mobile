@@ -1,10 +1,13 @@
 // ─── Auth Provider ───────────────────────────────────────────────────────────
 // Mirrors hooks/useAppBootstrap.ts – tracks auth state, onboarding flags, etc.
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/deep_links.dart';
+import '../core/remote_timeout.dart';
 import '../core/telemetry.dart';
 import '../features/auth/google_auth.dart';
 import '../core/offline_sync.dart';
@@ -41,10 +44,23 @@ class AuthProvider extends ChangeNotifier {
   String? get pendingDevotionGroupInviteCode => _pendingDevotionGroupInviteCode;
 
   AuthProvider() {
-    _init();
+    unawaited(_init());
   }
 
   Future<void> _init() async {
+    try {
+      await _bootstrap().timeout(const Duration(seconds: 6));
+    } catch (error, stack) {
+      debugPrint('Auth bootstrap timed out / failed: $error\n$stack');
+      // Fail open from whatever local session we already have.
+      _user ??= supabase.auth.currentSession?.user;
+      if (_status == AuthStatus.splash) {
+        await _resolveAuthenticatedStatus(isStartup: true);
+      }
+    }
+  }
+
+  Future<void> _bootstrap() async {
     final storedInvite =
         (await SharedPreferences.getInstance()).getString(pendingInviteKey);
     if (storedInvite != null && storedInvite.isNotEmpty) {
@@ -95,7 +111,10 @@ class AuthProvider extends ChangeNotifier {
     _user = session?.user;
     if (_user == null && DeepLinks.startupRecovery == null) {
       _restoringGoogle = true;
-      final restored = await restoreGoogleSession();
+      final restored = await tryRemote(
+        restoreGoogleSession,
+        timeout: const Duration(seconds: 3),
+      );
       _restoringGoogle = false;
       _user = supabase.auth.currentUser ?? restored;
     }
@@ -127,14 +146,30 @@ class AuthProvider extends ChangeNotifier {
       _status = AuthStatus.authenticated;
     }
 
-    if (_status == AuthStatus.authenticated) {
-      await PushTokens.register(_user!.id);
-      await DevotionSchedule.ensure();
-    }
-    await LegacyAsyncStorageMigration.migrate(_user!.id);
-    await OfflineSync.flush();
-    await OfflineSync.migrateEncryption();
+    // Leave splash / open the app from local session + cache first.
     notifyListeners();
+
+    // Server sync is best-effort and must never block offline open.
+    unawaited(_syncAfterAuthReady());
+  }
+
+  Future<void> _syncAfterAuthReady() async {
+    final userId = _user?.id;
+    if (userId == null) return;
+    try {
+      if (_status == AuthStatus.authenticated) {
+        await tryRemote(() => PushTokens.register(userId));
+        await tryRemote(DevotionSchedule.ensure);
+      }
+      await LegacyAsyncStorageMigration.migrate(userId);
+      await tryRemote(OfflineSync.flush, timeout: const Duration(seconds: 12));
+      await tryRemote(
+        OfflineSync.migrateEncryption,
+        timeout: const Duration(seconds: 8),
+      );
+    } catch (error, stack) {
+      debugPrint('Post-auth sync skipped: $error\n$stack');
+    }
   }
 
   /// Called after sign-in / sign-up to re-evaluate routing.
@@ -175,6 +210,7 @@ class AuthProvider extends ChangeNotifier {
 
   void hideSplash() {
     if (_status == AuthStatus.splash) {
+      _user ??= supabase.auth.currentSession?.user;
       _status =
           _user == null ? AuthStatus.unauthenticated : AuthStatus.authenticated;
       notifyListeners();

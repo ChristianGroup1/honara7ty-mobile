@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/remote_timeout.dart';
 import '../../core/supabase_service.dart';
 
 class AppUpdateOffer {
@@ -35,13 +36,13 @@ class AppUpdateService {
         return null;
       }
 
-      final row = await supabase
+      final row = await tryRemote(() => supabase
           .from('app_update_config')
           .select(
             'latest_version, android_store_url, ios_store_url, message_ar, enabled',
           )
           .eq('id', 1)
-          .maybeSingle();
+          .maybeSingle());
 
       if (row == null) return null;
       if (row['enabled'] != true) return null;
