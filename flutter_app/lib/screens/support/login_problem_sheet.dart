@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/offline_sync.dart';
 import '../../core/theme.dart';
 import '../../features/support/support_service.dart';
 
@@ -54,24 +55,24 @@ class _LoginProblemSheetState extends State<_LoginProblemSheet> {
       _sending = true;
       _error = null;
     });
+    final messenger = ScaffoldMessenger.of(context);
     try {
-      await _service.reportLoginProblem(email: email, message: message);
+      final saved = await _service.reportLoginProblem(email: email, message: message);
       if (!mounted) return;
-      final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
       messenger.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'وصلنا البلاغ. لما تدخل بنفس الإيميل، هتلاقي التذكرة في المزيد.',
+            saved.queued
+                ? offlineSavedMessage
+                : 'وصلنا البلاغ. لما تدخل بنفس الإيميل، هتلاقي التذكرة في المزيد.',
           ),
         ),
       );
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _sending = false;
-        _error = 'الإرسال متعطل دلوقتي. جرّب تاني.';
-      });
+      Navigator.of(context).pop();
+      messenger.showSnackBar(const SnackBar(content: Text(offlineSavedMessage)));
     }
   }
 

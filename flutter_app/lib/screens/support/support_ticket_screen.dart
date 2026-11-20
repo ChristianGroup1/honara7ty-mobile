@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/offline_sync.dart';
 import '../../core/supabase_service.dart';
 import '../../core/theme.dart';
 import '../../features/support/support_service.dart';
@@ -29,31 +30,33 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
   void initState() {
     super.initState();
     _load();
-    _channel = supabase
-        .channel('support-${widget.ticketId}')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.insert,
-          schema: 'public',
-          table: 'support_messages',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'ticket_id',
-            value: widget.ticketId,
-          ),
-          callback: (_) => _load(silent: true),
-        )
-        .onPostgresChanges(
-          event: PostgresChangeEvent.update,
-          schema: 'public',
-          table: 'support_tickets',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'id',
-            value: widget.ticketId,
-          ),
-          callback: (_) => _load(silent: true),
-        )
-        .subscribe();
+    try {
+      _channel = supabase
+          .channel('support-${widget.ticketId}')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.insert,
+            schema: 'public',
+            table: 'support_messages',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'ticket_id',
+              value: widget.ticketId,
+            ),
+            callback: (_) => _load(silent: true),
+          )
+          .onPostgresChanges(
+            event: PostgresChangeEvent.update,
+            schema: 'public',
+            table: 'support_tickets',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'id',
+              value: widget.ticketId,
+            ),
+            callback: (_) => _load(silent: true),
+          )
+          .subscribe();
+    } catch (_) {}
   }
 
   @override
@@ -84,10 +87,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
       _follow();
     } catch (_) {
       if (!mounted || silent) return;
-      setState(() {
-        _loading = false;
-        _error = 'مش قادرين نفتح التذكرة.';
-      });
+      setState(() => _loading = false);
     }
   }
 
@@ -107,12 +107,20 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
     if (text.isEmpty || _sending || _ticket?.isClosed == true) return;
     setState(() => _sending = true);
     try {
-      await _service.reply(ticketId: widget.ticketId, message: text);
+      final saved = await _service.reply(ticketId: widget.ticketId, message: text);
       _reply.clear();
       await _load(silent: true);
+      if (saved.queued && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(offlineSavedMessage)),
+        );
+      }
     } catch (_) {
-      if (!mounted) return;
-      setState(() => _error = 'الرسالة ماتبعَتش. جرّب تاني.');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(offlineSavedMessage)),
+        );
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
@@ -270,7 +278,7 @@ class _Bubble extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '$hour:$minute',
+              message.pending ? 'هتتبعت لما النت يرجع' : '$hour:$minute',
               style: _font(10, mine ? Colors.white70 : muted, FontWeight.w600),
             ),
           ],

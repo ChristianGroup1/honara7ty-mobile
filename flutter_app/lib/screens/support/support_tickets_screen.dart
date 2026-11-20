@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/offline_sync.dart';
 import '../../core/theme.dart';
 import '../../features/support/support_service.dart';
 import '../../routing/app_router.dart';
@@ -38,10 +39,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _error = 'مش قادرين نحمّل التذاكر دلوقتي.';
-        _loading = false;
-      });
+      setState(() => _loading = false);
     }
   }
 
@@ -122,7 +120,9 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                                 ]),
                                 const SizedBox(height: 8),
                                 Text(
-                                  _when(ticket.updatedAt),
+                                  ticket.pending
+                                      ? 'هتتبعت لما النت يرجع'
+                                      : _when(ticket.updatedAt),
                                   style: _font(12, muted, FontWeight.w600),
                                 ),
                               ],
@@ -213,16 +213,18 @@ class _NewTicketSheetState extends State<_NewTicketSheet> {
       _sending = true;
       _error = null;
     });
+    final messenger = ScaffoldMessenger.of(context);
     try {
-      await _service.openTicket(subject: subject, message: message);
+      final saved = await _service.openTicket(subject: subject, message: message);
       if (!mounted) return;
       Navigator.of(context).pop(true);
+      if (saved.queued) {
+        messenger.showSnackBar(const SnackBar(content: Text(offlineSavedMessage)));
+      }
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _sending = false;
-        _error = 'الإرسال متعطل دلوقتي. جرّب تاني.';
-      });
+      setState(() => _sending = false);
+      messenger.showSnackBar(const SnackBar(content: Text(offlineSavedMessage)));
     }
   }
 
