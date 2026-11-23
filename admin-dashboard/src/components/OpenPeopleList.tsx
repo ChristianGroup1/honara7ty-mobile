@@ -4,16 +4,43 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   activitySummary,
+  AppOpenDevice,
   AppOpenPerson,
   formatOpenedAt,
-  openedToday,
-  platformNames,
+  platformLabel,
 } from '@/lib/appPulse';
 
 type OpenTab = 'month' | 'today';
 
-function PeopleTable({ people }: { people: AppOpenPerson[] }) {
-  if (people.length === 0) {
+interface OpenRow {
+  key: string;
+  person: AppOpenPerson;
+  device: AppOpenDevice;
+}
+
+function deviceRows(people: AppOpenPerson[]): OpenRow[] {
+  return people.flatMap((person) => {
+    const devices = person.devices.length > 0 ? person.devices : fallbackDevices(person);
+    return devices.map((device) => ({
+      key: `${person.user_id}-${device.platform}`,
+      person,
+      device,
+    }));
+  });
+}
+
+function fallbackDevices(person: AppOpenPerson): AppOpenDevice[] {
+  const platforms = person.platforms.length > 0 ? person.platforms : [person.platform];
+  return platforms.map((platform) => ({
+    platform,
+    last_opened_at: person.last_opened_at,
+    last_opened_on: person.last_opened_on,
+    opens: person.opens_30_days,
+  }));
+}
+
+function PeopleTable({ rows }: { rows: OpenRow[] }) {
+  if (rows.length === 0) {
     return (
       <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
         لسه مفيش حد في التبويب ده.
@@ -34,20 +61,20 @@ function PeopleTable({ people }: { people: AppOpenPerson[] }) {
           </tr>
         </thead>
         <tbody>
-          {people.map((person, index) => (
-            <tr key={person.user_id}>
+          {rows.map((row, index) => (
+            <tr key={row.key}>
               <td>{index + 1}</td>
               <td>
-                <Link href={`/users/${person.user_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                  <strong>{person.full_name || person.email}</strong>
+                <Link href={`/users/${row.person.user_id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                  <strong>{row.person.full_name || row.person.email}</strong>
                   <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 12 }}>
-                    {person.email}
+                    {row.person.email}
                   </span>
                 </Link>
               </td>
-              <td>{platformNames(person)}</td>
-              <td>{formatOpenedAt(person.last_opened_at)}</td>
-              <td>{activitySummary(person)}</td>
+              <td>{platformLabel(row.device.platform)}</td>
+              <td>{formatOpenedAt(row.device.last_opened_at)}</td>
+              <td>{activitySummary(row.person)}</td>
             </tr>
           ))}
         </tbody>
@@ -58,23 +85,26 @@ function PeopleTable({ people }: { people: AppOpenPerson[] }) {
 
 export function OpenPeopleList({ people }: { people: AppOpenPerson[] }) {
   const [tab, setTab] = useState<OpenTab>('today');
-  const today = people
-    .filter(openedToday)
-    .sort((a, b) => b.last_opened_at.localeCompare(a.last_opened_at));
-  const month = [...people].sort((a, b) => b.last_opened_at.localeCompare(a.last_opened_at));
+  const month = deviceRows(people).sort((a, b) =>
+    b.device.last_opened_at.localeCompare(a.device.last_opened_at),
+  );
+  const today = month.filter((row) => row.device.last_opened_on.slice(0, 10) === todayKey());
+  const android = month.filter((row) => row.device.platform === 'android').length;
+  const ios = month.filter((row) => row.device.platform === 'ios').length;
+  const unique = new Set(month.map((row) => row.person.user_id)).size;
 
   const tabs: { id: OpenTab; label: string; count: number; note: string }[] = [
     {
       id: 'month',
       label: 'مين فتح التطبيق',
       count: month.length,
-      note: 'آخر ٣٠ يوم: آيفون أو أندرويد، واللي عمله بعد الدخول',
+      note: `${android} أندرويد + ${ios} آيفون = ${android + ios}. الأشخاص المختلفون ${unique}، لأن شخص واحد فتح من الجهازين.`,
     },
     {
       id: 'today',
       label: 'مين فتح التطبيق النهاردة',
       count: today.length,
-      note: 'اللي دخلوا النهاردة بس، آيفون أو أندرويد',
+      note: 'اللي دخلوا النهاردة، وصف لكل جهاز',
     },
   ];
   const active = tabs.find((item) => item.id === tab) ?? tabs[1];
@@ -114,7 +144,18 @@ export function OpenPeopleList({ people }: { people: AppOpenPerson[] }) {
         ))}
       </div>
       <div style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 12 }}>{active.note}</div>
-      <PeopleTable people={tab === 'today' ? today : month} />
+      <PeopleTable rows={tab === 'today' ? today : month} />
     </div>
   );
+}
+
+function todayKey() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
 }

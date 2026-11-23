@@ -322,7 +322,14 @@ export default function DashboardPage() {
                 لسه مفيش بيانات فتحات/نسخ. بعد ما المستخدمين يفتحوا التطبيق المتصل، هتظهر هنا.
               </p>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
+              <>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 12 }}>
+                  جدول الفتحات فيه {pulse.opens.table_rows} صف. الصف يوم وجهاز، مش شخص.
+                  المستخدمون {pulse.opens.versions.reduce((sum, row) => sum + row.users_7_days, 0)} لأن الشخص اللي فتح من الآيفون والأندرويد متسجل في الصفين.
+                  الأشخاص المختلفون {pulse.opens.opened_7_days}. الفتحات{' '}
+                  {pulse.opens.versions.reduce((sum, row) => sum + row.opens_7_days, 0)}.
+                </p>
+                <div style={{ overflowX: 'auto' }}>
                 <table className="admin-table">
                   <thead>
                     <tr>
@@ -348,6 +355,7 @@ export default function DashboardPage() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </section>
 

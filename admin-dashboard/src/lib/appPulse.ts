@@ -29,6 +29,13 @@ export interface AppOpenVersion {
   opens_7_days: number;
 }
 
+export interface AppOpenDevice {
+  platform: string;
+  last_opened_at: string;
+  last_opened_on: string;
+  opens: number;
+}
+
 export interface AppOpenPerson {
   user_id: string;
   email: string;
@@ -40,6 +47,7 @@ export interface AppOpenPerson {
   build_number: string;
   platform: string;
   platforms: string[];
+  devices: AppOpenDevice[];
   devotions_30: number;
   chapters_30: number;
   prayers_30: number;
@@ -51,6 +59,7 @@ export interface AppOpenStats {
   opened_today: number;
   opened_7_days: number;
   opened_30_days: number;
+  table_rows: number;
   versions: AppOpenVersion[];
   people: AppOpenPerson[];
   peopleReady: boolean;
@@ -96,6 +105,7 @@ export const emptyOpens: AppOpenStats = {
   opened_today: 0,
   opened_7_days: 0,
   opened_30_days: 0,
+  table_rows: 0,
   versions: [],
   people: [],
   peopleReady: false,
@@ -113,6 +123,7 @@ export function parseAppOpenStats(data: unknown): AppOpenStats {
     opened_today: Number(raw.opened_today ?? 0),
     opened_7_days: Number(raw.opened_7_days ?? 0),
     opened_30_days: Number(raw.opened_30_days ?? 0),
+    table_rows: Number(raw.table_rows ?? 0),
     versions: versions.map((item) => {
       const row = item as Partial<AppOpenVersion>;
       return {
@@ -138,6 +149,17 @@ export function parseAppOpenStats(data: unknown): AppOpenStats {
         platforms: Array.isArray(row.platforms)
           ? row.platforms.map((item) => String(item))
           : [String(row.platform ?? 'other')],
+        devices: Array.isArray(row.devices)
+          ? row.devices.map((item) => {
+              const device = item as Partial<AppOpenDevice>;
+              return {
+                platform: String(device.platform ?? 'other'),
+                last_opened_at: String(device.last_opened_at ?? ''),
+                last_opened_on: String(device.last_opened_on ?? ''),
+                opens: Number(device.opens ?? 0),
+              };
+            })
+          : [],
         devotions_30: Number(row.devotions_30 ?? 0),
         chapters_30: Number(row.chapters_30 ?? 0),
         prayers_30: Number(row.prayers_30 ?? 0),
