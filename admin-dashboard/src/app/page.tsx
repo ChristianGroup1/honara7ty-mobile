@@ -213,10 +213,6 @@ export default function DashboardPage() {
               />
             </div>
             <div className="card glass" style={{ marginTop: 16 }}>
-              <div style={{ fontWeight: 700, marginBottom: 4 }}>مين فتح التطبيق</div>
-              <div style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 12 }}>
-                آخر ٣٠ يوم: آيفون أو أندرويد، واللي عمله بعد الدخول
-              </div>
               {!pulse.opens.peopleReady ? (
                 <div style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                   الأعداد ظاهرة، والأسماء محتاجة تحديث دالة فتح التطبيق على قاعدة البيانات.
