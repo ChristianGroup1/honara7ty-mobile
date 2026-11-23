@@ -39,6 +39,7 @@ export interface AppOpenPerson {
   app_version: string;
   build_number: string;
   platform: string;
+  platforms: string[];
   devotions_30: number;
   chapters_30: number;
   prayers_30: number;
@@ -134,6 +135,9 @@ export function parseAppOpenStats(data: unknown): AppOpenStats {
         app_version: String(row.app_version ?? ''),
         build_number: String(row.build_number ?? ''),
         platform: String(row.platform ?? 'other'),
+        platforms: Array.isArray(row.platforms)
+          ? row.platforms.map((item) => String(item))
+          : [String(row.platform ?? 'other')],
         devotions_30: Number(row.devotions_30 ?? 0),
         chapters_30: Number(row.chapters_30 ?? 0),
         prayers_30: Number(row.prayers_30 ?? 0),
@@ -325,6 +329,16 @@ export async function fetchAppPulse(): Promise<AppPulse> {
     opensError,
     refreshedAt: new Date().toISOString(),
   };
+}
+
+export function personPlatforms(person: AppOpenPerson) {
+  const listed = (person.platforms ?? []).filter(Boolean);
+  if (listed.length > 0) return [...new Set(listed)];
+  return person.platform ? [person.platform] : [];
+}
+
+export function platformNames(person: AppOpenPerson) {
+  return personPlatforms(person).map(platformLabel).join(' · ');
 }
 
 export function platformLabel(platform: string) {

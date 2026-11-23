@@ -79,6 +79,8 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<DirectoryUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deviceFilter, setDeviceFilter] = useState<'all' | 'ios' | 'android'>('all');
+  const [devices, setDevices] = useState<Record<string, string[]>>({});
   const [selectedUser, setSelectedUser] = useState<DirectoryUser | null>(null);
   
   // Modal Details State
@@ -130,6 +132,18 @@ export default function UsersPage() {
       } else if (data) {
         setUsers(data as DirectoryUser[]);
       }
+
+      const { data: opens } = await supabase
+        .from('app_opens')
+        .select('user_id, platform');
+      const nextDevices: Record<string, string[]> = {};
+      for (const row of opens ?? []) {
+        const id = String(row.user_id);
+        const platform = String(row.platform);
+        const current = nextDevices[id] ?? [];
+        if (!current.includes(platform)) nextDevices[id] = [...current, platform];
+      }
+      setDevices(nextDevices);
     } catch (err: any) {
       console.error('Error fetching users directory:', err);
     } finally {
@@ -242,7 +256,18 @@ export default function UsersPage() {
     }
   };
 
+  const visibleUsers = users.filter((user) => {
+    if (deviceFilter === 'all') return true;
+    return (devices[user.id] ?? []).includes(deviceFilter);
+  });
 
+  const deviceText = (id: string) => {
+    const platforms = devices[id] ?? [];
+    if (platforms.length === 0) return 'غير معروف';
+    return platforms
+      .map((platform) => (platform === 'ios' ? 'آيفون' : platform === 'android' ? 'أندرويد' : 'جهاز آخر'))
+      .join(' · ');
+  };
 
   return (
     <div className="animate-fade-in" style={{ direction: 'rtl' }}>
@@ -299,6 +324,29 @@ export default function UsersPage() {
           />
           <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)' }} />
         </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {([
+            ['all', 'الكل'],
+            ['ios', 'آيفون'],
+            ['android', 'أندرويد'],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setDeviceFilter(id)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                background: deviceFilter === id ? 'rgba(110, 147, 176, 0.25)' : 'transparent',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Users Directory Table */}
@@ -308,14 +356,15 @@ export default function UsersPage() {
             <tr>
               <th>المستخدم</th>
               <th>الكنيسة والطائفة</th>
+              <th>الجهاز</th>
               <th>نقاط الخبرة XP</th>
               <th>آخر تحديث</th>
               <th style={{ textAlign: 'center' }}>العمليات</th>
             </tr>
           </thead>
           <tbody>
-            {users.length > 0 ? (
-              users.map((user) => (
+            {visibleUsers.length > 0 ? (
+              visibleUsers.map((user) => (
                 <tr key={user.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -333,6 +382,9 @@ export default function UsersPage() {
                       <span style={{ fontSize: '0.85rem' }}>{user.church}</span>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user.sect}</span>
                     </div>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: '0.85rem' }}>{deviceText(user.id)}</span>
                   </td>
                   <td>
                     <span className="badge badge-primary" style={{ fontWeight: 'bold' }}>
@@ -370,7 +422,7 @@ export default function UsersPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
                   لا يوجد مستخدمون يطابقون معايير البحث.
                 </td>
               </tr>

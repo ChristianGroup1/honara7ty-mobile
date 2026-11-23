@@ -5,11 +5,10 @@ import { supabase } from '@/lib/supabase';
 import {
   AppOpenStats,
   emptyOpens,
-  activitySummary,
-  formatOpenedAt,
   parseAppOpenStats,
   platformLabel,
 } from '@/lib/appPulse';
+import { OpenPeopleList } from '@/components/OpenPeopleList';
 import {
   CheckCircle,
   XCircle,
@@ -1418,38 +1417,7 @@ export default function HealthPage() {
               لسه مفيش حد مسجّل فتح التطبيق خلال آخر ٣٠ يوم.
             </p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {appOpenStats.people.map((person) => (
-                <a
-                  key={person.user_id}
-                  href={`/users/${person.user_id}`}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                    fontSize: '0.86rem',
-                  }}
-                >
-                  <span>
-                    <strong>{person.full_name || person.email}</strong>
-                    <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
-                      {platformLabel(person.platform)}
-                      {' · '}
-                      {person.email}
-                    </span>
-                    <span style={{ display: 'block', marginTop: '4px', fontSize: '0.8rem' }}>
-                      {activitySummary(person)}
-                    </span>
-                  </span>
-                  <span style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                    {formatOpenedAt(person.last_opened_at)}
-                    <span style={{ display: 'block' }}>{person.opens_30_days} فتحة / ٣٠ يوم</span>
-                  </span>
-                </a>
-              ))}
-            </div>
+            <OpenPeopleList people={appOpenStats.people} />
           )}
         </div>
       </section>

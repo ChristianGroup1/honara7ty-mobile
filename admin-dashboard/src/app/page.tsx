@@ -18,13 +18,12 @@ import {
 } from 'lucide-react';
 import {
   AppPulse,
-  activitySummary,
   fetchAppPulse,
-  formatOpenedAt,
   healthVerdict,
   pct,
   platformLabel,
 } from '@/lib/appPulse';
+import { OpenPeopleList } from '@/components/OpenPeopleList';
 
 function Metric({
   label,
@@ -227,35 +226,7 @@ export default function DashboardPage() {
                   لسه مفيش حد مسجّل فتح التطبيق خلال آخر ٣٠ يوم.
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {pulse.opens.people.slice(0, 20).map((person) => (
-                    <Link
-                      key={person.user_id}
-                      href={`/users/${person.user_id}`}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        gap: 12,
-                        textDecoration: 'none',
-                        color: 'inherit',
-                      }}
-                    >
-                      <span>
-                        <strong>{person.full_name || person.email}</strong>
-                        <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 13 }}>
-                          {platformLabel(person.platform)} · {person.email}
-                        </span>
-                        <span style={{ display: 'block', marginTop: 4, fontSize: 13 }}>
-                          {activitySummary(person)}
-                        </span>
-                      </span>
-                      <span style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'left' }}>
-                        {formatOpenedAt(person.last_opened_at)}
-                        <span style={{ display: 'block' }}>{person.opens_30_days} فتحة</span>
-                      </span>
-                    </Link>
-                  ))}
-                </div>
+                <OpenPeopleList people={pulse.opens.people} />
               )}
             </div>
           </section>
