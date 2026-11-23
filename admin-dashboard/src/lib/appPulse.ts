@@ -53,6 +53,9 @@ export interface AppOpenPerson {
   prayers_30: number;
   reflections_30: number;
   memorization_30: number;
+  signed_up_on: string;
+  is_new: boolean;
+  is_new_today: boolean;
 }
 
 export interface AppOpenStats {
@@ -165,6 +168,9 @@ export function parseAppOpenStats(data: unknown): AppOpenStats {
         prayers_30: Number(row.prayers_30 ?? 0),
         reflections_30: Number(row.reflections_30 ?? 0),
         memorization_30: Number(row.memorization_30 ?? 0),
+        signed_up_on: String(row.signed_up_on ?? ''),
+        is_new: Boolean(row.is_new),
+        is_new_today: Boolean(row.is_new_today),
       };
     }),
     peopleReady,
@@ -371,6 +377,12 @@ export function platformLabel(platform: string) {
   if (platform === 'ios') return 'آيفون';
   if (platform === 'android') return 'أندرويد';
   return 'جهاز آخر';
+}
+
+export function newUserLabel(person: AppOpenPerson) {
+  if (person.is_new_today) return 'جديد النهاردة';
+  if (person.is_new) return 'جديد';
+  return 'قديم';
 }
 
 export function activitySummary(person: AppOpenPerson) {

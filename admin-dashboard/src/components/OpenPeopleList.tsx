@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   activitySummary,
+  newUserLabel,
   AppOpenDevice,
   AppOpenPerson,
   formatOpenedAt,
@@ -55,6 +56,7 @@ function PeopleTable({ rows }: { rows: OpenRow[] }) {
           <tr>
             <th>#</th>
             <th>الاسم</th>
+            <th>الحساب</th>
             <th>الجهاز</th>
             <th>آخر فتح</th>
             <th>اللي عمله</th>
@@ -71,6 +73,9 @@ function PeopleTable({ rows }: { rows: OpenRow[] }) {
                     {row.person.email}
                   </span>
                 </Link>
+              </td>
+              <td style={{ color: row.person.is_new ? 'var(--success)' : 'var(--text-secondary)', fontWeight: row.person.is_new ? 700 : 400 }}>
+                {newUserLabel(row.person)}
               </td>
               <td>{platformLabel(row.device.platform)}</td>
               <td>{formatOpenedAt(row.device.last_opened_at)}</td>
@@ -91,20 +96,27 @@ export function OpenPeopleList({ people }: { people: AppOpenPerson[] }) {
   const today = month.filter((row) => row.device.last_opened_on.slice(0, 10) === todayKey());
   const android = month.filter((row) => row.device.platform === 'android').length;
   const ios = month.filter((row) => row.device.platform === 'ios').length;
-  const unique = new Set(month.map((row) => row.person.user_id)).size;
+  const uniquePeople = new Set(month.map((row) => row.person.user_id));
+  const newPeople = new Set(
+    month.filter((row) => row.person.is_new).map((row) => row.person.user_id),
+  );
+  const newTodayPeople = new Set(
+    today.filter((row) => row.person.is_new).map((row) => row.person.user_id),
+  );
+  const unique = uniquePeople.size;
 
   const tabs: { id: OpenTab; label: string; count: number; note: string }[] = [
     {
       id: 'month',
       label: 'مين فتح التطبيق',
       count: month.length,
-      note: `${android} أندرويد + ${ios} آيفون = ${android + ios}. الأشخاص المختلفون ${unique}، لأن شخص واحد فتح من الجهازين.`,
+      note: `${android} أندرويد + ${ios} آيفون = ${android + ios}. الأشخاص المختلفون ${unique}، منهم ${newPeople.size} حساب جديد خلال ٧ أيام.`,
     },
     {
       id: 'today',
       label: 'مين فتح التطبيق النهاردة',
       count: today.length,
-      note: 'اللي دخلوا النهاردة، وصف لكل جهاز',
+      note: `اللي دخلوا النهاردة، منهم ${newTodayPeople.size} حساب جديد.`,
     },
   ];
   const active = tabs.find((item) => item.id === tab) ?? tabs[1];
