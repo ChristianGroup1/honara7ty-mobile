@@ -126,7 +126,7 @@ BEGIN
         ) t ON t.user_id = l.user_id
         JOIN auth.users u ON u.id = l.user_id
         ORDER BY l.last_opened_at DESC
-        LIMIT 100
+        LIMIT 2000
       ) p
     ), '[]'::jsonb)
   );

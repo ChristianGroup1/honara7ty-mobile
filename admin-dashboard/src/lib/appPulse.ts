@@ -161,7 +161,7 @@ export function formatOpenedAt(value: string) {
   });
 }
 
-function cairoToday() {
+export function cairoToday() {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Africa/Cairo',
     year: 'numeric',
@@ -329,6 +329,10 @@ export async function fetchAppPulse(): Promise<AppPulse> {
     opensError,
     refreshedAt: new Date().toISOString(),
   };
+}
+
+export function openedToday(person: AppOpenPerson) {
+  return person.last_opened_on.slice(0, 10) === cairoToday();
 }
 
 export function personPlatforms(person: AppOpenPerson) {
