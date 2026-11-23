@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import {
   AppPulse,
+  activitySummary,
   fetchAppPulse,
   formatOpenedAt,
   healthVerdict,
@@ -213,7 +214,10 @@ export default function DashboardPage() {
               />
             </div>
             <div className="card glass" style={{ marginTop: 16 }}>
-              <div style={{ fontWeight: 700, marginBottom: 12 }}>مين فتح التطبيق</div>
+              <div style={{ fontWeight: 700, marginBottom: 4 }}>مين فتح التطبيق</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 12, marginBottom: 12 }}>
+                آخر ٣٠ يوم: آيفون أو أندرويد، واللي عمله بعد الدخول
+              </div>
               {!pulse.opens.peopleReady ? (
                 <div style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                   الأعداد ظاهرة، والأسماء محتاجة تحديث دالة فتح التطبيق على قاعدة البيانات.
@@ -239,8 +243,10 @@ export default function DashboardPage() {
                       <span>
                         <strong>{person.full_name || person.email}</strong>
                         <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 13 }}>
-                          {person.email} · {person.app_version}
-                          {person.build_number ? ` (${person.build_number})` : ''} · {platformLabel(person.platform)}
+                          {platformLabel(person.platform)} · {person.email}
+                        </span>
+                        <span style={{ display: 'block', marginTop: 4, fontSize: 13 }}>
+                          {activitySummary(person)}
                         </span>
                       </span>
                       <span style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'left' }}>

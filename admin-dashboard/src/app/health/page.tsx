@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import {
   AppOpenStats,
   emptyOpens,
+  activitySummary,
   formatOpenedAt,
   parseAppOpenStats,
   platformLabel,
@@ -1404,7 +1405,10 @@ export default function HealthPage() {
           )}
         </div>
         <div className="glass card" style={{ padding: '20px', borderRadius: '14px', marginTop: '16px' }}>
-          <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>مين فتح التطبيق</h3>
+          <h3 style={{ fontSize: '1rem', marginBottom: '4px' }}>مين فتح التطبيق</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.78rem', margin: '0 0 12px' }}>
+            آخر ٣٠ يوم: آيفون أو أندرويد، واللي عمله بعد الدخول
+          </p>
           {!appOpenStats.peopleReady ? (
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', margin: 0 }}>
               الأعداد ظاهرة، والأسماء محتاجة تحديث دالة فتح التطبيق على قاعدة البيانات.
@@ -1431,12 +1435,12 @@ export default function HealthPage() {
                   <span>
                     <strong>{person.full_name || person.email}</strong>
                     <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
-                      {person.email}
-                      {' · '}
-                      {person.app_version}
-                      {person.build_number ? ` (${person.build_number})` : ''}
-                      {' · '}
                       {platformLabel(person.platform)}
+                      {' · '}
+                      {person.email}
+                    </span>
+                    <span style={{ display: 'block', marginTop: '4px', fontSize: '0.8rem' }}>
+                      {activitySummary(person)}
                     </span>
                   </span>
                   <span style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.78rem' }}>

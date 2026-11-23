@@ -39,6 +39,11 @@ export interface AppOpenPerson {
   app_version: string;
   build_number: string;
   platform: string;
+  devotions_30: number;
+  chapters_30: number;
+  prayers_30: number;
+  reflections_30: number;
+  memorization_30: number;
 }
 
 export interface AppOpenStats {
@@ -129,6 +134,11 @@ export function parseAppOpenStats(data: unknown): AppOpenStats {
         app_version: String(row.app_version ?? ''),
         build_number: String(row.build_number ?? ''),
         platform: String(row.platform ?? 'other'),
+        devotions_30: Number(row.devotions_30 ?? 0),
+        chapters_30: Number(row.chapters_30 ?? 0),
+        prayers_30: Number(row.prayers_30 ?? 0),
+        reflections_30: Number(row.reflections_30 ?? 0),
+        memorization_30: Number(row.memorization_30 ?? 0),
       };
     }),
     peopleReady,
@@ -318,7 +328,18 @@ export async function fetchAppPulse(): Promise<AppPulse> {
 }
 
 export function platformLabel(platform: string) {
-  if (platform === 'ios') return 'iOS';
-  if (platform === 'android') return 'Android';
-  return 'أخرى';
+  if (platform === 'ios') return 'آيفون';
+  if (platform === 'android') return 'أندرويد';
+  return 'جهاز آخر';
+}
+
+export function activitySummary(person: AppOpenPerson) {
+  const parts = [
+    person.devotions_30 > 0 ? `خلوة ${person.devotions_30}` : '',
+    person.chapters_30 > 0 ? `قراءة ${person.chapters_30}` : '',
+    person.prayers_30 > 0 ? `صلاة ${person.prayers_30}` : '',
+    person.reflections_30 > 0 ? `تأمل ${person.reflections_30}` : '',
+    person.memorization_30 > 0 ? `حفظ ${person.memorization_30}` : '',
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : 'فتح التطبيق من غير نشاط مسجّل';
 }
