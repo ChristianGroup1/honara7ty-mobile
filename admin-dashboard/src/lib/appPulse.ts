@@ -29,11 +29,25 @@ export interface AppOpenVersion {
   opens_7_days: number;
 }
 
+export interface AppOpenPerson {
+  user_id: string;
+  email: string;
+  full_name: string;
+  last_opened_at: string;
+  last_opened_on: string;
+  opens_30_days: number;
+  app_version: string;
+  build_number: string;
+  platform: string;
+}
+
 export interface AppOpenStats {
   opened_today: number;
   opened_7_days: number;
   opened_30_days: number;
   versions: AppOpenVersion[];
+  people: AppOpenPerson[];
+  peopleReady: boolean;
 }
 
 export interface AppPulse {
@@ -77,7 +91,61 @@ export const emptyOpens: AppOpenStats = {
   opened_7_days: 0,
   opened_30_days: 0,
   versions: [],
+  people: [],
+  peopleReady: false,
 };
+
+export function parseAppOpenStats(data: unknown): AppOpenStats {
+  const raw = (data ?? {}) as Partial<AppOpenStats> & {
+    versions?: unknown;
+    people?: unknown;
+  };
+  const versions = Array.isArray(raw.versions) ? raw.versions : [];
+  const peopleReady = Array.isArray(raw.people);
+  const people = peopleReady ? raw.people : [];
+  return {
+    opened_today: Number(raw.opened_today ?? 0),
+    opened_7_days: Number(raw.opened_7_days ?? 0),
+    opened_30_days: Number(raw.opened_30_days ?? 0),
+    versions: versions.map((item) => {
+      const row = item as Partial<AppOpenVersion>;
+      return {
+        app_version: String(row.app_version ?? ''),
+        build_number: String(row.build_number ?? ''),
+        platform: String(row.platform ?? 'other'),
+        users_7_days: Number(row.users_7_days ?? 0),
+        opens_7_days: Number(row.opens_7_days ?? 0),
+      };
+    }),
+    people: (people as unknown[]).map((item) => {
+      const row = item as Partial<AppOpenPerson>;
+      return {
+        user_id: String(row.user_id ?? ''),
+        email: String(row.email ?? ''),
+        full_name: String(row.full_name ?? ''),
+        last_opened_at: String(row.last_opened_at ?? ''),
+        last_opened_on: String(row.last_opened_on ?? ''),
+        opens_30_days: Number(row.opens_30_days ?? 0),
+        app_version: String(row.app_version ?? ''),
+        build_number: String(row.build_number ?? ''),
+        platform: String(row.platform ?? 'other'),
+      };
+    }),
+    peopleReady,
+  };
+}
+
+export function formatOpenedAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('ar-EG', {
+    timeZone: 'Africa/Cairo',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
 
 function cairoToday() {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -226,23 +294,7 @@ export async function fetchAppPulse(): Promise<AppPulse> {
   if (opensRes.error) {
     opensError = opensRes.error.message;
   } else if (opensRes.data && typeof opensRes.data === 'object') {
-    const raw = opensRes.data as Partial<AppOpenStats> & { versions?: unknown };
-    const versions = Array.isArray(raw.versions) ? raw.versions : [];
-    opens = {
-      opened_today: Number(raw.opened_today ?? 0),
-      opened_7_days: Number(raw.opened_7_days ?? 0),
-      opened_30_days: Number(raw.opened_30_days ?? 0),
-      versions: versions.map((item) => {
-        const row = item as Partial<AppOpenVersion>;
-        return {
-          app_version: String(row.app_version ?? ''),
-          build_number: String(row.build_number ?? ''),
-          platform: String(row.platform ?? 'other'),
-          users_7_days: Number(row.users_7_days ?? 0),
-          opens_7_days: Number(row.opens_7_days ?? 0),
-        };
-      }),
-    };
+    opens = parseAppOpenStats(opensRes.data);
   }
 
   const newUsers7d = newUsersRes.error ? 0 : Number(newUsersRes.data ?? 0);

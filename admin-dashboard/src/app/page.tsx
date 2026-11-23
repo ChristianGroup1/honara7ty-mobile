@@ -19,6 +19,7 @@ import {
 import {
   AppPulse,
   fetchAppPulse,
+  formatOpenedAt,
   healthVerdict,
   pct,
   platformLabel,
@@ -210,6 +211,46 @@ export default function DashboardPage() {
                 value={pulse.totalUsers}
                 note={`جدد آخر ٧ أيام: ${pulse.newUsers7d}`}
               />
+            </div>
+            <div className="card glass" style={{ marginTop: 16 }}>
+              <div style={{ fontWeight: 700, marginBottom: 12 }}>مين فتح التطبيق</div>
+              {!pulse.opens.peopleReady ? (
+                <div style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  الأعداد ظاهرة، والأسماء محتاجة تحديث دالة فتح التطبيق على قاعدة البيانات.
+                </div>
+              ) : pulse.opens.people.length === 0 ? (
+                <div style={{ color: 'var(--text-secondary)' }}>
+                  لسه مفيش حد مسجّل فتح التطبيق خلال آخر ٣٠ يوم.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {pulse.opens.people.slice(0, 20).map((person) => (
+                    <Link
+                      key={person.user_id}
+                      href={`/users/${person.user_id}`}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        textDecoration: 'none',
+                        color: 'inherit',
+                      }}
+                    >
+                      <span>
+                        <strong>{person.full_name || person.email}</strong>
+                        <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: 13 }}>
+                          {person.email} · {person.app_version}
+                          {person.build_number ? ` (${person.build_number})` : ''} · {platformLabel(person.platform)}
+                        </span>
+                      </span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'left' }}>
+                        {formatOpenedAt(person.last_opened_at)}
+                        <span style={{ display: 'block' }}>{person.opens_30_days} فتحة</span>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
 

@@ -3,6 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import {
+  AppOpenStats,
+  emptyOpens,
+  formatOpenedAt,
+  parseAppOpenStats,
+  platformLabel,
+} from '@/lib/appPulse';
+import {
   CheckCircle,
   XCircle,
   TrendingUp,
@@ -57,33 +64,7 @@ interface AdminInsightSnapshot {
   missing_birth_date: number;
 }
 
-interface AppOpenVersion {
-  app_version: string;
-  build_number: string;
-  platform: string;
-  users_7_days: number;
-  opens_7_days: number;
-}
-
-interface AppOpenStats {
-  opened_today: number;
-  opened_7_days: number;
-  opened_30_days: number;
-  versions: AppOpenVersion[];
-}
-
-const emptyAppOpenStats: AppOpenStats = {
-  opened_today: 0,
-  opened_7_days: 0,
-  opened_30_days: 0,
-  versions: [],
-};
-
-function platformLabel(platform: string) {
-  if (platform === 'ios') return 'iOS';
-  if (platform === 'android') return 'Android';
-  return 'أخرى';
-}
+const emptyAppOpenStats: AppOpenStats = emptyOpens;
 
 const emptyInsightSnapshot: AdminInsightSnapshot = {
   dau_users: 0, wau_users: 0, mau_users: 0,
@@ -552,23 +533,7 @@ export default function HealthPage() {
         setAppOpenError('شغّل هجرة فتح التطبيق لإظهار عدد الفتحات والنسخ.');
         setAppOpenStats(emptyAppOpenStats);
       } else {
-        const raw = (appOpenData ?? {}) as Partial<AppOpenStats> & { versions?: unknown };
-        const versions = Array.isArray(raw.versions) ? raw.versions : [];
-        setAppOpenStats({
-          opened_today: Number(raw.opened_today ?? 0),
-          opened_7_days: Number(raw.opened_7_days ?? 0),
-          opened_30_days: Number(raw.opened_30_days ?? 0),
-          versions: versions.map((item) => {
-            const row = item as Partial<AppOpenVersion>;
-            return {
-              app_version: String(row.app_version ?? ''),
-              build_number: String(row.build_number ?? ''),
-              platform: String(row.platform ?? 'other'),
-              users_7_days: Number(row.users_7_days ?? 0),
-              opens_7_days: Number(row.opens_7_days ?? 0),
-            };
-          }),
-        });
+        setAppOpenStats(parseAppOpenStats(appOpenData));
         setAppOpenError(null);
       }
 
@@ -1434,6 +1399,51 @@ export default function HealthPage() {
                   </span>
                   <strong>{version.users_7_days} مستخدم · {version.opens_7_days} فتحة</strong>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="glass card" style={{ padding: '20px', borderRadius: '14px', marginTop: '16px' }}>
+          <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>مين فتح التطبيق</h3>
+          {!appOpenStats.peopleReady ? (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', margin: 0 }}>
+              الأعداد ظاهرة، والأسماء محتاجة تحديث دالة فتح التطبيق على قاعدة البيانات.
+            </p>
+          ) : appOpenStats.people.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', margin: 0 }}>
+              لسه مفيش حد مسجّل فتح التطبيق خلال آخر ٣٠ يوم.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {appOpenStats.people.map((person) => (
+                <a
+                  key={person.user_id}
+                  href={`/users/${person.user_id}`}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    fontSize: '0.86rem',
+                  }}
+                >
+                  <span>
+                    <strong>{person.full_name || person.email}</strong>
+                    <span style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
+                      {person.email}
+                      {' · '}
+                      {person.app_version}
+                      {person.build_number ? ` (${person.build_number})` : ''}
+                      {' · '}
+                      {platformLabel(person.platform)}
+                    </span>
+                  </span>
+                  <span style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                    {formatOpenedAt(person.last_opened_at)}
+                    <span style={{ display: 'block' }}>{person.opens_30_days} فتحة / ٣٠ يوم</span>
+                  </span>
+                </a>
               ))}
             </div>
           )}
